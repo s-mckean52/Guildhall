@@ -1,0 +1,57 @@
+<TileDefinitions>
+  
+  <TileDefinition
+    name="Grass"
+    spriteCoords="1,0"
+    texelColorForSet="0,255,0"
+    spriteTint="180,180,180"
+    allowsSight="true"
+    allowsWalking="true"
+    allowsFlying="true"
+    allowsSwimming="false"
+	/>
+  
+  <TileDefinition
+		name="Stone"
+		spriteCoords="0,5"
+    texelColorForSet="128,128,128"
+		allowsSight="false"
+		allowsWalking="false"
+		allowsFlying="false"
+		allowsSwimming="false"
+	/>
+  
+  <TileDefinition
+		name="Mud"
+		spriteCoords="25,1"
+    texelColorForSet="165,42,42"
+		spriteTint="180,180,180,100"
+		allowsSight="true"
+		allowsWalking="true"
+		allowsFlying="true"
+		allowsSwimming="false"
+	/>
+
+  <TileDefinition
+    name="Water"
+    spriteCoords="30,3"
+    texelColorForSet="0,0,255"
+    spriteTint="255,255,255"
+    allowsSight="true"
+    allowsWalking="false"
+    allowsFlying="true"
+    allowsSwimming="true"
+  />
+
+  <TileDfinition
+    name="Sand"
+    spriteCoords="6,1"
+    texelColorForSet="255,255,0"
+    spriteTint="255,255,255"
+    allowSight="true"
+    allowWalking="true"
+    allowFlying="true"
+    allowSwimming="false"
+  />
+
+</TileDefinitions>

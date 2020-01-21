@@ -1,0 +1,17 @@
+<MapDefinitions>
+  <MapDefinition name="Island" width="40" height="60" fillTile="Grass" edgeTile="Water">
+    <MapGenSteps>
+      <Worms iterations="2" chancePerTile="1" setTile="Water" NumWorms="4" WormLength="100"/>
+      <CellularAutomata iterations="1" chancePerTile="1" setTile="Sand" IfNeighbor="Water" NumNeighbors="1"/>
+      <CellularAutomata iterations="1" chancePerTile="1" setTile="Water" IfNeighbor="Water" NumNeighbors="7"/>
+      <Mutate iterations="1" chancePerTile =".15" ifTile="Grass" setTile="Mud"/>
+      <FromImage ImageFilePath="Data/Images/RingOfWater.png" AlignmentX=".5" AlignmentY=".8"/>      
+    </MapGenSteps>
+  </MapDefinition>
+  
+  <MapDefinition name="test" width="40" height="60" fillTile="Grass" edgeTile="Water">
+    <MapGenSteps>
+    </MapGenSteps>
+  </MapDefinition>
+  
+</MapDefinitions>
