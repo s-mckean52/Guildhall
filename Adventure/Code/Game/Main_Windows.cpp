@@ -40,7 +40,7 @@ void CreateRenderContext()
 // 	SetPixelFormat( g_displayDeviceContext, pixelFormatCode, &pixelFormatDescriptor );
 // 	g_openGLRenderingContext = wglCreateContext( g_displayDeviceContext );
 // 	wglMakeCurrent( g_displayDeviceContext, g_openGLRenderingContext );
-	UNIMPLEMENTED( "openGL Stuff" );
+	UNIMPLEMENTED_MSG( "openGL Stuff" );
 }
 
 

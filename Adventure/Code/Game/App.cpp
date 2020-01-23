@@ -32,7 +32,7 @@ void App::StartUp()
 	g_theGame = new Game();
 
 	g_theEventSystem->StartUp();
-	g_theRenderer->StartUp();
+	g_theRenderer->StartUp( g_theWindow );
 	g_theInput->StartUp();
 	g_theConsole->StartUp();
 	g_theGame->StartUp();
@@ -119,6 +119,7 @@ void App::BeginFrame()
 //---------------------------------------------------------------------------------------------------------
 void App::Update( float deltaSeconds )
 {
+	UNUSED( deltaSeconds );
 	if( g_theGame->IsQuitting() )
 	{
 		HandleQuitRequested();
@@ -139,16 +140,16 @@ void App::Update( float deltaSeconds )
 		g_isDebugCamera = !g_isDebugCamera;
 	}
 
-	g_theGame->Update( deltaSeconds );
+	//g_theGame->Update( deltaSeconds );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void App::Render() const
 {
-	g_theRenderer->ClearScreen( Rgba8::BLACK );
+	//g_theRenderer->ClearScreen( Rgba8::BLACK );
 
-	g_theGame->Render();
+	//g_theGame->Render();
 }
 
 

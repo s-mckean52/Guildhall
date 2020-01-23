@@ -53,7 +53,7 @@ void InputSystem::StartUp()
 //---------------------------------------------------------------------------------------------------------
 void InputSystem::BeginFrame()
 {
-	UpdateMouse();
+	//UpdateMouse();
 	UpdateControllers();
 }
 
@@ -92,7 +92,7 @@ void InputSystem::UpdateMouse()
 // 						static_cast<float>(clientRect.top) ); //Windows ( 0, 0 ) is top left
 // 
 // 	m_mouseNormalizedPos = clientBounds.GetUVForPoint( mouseClientPos );
-	UNIMPLEMENTED( "Mouse input to not use hwnd" );
+	UNIMPLEMENTED_MSG( "Mouse input to not use hwnd" );
 }
 
 

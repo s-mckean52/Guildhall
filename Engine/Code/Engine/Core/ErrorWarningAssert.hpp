@@ -171,6 +171,8 @@ int SystemDialogue_YesNoCancel( const std::string& messageTitle, const std::stri
 // PRAGMA TODO 
 // Idea from my friend Micheal Bosley
 // Source from http://www.flipcode.com/archives/FIXME_TODO_Notes_As_Warnings_In_Compiler_Output.shtml
+#define _QUOTE(x) # x
+#define QUOTE(x) _QUOTE(x)
 #define __FILE__LINE__ __FILE__ "(" QUOTE(__LINE__) ") : "
 #define DEBUGBREAK()  __debugbreak()
 #define PRAGMA(p)  __pragma( p )

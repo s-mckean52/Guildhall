@@ -7,6 +7,10 @@
 #include <vector>
 
 class BitmapFont;
+class Window;
+struct ID3D11Device;
+struct ID3D11DeviceContext;
+
 
 enum class BlendMode
 {
@@ -16,12 +20,8 @@ enum class BlendMode
 
 class RenderContext
 {
-private:
-	std::vector<Texture*>		m_loadedTextures;
-	std::vector<BitmapFont*>	m_loadedFonts;
-
 public:
-	void StartUp();
+	void StartUp( Window* theWindow );
 	void BeginFrame();
 	void EndFrame();
 	void ShutDown();
@@ -41,4 +41,12 @@ public:
 private:
 	void CreateTextureFromFile( const char* imageFilePath );
 	void CreateBitmapFontFromFile( const char* fontFilePath );
+
+private:
+	std::vector<Texture*>		m_loadedTextures;
+	std::vector<BitmapFont*>	m_loadedFonts;
+
+public:
+	ID3D11Device*			m_device;
+	ID3D11DeviceContext*	m_context;
 };

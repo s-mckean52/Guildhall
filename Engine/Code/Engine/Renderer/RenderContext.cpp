@@ -1,5 +1,27 @@
+//---------------------------------------------------------------------------------------------------------
+//		THIRD PARTY INCLUDES
+//---------------------------------------------------------------------------------------------------------
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "ThirdParty/stb/stb_image.h"
+
+#if !defined(WIN32_LEAN_AND_MEAN) 
+	#define WIN32_LEAN_AND_MEAN
+#endif
+
+#define INITGUID
+#include <d3d11.h>  // d3d11 specific objects
+#include <dxgi.h>   // shared library used across multiple dx graphical interfaces
+#include <dxgidebug.h>  // debug utility (mostly used for reporting and analytics)
+
+#pragma comment( lib, "d3d11.lib" )         // needed a01
+#pragma comment( lib, "dxgi.lib" )          // needed a01
+#pragma comment( lib, "d3dcompiler.lib" )   // needed when we get to shaders
+
+#define RENDER_DEBUG
+#define DX_SAFE_RELEASE(obj) if (nullptr != (obj)) { (obj)->Release(); (obj) = nullptr; }
+
+//---------------------------------------------------------------------------------------------------------
 
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Core/EngineCommon.hpp"
@@ -8,14 +30,56 @@
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
+#include "Engine/Platform/Window.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
-void RenderContext::StartUp()
+void RenderContext::StartUp( Window* theWindow )
 {
-	/*glEnable( GL_BLEND );*/
-	UNIMPLEMENTED( "OpenGL stuff" );
-	SetBlendMode( BlendMode::ALPHA );
+/*	SetBlendMode( BlendMode::ALPHA );*/
+
+	IDXGISwapChain* swapchain;
+
+	UINT flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
+#if defined(RENDER_DEBUG)
+	flags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
+	DXGI_SWAP_CHAIN_DESC swapchainDesc;
+	memset( &swapchainDesc, 0, sizeof( swapchainDesc ) );
+	swapchainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_BACK_BUFFER;
+	swapchainDesc.BufferCount = 2;
+	swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+	swapchainDesc.Flags = 0;
+
+	HWND hwnd = (HWND) theWindow->m_hwnd;
+	swapchainDesc.OutputWindow = hwnd;
+	swapchainDesc.SampleDesc.Count = 1;
+
+	swapchainDesc.Windowed = TRUE;
+	swapchainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	swapchainDesc.BufferDesc.Width = theWindow->GetClientWidth();
+	swapchainDesc.BufferDesc.Height = theWindow->GetClientHeight();
+
+
+
+	HRESULT result = D3D11CreateDeviceAndSwapChain(
+		nullptr,
+		D3D_DRIVER_TYPE_HARDWARE,
+		nullptr,
+		flags, //controls the type of device we make
+		nullptr,
+		0,
+		D3D11_SDK_VERSION,
+		&swapchainDesc,
+		&swapchain,
+		&m_device,
+		nullptr,
+		&m_context );
+
+	GUARANTEE_OR_DIE( SUCCEEDED( result ), "Failed to create rendering pipeline" );
+
+	DX_SAFE_RELEASE( swapchain );
 }
 
 
@@ -36,13 +100,15 @@ void RenderContext::EndFrame()
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::ShutDown()
 {
-
+	DX_SAFE_RELEASE( m_device );
+	DX_SAFE_RELEASE( m_context );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::SetBlendMode( BlendMode blendMode )
 {
+	UNUSED( blendMode );
 // 	switch( blendMode )
 // 	{
 // 	case BlendMode::ALPHA:
@@ -57,16 +123,17 @@ void RenderContext::SetBlendMode( BlendMode blendMode )
 // 		ERROR_AND_DIE( Stringf( "Unkown or unsupported blend mode #%i", blendMode ) );
 // 		break;
 // 	}
-	UNIMPLEMENTED( "OpenGl Blend mode stuff" );
+	UNIMPLEMENTED_MSG( "OpenGl Blend mode stuff" );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::ClearScreen( const Rgba8& clearColor )
 {
+	UNUSED( clearColor );
 // 	glClearColor( (float)clearColor.r / 255.f, (float)clearColor.g / 255.f, (float)clearColor.b / 255.f, 1.f);		// Note; glClearColor takes colors as floats in [0,1], not bytes in [0,255]
 // 	glClear( GL_COLOR_BUFFER_BIT );																				// ALWAYS clear the screen at the top of each frame's Render()!
-	UNIMPLEMENTED( "Clear Screen" );
+	UNIMPLEMENTED_MSG( "Clear Screen" );
 }
 
 
@@ -79,7 +146,7 @@ void RenderContext::BeginCamera( const Camera& camera )
 // 	glLoadIdentity();
 // 
 // 	glOrtho( bottomLeft.x, topRight.x, bottomLeft.y, topRight.y, 0.f, 1.f );
-	UNIMPLEMENTED( "OpneGl clear screen" );
+	UNIMPLEMENTED_MSG( "OpneGl clear screen" );
 }
 
 
@@ -93,6 +160,8 @@ void RenderContext::EndCamera( const Camera& camera )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::DrawVertexArray( int numVerticies, const Vertex_PCU* verticies )
 {
+	UNUSED( verticies );
+	UNUSED( numVerticies );
 // 	glBegin( GL_TRIANGLES );
 // 	{
 // 		for( int vertIndex = 0; vertIndex < numVerticies; vertIndex++ )
@@ -107,7 +176,7 @@ void RenderContext::DrawVertexArray( int numVerticies, const Vertex_PCU* vertici
 // 		}
 // 	}
 // 	glEnd();
-	UNIMPLEMENTED( "OpenGl draw vertex" );
+	UNIMPLEMENTED_MSG( "OpenGl draw vertex" );
 }
 
 
@@ -121,6 +190,7 @@ void RenderContext::DrawVertexArray( const std::vector<Vertex_PCU>& vertexArray 
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::CreateTextureFromFile( const char* imageFilePath )
 {
+	UNUSED( imageFilePath );
 // 	unsigned int textureID = 0;
 // 	int imageTexelSizeX = 0;
 // 	int imageTexelSizeY = 0;
@@ -179,7 +249,7 @@ void RenderContext::CreateTextureFromFile( const char* imageFilePath )
 // 	stbi_image_free( imageData );
 // 
 // 	m_loadedTextures.push_back( new Texture( imageFilePath, textureID, IntVec2( imageTexelSizeX, imageTexelSizeY ), numComponents ) );
-	UNIMPLEMENTED( "OpenGL load texture" );
+	UNIMPLEMENTED_MSG( "OpenGL load texture" );
 }
 
 
@@ -230,7 +300,7 @@ void RenderContext::BindTexture( const Texture* texture )
 // 	{
 // 		glDisable( GL_TEXTURE_2D );
 // 	}
-	UNIMPLEMENTED( "OpenGl Bind Texture" );
+	UNIMPLEMENTED_MSG( "OpenGl Bind Texture" );
 }
 
 

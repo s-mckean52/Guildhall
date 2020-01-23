@@ -158,6 +158,8 @@ bool Window::Open( std::string const& title, float clientAspect, float ratioOfHe
 	SetCursor( cursor );
 
 	m_hwnd = (void*)hwnd;
+	m_height = static_cast<unsigned int>( clientHeight );
+	m_width = static_cast<unsigned int>( clientWidth );
 	return true;
 }
 

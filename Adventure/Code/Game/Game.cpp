@@ -47,21 +47,21 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
-	g_theConsole->PrintString( Rgba8::RED, "Game Start Up" );
-	g_RNG = new RandomNumberGenerator();
-
-	g_testFont = g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
-
-	LoadAssets();
-	
-	TestImageLoad();
-	TestSetFromText();
-	TestXmlAttribute();
-	TestSubscribe();
-	TestFireEvent();
-	TestUnsubscribe();
-	TestFireEvent();
-	LoadDefinitions();
+// 	g_theConsole->PrintString( Rgba8::RED, "Game Start Up" );
+// 	g_RNG = new RandomNumberGenerator();
+// 
+// 	g_testFont = g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
+// 
+// 	LoadAssets();
+// 	
+// 	TestImageLoad();
+// 	TestSetFromText();
+// 	TestXmlAttribute();
+// 	TestSubscribe();
+// 	TestFireEvent();
+// 	TestUnsubscribe();
+// 	TestFireEvent();
+// 	LoadDefinitions();
 	
 	m_worldCamera.SetOrthoView( Vec2( 0, 0 ), Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
 	m_uiCamera.SetOrthoView( Vec2( 0, 0 ), Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
@@ -88,14 +88,14 @@ void Game::Render() const
 {
 	//Render worldCamera
 	g_theRenderer->BeginCamera( m_worldCamera );
-	m_map->Render();
-	RenderMouseCursor();
+	//m_map->Render();
+	//RenderMouseCursor();
 	g_theRenderer->EndCamera( m_worldCamera );
 
 
 	//UI Camera
 	g_theRenderer->BeginCamera( m_uiCamera );
-	RenderUI();
+	//RenderUI();
 	g_theRenderer->EndCamera( m_uiCamera );
 }
 

@@ -13,7 +13,11 @@ public:
 
 	void BeginFrame();
 
+	unsigned int GetClientWidth()	const { return m_width; }
+	unsigned int GetClientHeight()	const { return m_height; }
+
 public:
 	void* m_hwnd;
-
+	unsigned int m_height	= 0;
+	unsigned int m_width	= 0;
 };
