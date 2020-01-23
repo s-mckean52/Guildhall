@@ -4,7 +4,7 @@
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/AABB2.hpp"
 
-extern HWND g_hWnd;
+//extern HWND g_hWnd;
 
 
 //Define Key Codes
@@ -79,19 +79,20 @@ void InputSystem::ShutDown()
 //---------------------------------------------------------------------------------------------------------
 void InputSystem::UpdateMouse()
 {
-	POINT screenMousePos;
-	GetCursorPos( &screenMousePos );
-	ScreenToClient( g_hWnd, &screenMousePos );
-	Vec2 mouseClientPos( static_cast<float>(screenMousePos.x), static_cast<float>(screenMousePos.y) );
-
-	RECT clientRect;
-	GetClientRect( g_hWnd, &clientRect );
-	AABB2 clientBounds( static_cast<float>(clientRect.left),
-						static_cast<float>(clientRect.bottom),
-						static_cast<float>(clientRect.right),
-						static_cast<float>(clientRect.top) ); //Windows ( 0, 0 ) is top left
-
-	m_mouseNormalizedPos = clientBounds.GetUVForPoint( mouseClientPos );
+// 	POINT screenMousePos;
+// 	GetCursorPos( &screenMousePos );
+// 	ScreenToClient( g_hWnd, &screenMousePos );
+// 	Vec2 mouseClientPos( static_cast<float>(screenMousePos.x), static_cast<float>(screenMousePos.y) );
+// 
+// 	RECT clientRect;
+// 	GetClientRect( g_hWnd, &clientRect );
+// 	AABB2 clientBounds( static_cast<float>(clientRect.left),
+// 						static_cast<float>(clientRect.bottom),
+// 						static_cast<float>(clientRect.right),
+// 						static_cast<float>(clientRect.top) ); //Windows ( 0, 0 ) is top left
+// 
+// 	m_mouseNormalizedPos = clientBounds.GetUVForPoint( mouseClientPos );
+	UNIMPLEMENTED( "Mouse input to not use hwnd" );
 }
 
 

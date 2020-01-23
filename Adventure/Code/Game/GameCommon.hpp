@@ -15,6 +15,7 @@ class AudioSystem;
 class BitmapFont;
 class SpriteSheet;
 class EventSystem;
+class Window;
 struct AABB2;
 
 extern EventSystem* g_theEventSystem;
@@ -25,6 +26,7 @@ extern RandomNumberGenerator* g_RNG;
 extern InputSystem* g_theInput;
 extern AudioSystem* g_theAudio;
 extern BitmapFont* g_testFont;
+extern Window* g_theWindow;
 
 extern SpriteSheet* g_tileSpriteSheet;
 extern SpriteSheet* g_actorSpriteSheet;

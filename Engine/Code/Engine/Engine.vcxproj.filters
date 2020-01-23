@@ -29,6 +29,9 @@
     <Filter Include="ThirdParty\TinyXML2">
       <UniqueIdentifier>{08a5831f-154d-47b0-97ca-295b0a929a3b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Platform">
+      <UniqueIdentifier>{4544d9d1-4dbc-4411-9024-71225084e6d2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -150,6 +153,9 @@
     </ClCompile>
     <ClCompile Include="Math\SmoothNoise.cpp">
       <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Platform\Window.cpp">
+      <Filter>Platform</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -299,6 +305,9 @@
     </ClInclude>
     <ClInclude Include="Math\SmoothNoise.hpp">
       <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Platform\Window.hpp">
+      <Filter>Platform</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
