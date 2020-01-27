@@ -15,7 +15,7 @@ public:
 
 	bool HandleQuitRequested();
 
-	const bool IsQuitting() const { return true; }//m_isQuitting; }
+	const bool IsQuitting() const { return m_isQuitting; }
 
 private:
 	void BeginFrame();

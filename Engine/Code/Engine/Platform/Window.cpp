@@ -1,5 +1,6 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Platform/Window.hpp"
+#include "Engine/Input/InputSystem.hpp"
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -13,34 +14,39 @@ static TCHAR const* WND_CLASS_NAME = L"SImple Window Class";
 //
 static LRESULT CALLBACK WindowsMessageHandlingProcedure( HWND windowHandle, UINT wmMessageCode, WPARAM wParam, LPARAM lParam )
 {
-// 	switch( wmMessageCode )
-// 	{
-// 		// App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
-// 		case WM_CLOSE:
-// 		{
-// 			return g_theApp->HandleQuitRequested();
-// 		}
-// 
-// 		// Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
-// 		case WM_KEYDOWN:
-// 		{
-// 			unsigned char asKey = (unsigned char)wParam;
-// 
-// 			return g_theInput->HandleKeyPressed( asKey );
-// 
-// 			break;
-// 		}
-// 
-// 		// Raw physical keyboard "key-was-just-released" event (case-insensitive, not translated)
-// 		case WM_KEYUP:
-// 		{
-// 			unsigned char asKey = (unsigned char)wParam;
-// 
-// 			return g_theInput->HandleKeyReleased( asKey );
-// 
-// 			break;
-// 		}
-// 	}
+	Window* window = (Window*) ::GetWindowLongPtr( windowHandle, GWLP_USERDATA );
+
+	switch( wmMessageCode )
+	{
+		// App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
+		case WM_CLOSE:
+		{
+			//return g_theApp->HandleQuitRequested();
+			return 0;
+		}
+
+		// Raw physical keyboard "key-was-just-depressed" event (case-insensitive, not translated)
+		case WM_KEYDOWN:
+		{
+			unsigned char asKey = (unsigned char)wParam;
+			
+			InputSystem* theInput = window->GetInputSystem();
+			return theInput->HandleKeyPressed( asKey );
+
+			break;
+		}
+
+		// Raw physical keyboard "key-was-just-released" event (case-insensitive, not translated)
+		case WM_KEYUP:
+		{
+			unsigned char asKey = (unsigned char)wParam;
+
+			InputSystem* theInput = window->GetInputSystem();
+			return theInput->HandleKeyReleased( asKey );
+
+			break;
+		}
+	}
 
 	// Send back to Windows any unhandled/unconsumed messages we want other apps to see (e.g. play/pause in music apps, etc.)
 	return ::DefWindowProc( windowHandle, wmMessageCode, wParam, lParam );
@@ -145,6 +151,8 @@ bool Window::Open( std::string const& title, float clientAspect, float ratioOfHe
 		(HINSTANCE) ::GetModuleHandle( NULL ),
 		NULL );
 
+	::SetWindowLongPtr( hwnd, GWLP_USERDATA, (LONG_PTR)this );
+
 	if( hwnd == nullptr )
 	{
 		return false;
@@ -158,8 +166,10 @@ bool Window::Open( std::string const& title, float clientAspect, float ratioOfHe
 	SetCursor( cursor );
 
 	m_hwnd = (void*)hwnd;
+
 	m_height = static_cast<unsigned int>( clientHeight );
 	m_width = static_cast<unsigned int>( clientWidth );
+
 	return true;
 }
 
@@ -175,6 +185,13 @@ void Window::Close()
 
 	::DestroyWindow( hwnd );
 	m_hwnd = nullptr;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Window::SetInputSystem( InputSystem* input )
+{
+	m_theInput = input;
 }
 
 

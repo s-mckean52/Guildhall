@@ -1,3 +1,4 @@
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/Camera.hpp"
 
 
@@ -27,6 +28,17 @@ Vec2 Camera::GetOrthoBottomLeft() const
 Vec2 Camera::GetOrthoTopRight() const
 {
 	return m_topRight;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::SetClearMode( unsigned int clearFlags, Rgba8 color, float depth, unsigned int stencil )
+{
+	m_clearMode		= clearFlags;
+	m_clearColor	= color;
+
+	UNUSED( depth );
+	UNUSED( stencil );
 }
 
 

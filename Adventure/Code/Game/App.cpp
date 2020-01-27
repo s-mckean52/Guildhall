@@ -11,6 +11,7 @@
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EventSystem.hpp"
+#include "Engine/Platform/Window.hpp"
 
 
 EventSystem*	g_theEventSystem = nullptr;
@@ -33,7 +34,10 @@ void App::StartUp()
 
 	g_theEventSystem->StartUp();
 	g_theRenderer->StartUp( g_theWindow );
+	
 	g_theInput->StartUp();
+	g_theWindow->SetInputSystem( g_theInput );
+
 	g_theConsole->StartUp();
 	g_theGame->StartUp();
 
@@ -119,7 +123,6 @@ void App::BeginFrame()
 //---------------------------------------------------------------------------------------------------------
 void App::Update( float deltaSeconds )
 {
-	UNUSED( deltaSeconds );
 	if( g_theGame->IsQuitting() )
 	{
 		HandleQuitRequested();
@@ -140,7 +143,7 @@ void App::Update( float deltaSeconds )
 		g_isDebugCamera = !g_isDebugCamera;
 	}
 
-	//g_theGame->Update( deltaSeconds );
+	g_theGame->Update( deltaSeconds );
 }
 
 
