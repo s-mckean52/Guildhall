@@ -64,7 +64,6 @@ void Game::Render() const
 {
 	//Render worldCamera
 	g_theRenderer->BeginCamera( m_worldCamera );
-
 	g_theRenderer->EndCamera( m_worldCamera );
 
 }

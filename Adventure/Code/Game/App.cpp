@@ -115,6 +115,7 @@ bool App::HandleQuitRequested()
 //---------------------------------------------------------------------------------------------------------
 void App::BeginFrame()
 {
+	g_theRenderer->BeginFrame();
 	g_theInput->BeginFrame();
 	g_theAudio->BeginFrame();
 }
@@ -150,15 +151,16 @@ void App::Update( float deltaSeconds )
 //---------------------------------------------------------------------------------------------------------
 void App::Render() const
 {
-	//g_theRenderer->ClearScreen( Rgba8::BLACK );
+	//g_theRenderer->ClearScreen( Rgba8::RED );
 
-	//g_theGame->Render();
+	g_theGame->Render();
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void App::EndFrame()
 {
+	g_theRenderer->EndFrame();
 	g_theInput->EndFrame();
 	g_theAudio->EndFrame();
 }

@@ -6,8 +6,10 @@
 #include "Engine/Renderer/Texture.hpp"
 #include <vector>
 
+
 class BitmapFont;
 class Window;
+class SwapChain;
 struct ID3D11Device;
 struct ID3D11DeviceContext;
 
@@ -47,6 +49,7 @@ private:
 	std::vector<BitmapFont*>	m_loadedFonts;
 
 public:
-	ID3D11Device*			m_device;
-	ID3D11DeviceContext*	m_context;
+	ID3D11Device*			m_device	= nullptr;
+	ID3D11DeviceContext*	m_context	= nullptr;
+	SwapChain*				m_swapchain	= nullptr;
 };
