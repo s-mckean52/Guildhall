@@ -205,6 +205,7 @@
     <ClCompile Include="Renderer\Camera.cpp" />
     <ClCompile Include="Renderer\MeshUtils.cpp" />
     <ClCompile Include="Renderer\RenderContext.cpp" />
+    <ClCompile Include="Renderer\Shader.cpp" />
     <ClCompile Include="Renderer\SpriteAnimDefinition.cpp" />
     <ClCompile Include="Renderer\SpriteDefinition.cpp" />
     <ClCompile Include="Renderer\SpriteSheet.cpp" />
@@ -260,6 +261,7 @@
     <ClInclude Include="Renderer\D3D11Common.hpp" />
     <ClInclude Include="Renderer\MeshUtils.hpp" />
     <ClInclude Include="Renderer\RenderContext.hpp" />
+    <ClInclude Include="Renderer\Shader.hpp" />
     <ClInclude Include="Renderer\SpriteAnimDefinition.hpp" />
     <ClInclude Include="Renderer\SpriteDefinition.hpp" />
     <ClInclude Include="Renderer\SpriteSheet.hpp" />

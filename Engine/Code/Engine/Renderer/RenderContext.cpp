@@ -23,6 +23,7 @@
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Renderer/SwapChain.hpp"
 #include "Engine/Renderer/TextureView.hpp"
+#include "Engine/Renderer/Shader.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -72,6 +73,8 @@ void RenderContext::StartUp( Window* theWindow )
 	GUARANTEE_OR_DIE( SUCCEEDED( result ), "Failed to create rendering pipeline" );
 
 	m_swapchain = new SwapChain( this, swapchain );
+	m_currentShader = new Shader();
+	m_currentShader->CreateFromFile( "Data/Shaders/triangle.hlsl" );
 }
 
 
@@ -152,6 +155,13 @@ void RenderContext::BeginCamera( const Camera& camera )
 void RenderContext::EndCamera( const Camera& camera )
 {
 	UNUSED( camera );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::Draw( int numVertices, int vertexOffset )
+{
+	m_context->Draw( numVertices, vertexOffset );
 }
 
 

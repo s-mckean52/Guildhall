@@ -10,6 +10,7 @@
 class BitmapFont;
 class Window;
 class SwapChain;
+class Shader;
 struct ID3D11Device;
 struct ID3D11DeviceContext;
 
@@ -33,6 +34,7 @@ public:
 	void BeginCamera( const Camera& camera );
 	void EndCamera(const Camera& camera);
 	
+	void Draw( int numVertices, int vertexOffset = 0 );
 	void DrawVertexArray( int numVerticies, const Vertex_PCU* verticies );
 	void DrawVertexArray( const std::vector<Vertex_PCU>& vertexArray );
 	
@@ -49,7 +51,8 @@ private:
 	std::vector<BitmapFont*>	m_loadedFonts;
 
 public:
-	ID3D11Device*			m_device	= nullptr;
-	ID3D11DeviceContext*	m_context	= nullptr;
-	SwapChain*				m_swapchain	= nullptr;
+	ID3D11Device*			m_device		= nullptr;
+	ID3D11DeviceContext*	m_context		= nullptr;
+	SwapChain*				m_swapchain		= nullptr;
+	Shader*					m_currentShader = nullptr;
 };

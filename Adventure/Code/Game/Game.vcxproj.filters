@@ -11,6 +11,9 @@
     <Filter Include="Data\Definitions">
       <UniqueIdentifier>{e5e8bf85-1628-40eb-b451-9376ac478fb4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Data\Shaders">
+      <UniqueIdentifier>{5a50d78a-11aa-415a-8cfc-a7c3db6b57b0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main_Windows.cpp">

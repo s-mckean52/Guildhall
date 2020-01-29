@@ -86,10 +86,10 @@ void InputSystem::UpdateMouse()
 // 
 // 	RECT clientRect;
 // 	GetClientRect( g_hWnd, &clientRect );
-// 	AABB2 clientBounds( static_cast<float>(clientRect.left),
-// 						static_cast<float>(clientRect.bottom),
-// 						static_cast<float>(clientRect.right),
-// 						static_cast<float>(clientRect.top) ); //Windows ( 0, 0 ) is top left
+// 	AABB2 clientBounds( static_cast<float>( clientRect.left ),
+// 						static_cast<float>( clientRect.bottom ),
+// 						static_cast<float>( clientRect.right ),
+// 						static_cast<float>( clientRect.top ) ); //Windows ( 0, 0 ) is top left
 // 
 // 	m_mouseNormalizedPos = clientBounds.GetUVForPoint( mouseClientPos );
 	UNIMPLEMENTED_MSG( "Mouse input to not use hwnd" );
