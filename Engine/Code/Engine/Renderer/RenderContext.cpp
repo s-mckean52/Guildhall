@@ -54,8 +54,6 @@ void RenderContext::StartUp( Window* theWindow )
 	swapchainDesc.BufferDesc.Width = theWindow->GetClientWidth();
 	swapchainDesc.BufferDesc.Height = theWindow->GetClientHeight();
 
-
-
 	HRESULT result = D3D11CreateDeviceAndSwapChain(
 		nullptr,
 		D3D_DRIVER_TYPE_HARDWARE,
