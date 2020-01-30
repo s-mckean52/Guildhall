@@ -4,6 +4,7 @@
 
 typedef unsigned int EntityID;
 typedef void( *EventCallbackFunctionPtrType )();
+//typedef bool( *EventCallbackFunctionPtrType )();
 
 struct EventSubscription;
 

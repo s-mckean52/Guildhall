@@ -1,6 +1,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Core/EventSystem.hpp"
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -21,7 +22,7 @@ static LRESULT CALLBACK WindowsMessageHandlingProcedure( HWND windowHandle, UINT
 		// App close requested via "X" button, or right-click "Close Window" on task bar, or "Close" from system menu, or Alt-F4
 		case WM_CLOSE:
 		{
-			//return g_theApp->HandleQuitRequested();
+			window->SetIsQuitting( true );
 			return 0;
 		}
 
@@ -192,6 +193,13 @@ void Window::Close()
 void Window::SetInputSystem( InputSystem* input )
 {
 	m_theInput = input;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Window::SetIsQuitting( bool isQuitting )
+{
+	m_isQuitting = isQuitting;
 }
 
 

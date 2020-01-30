@@ -7,6 +7,7 @@
 #include "Engine/Core/NamedStrings.hpp"
 
 class DevConsole;
+class EventSystem;
 
 enum KeyboardKeys
 {
@@ -22,6 +23,7 @@ enum KeyboardKeys
 };
 
 extern DevConsole* g_theConsole;
+extern EventSystem* g_theEventSystem;
 extern NamedStrings g_gameConfigBlackboard;
 
 //Key Codes

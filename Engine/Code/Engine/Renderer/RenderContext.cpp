@@ -145,7 +145,7 @@ void RenderContext::ClearScreen( const Rgba8& clearColor )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::BeginCamera( const Camera& camera )
 {
-	ClearScreen( Rgba8::RED );
+	ClearScreen( camera.GetClearColor() );
 	Vec2 bottomLeft = camera.GetOrthoBottomLeft();
 	Vec2 topRight = camera.GetOrthoTopRight();
 }
