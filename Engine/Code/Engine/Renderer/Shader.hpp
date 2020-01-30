@@ -5,6 +5,8 @@ class	RenderContext;
 struct	ID3D11Resource;
 struct	ID3D11VertexShader;
 struct	ID3D11PixelShader;
+struct	ID3D10Blob;
+struct	ID3D11RasterizerState;
 
 enum ShaderType
 {
@@ -15,14 +17,18 @@ enum ShaderType
 class ShaderStage
 {
 public:
+	~ShaderStage();
 	bool Compile(	RenderContext* ctx,
 					std::string const& filename, //Purely for debug reasons
 					void const* source,
 					size_t const sourceByteLen,
 					ShaderType stage );
 
+	bool IsValid() const	{ return ( m_handle != nullptr ); }
+
 public:
 	ShaderType m_type;
+	ID3D10Blob* m_byteCode = nullptr;
 	union
 	{
 		ID3D11Resource		*m_handle;
@@ -34,11 +40,17 @@ public:
 class Shader
 {
 public:
+	Shader( RenderContext* context );
+	~Shader();
 	bool CreateFromFile( std::string const& filename );
+	void CreateRasterState();
 
 public:
 	ShaderStage m_vertexStage;
-	ShaderStage m_fragementStage;
+	ShaderStage m_fragmentStage;
+	RenderContext* m_owner = nullptr;
+
+	ID3D11RasterizerState* m_rasterState = nullptr;
 };
 
 void* FileReadToNewBuffer( std::string const& filename, size_t *out_size );

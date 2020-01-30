@@ -71,7 +71,7 @@ void RenderContext::StartUp( Window* theWindow )
 	GUARANTEE_OR_DIE( SUCCEEDED( result ), "Failed to create rendering pipeline" );
 
 	m_swapchain = new SwapChain( this, swapchain );
-	m_currentShader = new Shader();
+	m_currentShader = new Shader( this );
 	m_currentShader->CreateFromFile( "Data/Shaders/triangle.hlsl" );
 }
 
@@ -93,6 +93,9 @@ void RenderContext::EndFrame()
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::ShutDown()
 {
+	delete m_currentShader;
+	m_currentShader = nullptr;
+
 	delete m_swapchain;
 	m_swapchain = nullptr;
 
@@ -143,7 +146,10 @@ void RenderContext::ClearScreen( const Rgba8& clearColor )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::BeginCamera( const Camera& camera )
 {
-	ClearScreen( camera.GetClearColor() );
+	if( camera.ShouldClearColor() )
+	{
+		ClearScreen( camera.GetClearColor() );
+	}
 	Vec2 bottomLeft = camera.GetOrthoBottomLeft();
 	Vec2 topRight = camera.GetOrthoTopRight();
 }
@@ -159,6 +165,29 @@ void RenderContext::EndCamera( const Camera& camera )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::Draw( int numVertices, int vertexOffset )
 {
+	Texture* texture = m_swapchain->GetBackBuffer();
+	TextureView* view = texture->GetRenderTargetView();
+	ID3D11RenderTargetView* rtv = view->GetRTVHandle();
+
+	IntVec2 outputSize = texture->GetImageTexelSize();
+
+	D3D11_VIEWPORT viewport;
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+	viewport.Width = static_cast<float>( outputSize.x );
+	viewport.Height = static_cast<float>( outputSize.y );
+	viewport.MinDepth = 0.f;
+	viewport.MaxDepth = 1.f;
+
+	//TEMPORARY - This will be moved
+	m_context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+
+	m_context->VSSetShader( m_currentShader->m_vertexStage.m_vs, nullptr, 0 );
+	m_context->RSSetState( m_currentShader->m_rasterState );
+	m_context->RSSetViewports( 1, &viewport );
+	m_context->PSSetShader( m_currentShader->m_fragmentStage.m_fs, nullptr, 0 );
+	m_context->OMSetRenderTargets( 1, &rtv, nullptr );
+
 	m_context->Draw( numVertices, vertexOffset );
 }
 

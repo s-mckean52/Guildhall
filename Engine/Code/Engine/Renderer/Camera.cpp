@@ -39,6 +39,13 @@ Vec2 Camera::GetOrthoTopRight() const
 
 
 //---------------------------------------------------------------------------------------------------------
+bool Camera::ShouldClearColor() const
+{
+	return m_clearMode & CLEAR_COLOR_BIT;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Camera::SetClearMode( unsigned int clearFlags, Rgba8 color, float depth, unsigned int stencil )
 {
 	m_clearMode		= clearFlags;

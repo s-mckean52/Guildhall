@@ -60,6 +60,9 @@ void Game::Render() const
 {
 	//Render worldCamera
 	g_theRenderer->BeginCamera( m_worldCamera );
+
+	g_theRenderer->Draw( 3, 0 );
+
 	g_theRenderer->EndCamera( m_worldCamera );
 
 }
@@ -68,10 +71,16 @@ void Game::Render() const
 //---------------------------------------------------------------------------------------------------------
 void Game::Update( float deltaSeconds )
 {
-	UNUSED( deltaSeconds );
-	if( m_clearColor.r > 0 )
+	m_colorChangeDelay -= deltaSeconds;
+
+	if( m_clearColor.r > 29 && m_colorChangeDelay <= 0 )
 	{
-		m_clearColor.r -= 1;
+		m_clearColor.r -= 30;
+		m_colorChangeDelay = 1.f;
+	}
+	else if( m_clearColor.r < 30 && m_colorChangeDelay <= 0 )
+	{
+		m_clearColor.r = 0;
 	}
 
 	m_worldCamera.SetClearMode( CLEAR_COLOR_BIT, m_clearColor, 0.0f, 0 );

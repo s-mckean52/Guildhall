@@ -26,6 +26,7 @@ public:
 	Vec2	GetCameraDimensions() const;
 	Vec2	GetOrthoBottomLeft() const;
 	Vec2	GetOrthoTopRight() const;
+	bool	ShouldClearColor() const;
 
 	void SetClearMode( unsigned int clearFlags, Rgba8 color, float depth = 0.0f, unsigned int stencil = 0 );
 

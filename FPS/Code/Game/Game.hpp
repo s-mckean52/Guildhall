@@ -26,5 +26,6 @@ public:
 private:
 	Camera	m_worldCamera;
 	Rgba8	m_clearColor = Rgba8::RED;
+	float	m_colorChangeDelay = 1.f;
 	bool	m_isQuitting = false;
 };

@@ -30,6 +30,9 @@ Texture::Texture( RenderContext* renderContext, ID3D11Texture2D* handle )
 	: m_owner( renderContext )
 	, m_handle( handle )
 {
+	D3D11_TEXTURE2D_DESC desc;
+	handle->GetDesc( &desc );
+	m_imageTexelSize = IntVec2( desc.Width, desc.Height );
 }
 
 
