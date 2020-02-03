@@ -203,8 +203,6 @@ void RenderContext::Draw( int numVertices, int vertexOffset )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::DrawVertexArray( int numVerticies, const Vertex_PCU* verticies )
 {
-	//RenderBuffer* m_immediateVBO;  //VBO - Vertex Buffer Object
-
 	//Update Vertex buffer
 	size_t byteSize		= numVerticies * sizeof( Vertex_PCU );
 	size_t elementSize	= sizeof( Vertex_PCU );
