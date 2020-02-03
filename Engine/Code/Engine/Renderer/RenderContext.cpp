@@ -24,6 +24,7 @@
 #include "Engine/Renderer/SwapChain.hpp"
 #include "Engine/Renderer/TextureView.hpp"
 #include "Engine/Renderer/Shader.hpp"
+#include "Engine/Renderer/RenderBuffer.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -71,8 +72,10 @@ void RenderContext::StartUp( Window* theWindow )
 	GUARANTEE_OR_DIE( SUCCEEDED( result ), "Failed to create rendering pipeline" );
 
 	m_swapchain = new SwapChain( this, swapchain );
-	m_currentShader = new Shader( this );
-	m_currentShader->CreateFromFile( "Data/Shaders/triangle.hlsl" );
+	m_defaultShader = new Shader( this );
+	m_defaultShader->CreateFromFile( "Data/Shaders/triangle.hlsl" );
+
+	m_immediateVBO = new VertexBuffer( this, MEMORY_HINT_DYNAMIC );
 }
 
 
@@ -93,8 +96,11 @@ void RenderContext::EndFrame()
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::ShutDown()
 {
-	delete m_currentShader;
-	m_currentShader = nullptr;
+	delete m_immediateVBO;
+	m_immediateVBO = nullptr;
+
+	delete m_defaultShader;
+	m_defaultShader = nullptr;
 
 	delete m_swapchain;
 	m_swapchain = nullptr;
@@ -152,6 +158,8 @@ void RenderContext::BeginCamera( const Camera& camera )
 	}
 	Vec2 bottomLeft = camera.GetOrthoBottomLeft();
 	Vec2 topRight = camera.GetOrthoTopRight();
+
+	BindShader( nullptr );
 }
 
 
@@ -195,23 +203,18 @@ void RenderContext::Draw( int numVertices, int vertexOffset )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::DrawVertexArray( int numVerticies, const Vertex_PCU* verticies )
 {
-	UNUSED( verticies );
-	UNUSED( numVerticies );
-// 	glBegin( GL_TRIANGLES );
-// 	{
-// 		for( int vertIndex = 0; vertIndex < numVerticies; vertIndex++ )
-// 		{
-// 			Rgba8 vertexColor = verticies[ vertIndex ].m_color;
-// 			Vec3 vertexPos = verticies[ vertIndex ].m_position;
-// 			Vec2 vertexUVs = verticies[ vertIndex ].m_uvTexCoords;
-// 
-// 			glTexCoord2f( vertexUVs.x, vertexUVs.y );
-// 			glColor4ub( vertexColor.r, vertexColor.g, vertexColor.b, vertexColor.a );
-// 			glVertex3f( vertexPos.x, vertexPos.y, vertexPos.z );
-// 		}
-// 	}
-// 	glEnd();
-	UNIMPLEMENTED_MSG( "OpenGl draw vertex" );
+	//RenderBuffer* m_immediateVBO;  //VBO - Vertex Buffer Object
+
+	//Update Vertex buffer
+	size_t byteSize		= numVerticies * sizeof( Vertex_PCU );
+	size_t elementSize	= sizeof( Vertex_PCU );
+	m_immediateVBO->Update( verticies, byteSize, elementSize );
+
+	//Bind
+	BindVertexInput( m_immediateVBO );
+
+	//Draw
+	Draw( numVerticies );
 }
 
 
@@ -336,6 +339,28 @@ void RenderContext::BindTexture( const Texture* texture )
 // 		glDisable( GL_TEXTURE_2D );
 // 	}
 	UNIMPLEMENTED_MSG( "OpenGl Bind Texture" );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::BindShader( Shader* shader )
+{
+	m_currentShader = shader;
+	if( m_currentShader == nullptr )
+	{
+		m_currentShader = m_defaultShader;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::BindVertexInput( VertexBuffer* vbo )
+{
+	ID3D11Buffer* vboHandle = vbo->m_handle;
+	UINT stride = sizeof( Vertex_PCU );
+	UINT offset = 0;
+
+	m_context->IASetVertexBuffers( 0, 1, &vboHandle, &stride, &offset );
 }
 
 

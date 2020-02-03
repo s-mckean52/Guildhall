@@ -11,6 +11,8 @@ class BitmapFont;
 class Window;
 class SwapChain;
 class Shader;
+class RenderBuffer;
+class VertexBuffer;
 struct ID3D11Device;
 struct ID3D11DeviceContext;
 
@@ -38,6 +40,9 @@ public:
 	void DrawVertexArray( int numVerticies, const Vertex_PCU* verticies );
 	void DrawVertexArray( const std::vector<Vertex_PCU>& vertexArray );
 	
+	void		BindShader( Shader* shader );
+	void		BindVertexInput( VertexBuffer* vbo );
+
 	void		BindTexture( const Texture* texture );
 	Texture*	CreateOrGetTextureFromFile( const char* imageFilePath );
 	BitmapFont* CreateOrGetBitmapFontFromFile( const char* imageFilePath );
@@ -55,4 +60,6 @@ public:
 	ID3D11DeviceContext*	m_context		= nullptr;
 	SwapChain*				m_swapchain		= nullptr;
 	Shader*					m_currentShader = nullptr;
+	Shader*					m_defaultShader = nullptr;
+	VertexBuffer*			m_immediateVBO	= nullptr;
 };

@@ -4,6 +4,7 @@
 
 #define RENDER_DEBUG
 #define DX_SAFE_RELEASE(obj) if (nullptr != (obj)) { (obj)->Release(); (obj) = nullptr; }
+#define BIT_FLAG( b )		( 1 << ( b ) )
 
 //---------------------------------------------------------------------------------------------------------
 #define INITGUID
