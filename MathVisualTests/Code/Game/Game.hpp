@@ -3,6 +3,7 @@
 #include "Game/GameCommon.hpp"
 #include "Engine/Math/OBB2.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Core/Rgba8.hpp"
 
 class Entity;
 class XboxController;
@@ -46,6 +47,17 @@ public:
 
 	bool IsQuitting() const { return m_isQuitting; }
 
+	void TestSubscribe();
+	void TestFireEvent();
+	void TestUnsubscribe();
+	void GetNearestPoints( float deltaSeconds );
+	void RenderShapes() const;
+	static void DeclareSunrise();
+	static void DeclareSunset();
+	static void PrintTimeOfEvent();
+	bool MouseIsInShape() const;
+
+
 private:
 	AABB2 m_AABB = AABB2( 800.f, 300.f, 1200.f, 500.f );
 
@@ -55,6 +67,7 @@ private:
 	Vec2 m_lineStart = Vec2( 1500.f, 700.f );
 	Vec2 m_lineEnd = Vec2( 1456.f, 750.f );
 
+	Rgba8 m_mouseBoxColor = Rgba8::MAGENTA;
 	float m_mouseBoxAlpha = 1.f;
 	Vec2 m_mousePos = Vec2();
 	std::vector<Vec2> m_pointsToDraw;
@@ -70,13 +83,4 @@ private:
 
 	float	m_screenShakeIntensity = 0.f;
 	bool	m_isQuitting = false;
-	void TestSubscribe();
-	void TestFireEvent();
-	void TestUnsubscribe();
-	void GetNearestPoints( float deltaSeconds );
-	void RenderShapes() const;
-	static void DeclareSunrise();
-	static void DeclareSunset();
-	static void PrintTimeOfEvent();
-	bool MouseIsInShape() const;
 };

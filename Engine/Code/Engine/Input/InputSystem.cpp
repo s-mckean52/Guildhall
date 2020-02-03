@@ -28,7 +28,12 @@ const unsigned char KEY_CODE_F9				= VK_F9;
 const unsigned char KEY_CODE_F10			= VK_F10;
 const unsigned char KEY_CODE_F11			= VK_F11;
 const unsigned char KEY_CODE_F12			= VK_F12;
-const unsigned char KEY_CODE_TILDE			= VK_OEM_3;	
+const unsigned char KEY_CODE_TILDE			= VK_OEM_3;
+
+//Define Mouse Codes
+const unsigned char MOUSE_CODE_LEFT			= MK_LBUTTON;
+const unsigned char MOUSE_CODE_RIGHT		= MK_RBUTTON;
+const unsigned char MOUSE_CODE_MIDDLE		= MK_MBUTTON;
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -66,6 +71,14 @@ void InputSystem::EndFrame()
 		KeyButtonState& keyState = m_keyStates[ keyIndex ];
 		keyState.m_wasPressedLastFrame = keyState.m_isPressed;
 	}
+
+	for( int mouseIndex = 0; mouseIndex < NUM_MOUSE_BUTTONS; ++mouseIndex )
+	{
+		KeyButtonState& mouseState = m_mouseStates[ mouseIndex ];
+		mouseState.m_wasPressedLastFrame = mouseState.m_isPressed;
+	}
+
+	m_scrollAmount = 0.f;
 }
 
 
@@ -175,3 +188,57 @@ bool InputSystem::WasKeyJustReleased( unsigned char keyCode ) const
 	return m_keyStates[ keyCode ].WasJustReleased();
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::ResetMouse()
+{
+	for( int mouseIndex = 0; mouseIndex < NUM_MOUSE_BUTTONS; ++mouseIndex )
+	{
+		KeyButtonState& mouseState = m_mouseStates[ mouseIndex ];
+		mouseState.Reset();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::UpdateMouseButtonState( bool leftButton, bool rightButton, bool middleButton )
+{
+	m_mouseStates[ MOUSE_BUTTON_LEFT ].UpdateStatus( leftButton );
+	m_mouseStates[ MOUSE_BUTTON_RIGHT ].UpdateStatus( rightButton );
+	m_mouseStates[ MOUSE_BUTTON_MIDDLE ].UpdateStatus( middleButton );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool InputSystem::IsMouseButtonPressed( MouseButtons mouseButton ) const
+{
+	return m_mouseStates[ mouseButton ].IsPressed();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool InputSystem::WasMouseButtonJustPressed( MouseButtons mouseButton ) const
+{
+	return m_mouseStates[ mouseButton ].WasJustPressed();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool InputSystem::WasMouseButtonJustReleased( MouseButtons mouseButton ) const
+{
+	return m_mouseStates[ mouseButton ].WasJustReleased();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::AddMouseWheelScrollAmount( float scrollAmount )
+{
+	m_scrollAmount += scrollAmount;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float InputSystem::GetScrollAmount() const
+{
+	return m_scrollAmount;
+}

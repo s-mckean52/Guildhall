@@ -131,6 +131,22 @@ void Game::UpdateGameStatesFromInput()
 	{
 		RandomlyGenerateShapes();
 	}
+
+	if( g_theInput->IsMouseButtonPressed( MOUSE_BUTTON_MIDDLE ) )
+	{
+		m_mouseBoxColor = Rgba8::RED;
+	}
+	else
+	{
+		m_mouseBoxColor = Rgba8::MAGENTA;
+	}
+
+	float scrollAmount = g_theInput->GetScrollAmount();
+	if( scrollAmount != 0.f )
+	{
+		Vec2 newMouseBoxDimensions = m_mouseBox.GetDimensions() + ( Vec2( 20.f, 20.f ) * scrollAmount ); 
+		m_mouseBox.SetDimensions( newMouseBoxDimensions );
+	}
 }
 
 
@@ -277,7 +293,7 @@ void Game::DrawAtMouse() const
 	//DrawCircleAtPoint( m_mousePos, 1.f, Rgba8::RED, 2.f );
 	std::vector<Vertex_PCU> obb2Array;
 
-	Rgba8 mouseBoxColor = Rgba8::MAGENTA;
+	Rgba8 mouseBoxColor = m_mouseBoxColor;
 	mouseBoxColor.a = static_cast<unsigned char>( static_cast<float>( mouseBoxColor.a ) * m_mouseBoxAlpha );
 
 	AppendVertsForOBB2D( obb2Array, m_mouseBox, mouseBoxColor );

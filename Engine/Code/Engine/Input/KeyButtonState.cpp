@@ -9,6 +9,8 @@ void KeyButtonState::UpdateStatus( bool isNowPressed )
 	m_isPressed = isNowPressed;
 }
 
+
+//---------------------------------------------------------------------------------------------------------
 bool KeyButtonState::WasJustPressed() const
 {
 	if( !m_wasPressedLastFrame && m_isPressed )

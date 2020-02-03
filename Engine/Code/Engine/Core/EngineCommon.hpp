@@ -21,6 +21,17 @@ enum KeyboardKeys
 	NUM_KEYS
 };
 
+enum MouseButtons
+{
+	INVALID_BUTTON = -1,
+	
+	MOUSE_BUTTON_LEFT,
+	MOUSE_BUTTON_RIGHT,
+	MOUSE_BUTTON_MIDDLE,
+
+	NUM_MOUSE_BUTTONS
+};
+
 extern DevConsole* g_theConsole;
 extern NamedStrings g_gameConfigBlackboard;
 
@@ -46,6 +57,10 @@ extern const unsigned char KEY_CODE_F10;
 extern const unsigned char KEY_CODE_F11;
 extern const unsigned char KEY_CODE_F12;
 extern const unsigned char KEY_CODE_TILDE;
+
+extern const unsigned char MOUSE_CODE_LEFT;
+extern const unsigned char MOUSE_CODE_RIGHT;
+extern const unsigned char MOUSE_CODE_MIDDLE;
 
 
 //---------------------------------------------------------------------------------------------------------
