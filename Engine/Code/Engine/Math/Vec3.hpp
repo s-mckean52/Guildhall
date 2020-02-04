@@ -1,5 +1,7 @@
 #pragma once
 
+struct Vec2;
+
 struct Vec3
 {
 public:
@@ -11,7 +13,7 @@ public:
 	~Vec3() {}
 	Vec3() {}
 	Vec3( const Vec3& copyFrom );
-	explicit Vec3( float initialX, float initialY, float initialZ);
+	explicit Vec3( float initialX, float initialY, float initialZ );
 
 	//Accessors
 	float		GetLength() const;
@@ -40,6 +42,7 @@ public:
 	void		operator/=( const float inverseScale );
 	void 		operator*=( const float uniformScale );
 	void 		operator=( const Vec3& copyFrom );
+	void		operator=( const Vec2& copyFrom );
 
 	//Standalone friend functions
 	friend const Vec3 operator*( float uniformScale, const Vec3& vecToScale );

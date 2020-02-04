@@ -1,11 +1,10 @@
 #include "Game/Game.hpp"
-#include "Game/GameCommon.hpp"
 #include "Game/Entity.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Input/InputSystem.hpp"
@@ -52,7 +51,10 @@ void Game::StartUp()
 
 	LoadAssets();
 
-	m_worldCamera.SetOrthoView( Vec2( 0, 0 ), Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
+	//m_worldCamera.SetOrthoView( Vec2( 0, 0 ), Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
+	m_worldCamera.SetOutputSize( Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
+	m_worldCamera.SetPosition( m_focalPoint );
+	m_worldCamera.SetProjectionOrthographic( CAMERA_SIZE_Y );
 	m_uiCamera.SetOrthoView( Vec2( 0, 0 ), Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
 }
 

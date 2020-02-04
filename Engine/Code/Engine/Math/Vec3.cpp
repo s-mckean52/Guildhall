@@ -1,4 +1,5 @@
 #include "Engine/Math/Vec3.hpp"
+#include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include <math.h>
 
@@ -172,6 +173,15 @@ void Vec3::operator=( const Vec3& copyFrom )
 	x = copyFrom.x;
 	y = copyFrom.y;
 	z = copyFrom.z;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Vec3::operator=( const Vec2& copyFrom )
+{
+	x = copyFrom.x;
+	y = copyFrom.y;
+	z = 0.f;
 }
 
 

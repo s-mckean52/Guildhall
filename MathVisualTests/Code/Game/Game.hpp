@@ -4,6 +4,7 @@
 #include "Engine/Math/OBB2.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Math/Vec3.hpp"
 
 class Entity;
 class XboxController;
@@ -80,6 +81,7 @@ private:
 
 	Camera m_worldCamera;
 	Camera m_uiCamera;
+	Vec3 m_focalPoint = Vec3( HALF_SCREEN_X, HALF_SCREEN_Y, 0.f );
 
 	float	m_screenShakeIntensity = 0.f;
 	bool	m_isQuitting = false;

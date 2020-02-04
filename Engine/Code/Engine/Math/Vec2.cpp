@@ -1,7 +1,8 @@
-#include <math.h>
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/Vec3.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include <math.h>
 
 
 //-----------------------------------------------------------------------------------------------
@@ -309,6 +310,14 @@ const Vec2 Vec2::operator-( const Vec2& vecToSubtract ) const
 const Vec2 Vec2::operator-() const
 {
 	return Vec2( -x, -y );
+}
+
+																										   
+//---------------------------------------------------------------------------------------------------------
+void Vec2::operator=( const Vec3& copyFrom )
+{
+	x = copyFrom.x;
+	y = copyFrom.y;
 }
 
 
