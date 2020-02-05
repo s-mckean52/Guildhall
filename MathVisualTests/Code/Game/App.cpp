@@ -113,6 +113,7 @@ void App::BeginFrame()
 {
 	g_theInput->BeginFrame();
 	g_theAudio->BeginFrame();
+	g_theGame->BeginFrame();
 }
 
 
@@ -147,4 +148,5 @@ void App::EndFrame()
 {
 	g_theInput->EndFrame();
 	g_theAudio->EndFrame();
+	g_theGame->EndFrame();
 }

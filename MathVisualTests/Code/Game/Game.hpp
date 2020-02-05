@@ -8,6 +8,8 @@
 
 class Entity;
 class XboxController;
+class Physics2D;
+class GameObject;
 
 class Game
 {
@@ -17,6 +19,8 @@ public:
 
 	void StartUp();
 	void ShutDown();
+	void BeginFrame();
+	void EndFrame();
 
 	void AddScreenShakeIntensity( float screenShakeFractionToAdd );
 
@@ -58,6 +62,9 @@ public:
 	static void PrintTimeOfEvent();
 	bool MouseIsInShape() const;
 
+	GameObject* CreateDisc();
+	void DrawGameObjects() const;
+
 
 private:
 	AABB2 m_AABB = AABB2( 800.f, 300.f, 1200.f, 500.f );
@@ -85,4 +92,8 @@ private:
 
 	float	m_screenShakeIntensity = 0.f;
 	bool	m_isQuitting = false;
+
+	Physics2D* m_physics2D = nullptr;
+
+	std::vector<GameObject*> m_gameObjects;
 };

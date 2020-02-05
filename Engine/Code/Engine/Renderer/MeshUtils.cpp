@@ -147,6 +147,34 @@ void AppendVertsForCircleAtPoint( std::vector<Vertex_PCU>& circleVerts, float ra
 
 
 //---------------------------------------------------------------------------------------------------------
+void AppendVertsForFilledCircle( std::vector<Vertex_PCU>& circleVerts, float radius, const Rgba8 color )
+{
+	constexpr int circleSegments = 64;
+	constexpr float angleToRotateDegrees = 360.f / static_cast<float>(circleSegments);
+
+	Vec2 centerVertex = Vec2( 0.f, 0.f );
+	Vec2 currentRadialPoint( radius, 0.f );
+	Vec2 nextRadialPoint = currentRadialPoint.GetRotatedDegrees( angleToRotateDegrees );
+
+	Vec2 currentVertex;
+	Vec2 nextVertex;
+
+	for( int circleSegmentIndex = 0; circleSegmentIndex < circleSegments; ++circleSegmentIndex )
+	{
+		currentVertex		= currentRadialPoint.GetNormalized() * radius;
+		nextVertex			= nextRadialPoint.GetNormalized() * radius;
+
+		circleVerts.push_back( Vertex_PCU( centerVertex, color ) );
+		circleVerts.push_back( Vertex_PCU( currentVertex, color ) );
+		circleVerts.push_back( Vertex_PCU( nextVertex, color ) );
+
+		currentRadialPoint = nextRadialPoint;
+		nextRadialPoint.RotateDegrees( angleToRotateDegrees );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void AppendVertsForAABB2OutlineAtPoint( std::vector<Vertex_PCU>& vertextArray, const AABB2& box, const Rgba8& color, float thickness )
 {
 	Vec2 topLeftPoint		= Vec2( box.mins.x, box.maxes.y );

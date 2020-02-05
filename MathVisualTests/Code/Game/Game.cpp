@@ -1,5 +1,6 @@
 #include "Game/Game.hpp"
 #include "Game/Entity.hpp"
+#include "Game/GameObject.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Core/Rgba8.hpp"
@@ -16,6 +17,10 @@
 #include "Engine/Core/Image.hpp"
 #include "Engine/Core/NamedStrings.hpp"
 #include "Engine/Core/EventSystem.hpp"
+#include "Engine/Physics/Physics2D.hpp"
+#include "Engine/Physics/Rigidbody2D.hpp"
+#include "Engine/Physics/Collider2D.hpp"
+#include "Engine/Physics/DiscCollider2D.hpp"
 #include <string>
 
 
@@ -39,6 +44,8 @@ void Game::StartUp()
 	g_theConsole->PrintString( Rgba8::RED, "Game Start Up" );
 	g_RNG = new RandomNumberGenerator();
 
+	m_physics2D = new Physics2D();
+
 	g_testFont = g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 
 	TestImageLoad();
@@ -50,6 +57,10 @@ void Game::StartUp()
 	TestUnsubscribe();
 
 	LoadAssets();
+
+// 	GameObject* newGO = CreateDisc();
+// 	newGO->m_rigidbody->m_worldPosition = Vec2( HALF_SCREEN_X, HALF_SCREEN_Y );
+// 	m_gameObjects.push_back( newGO );
 
 	//m_worldCamera.SetOrthoView( Vec2( 0, 0 ), Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
 	m_worldCamera.SetOutputSize( Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
@@ -64,6 +75,23 @@ void Game::ShutDown()
 {
 	delete g_RNG;
 	g_RNG = nullptr;
+
+	delete m_physics2D;
+	m_physics2D = nullptr;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::BeginFrame()
+{
+
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::EndFrame()
+{
+	m_physics2D->EndFrame();
 }
 
 
@@ -84,6 +112,7 @@ void Game::Render() const
 	TestDrawCapsule2D();
 	DrawPointArray();
 	DrawAtMouse();
+	DrawGameObjects();
 	g_theRenderer->EndCamera( m_worldCamera );
 
 
@@ -115,6 +144,8 @@ void Game::Update( float deltaSeconds )
 
 	UpdateGameStatesFromInput();
 
+	m_physics2D->Update();
+
 	UpdateCameras( deltaSeconds );
 }
 
@@ -134,9 +165,10 @@ void Game::UpdateGameStatesFromInput()
 		RandomlyGenerateShapes();
 	}
 
-	if( g_theInput->IsMouseButtonPressed( MOUSE_BUTTON_MIDDLE ) )
+	if( g_theInput->IsMouseButtonPressed( MOUSE_BUTTON_LEFT ) )
 	{
 		m_mouseBoxColor = Rgba8::RED;
+		m_gameObjects.push_back( CreateDisc() );
 	}
 	else
 	{
@@ -471,6 +503,36 @@ bool Game::MouseIsInShape() const
 	}
 	return false;
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+GameObject* Game::CreateDisc()
+{
+	Vec2 mousePos = g_theInput->GetMouseNormalizedClientPosition();
+	mousePos = m_worldCamera.ClientToWorldPosition( mousePos );
+//	Vec2 mousePos = Vec2( HALF_SCREEN_X, HALF_SCREEN_Y );
+
+	GameObject* gameObject = new GameObject();
+	gameObject->m_rigidbody = m_physics2D->CreateRigidbody2D();
+	gameObject->m_rigidbody->SetPosition( mousePos );
+
+	float radius = g_RNG->RollRandomFloatInRange( 20.f, 50.f );
+	DiscCollider2D* collider = m_physics2D->CreateDiscCollider2D( Vec2( 0.f, 0.f ), radius );
+	gameObject->m_rigidbody->TakeCollider( collider );
+
+	return gameObject;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::DrawGameObjects() const
+{
+	for( int goIndex = 0; goIndex < m_gameObjects.size(); ++goIndex )
+	{
+		m_gameObjects[ goIndex ]->Draw();
+	}
+}
+
 
 //---------------------------------------------------------------------------------------------------------
 void Game::TestUnsubscribe()

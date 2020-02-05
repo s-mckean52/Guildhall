@@ -29,6 +29,9 @@
     <Filter Include="ThirdParty\TinyXML2">
       <UniqueIdentifier>{08a5831f-154d-47b0-97ca-295b0a929a3b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Physics">
+      <UniqueIdentifier>{51d10c21-0234-406d-bec3-b0b7ad0fa351}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -150,6 +153,18 @@
     </ClCompile>
     <ClCompile Include="Math\SmoothNoise.cpp">
       <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Physics\Collider2D.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Physics\DiscCollider2D.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Physics\Physics2D.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Physics\Rigidbody2D.cpp">
+      <Filter>Physics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -299,6 +314,18 @@
     </ClInclude>
     <ClInclude Include="Math\SmoothNoise.hpp">
       <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\Collider2D.hpp">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\DiscCollider2D.hpp">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\Physics2D.hpp">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\Rigidbody2D.hpp">
+      <Filter>Physics</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

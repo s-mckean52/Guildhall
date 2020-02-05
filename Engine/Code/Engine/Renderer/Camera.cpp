@@ -83,11 +83,11 @@ Vec2 Camera::ClientToWorldPosition( Vec2 clientPosition )
 	Vec2 worldPos;
 	Vec2 outputDimensions = GetCameraDimensions();
 
-	float normalizedClientX = RangeMapFloat( 0.f, outputDimensions.x, 0.f, 1.f, clientPosition.x );
-	float normalizedClientY = RangeMapFloat( 0.f, outputDimensions.y, 0.f, 1.f, clientPosition.y );
+// 	float normalizedClientX = RangeMapFloat( 0.f, outputDimensions.x, 0.f, 1.f, clientPosition.x );
+// 	float normalizedClientY = RangeMapFloat( 0.f, outputDimensions.y, 0.f, 1.f, clientPosition.y );
 
-	worldPos.x = RangeMapFloat( 0.f, 1.f, m_bottomLeft.x, m_topRight.x, normalizedClientX );
-	worldPos.y = RangeMapFloat( 0.f, 1.f, m_bottomLeft.y, m_topRight.y, normalizedClientY );
+	worldPos.x = RangeMapFloat( 0.f, 1.f, m_bottomLeft.x, m_topRight.x, clientPosition.x );
+	worldPos.y = RangeMapFloat( 0.f, 1.f, m_bottomLeft.y, m_topRight.y, clientPosition.y );
 
 	// TODO - take into account render target
 	//        clientPos being the pixel location on the texture
