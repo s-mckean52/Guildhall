@@ -165,7 +165,7 @@ void Game::UpdateGameStatesFromInput()
 		RandomlyGenerateShapes();
 	}
 
-	if( g_theInput->IsMouseButtonPressed( MOUSE_BUTTON_LEFT ) )
+	if( g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_LEFT ) )
 	{
 		m_mouseBoxColor = Rgba8::RED;
 		m_gameObjects.push_back( CreateDisc() );
