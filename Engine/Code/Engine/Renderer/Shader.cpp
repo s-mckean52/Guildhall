@@ -134,6 +134,19 @@ bool ShaderStage::Compile( RenderContext* ctx, std::string const& filename, void
 
 
 //---------------------------------------------------------------------------------------------------------
+void const* ShaderStage::GetByteCode() const
+{
+	return m_byteCode->GetBufferPointer();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+size_t ShaderStage::GetByteCodeLength() const
+{
+	return m_byteCode->GetBufferSize();
+}
+
+//---------------------------------------------------------------------------------------------------------
 Shader::Shader( RenderContext* context )
 	: m_owner( context )
 {
@@ -144,6 +157,7 @@ Shader::Shader( RenderContext* context )
 //---------------------------------------------------------------------------------------------------------
 Shader::~Shader()
 {
+	DX_SAFE_RELEASE( m_inputLayout );
 	DX_SAFE_RELEASE( m_rasterState );
 }
 
@@ -172,12 +186,12 @@ void Shader::CreateRasterState()
 {
 	D3D11_RASTERIZER_DESC desc;
 
-	desc.FillMode = D3D11_FILL_SOLID;	//FIlled Triangle
+	desc.FillMode = D3D11_FILL_SOLID;	//Filled Triangle
 	desc.CullMode = D3D11_CULL_NONE;
-	desc.FrontCounterClockwise = TRUE;	// the only reason we're doing this; 
+	desc.FrontCounterClockwise = TRUE;
 	desc.DepthBias = 0U;
 	desc.DepthBiasClamp = 0.0f;
-	desc.SlopeScaledDepthBias = 0.0f;
+	desc.SlopeScaledDepthBias = TRUE;
 	desc.DepthClipEnable = TRUE;
 	desc.ScissorEnable = FALSE;
 	desc.MultisampleEnable = FALSE;
@@ -185,6 +199,56 @@ void Shader::CreateRasterState()
 
 	ID3D11Device* device = m_owner->m_device;
 	device->CreateRasterizerState( &desc, &m_rasterState );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+ID3D11InputLayout* Shader::GetOrCreateInputLayout(/*buffer_attribute_t const* attribute*/ )
+{
+	if( m_inputLayout != nullptr )
+	{
+		return m_inputLayout;
+	}
+
+	D3D11_INPUT_ELEMENT_DESC vertexDescription[3];
+
+	//Position
+	vertexDescription[0].SemanticName			= "POSITION";
+	vertexDescription[0].SemanticIndex			= 0;
+	vertexDescription[0].Format					= DXGI_FORMAT_R32G32B32_FLOAT;	// 3 32-bit floats
+	vertexDescription[0].InputSlot				= 0;
+	vertexDescription[0].AlignedByteOffset		= offsetof( Vertex_PCU, m_position );
+	vertexDescription[0].InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
+	vertexDescription[0].InstanceDataStepRate	= 0;
+
+	//Color
+	vertexDescription[1].SemanticName			= "COLOR";
+	vertexDescription[1].SemanticIndex			= 0;
+	vertexDescription[1].Format					= DXGI_FORMAT_R8G8B8A8_UNORM;
+	vertexDescription[1].InputSlot				= 0;
+	vertexDescription[1].AlignedByteOffset		= offsetof( Vertex_PCU, m_color );
+	vertexDescription[1].InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
+	vertexDescription[1].InstanceDataStepRate	= 0;
+
+
+	//UV
+	vertexDescription[2].SemanticName			= "TEXCOORD";
+	vertexDescription[2].SemanticIndex			= 0;
+	vertexDescription[2].Format					= DXGI_FORMAT_R32G32_FLOAT;
+	vertexDescription[2].InputSlot				= 0;
+	vertexDescription[2].AlignedByteOffset		= offsetof( Vertex_PCU, m_uvTexCoords );
+	vertexDescription[2].InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
+	vertexDescription[2].InstanceDataStepRate	= 0;
+
+	//Create the input
+
+	ID3D11Device* device = m_owner->m_device;
+	device->CreateInputLayout(
+		vertexDescription, 3,
+		m_vertexStage.GetByteCode(), m_vertexStage.GetByteCodeLength(),
+		&m_inputLayout );
+
+	return m_inputLayout;
 }
 
 

@@ -64,7 +64,7 @@ void Game::Render() const
 	g_theRenderer->Draw( 3, 0 );
 
 	std::vector<Vertex_PCU> aabb2;
-	AppendVertsForAABB2D( aabb2, AABB2( 0.5f, 0.5f, 0.5f, 0.5f ), Rgba8::GREEN );
+	AppendVertsForAABB2D( aabb2, AABB2( -0.5f, -0.5f, 0.5f, 0.5f ), Rgba8::GREEN, Vec2( 0.f, 0.f ), Vec2( 1.f, 1.f ) );
 	g_theRenderer->DrawVertexArray( aabb2 );
 
 	g_theRenderer->EndCamera( m_worldCamera );

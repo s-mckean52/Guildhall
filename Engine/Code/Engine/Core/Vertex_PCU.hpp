@@ -7,9 +7,9 @@
 struct Vertex_PCU
 {
 public:
-	Vec3 m_position;
-	Rgba8 m_color;
-	Vec2 m_uvTexCoords;
+	Vec3	m_position;
+	Rgba8	m_color;
+	Vec2	m_uvTexCoords;
 
 public:
 	~Vertex_PCU() {};

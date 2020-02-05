@@ -73,7 +73,7 @@ void RenderContext::StartUp( Window* theWindow )
 
 	m_swapchain = new SwapChain( this, swapchain );
 	m_defaultShader = new Shader( this );
-	m_defaultShader->CreateFromFile( "Data/Shaders/triangle.hlsl" );
+	m_defaultShader->CreateFromFile( "Data/Shaders/Default.hlsl" );
 
 	m_immediateVBO = new VertexBuffer( this, MEMORY_HINT_DYNAMIC );
 }
@@ -196,6 +196,9 @@ void RenderContext::Draw( int numVertices, int vertexOffset )
 	m_context->PSSetShader( m_currentShader->m_fragmentStage.m_fs, nullptr, 0 );
 	m_context->OMSetRenderTargets( 1, &rtv, nullptr );
 
+	ID3D11InputLayout* inputLayout = m_currentShader->GetOrCreateInputLayout();
+	m_context->IASetInputLayout( inputLayout );
+
 	m_context->Draw( numVertices, vertexOffset );
 }
 
@@ -219,7 +222,7 @@ void RenderContext::DrawVertexArray( int numVerticies, const Vertex_PCU* vertici
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::DrawVertexArray( const std::vector<Vertex_PCU>& vertexArray )
 {
-	DrawVertexArray( static_cast<int>(vertexArray.size()), &vertexArray[ 0 ] );
+	DrawVertexArray( static_cast<int>( vertexArray.size() ), &vertexArray[ 0 ] );
 }
 
 
