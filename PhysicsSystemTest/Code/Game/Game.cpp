@@ -153,8 +153,21 @@ void Game::UpdateGameStatesFromInput()
 
 	if( g_theInput->WasKeyJustPressed( '1' ) )
 	{
+		bool wasPlaced = false;
 		GameObject* newGameObject = CreateDisc();
-		m_gameObjects.push_back( newGameObject );
+		for( int goIndex = 0; goIndex < m_gameObjects.size(); ++goIndex )
+		{
+			if( m_gameObjects[ goIndex ] == nullptr )
+			{
+				m_gameObjects[ goIndex ] = newGameObject;
+				wasPlaced = true;
+				break;
+			}
+		}
+		if( !wasPlaced )
+		{
+			m_gameObjects.push_back( newGameObject );
+		}
 	}
 
 	if( g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_LEFT ) )
@@ -173,7 +186,11 @@ void Game::UpdateGameStatesFromInput()
 
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_DELETE ) || g_theInput->WasKeyJustPressed( KEY_CODE_BACKSPACE ) )
 	{
-		m_draggedObject->m_isDestroyed = true;
+		if( m_draggedObject )
+		{
+			m_draggedObject->m_isDestroyed = true;
+			m_draggedObject = nullptr;
+		}
 	}
 
 	float scrollAmount = g_theInput->GetScrollAmount();
@@ -326,7 +343,7 @@ void Game::SetDraggedObject()
 	for( int goIndex = gameObjectSize; goIndex >= 0; --goIndex )
 	{
 		GameObject* currentGameObject = m_gameObjects[ goIndex ];
-		if( currentGameObject->m_isHovered )
+		if( currentGameObject && currentGameObject->m_isHovered )
 		{
 			m_draggedObject = currentGameObject;
 			m_draggedObjectOffset = currentGameObject->m_rigidbody->m_worldPosition - m_mousePos;
@@ -343,7 +360,7 @@ void Game::DestroyGameObjects()
 {
 	for( int goIndex = 0; goIndex < m_gameObjects.size(); ++goIndex )
 	{
-		if( m_gameObjects[goIndex]->m_isDestroyed )
+		if( m_gameObjects[ goIndex] && m_gameObjects[goIndex]->m_isDestroyed )
 		{
 			delete m_gameObjects[ goIndex ];
 			m_gameObjects[ goIndex ] = nullptr;
