@@ -12,6 +12,7 @@ const unsigned char KEY_CODE_ESC			= VK_ESCAPE;
 const unsigned char KEY_CODE_ENTER			= VK_RETURN;
 const unsigned char KEY_CODE_SPACEBAR		= VK_SPACE;
 const unsigned char KEY_CODE_BACKSPACE		= VK_BACK;
+const unsigned char KEY_CODE_DELETE			= VK_DELETE;
 const unsigned char KEY_CODE_UP_ARROW		= VK_UP;
 const unsigned char KEY_CODE_LEFT_ARROW		= VK_LEFT;
 const unsigned char KEY_CODE_DOWN_ARROW		= VK_DOWN;
