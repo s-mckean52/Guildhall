@@ -1,6 +1,7 @@
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/D3D11Common.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
+#include "Engine/Renderer/buffer_attribute_t.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 
 #include <d3dcompiler.h>
@@ -165,6 +166,7 @@ Shader::~Shader()
 //---------------------------------------------------------------------------------------------------------
 bool Shader::CreateFromFile( std::string const& filename )
 {
+	m_filePath = filename.c_str();
 	size_t file_size = 0;
 	void* source = FileReadToNewBuffer( filename, &file_size );
 	if( source == nullptr )
@@ -203,7 +205,14 @@ void Shader::CreateRasterState()
 
 
 //---------------------------------------------------------------------------------------------------------
-ID3D11InputLayout* Shader::GetOrCreateInputLayout(/*buffer_attribute_t const* attribute*/ )
+const char* Shader::GetFilePath() const
+{
+	return m_filePath;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+ID3D11InputLayout* Shader::GetOrCreateInputLayout( buffer_attribute_t const* attribute )
 {
 	if( m_inputLayout != nullptr )
 	{
@@ -212,36 +221,34 @@ ID3D11InputLayout* Shader::GetOrCreateInputLayout(/*buffer_attribute_t const* at
 
 	D3D11_INPUT_ELEMENT_DESC vertexDescription[3];
 
-	//Position
-	vertexDescription[0].SemanticName			= "POSITION";
-	vertexDescription[0].SemanticIndex			= 0;
-	vertexDescription[0].Format					= DXGI_FORMAT_R32G32B32_FLOAT;	// 3 32-bit floats
-	vertexDescription[0].InputSlot				= 0;
-	vertexDescription[0].AlignedByteOffset		= offsetof( Vertex_PCU, m_position );
-	vertexDescription[0].InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
-	vertexDescription[0].InstanceDataStepRate	= 0;
-
-	//Color
-	vertexDescription[1].SemanticName			= "COLOR";
-	vertexDescription[1].SemanticIndex			= 0;
-	vertexDescription[1].Format					= DXGI_FORMAT_R8G8B8A8_UNORM;
-	vertexDescription[1].InputSlot				= 0;
-	vertexDescription[1].AlignedByteOffset		= offsetof( Vertex_PCU, m_color );
-	vertexDescription[1].InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
-	vertexDescription[1].InstanceDataStepRate	= 0;
+	for( int vertDescIndex = 0; vertDescIndex < 3; ++vertDescIndex )
+	{
+		vertexDescription[ vertDescIndex ].SemanticName				= attribute[ vertDescIndex ].name.c_str();
+		vertexDescription[ vertDescIndex ].SemanticIndex			= 0;
+		vertexDescription[ vertDescIndex ].InputSlot				= 0;
+		vertexDescription[ vertDescIndex ].AlignedByteOffset		= attribute[ vertDescIndex ].offset;
+		vertexDescription[ vertDescIndex ].InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
+		vertexDescription[ vertDescIndex ].InstanceDataStepRate		= 0;
 
 
-	//UV
-	vertexDescription[2].SemanticName			= "TEXCOORD";
-	vertexDescription[2].SemanticIndex			= 0;
-	vertexDescription[2].Format					= DXGI_FORMAT_R32G32_FLOAT;
-	vertexDescription[2].InputSlot				= 0;
-	vertexDescription[2].AlignedByteOffset		= offsetof( Vertex_PCU, m_uvTexCoords );
-	vertexDescription[2].InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
-	vertexDescription[2].InstanceDataStepRate	= 0;
+		switch( attribute[ vertDescIndex ].type )
+		{
+		case BUFFER_FORMAT_VEC3:
+			vertexDescription[ vertDescIndex ].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+			break;
+		case BUFFER_FORMAT_VEC2:
+			vertexDescription[ vertDescIndex ].Format = DXGI_FORMAT_R32G32_FLOAT;
+			break;
+		case BUFFER_FORMAT_R8G8B8A8_UNORM:
+			vertexDescription[ vertDescIndex ].Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			break;
+		default:
+			ERROR_AND_DIE( "Unknown vertex description format" );
+			break;
+		}
+	}
 
 	//Create the input
-
 	ID3D11Device* device = m_owner->m_device;
 	device->CreateInputLayout(
 		vertexDescription, 3,

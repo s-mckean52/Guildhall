@@ -1,6 +1,6 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/Camera.hpp"
-
+#include "Engine/Renderer/Texture.hpp"
 
 //---------------------------------------------------------------------------------------------------------
 Rgba8 Camera::GetClearColor() const
@@ -46,6 +46,13 @@ bool Camera::ShouldClearColor() const
 
 
 //---------------------------------------------------------------------------------------------------------
+Texture* Camera::GetColorTarget() const
+{
+	return m_colorTarget;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Camera::SetClearMode( unsigned int clearFlags, Rgba8 color, float depth, unsigned int stencil )
 {
 	m_clearMode		= clearFlags;
@@ -53,6 +60,13 @@ void Camera::SetClearMode( unsigned int clearFlags, Rgba8 color, float depth, un
 
 	UNUSED( depth );
 	UNUSED( stencil );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::SetColorTarget( Texture* texture )
+{
+	m_colorTarget = texture;
 }
 
 

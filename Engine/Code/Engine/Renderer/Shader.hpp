@@ -2,6 +2,7 @@
 #include <string>
 
 class	RenderContext;
+struct	buffer_attribute_t;
 struct	ID3D11Resource;
 struct	ID3D11VertexShader;
 struct	ID3D11PixelShader;
@@ -50,9 +51,12 @@ public:
 	bool CreateFromFile( std::string const& filename );
 	void CreateRasterState();
 
-	ID3D11InputLayout* GetOrCreateInputLayout( /*buffer_attribute_t const* attribute*/ );
+	const char*			GetFilePath() const;
+	ID3D11InputLayout*	GetOrCreateInputLayout( buffer_attribute_t const* attribute );
 
 public:
+	const char* m_filePath = "";
+
 	ShaderStage m_vertexStage;
 	ShaderStage m_fragmentStage;
 	RenderContext* m_owner = nullptr;

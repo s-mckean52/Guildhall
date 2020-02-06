@@ -1,6 +1,7 @@
 #pragma once
 
 #define UNUSED(x) (void)(x);
+#define STATIC
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Math/Vec2.hpp"

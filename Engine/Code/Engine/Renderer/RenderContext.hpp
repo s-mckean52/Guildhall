@@ -14,6 +14,7 @@ class Shader;
 class RenderBuffer;
 class VertexBuffer;
 struct ID3D11Device;
+struct ID3D11Buffer;
 struct ID3D11DeviceContext;
 
 
@@ -35,25 +36,34 @@ public:
 	void ClearScreen( const Rgba8& clearColor );
 	void BeginCamera( const Camera& camera );
 	void EndCamera(const Camera& camera);
+
+	bool IsDrawing() const { return m_isDrawing; }
 	
 	void Draw( int numVertices, int vertexOffset = 0 );
 	void DrawVertexArray( int numVerticies, const Vertex_PCU* verticies );
 	void DrawVertexArray( const std::vector<Vertex_PCU>& vertexArray );
 	
 	void		BindShader( Shader* shader );
+	void		BindShader( const char* filepath );
 	void		BindVertexInput( VertexBuffer* vbo );
 
 	void		BindTexture( const Texture* texture );
 	Texture*	CreateOrGetTextureFromFile( const char* imageFilePath );
 	BitmapFont* CreateOrGetBitmapFontFromFile( const char* imageFilePath );
 
+	Shader* GetOrCreateShader( char const* filename );
+
 private:
 	void CreateTextureFromFile( const char* imageFilePath );
 	void CreateBitmapFontFromFile( const char* fontFilePath );
 
 private:
+	bool m_isDrawing = false;
+	ID3D11Buffer* m_lastBoundVBOHandle = nullptr;
+
 	std::vector<Texture*>		m_loadedTextures;
 	std::vector<BitmapFont*>	m_loadedFonts;
+	std::vector<Shader*>		m_loadedShaders;
 
 public:
 	ID3D11Device*			m_device		= nullptr;

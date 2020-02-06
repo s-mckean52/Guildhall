@@ -9,6 +9,8 @@ enum CameraClearBitFlag : unsigned int
 	CLEAR_STENCIL_BIT	= ( 1 << 2 ),
 };
 
+struct Texture;
+
 class Camera
 {
 private: 
@@ -18,17 +20,21 @@ private:
 	Rgba8			m_clearColor	= Rgba8::BLACK;
 	unsigned int	m_clearMode		= 0;
 
+	Texture* m_colorTarget = nullptr;
+
 public:
 	~Camera() {};
 	Camera() {};
 
-	Rgba8	GetClearColor() const;
-	Vec2	GetCameraDimensions() const;
-	Vec2	GetOrthoBottomLeft() const;
-	Vec2	GetOrthoTopRight() const;
-	bool	ShouldClearColor() const;
+	Rgba8		GetClearColor() const;
+	Vec2		GetCameraDimensions() const;
+	Vec2		GetOrthoBottomLeft() const;
+	Vec2		GetOrthoTopRight() const;
+	bool		ShouldClearColor() const;
+	Texture*	GetColorTarget() const;
 
 	void SetClearMode( unsigned int clearFlags, Rgba8 color, float depth = 0.0f, unsigned int stencil = 0 );
+	void SetColorTarget( Texture* texture );
 
 	void SetOrthoView( const Vec2& bottomLeft, const Vec2& topRight );
 	void Translate2D( const Vec2& translation2D );

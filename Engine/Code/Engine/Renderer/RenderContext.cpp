@@ -152,14 +152,38 @@ void RenderContext::ClearScreen( const Rgba8& clearColor )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::BeginCamera( const Camera& camera )
 {
+	m_context->ClearState();
+
+	Texture* colorTarget = camera.GetColorTarget();
+	if( colorTarget == nullptr )
+	{
+		colorTarget = m_swapchain->GetBackBuffer();
+	}
+
+	TextureView* view = colorTarget->GetRenderTargetView();
+	ID3D11RenderTargetView* rtv = view->GetRTVHandle();
+	m_context->OMSetRenderTargets( 1, &rtv, nullptr );
+
+	IntVec2 outputSize = colorTarget->GetImageTexelSize();
+
+	D3D11_VIEWPORT viewport;
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+	viewport.Width = static_cast<float>(outputSize.x);
+	viewport.Height = static_cast<float>(outputSize.y);
+	viewport.MinDepth = 0.f;
+	viewport.MaxDepth = 1.f;
+	m_context->RSSetViewports( 1, &viewport );
+
 	if( camera.ShouldClearColor() )
 	{
 		ClearScreen( camera.GetClearColor() );
 	}
-	Vec2 bottomLeft = camera.GetOrthoBottomLeft();
-	Vec2 topRight = camera.GetOrthoTopRight();
 
-	BindShader( nullptr );
+	m_isDrawing = true;
+
+	BindShader( static_cast<Shader*>( nullptr ) );
+	m_lastBoundVBOHandle = nullptr;
 }
 
 
@@ -167,36 +191,14 @@ void RenderContext::BeginCamera( const Camera& camera )
 void RenderContext::EndCamera( const Camera& camera )
 {
 	UNUSED( camera );
+	m_isDrawing = false;
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::Draw( int numVertices, int vertexOffset )
 {
-	Texture* texture = m_swapchain->GetBackBuffer();
-	TextureView* view = texture->GetRenderTargetView();
-	ID3D11RenderTargetView* rtv = view->GetRTVHandle();
-
-	IntVec2 outputSize = texture->GetImageTexelSize();
-
-	D3D11_VIEWPORT viewport;
-	viewport.TopLeftX = 0;
-	viewport.TopLeftY = 0;
-	viewport.Width = static_cast<float>( outputSize.x );
-	viewport.Height = static_cast<float>( outputSize.y );
-	viewport.MinDepth = 0.f;
-	viewport.MaxDepth = 1.f;
-
-	//TEMPORARY - This will be moved
-	m_context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
-
-	m_context->VSSetShader( m_currentShader->m_vertexStage.m_vs, nullptr, 0 );
-	m_context->RSSetState( m_currentShader->m_rasterState );
-	m_context->RSSetViewports( 1, &viewport );
-	m_context->PSSetShader( m_currentShader->m_fragmentStage.m_fs, nullptr, 0 );
-	m_context->OMSetRenderTargets( 1, &rtv, nullptr );
-
-	ID3D11InputLayout* inputLayout = m_currentShader->GetOrCreateInputLayout();
+	ID3D11InputLayout* inputLayout = m_currentShader->GetOrCreateInputLayout( Vertex_PCU::LAYOUT );
 	m_context->IASetInputLayout( inputLayout );
 
 	m_context->Draw( numVertices, vertexOffset );
@@ -327,6 +329,24 @@ BitmapFont* RenderContext::CreateOrGetBitmapFontFromFile( const char* imageFileP
 
 
 //---------------------------------------------------------------------------------------------------------
+Shader* RenderContext::GetOrCreateShader( char const* filename )
+{
+	Shader* newShader = new Shader( this );
+	
+	for( int shaderIndex = 0; shaderIndex < m_loadedShaders.size(); ++shaderIndex )
+	{
+		Shader* shader = m_loadedShaders[ shaderIndex ];
+		if( shader->GetFilePath() == filename )
+		{
+			return shader;
+		}
+	}
+	newShader->CreateFromFile( filename );
+	return newShader;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void RenderContext::BindTexture( const Texture* texture )
 {
 	UNUSED( texture );
@@ -346,7 +366,25 @@ void RenderContext::BindTexture( const Texture* texture )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::BindShader( Shader* shader )
 {
+	ASSERT_OR_DIE( IsDrawing(), "Cannot bind shader if begin camera has not been called first" );
+
 	m_currentShader = shader;
+	if( m_currentShader == nullptr )
+	{
+		m_currentShader = m_defaultShader;
+	}
+
+	m_context->VSSetShader( m_currentShader->m_vertexStage.m_vs, nullptr, 0 );
+	m_context->RSSetState( m_currentShader->m_rasterState );
+	m_context->PSSetShader( m_currentShader->m_fragmentStage.m_fs, nullptr, 0 );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::BindShader( const char* filepath )
+{
+	m_currentShader = GetOrCreateShader( filepath );
+
 	if( m_currentShader == nullptr )
 	{
 		m_currentShader = m_defaultShader;
@@ -361,7 +399,12 @@ void RenderContext::BindVertexInput( VertexBuffer* vbo )
 	UINT stride = sizeof( Vertex_PCU );
 	UINT offset = 0;
 
-	m_context->IASetVertexBuffers( 0, 1, &vboHandle, &stride, &offset );
+	if( m_lastBoundVBOHandle != vboHandle )
+	{
+		m_context->IASetVertexBuffers( 0, 1, &vboHandle, &stride, &offset );
+		m_context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+		m_lastBoundVBOHandle = vboHandle;
+	}
 }
 
 
