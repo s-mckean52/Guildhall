@@ -21,6 +21,20 @@ struct vs_input_t
    float2 uv            : TEXCOORD; 
 }; 
 
+static float SHIFT = 0.75f;
+
+cbuffer time_constants : register(b0)
+{
+	float SYSTEM_TIME_SECONDS;
+	float SYSTEM_TIME_DELTA_SECONDS;
+};
+
+cbuffer camera_constants : register(b1)
+{
+	float2 ORTHO_MIN;
+	float2 ORTHO_MAX;
+}
+
 
 //--------------------------------------------------------------------------------------
 // Programmable Shader Stages
@@ -35,6 +49,13 @@ struct v2f_t
    float2 uv : UV; 
 }; 
 
+float RangeMap( float val, float inMin, float inMax, float outMin, float outMax )
+{
+	float domain = inMax - inMin;
+	float range = outMax - outMin;
+	return ((val - inMin) / domain) * range + outMin;
+}
+
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 v2f_t VertexFunction( vs_input_t input )
@@ -45,7 +66,20 @@ v2f_t VertexFunction( vs_input_t input )
    v2f.position = float4( input.position, 1.0f ); 
    v2f.color = input.color; 
    v2f.uv = input.uv; 
-    
+
+   float4 worldPos = float4( input.position, 1 );
+   worldPos.x += cos(SYSTEM_TIME_SECONDS);
+   worldPos.y += sin(SYSTEM_TIME_SECONDS);
+
+   float4 clipPos;
+   clipPos.x = RangeMap( worldPos.x, ORTHO_MIN.x, ORTHO_MAX.x, 0.0f, 1.0f );
+   clipPos.y = RangeMap( worldPos.y, ORTHO_MIN.y, ORTHO_MAX.y, 0.0f, 1.0f );
+   clipPos.z = 0.0f;
+   clipPos.w = 1.0f;
+   //clipPos.xyz /= clipPos.w;
+
+   v2f.position = clipPos;
+
    return v2f;
 }
 
@@ -60,8 +94,9 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
    // to make sure they're being passed correctly.
    // Very common rendering debugging method is to 
    // use color to portray information; 
-   float4 uvAsColor = float4( input.uv, 0.0f, 1.0f ); 
-   float4 finalColor = input.color; 
+   float g = cos( input.uv.x * 40.0f + SYSTEM_TIME_SECONDS );
+   float4 uvAsColor = float4( 0.0f, g  , 0.0f, 1.0f ); 
+   float4 finalColor = uvAsColor; 
 
    return finalColor; 
 }

@@ -124,6 +124,8 @@ void App::BeginFrame()
 //---------------------------------------------------------------------------------------------------------
 void App::Update( float deltaSeconds )
 {
+	g_theRenderer->UpdateFrameTime( deltaSeconds );
+
 	if( g_theGame->IsQuitting() || g_theWindow->IsQuitting() )
 	{
 		HandleQuitRequested();

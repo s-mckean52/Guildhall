@@ -25,6 +25,7 @@
 #include "Engine/Renderer/TextureView.hpp"
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/RenderBuffer.hpp"
+#include "Engine/Core/Time.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -76,13 +77,15 @@ void RenderContext::StartUp( Window* theWindow )
 	m_defaultShader->CreateFromFile( "Data/Shaders/Default.hlsl" );
 
 	m_immediateVBO = new VertexBuffer( this, MEMORY_HINT_DYNAMIC );
+
+	m_frameUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
+	m_cameraUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::BeginFrame()
 {
-
 }
 
 
@@ -96,6 +99,12 @@ void RenderContext::EndFrame()
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::ShutDown()
 {
+	delete m_cameraUBO;
+	m_cameraUBO = nullptr;
+
+	delete m_frameUBO;
+	m_frameUBO = nullptr;
+
 	delete m_immediateVBO;
 	m_immediateVBO = nullptr;
 
@@ -107,6 +116,17 @@ void RenderContext::ShutDown()
 
 	DX_SAFE_RELEASE( m_device );
 	DX_SAFE_RELEASE( m_context );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::UpdateFrameTime( float deltaSeconds )
+{
+	frame_data_t frameData;
+	frameData.system_time = static_cast<float>( GetCurrentTimeSeconds() );
+	frameData.system_delta_time = deltaSeconds;
+
+	m_frameUBO->Update( &frameData, sizeof( frameData ), sizeof( frameData ) );
 }
 
 
@@ -184,8 +204,24 @@ void RenderContext::BeginCamera( const Camera& camera )
 
 	BindShader( static_cast<Shader*>( nullptr ) );
 	m_lastBoundVBOHandle = nullptr;
+
+	UpdateCameraData( camera );
+
+	BindUniformBuffer( UBO_FRAME_SLOT, m_frameUBO );
+	BindUniformBuffer( UBO_CAMERA_SLOT, m_cameraUBO );
 }
 
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::UpdateCameraData( Camera const& camera )
+{
+	camera_data_t cameraData;
+	cameraData.ortho_min = camera.GetOrthoBottomLeft();
+	cameraData.ortho_max = camera.GetOrthoTopRight();
+
+	m_cameraUBO->Update( &cameraData, sizeof( cameraData ), sizeof( cameraData ) );
+}
 
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::EndCamera( const Camera& camera )
@@ -405,6 +441,16 @@ void RenderContext::BindVertexInput( VertexBuffer* vbo )
 		m_context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 		m_lastBoundVBOHandle = vboHandle;
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::BindUniformBuffer( unsigned int slot, RenderBuffer* ubo )
+{
+	ID3D11Buffer* uboHandle = ubo->m_handle; // GetHandle()
+
+	m_context->VSSetConstantBuffers( slot, 1, &uboHandle );
+	m_context->PSSetConstantBuffers( slot, 1, &uboHandle );
 }
 
 

@@ -24,6 +24,26 @@ enum class BlendMode
 	ADDITIVE,
 };
 
+enum BufferSlot
+{
+	UBO_FRAME_SLOT = 0,
+	UBO_CAMERA_SLOT = 1,
+};
+
+struct frame_data_t
+{
+	float system_time;
+	float system_delta_time;
+
+	float padding[2];
+};
+
+struct camera_data_t
+{
+	Vec2 ortho_min;
+	Vec2 ortho_max;
+};
+
 class RenderContext
 {
 public:
@@ -31,11 +51,14 @@ public:
 	void BeginFrame();
 	void EndFrame();
 	void ShutDown();
+
+	void UpdateFrameTime( float deltaSeconds );
 	
 	void SetBlendMode( BlendMode blendMode );
 	void ClearScreen( const Rgba8& clearColor );
 	void BeginCamera( const Camera& camera );
-	void EndCamera(const Camera& camera);
+	void UpdateCameraData( Camera const& camera );
+	void EndCamera( const Camera& camera );
 
 	bool IsDrawing() const { return m_isDrawing; }
 	
@@ -46,6 +69,7 @@ public:
 	void		BindShader( Shader* shader );
 	void		BindShader( const char* filepath );
 	void		BindVertexInput( VertexBuffer* vbo );
+	void		BindUniformBuffer( unsigned int slot, RenderBuffer* ubo );
 
 	void		BindTexture( const Texture* texture );
 	Texture*	CreateOrGetTextureFromFile( const char* imageFilePath );
@@ -72,4 +96,6 @@ public:
 	Shader*					m_currentShader = nullptr;
 	Shader*					m_defaultShader = nullptr;
 	VertexBuffer*			m_immediateVBO	= nullptr;
+	RenderBuffer*			m_frameUBO		= nullptr;
+	RenderBuffer*			m_cameraUBO		= nullptr;
 };
