@@ -4,6 +4,7 @@
 class	Rigidbody2D;
 class	Collider2D;
 class	DiscCollider2D;
+class	PolygonCollider2D;
 struct	Vec2;
 
 class Physics2D
@@ -17,11 +18,13 @@ public:
 	void EndFrame();
 
 	Rigidbody2D* CreateRigidbody2D();
-	void DestroyRigidbody2D( Rigidbody2D* rigidbody );
-
 	DiscCollider2D* CreateDiscCollider2D( Vec2 localPosition, float radius );
+	PolygonCollider2D* CreatePolygonCollider2D( std::vector<Vec2> polygonVerts, Vec2 localPosition );
+
+	void DestroyRigidbody2D( Rigidbody2D* rigidbody );
 	void DestroyCollider2D( Collider2D* collider );
 
+	Collider2D* AddColliderToVector( Collider2D* newCollider );
 
 public:
 	std::vector< Rigidbody2D* > m_rigidbodies2D;

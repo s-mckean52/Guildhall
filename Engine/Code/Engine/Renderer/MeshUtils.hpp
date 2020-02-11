@@ -16,3 +16,5 @@ void AppendVertsForLineBetweenPoints( std::vector<Vertex_PCU>& lineVerts, const 
 void AppendVertsForCircleAtPoint( std::vector<Vertex_PCU>& circleVerts, float radius, const Rgba8 color, float thickness );
 void AppendVertsForFilledCircle( std::vector<Vertex_PCU>& circleVerts, float radius, const Rgba8 color );
 void AppendVertsForAABB2OutlineAtPoint( std::vector<Vertex_PCU>& vertextArray, const AABB2& box, const Rgba8& color, float thickness );
+void AppendVertsForPolygon2DOutline( std::vector<Vertex_PCU>& vertexArray, const std::vector<Vec2> polygonVerts, const Rgba8& color, float thickness );
+void AppendVertsForPolygon2DFilled( std::vector<Vertex_PCU>& vertexArray, const std::vector<Vec2> polygonVerts, const Rgba8& color );

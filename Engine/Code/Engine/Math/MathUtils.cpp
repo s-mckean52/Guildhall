@@ -611,6 +611,13 @@ bool DoOBBAndDiscOverlap2D( const OBB2& obb, const Vec2& discCenter, float discR
 
 
 //---------------------------------------------------------------------------------------------------------
+bool DoPolygonAndDiscOverlap( std::vector<Vec2> polygonVerts, const Vec2& discCenter, float discRadius )
+{
+	return false;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 float SmoothStart2( float t )
 {
 	return t * t;
@@ -854,6 +861,42 @@ const Vec2 GetNearestPointOnOBB2D( const Vec2& refPos, const OBB2& box )
 
 
 //---------------------------------------------------------------------------------------------------------
+const Vec2 GetNearestPointOnPolygon2D( const Vec2& refPos, std::vector<Vec2> polygonVerts )
+{
+	if( IsPointInsidePolygon2D( refPos, polygonVerts ) ) return refPos;
+
+	for( int vertIndex = 0; vertIndex < polygonVerts.size(); ++vertIndex )
+	{
+		Vec2 currentVertex = polygonVerts[ vertIndex ];
+		Vec2 nextVertex;
+		if( vertIndex != polygonVerts.size() - 1 )
+		{
+			nextVertex = polygonVerts[ static_cast<size_t>( vertIndex ) + 1 ];
+		}
+		else
+		{
+			nextVertex = polygonVerts[ 0 ];
+		}
+
+		Vec2 lineSegment = nextVertex - currentVertex;
+		Vec2 displacementToPointFromStart = refPos - currentVertex;
+
+		Vec2 projectedVector = GetProjectedOnto2D( displacementToPointFromStart, lineSegment );
+		float projectedVectorDot = DotProduct2D( projectedVector, lineSegment );
+
+		if( projectedVectorDot < 0.f )
+		{
+			return currentVertex;
+		}
+		else if( projectedVector.GetLengthSquared() <= lineSegment.GetLengthSquared() )
+		{
+			return currentVertex + projectedVector;
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 bool IsPointInsideDisk2D( const Vec2& point, const Vec2& discCenter, float discRadius )
 {
 	Vec2 displacementToPoint = point - discCenter;
@@ -904,6 +947,37 @@ bool IsPointInsideCapsule2D( const Vec2& point, const Vec2& capsuleMidStart, con
 bool IsPointInsideOBB2D( const Vec2& point, const OBB2& box )
 {
 	return box.IsPointInside( point );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool IsPointInsidePolygon2D( const Vec2& point, std::vector<Vec2> polygonVerts )
+{
+	for( int vertIndex = 0; vertIndex < polygonVerts.size(); ++vertIndex )
+	{
+		Vec2 currentVertex = polygonVerts[ vertIndex ];
+		Vec2 nextVertex;
+		if( vertIndex != polygonVerts.size() - 1 )
+		{
+			int nextIndex = vertIndex + 1;
+			nextVertex = polygonVerts[ nextIndex ];
+		}
+		else
+		{
+			nextVertex = polygonVerts[ 0 ];
+		}
+
+		Vec2 lineSegment = nextVertex - currentVertex;
+		Vec2 segmentNormal = lineSegment.GetRotatedMinus90Degrees();
+		segmentNormal.Normalize();
+		Vec2 displacementToPoint = point - currentVertex;
+		if( DotProduct2D( segmentNormal, displacementToPoint ) < 0.f )
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 

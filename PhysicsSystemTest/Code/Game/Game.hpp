@@ -39,11 +39,18 @@ public:
 	bool IsQuitting() const { return m_isQuitting; }
 
 	GameObject* CreateDisc();
+	GameObject* CreatePolygon( std::vector<Vec2> polygonPoints );
+	void AddPointToNewPolygon();
+	Vec2 AveragePositions( std::vector<Vec2> points );
 	void DrawGameObjects() const;
 	void UpdateGameObjects( float deltaSeconds );
 	void CheckGameObjectOverlap( GameObject* gameObject );
 	void SetDraggedObject();
 	void DestroyGameObjects();
+
+	void CreatePolygonFromInput();
+	void DrawNewPolygonPoints() const;
+	void AddGameObject( GameObject* gameObject );
 
 private:
 	Vec2 m_mousePos = Vec2();
@@ -60,8 +67,10 @@ private:
 	GameObject* m_draggedObject;
 
 	bool	m_isQuitting = false;
+	bool	m_isCreatingPolygon = false;
 
 	Physics2D* m_physics2D = nullptr;
 
+	std::vector<Vec2> m_newPolygonToDraw;
 	std::vector<GameObject*> m_gameObjects;
 };

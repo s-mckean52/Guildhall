@@ -203,6 +203,7 @@
     <ClCompile Include="Physics\Collider2D.cpp" />
     <ClCompile Include="Physics\DiscCollider2D.cpp" />
     <ClCompile Include="Physics\Physics2D.cpp" />
+    <ClCompile Include="Physics\PolygonCollider2D.cpp" />
     <ClCompile Include="Physics\Rigidbody2D.cpp" />
     <ClCompile Include="Renderer\BitmapFont.cpp" />
     <ClCompile Include="Renderer\Camera.cpp" />
@@ -258,6 +259,7 @@
     <ClInclude Include="Physics\Collider2D.hpp" />
     <ClInclude Include="Physics\DiscCollider2D.hpp" />
     <ClInclude Include="Physics\Physics2D.hpp" />
+    <ClInclude Include="Physics\PolygonCollider2D.hpp" />
     <ClInclude Include="Physics\Rigidbody2D.hpp" />
     <ClInclude Include="Renderer\BitmapFont.hpp" />
     <ClInclude Include="Renderer\Camera.hpp" />

@@ -21,6 +21,7 @@
 #include "Engine/Physics/Rigidbody2D.hpp"
 #include "Engine/Physics/Collider2D.hpp"
 #include "Engine/Physics/DiscCollider2D.hpp"
+#include "Engine/Physics/PolygonCollider2D.hpp"
 #include <string>
 
 
@@ -89,6 +90,25 @@ void Game::Render() const
 {
 	//Render worldCamera
 	g_theRenderer->BeginCamera( m_worldCamera );
+
+	//---------------------------------------------------------------------------------------------------------
+// 	std::vector< Vec2 > polygonVerts;
+// 	polygonVerts.push_back( Vec2(200.f, 0.f) );
+// 	polygonVerts.push_back( Vec2(200.f, 100.f) );
+// 	polygonVerts.push_back( Vec2(0.f, 200.f) );
+// 	polygonVerts.push_back( Vec2(-200.f, 100.f) );
+// 	polygonVerts.push_back( Vec2(-200.f, 0.f) );
+// 
+// 	std::vector< Vertex_PCU > polygonDrawVerts;
+// 	AppendVertsForPolygon2DFilled( polygonDrawVerts, polygonVerts, Rgba8::WHITE );
+// 	AppendVertsForPolygon2DOutline( polygonDrawVerts, polygonVerts, Rgba8::BLUE, 5.f );
+// 
+// 	TransformVertexArray( polygonDrawVerts, 1.f, 0.f, Vec2( 300.f, 300.f ) );
+// 
+// 	g_theRenderer->BindTexture( nullptr );
+// 	g_theRenderer->DrawVertexArray( polygonDrawVerts );
+	//---------------------------------------------------------------------------------------------------------
+	DrawNewPolygonPoints();
 	DrawGameObjects();
 	g_theRenderer->EndCamera( m_worldCamera );
 
@@ -151,23 +171,22 @@ void Game::UpdateGameStatesFromInput()
 		m_cameraHeight = CAMERA_SIZE_Y;
 	}
 
+	if( m_isCreatingPolygon )
+	{
+		CreatePolygonFromInput();
+		return;
+	}
+
 	if( g_theInput->WasKeyJustPressed( '1' ) )
 	{
-		bool wasPlaced = false;
 		GameObject* newGameObject = CreateDisc();
-		for( int goIndex = 0; goIndex < m_gameObjects.size(); ++goIndex )
-		{
-			if( m_gameObjects[ goIndex ] == nullptr )
-			{
-				m_gameObjects[ goIndex ] = newGameObject;
-				wasPlaced = true;
-				break;
-			}
-		}
-		if( !wasPlaced )
-		{
-			m_gameObjects.push_back( newGameObject );
-		}
+		AddGameObject( newGameObject );
+	}
+
+	if( g_theInput->WasKeyJustPressed( '2' ) )
+	{
+		AddPointToNewPolygon();
+		m_isCreatingPolygon = true;
 	}
 
 	if( g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_LEFT ) )
@@ -290,6 +309,45 @@ GameObject* Game::CreateDisc()
 
 
 //---------------------------------------------------------------------------------------------------------
+GameObject* Game::CreatePolygon( std::vector<Vec2> polygonPoints )
+{
+	GameObject* gameObject = new GameObject();
+	gameObject->m_rigidbody = m_physics2D->CreateRigidbody2D();
+	
+	Vec2 position = AveragePositions( polygonPoints );
+	gameObject->m_rigidbody->SetPosition( position );
+
+	PolygonCollider2D* collider = m_physics2D->CreatePolygonCollider2D( polygonPoints, Vec2( 0.f, 0.f ) );
+	gameObject->m_rigidbody->TakeCollider( collider );
+
+	return gameObject;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddPointToNewPolygon()
+{
+	Vec2 mousePos = g_theInput->GetMouseNormalizedClientPosition();
+	mousePos = m_worldCamera.ClientToWorldPosition( mousePos );
+
+	m_newPolygonToDraw.push_back( mousePos );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec2 Game::AveragePositions( std::vector<Vec2> points )
+{
+	Vec2 averagePosition;
+	for( int pointIndex = 0; pointIndex < points.size(); ++pointIndex )
+	{
+		averagePosition += points[ pointIndex ];
+	}
+	averagePosition /= points.size();
+	return averagePosition;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::DrawGameObjects() const
 {
 	for( int goIndex = 0; goIndex < m_gameObjects.size(); ++goIndex )
@@ -365,5 +423,65 @@ void Game::DestroyGameObjects()
 			delete m_gameObjects[ goIndex ];
 			m_gameObjects[ goIndex ] = nullptr;
 		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::CreatePolygonFromInput()
+{
+	if( g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_LEFT ) )
+	{
+		AddPointToNewPolygon();
+	}
+
+	if( g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_RIGHT ) )
+	{
+		GameObject* newGameObject = CreatePolygon( m_newPolygonToDraw );
+		AddGameObject( newGameObject );
+		m_newPolygonToDraw.clear();
+		m_isCreatingPolygon = false;
+	}
+
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
+	{
+		m_newPolygonToDraw.clear();
+		m_isCreatingPolygon = false;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::DrawNewPolygonPoints() const
+{
+	for( int pointIndex = 0; pointIndex < m_newPolygonToDraw.size(); ++pointIndex )
+	{
+		if( pointIndex != m_newPolygonToDraw.size() - 1 )
+		{
+			Vec2 start = m_newPolygonToDraw[ pointIndex ];
+			Vec2 end = m_newPolygonToDraw[ pointIndex + 1 ];
+			DrawLineBetweenPoints( start, end, Rgba8::BLUE, 5.f );
+		}
+		DrawCircleAtPoint( m_newPolygonToDraw[ pointIndex ], 5.f, Rgba8::YELLOW, 3.f );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddGameObject( GameObject* gameObject )
+{
+	bool wasPlaced = false;
+	for( int goIndex = 0; goIndex < m_gameObjects.size(); ++goIndex )
+	{
+		if( m_gameObjects[goIndex] == nullptr )
+		{
+			m_gameObjects[goIndex] = gameObject;
+			wasPlaced = true;
+			break;
+		}
+	}
+	if( !wasPlaced )
+	{
+		m_gameObjects.push_back( gameObject );
 	}
 }

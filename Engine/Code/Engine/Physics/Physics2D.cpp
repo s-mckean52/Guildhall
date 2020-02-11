@@ -2,6 +2,7 @@
 #include "Engine/Physics/Rigidbody2D.hpp"
 #include "Engine/Physics/Collider2D.hpp"
 #include "Engine/Physics/DiscCollider2D.hpp"
+#include "Engine/Physics/PolygonCollider2D.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/Vec2.hpp"
 
@@ -91,18 +92,16 @@ DiscCollider2D* Physics2D::CreateDiscCollider2D( Vec2 localPosition, float radiu
 	newDiscCollider->m_radius = radius;
 	newDiscCollider->m_localPosition = localPosition;
 	newDiscCollider->m_physicsSystem = this;
-	for( int colliderIndex = 0; colliderIndex < m_colliders2D.size(); ++colliderIndex )
-	{
-		Collider2D* currentCollider = m_colliders2D[ colliderIndex ];
-		if( currentCollider == nullptr )
-		{
-			currentCollider = newDiscCollider;
-			return newDiscCollider;
-		}
-	}
+	return (DiscCollider2D*)AddColliderToVector( newDiscCollider );
+}
 
-	m_colliders2D.push_back( newDiscCollider );
-	return newDiscCollider;
+
+//---------------------------------------------------------------------------------------------------------
+PolygonCollider2D* Physics2D::CreatePolygonCollider2D( std::vector<Vec2> polygonVerts, Vec2 localPosition )
+{
+	PolygonCollider2D* newPolygonCollider = new PolygonCollider2D();
+	newPolygonCollider->SetMembers( this, polygonVerts, localPosition );
+	return (PolygonCollider2D*)AddColliderToVector( newPolygonCollider );
 }
 
 
@@ -110,4 +109,21 @@ DiscCollider2D* Physics2D::CreateDiscCollider2D( Vec2 localPosition, float radiu
 void Physics2D::DestroyCollider2D( Collider2D* collider )
 {
 	m_colliders2DToBeDestroyed.push_back( collider );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Collider2D* Physics2D::AddColliderToVector( Collider2D* newCollider )
+{
+	for( int colliderIndex = 0; colliderIndex < m_colliders2D.size(); ++colliderIndex )
+	{
+		Collider2D* currentCollider = m_colliders2D[colliderIndex];
+		if( currentCollider == nullptr )
+		{
+			currentCollider = newCollider;
+			return newCollider;
+		}
+	}
+	m_colliders2D.push_back( newCollider );
+	return newCollider;
 }

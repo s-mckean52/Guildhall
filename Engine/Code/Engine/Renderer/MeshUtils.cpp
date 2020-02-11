@@ -185,3 +185,45 @@ void AppendVertsForAABB2OutlineAtPoint( std::vector<Vertex_PCU>& vertextArray, c
 	AppendVertsForLineBetweenPoints( vertextArray, box.maxes, topLeftPoint, color, thickness );
 	AppendVertsForLineBetweenPoints( vertextArray, topLeftPoint, box.mins, color, thickness );
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+void AppendVertsForPolygon2DOutline( std::vector<Vertex_PCU>& vertexArray, const std::vector<Vec2> polygonVerts, const Rgba8& color, float thickness )
+{
+	Vec2 startVert;
+	Vec2 endVert;
+	for( int polygonVertIndex = 0; polygonVertIndex < polygonVerts.size(); ++polygonVertIndex )
+	{
+		startVert = polygonVerts[ polygonVertIndex ];
+		if( polygonVertIndex != polygonVerts.size() - 1 )
+		{
+			endVert = polygonVerts[ static_cast<size_t>( polygonVertIndex ) + 1 ];
+		}
+		else
+		{
+			endVert = polygonVerts[ 0 ];
+		}
+
+		AppendVertsForLineBetweenPoints( vertexArray, startVert, endVert, color, thickness );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void AppendVertsForPolygon2DFilled( std::vector<Vertex_PCU>& vertexArray, const std::vector<Vec2> polygonVerts, const Rgba8& color )
+{
+	Vec2 startVert = polygonVerts[ 0 ];
+	Vec2 secondTriVert = polygonVerts[ 1 ];
+	Vec2 thirdTriVert = polygonVerts[ 2 ];
+
+	for( int polygonVertIndex = 1; polygonVertIndex < polygonVerts.size() - 1; ++polygonVertIndex )
+	{
+		vertexArray.push_back( Vertex_PCU( startVert, color ) );
+		vertexArray.push_back( Vertex_PCU( secondTriVert, color ) );
+		vertexArray.push_back( Vertex_PCU( thirdTriVert, color ) );
+
+		int nextVertIndex = ( polygonVertIndex + 2 ) % polygonVerts.size();
+		secondTriVert = thirdTriVert;
+		thirdTriVert = polygonVerts[ nextVertIndex ];
+	}
+}
