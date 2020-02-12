@@ -76,7 +76,7 @@ void Physics2D::MoveRigidbodies( float deltaSeconds )
 		Rigidbody2D* rb = m_rigidbodies2D[ rbIndex ];
 		if( rb->DoesMove() )
 		{
-			rb->EulerStep( deltaSeconds, rb );
+			EulerStep( deltaSeconds, rb );
 		}
 	}
 }
@@ -85,7 +85,7 @@ void Physics2D::MoveRigidbodies( float deltaSeconds )
 //---------------------------------------------------------------------------------------------------------
 void Physics2D::EulerStep( float deltaSeconds, Rigidbody2D* rb )
 {
-	Vec2 acceleration = rb->GetFrameAcceleration();
+	Vec2 acceleration = rb->GetFrameAcceleration( m_gravityAcceleration );
 
 	Vec2 deltaVelocity = acceleration * deltaSeconds;
 	rb->m_velocity += deltaVelocity;

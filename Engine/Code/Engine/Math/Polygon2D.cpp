@@ -58,26 +58,32 @@ Vec2 Polygon2D::GetClosestPoint( Vec2 const& point ) const
 
 	Vec2 edgeStart;
 	Vec2 edgeEnd;
+	Vec2 closestPoint;
+	float shortestDistanceSquared;
 
 	for( int edgeIndex = 0; edgeIndex < GetEdgeCount(); ++edgeIndex )
 	{
 		GetEdge( edgeIndex, edgeStart, edgeEnd );
-
-		Vec2 lineSegment = edgeEnd - edgeStart;
-		Vec2 displacementToPointFromStart = point - edgeStart;
-
-		Vec2 projectedVector = GetProjectedOnto2D( displacementToPointFromStart, lineSegment );
-		float projectedVectorDot = DotProduct2D( projectedVector, lineSegment );
-
-		if( projectedVectorDot < 0.f )
+		if( edgeIndex == 0 )
 		{
-			return edgeStart;
+			closestPoint = GetNearestPointOnLineSegment2D( point, edgeStart, edgeEnd );
+			Vec2 displacement = closestPoint - edgeStart;
+			shortestDistanceSquared = displacement.GetLengthSquared(); 
 		}
-		else if( projectedVector.GetLengthSquared() <= lineSegment.GetLengthSquared() )
+		else
 		{
-			return edgeStart + projectedVector;
+			Vec2 tempClosestPoint = GetNearestPointOnLineSegment2D( point, edgeStart, edgeEnd );
+			Vec2 displacement = tempClosestPoint - edgeStart;
+			float distanceSquaredToPoint = displacement.GetLengthSquared();
+			if( shortestDistanceSquared > distanceSquaredToPoint )
+			{
+				closestPoint = tempClosestPoint;
+				shortestDistanceSquared = distanceSquaredToPoint;
+			}
 		}
 	}
+
+	return closestPoint;
 }
 
 
