@@ -14,8 +14,13 @@ public:
 	~Physics2D();
 	
 	void BeginFrame();
-	void Update();
+	void Update( float deltaSeconds );
 	void EndFrame();
+
+	void AdvanceSimulation( float deltaSeconds );
+	void ApplyEffectors( float deltaSeconds );
+	void MoveRigidbodies( float deltaSeconds );
+	void EulerStep( float deltaSeconds, Rigidbody2D* rb );
 
 	Rigidbody2D* CreateRigidbody2D();
 	DiscCollider2D* CreateDiscCollider2D( Vec2 localPosition, float radius );
@@ -27,6 +32,8 @@ public:
 	Collider2D* AddColliderToVector( Collider2D* newCollider );
 
 public:
+	float m_gravityAcceleration = 9.81f;
+
 	std::vector< Rigidbody2D* > m_rigidbodies2D;
 	std::vector< Rigidbody2D* > m_rigidbodies2DToBeDestroyed;
 	std::vector< Collider2D* > m_colliders2D;

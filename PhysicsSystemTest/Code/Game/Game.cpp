@@ -90,24 +90,6 @@ void Game::Render() const
 {
 	//Render worldCamera
 	g_theRenderer->BeginCamera( m_worldCamera );
-
-	//---------------------------------------------------------------------------------------------------------
-// 	std::vector< Vec2 > polygonVerts;
-// 	polygonVerts.push_back( Vec2(200.f, 0.f) );
-// 	polygonVerts.push_back( Vec2(200.f, 100.f) );
-// 	polygonVerts.push_back( Vec2(0.f, 200.f) );
-// 	polygonVerts.push_back( Vec2(-200.f, 100.f) );
-// 	polygonVerts.push_back( Vec2(-200.f, 0.f) );
-// 
-// 	std::vector< Vertex_PCU > polygonDrawVerts;
-// 	AppendVertsForPolygon2DFilled( polygonDrawVerts, polygonVerts, Rgba8::WHITE );
-// 	AppendVertsForPolygon2DOutline( polygonDrawVerts, polygonVerts, Rgba8::BLUE, 5.f );
-// 
-// 	TransformVertexArray( polygonDrawVerts, 1.f, 0.f, Vec2( 300.f, 300.f ) );
-// 
-// 	g_theRenderer->BindTexture( nullptr );
-// 	g_theRenderer->DrawVertexArray( polygonDrawVerts );
-	//---------------------------------------------------------------------------------------------------------
 	DrawNewPolygonPoints();
 	DrawGameObjects();
 	g_theRenderer->EndCamera( m_worldCamera );
@@ -135,7 +117,7 @@ void Game::Update( float deltaSeconds )
 {
 	UpdateGameStatesFromInput();
 
-	m_physics2D->Update();
+	m_physics2D->Update( deltaSeconds );
 
 	UpdateGameObjects( deltaSeconds );
 
@@ -177,16 +159,29 @@ void Game::UpdateGameStatesFromInput()
 		return;
 	}
 
-	if( g_theInput->WasKeyJustPressed( '1' ) )
+	if( g_theInput->WasKeyJustPressed( '1' ) && !m_draggedObject )
 	{
 		GameObject* newGameObject = CreateDisc();
 		AddGameObject( newGameObject );
 	}
+	else if( g_theInput->WasKeyJustPressed( '1' ) )
+	{
+		m_draggedObject->m_rigidbody->SetSimulationMode( SIMULATION_MODE_STATIC );
+	}
 
-	if( g_theInput->WasKeyJustPressed( '2' ) )
+	if( g_theInput->WasKeyJustPressed( '2' ) && !m_draggedObject )
 	{
 		AddPointToNewPolygon();
 		m_isCreatingPolygon = true;
+	}
+	else if( g_theInput->WasKeyJustPressed( '2' ) )
+	{
+		m_draggedObject->m_rigidbody->SetSimulationMode( SIMULATION_MODE_KINEMATIC );
+	}
+
+	if( g_theInput->WasKeyJustPressed( '3' ) && m_draggedObject )
+	{
+		m_draggedObject->m_rigidbody->SetSimulationMode( SIMULATION_MODE_DYNAMIC );
 	}
 
 	if( g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_LEFT ) )
@@ -316,6 +311,11 @@ GameObject* Game::CreatePolygon( std::vector<Vec2> polygonPoints )
 	
 	Vec2 position = AveragePositions( polygonPoints );
 	gameObject->m_rigidbody->SetPosition( position );
+
+	for( int pointIndex = 0; pointIndex < polygonPoints.size(); ++pointIndex )
+	{
+		polygonPoints[ pointIndex ] -= position;
+	}
 
 	PolygonCollider2D* collider = m_physics2D->CreatePolygonCollider2D( polygonPoints, Vec2( 0.f, 0.f ) );
 	gameObject->m_rigidbody->TakeCollider( collider );

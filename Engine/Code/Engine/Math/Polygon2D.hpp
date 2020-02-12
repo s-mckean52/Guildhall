@@ -2,31 +2,26 @@
 #include "Engine/Math/Vec2.hpp"
 #include <vector>
 
-struct Polygon2D
+class Polygon2D
 {
-	Vec2				center;
-	std::vector<Vec2>	localVerts;
+public:
+	bool IsValid() const;
 
-	// Construction / destructor
-	Polygon2D() = default;
-	~Polygon2D() = default;
-	Polygon2D( const Polygon2D& copyFrom );
-	explicit Polygon2D( const std::vector<Vec2> verts, const Vec2& position );
+	bool IsConvex() const;
+	bool IsPointInside( Vec2 const& point ) const;
+	float GetDistance( Vec2 const& point ) const;
+	Vec2 GetClosestPoint( Vec2 const& point ) const;
 
-	// Accessors (const methods)
-	bool				IsValid() const;
-	bool				IsPointInside( const Vec2& point ) const;
-	const Vec2			GetCenter() const;
-	const Vec2			GetNearestPoint( const Vec2& referentPos ) const;
-	float				GetOuterRadius() const;
-	float				GetInnerRadius() const;
-	std::vector<Vec2>	GetLocalVerts() const;
+	int GetVertexCount() const;
+	int GetEdgeCount() const;
+	void GetEdge( int edgeNumber, Vec2& out_start, Vec2& out_end ) const;
+	Polygon2D GetTranslated( const Vec2& translation ) const;
 
-	// Mutators
-	void	AddLocalVert( const Vec2& worldPosition );
-	void	SetLocalVerts( std::vector<Vec2> worldVerts );
-	void	Translate( const Vec2& translation );
-	void	SetCenter( const Vec2& newCenter );
-	void	SetOrientationDegrees( float newOrientaiton );
-	void	RotateByDegrees( float relativeRotationDegrees );
+
+public:
+	static Polygon2D MakeFromLineLoop( Vec2 const* points, unsigned int pointCount );
+	static Polygon2D MakeFromPointCloud( Vec2 const* points, unsigned int pointCount );
+
+private:
+	std::vector<Vec2> m_points;
 };

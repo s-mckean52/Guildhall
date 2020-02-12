@@ -29,9 +29,9 @@ void Physics2D::BeginFrame()
 
 
 //---------------------------------------------------------------------------------------------------------
-void Physics2D::Update()
+void Physics2D::Update( float deltaSeconds )
 {
-
+	AdvanceSimulation( deltaSeconds );
 }
 
 
@@ -49,6 +49,49 @@ void Physics2D::EndFrame()
 		delete m_colliders2DToBeDestroyed[ colliderToBeDestroyedIndex ];
 		m_colliders2DToBeDestroyed[ colliderToBeDestroyedIndex ] = nullptr;
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::AdvanceSimulation( float deltaSeconds )
+{
+	ApplyEffectors( deltaSeconds );
+	MoveRigidbodies( deltaSeconds );
+	//Clean Up is end frame
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::ApplyEffectors( float deltaSeconds )
+{
+	
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::MoveRigidbodies( float deltaSeconds )
+{
+	for( int rbIndex = 0; rbIndex < m_rigidbodies2D.size(); ++rbIndex )
+	{
+		Rigidbody2D* rb = m_rigidbodies2D[ rbIndex ];
+		if( rb->DoesMove() )
+		{
+			rb->EulerStep( deltaSeconds, rb );
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::EulerStep( float deltaSeconds, Rigidbody2D* rb )
+{
+	Vec2 acceleration = rb->GetFrameAcceleration();
+
+	Vec2 deltaVelocity = acceleration * deltaSeconds;
+	rb->m_velocity += deltaVelocity;
+
+	Vec2 deltaPosition = rb->m_velocity * deltaSeconds;
+	rb->SetPosition( rb->m_worldPosition + deltaPosition );
 }
 
 
@@ -100,7 +143,7 @@ DiscCollider2D* Physics2D::CreateDiscCollider2D( Vec2 localPosition, float radiu
 PolygonCollider2D* Physics2D::CreatePolygonCollider2D( std::vector<Vec2> polygonVerts, Vec2 localPosition )
 {
 	PolygonCollider2D* newPolygonCollider = new PolygonCollider2D();
-	newPolygonCollider->SetMembers( this, polygonVerts, localPosition );
+	newPolygonCollider->SetMembers( this, &polygonVerts[ 0 ], polygonVerts.size(), localPosition );
 	return (PolygonCollider2D*)AddColliderToVector( newPolygonCollider );
 }
 

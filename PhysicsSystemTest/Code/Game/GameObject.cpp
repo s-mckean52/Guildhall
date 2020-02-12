@@ -32,6 +32,8 @@ void GameObject::Update( float deltaSeconds )
 	UNUSED( deltaSeconds );
 
 	UpdateColors();
+
+	m_rigidbody->SetEnabled( !m_isHeld );
 }
 
 
@@ -73,6 +75,7 @@ void GameObject::Draw() const
 	if( m_isDestroyed ) return;
 
 	m_rigidbody->m_collider->DebugRender( g_theRenderer, m_currentBorderColor, m_currentFillColor );
+	m_rigidbody->DebugRender( g_theRenderer );
 }
 
 

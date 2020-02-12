@@ -7,6 +7,7 @@
 #include "Engine/Math/OBB2.hpp"
 #include "Engine/Math/FloatRange.hpp"
 #include "Engine/Math/Vec4.hpp"
+#include "Engine/Math/Polygon2D.hpp"
 #include <math.h>
 
 
@@ -611,7 +612,7 @@ bool DoOBBAndDiscOverlap2D( const OBB2& obb, const Vec2& discCenter, float discR
 
 
 //---------------------------------------------------------------------------------------------------------
-bool DoPolygonAndDiscOverlap( std::vector<Vec2> polygonVerts, const Vec2& discCenter, float discRadius )
+bool DoPolygonAndDiscOverlap( const Polygon2D& polygon, const Vec2& discCenter, float discRadius )
 {
 	return false;
 }
@@ -861,38 +862,9 @@ const Vec2 GetNearestPointOnOBB2D( const Vec2& refPos, const OBB2& box )
 
 
 //---------------------------------------------------------------------------------------------------------
-const Vec2 GetNearestPointOnPolygon2D( const Vec2& refPos, std::vector<Vec2> polygonVerts )
+const Vec2 GetNearestPointOnPolygon2D( const Vec2& refPos, const Polygon2D& polygon )
 {
-	if( IsPointInsidePolygon2D( refPos, polygonVerts ) ) return refPos;
-
-	for( int vertIndex = 0; vertIndex < polygonVerts.size(); ++vertIndex )
-	{
-		Vec2 currentVertex = polygonVerts[ vertIndex ];
-		Vec2 nextVertex;
-		if( vertIndex != polygonVerts.size() - 1 )
-		{
-			nextVertex = polygonVerts[ static_cast<size_t>( vertIndex ) + 1 ];
-		}
-		else
-		{
-			nextVertex = polygonVerts[ 0 ];
-		}
-
-		Vec2 lineSegment = nextVertex - currentVertex;
-		Vec2 displacementToPointFromStart = refPos - currentVertex;
-
-		Vec2 projectedVector = GetProjectedOnto2D( displacementToPointFromStart, lineSegment );
-		float projectedVectorDot = DotProduct2D( projectedVector, lineSegment );
-
-		if( projectedVectorDot < 0.f )
-		{
-			return currentVertex;
-		}
-		else if( projectedVector.GetLengthSquared() <= lineSegment.GetLengthSquared() )
-		{
-			return currentVertex + projectedVector;
-		}
-	}
+	return polygon.GetClosestPoint( refPos );
 }
 
 
@@ -951,33 +923,9 @@ bool IsPointInsideOBB2D( const Vec2& point, const OBB2& box )
 
 
 //---------------------------------------------------------------------------------------------------------
-bool IsPointInsidePolygon2D( const Vec2& point, std::vector<Vec2> polygonVerts )
+bool IsPointInsidePolygon2D( const Vec2& point, const Polygon2D& polygon )
 {
-	for( int vertIndex = 0; vertIndex < polygonVerts.size(); ++vertIndex )
-	{
-		Vec2 currentVertex = polygonVerts[ vertIndex ];
-		Vec2 nextVertex;
-		if( vertIndex != polygonVerts.size() - 1 )
-		{
-			int nextIndex = vertIndex + 1;
-			nextVertex = polygonVerts[ nextIndex ];
-		}
-		else
-		{
-			nextVertex = polygonVerts[ 0 ];
-		}
-
-		Vec2 lineSegment = nextVertex - currentVertex;
-		Vec2 segmentNormal = lineSegment.GetRotatedMinus90Degrees();
-		segmentNormal.Normalize();
-		Vec2 displacementToPoint = point - currentVertex;
-		if( DotProduct2D( segmentNormal, displacementToPoint ) < 0.f )
-		{
-			return false;
-		}
-	}
-
-	return true;
+	return polygon.IsPointInside( point );
 }
 
 

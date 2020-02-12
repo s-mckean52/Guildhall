@@ -3,10 +3,11 @@
 #include "Engine/Math/Vec2.hpp"
 #include <vector>
 
-struct AABB2;
-struct Vec2;
-struct Rgba8;
-struct OBB2;
+struct	AABB2;
+struct	Vec2;
+struct	Rgba8;
+struct	OBB2;
+class	Polygon2D;
 
 
 void AppendVertsForAABB2D( std::vector<Vertex_PCU>& vertexArray, const AABB2& box, const Rgba8& color, const Vec2& uvAtMins = Vec2(), const Vec2& uvAtMaxes = Vec2() );
@@ -16,5 +17,5 @@ void AppendVertsForLineBetweenPoints( std::vector<Vertex_PCU>& lineVerts, const 
 void AppendVertsForCircleAtPoint( std::vector<Vertex_PCU>& circleVerts, float radius, const Rgba8 color, float thickness );
 void AppendVertsForFilledCircle( std::vector<Vertex_PCU>& circleVerts, float radius, const Rgba8 color );
 void AppendVertsForAABB2OutlineAtPoint( std::vector<Vertex_PCU>& vertextArray, const AABB2& box, const Rgba8& color, float thickness );
-void AppendVertsForPolygon2DOutline( std::vector<Vertex_PCU>& vertexArray, const std::vector<Vec2> polygonVerts, const Rgba8& color, float thickness );
-void AppendVertsForPolygon2DFilled( std::vector<Vertex_PCU>& vertexArray, const std::vector<Vec2> polygonVerts, const Rgba8& color );
+void AppendVertsForPolygon2DOutline( std::vector<Vertex_PCU>& vertexArray, Polygon2D const& polygon, const Rgba8& color, float thickness );
+void AppendVertsForPolygon2DFilled( std::vector<Vertex_PCU>& vertexArray, Polygon2D const& polygon, const Rgba8& color );

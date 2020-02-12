@@ -2,6 +2,7 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/OBB2.hpp"
+#include "Engine/Math/Polygon2D.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -188,42 +189,35 @@ void AppendVertsForAABB2OutlineAtPoint( std::vector<Vertex_PCU>& vertextArray, c
 
 
 //---------------------------------------------------------------------------------------------------------
-void AppendVertsForPolygon2DOutline( std::vector<Vertex_PCU>& vertexArray, const std::vector<Vec2> polygonVerts, const Rgba8& color, float thickness )
+void AppendVertsForPolygon2DOutline( std::vector<Vertex_PCU>& vertexArray, Polygon2D const& polygon, const Rgba8& color, float thickness )
 {
 	Vec2 startVert;
 	Vec2 endVert;
-	for( int polygonVertIndex = 0; polygonVertIndex < polygonVerts.size(); ++polygonVertIndex )
-	{
-		startVert = polygonVerts[ polygonVertIndex ];
-		if( polygonVertIndex != polygonVerts.size() - 1 )
-		{
-			endVert = polygonVerts[ static_cast<size_t>( polygonVertIndex ) + 1 ];
-		}
-		else
-		{
-			endVert = polygonVerts[ 0 ];
-		}
 
+	for( int polygonEdgeIndex = 0; polygonEdgeIndex < polygon.GetEdgeCount(); ++polygonEdgeIndex )
+	{
+		polygon.GetEdge( polygonEdgeIndex, startVert, endVert );
 		AppendVertsForLineBetweenPoints( vertexArray, startVert, endVert, color, thickness );
 	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void AppendVertsForPolygon2DFilled( std::vector<Vertex_PCU>& vertexArray, const std::vector<Vec2> polygonVerts, const Rgba8& color )
+void AppendVertsForPolygon2DFilled( std::vector<Vertex_PCU>& vertexArray, Polygon2D const& polygon, const Rgba8& color )
 {
-	Vec2 startVert = polygonVerts[ 0 ];
-	Vec2 secondTriVert = polygonVerts[ 1 ];
-	Vec2 thirdTriVert = polygonVerts[ 2 ];
+	Vec2 startVert;
+	Vec2 secondTriVert;
+	Vec2 thirdTriVert;
 
-	for( int polygonVertIndex = 1; polygonVertIndex < polygonVerts.size() - 1; ++polygonVertIndex )
+	int polygonEdgeCount = polygon.GetVertexCount();
+	polygon.GetEdge( 0, startVert, secondTriVert );
+
+	for( int polygonEdgeIndex = 1; polygonEdgeIndex < polygonEdgeCount - 1; ++polygonEdgeIndex )
 	{
+		polygon.GetEdge( polygonEdgeIndex, secondTriVert, thirdTriVert );
+
 		vertexArray.push_back( Vertex_PCU( startVert, color ) );
 		vertexArray.push_back( Vertex_PCU( secondTriVert, color ) );
 		vertexArray.push_back( Vertex_PCU( thirdTriVert, color ) );
-
-		int nextVertIndex = ( polygonVertIndex + 2 ) % polygonVerts.size();
-		secondTriVert = thirdTriVert;
-		thirdTriVert = polygonVerts[ nextVertIndex ];
 	}
 }
