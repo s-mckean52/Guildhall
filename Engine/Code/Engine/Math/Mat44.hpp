@@ -101,6 +101,10 @@ public:
 	static const Mat44 CreateUniformScaleXYZ( float uniformScaleXYZ );
 	static const Mat44 CreateNonUniformScaleXYZ( const Vec3& scalesXYZ );
 
+
+	//Projection
+	static const Mat44 CreateOrthographicProjection( const Vec3& min, const Vec3& max );
+
 private:
 	const Mat44 operator*( const Mat44& rhs ) const = delete;
 };

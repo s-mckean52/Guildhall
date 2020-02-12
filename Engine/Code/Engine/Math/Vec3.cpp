@@ -1,4 +1,5 @@
 #include "Engine/Math/Vec3.hpp"
+#include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include <math.h>
 
@@ -20,6 +21,13 @@ Vec3::Vec3( float initialX, float initialY, float initialZ )
 {
 }
 
+
+Vec3::Vec3( const Vec2& copyFrom, float z )
+	: x( copyFrom.x )
+	, y( copyFrom.y )
+	, z( z )
+{
+}
 
 //---------------------------------------------------------------------------------------------------------
 float Vec3::GetLength() const

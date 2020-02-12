@@ -217,8 +217,8 @@ void RenderContext::BeginCamera( const Camera& camera )
 void RenderContext::UpdateCameraData( Camera const& camera )
 {
 	camera_data_t cameraData;
-	cameraData.ortho_min = camera.GetOrthoBottomLeft();
-	cameraData.ortho_max = camera.GetOrthoTopRight();
+	cameraData.projection = camera.GetProjectionMatrix();
+	cameraData.view = camera.GetViewMatrix();
 
 	m_cameraUBO->Update( &cameraData, sizeof( cameraData ), sizeof( cameraData ) );
 }

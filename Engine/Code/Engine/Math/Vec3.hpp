@@ -1,5 +1,7 @@
 #pragma once
 
+struct Vec2;
+
 struct Vec3
 {
 public:
@@ -11,6 +13,7 @@ public:
 	~Vec3() {}
 	Vec3() {}
 	Vec3( const Vec3& copyFrom );
+	Vec3( const Vec2& copyFrom, float z );
 	explicit Vec3( float initialX, float initialY, float initialZ);
 
 	//Accessors

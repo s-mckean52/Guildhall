@@ -4,6 +4,7 @@
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Renderer/Texture.hpp"
+#include "Engine/Math/Mat44.hpp"
 #include <vector>
 
 
@@ -39,9 +40,9 @@ struct frame_data_t
 };
 
 struct camera_data_t
-{
-	Vec2 ortho_min;
-	Vec2 ortho_max;
+{				  
+	Mat44 projection;
+	Mat44 view;
 };
 
 class RenderContext

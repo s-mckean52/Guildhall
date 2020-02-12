@@ -3,6 +3,20 @@
 #include "Engine/Renderer/Texture.hpp"
 
 //---------------------------------------------------------------------------------------------------------
+void Camera::SetPosition( const Vec3& position )
+{
+	m_position = position;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::Translate( const Vec3& translation )
+{
+	m_position += translation;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 Rgba8 Camera::GetClearColor() const
 {
 	return m_clearColor;
@@ -21,6 +35,8 @@ void Camera::SetOrthoView( const Vec2& bottomLeft, const Vec2& topRight )
 {
 	m_bottomLeft = bottomLeft;
 	m_topRight = topRight;
+
+	m_projection = Mat44::CreateOrthographicProjection( Vec3( bottomLeft, 0.0f ), Vec3( topRight, 1.0f ) );
 }
 
 
@@ -35,6 +51,20 @@ Vec2 Camera::GetOrthoBottomLeft() const
 Vec2 Camera::GetOrthoTopRight() const
 {
 	return m_topRight;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Mat44 Camera::GetProjectionMatrix() const
+{
+	return m_projection;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Mat44 Camera::GetViewMatrix() const
+{
+	return m_view;
 }
 
 
