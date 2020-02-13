@@ -218,7 +218,7 @@ void RenderContext::UpdateCameraData( Camera const& camera )
 {
 	camera_data_t cameraData;
 	cameraData.projection = camera.GetProjectionMatrix();
-	cameraData.view = camera.GetViewMatrix();
+	cameraData.view = Mat44::CreateTranslationXYZ( -camera.m_position );
 
 	m_cameraUBO->Update( &cameraData, sizeof( cameraData ), sizeof( cameraData ) );
 }

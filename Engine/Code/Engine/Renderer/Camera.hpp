@@ -15,11 +15,13 @@ struct Texture;
 
 class Camera
 {
+public:
+	Vec3 m_position;
+
 private: 
 	Vec2 m_bottomLeft;
 	Vec2 m_topRight;
 
-	Vec3 m_position;
 
 	Mat44 m_projection;
 	Mat44 m_view;

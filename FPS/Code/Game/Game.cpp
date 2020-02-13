@@ -73,6 +73,35 @@ void Game::Render() const
 //---------------------------------------------------------------------------------------------------------
 void Game::Update( float deltaSeconds )
 {
+	MoveCamera( deltaSeconds );
+	ChangeClearColor( deltaSeconds );
+}
+
+
+void Game::MoveCamera( float deltaSeconds )
+{
+	float moveSpeed = 5.f * deltaSeconds;
+	if( g_theInput->IsKeyPressed( 'W' ) )
+	{
+		m_worldCamera.Translate( Vec3( 0.f, moveSpeed, 0.f ) );
+	}	
+	if( g_theInput->IsKeyPressed( 'A' ) )
+	{
+		m_worldCamera.Translate( Vec3( -moveSpeed, 0.f, 0.f ) );
+	}	
+	if( g_theInput->IsKeyPressed( 'S' ) )
+	{
+		m_worldCamera.Translate( Vec3( 0.f, -moveSpeed, 0.f ) );
+	}	
+	if( g_theInput->IsKeyPressed( 'D' ) )
+	{
+		m_worldCamera.Translate( Vec3( moveSpeed, 0.f, 0.f ) );
+	}
+}
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ChangeClearColor( float deltaSeconds )
+{
 	m_colorChangeDelay -= deltaSeconds;
 
 	if( m_clearColor.r > 29 && m_colorChangeDelay <= 0 )
@@ -87,7 +116,6 @@ void Game::Update( float deltaSeconds )
 
 	m_worldCamera.SetClearMode( CLEAR_COLOR_BIT, m_clearColor, 0.0f, 0 );
 }
-
 
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateCameras( float deltaSeconds )

@@ -19,6 +19,8 @@ public:
 	void Render() const;
 
 	void Update( float deltaSeconds );
+	void ChangeClearColor( float deltaSeconds );
+	void MoveCamera( float deltaSeconds );
 	void UpdateCameras( float deltaSeconds );
 
 	bool IsQuitting() const { return m_isQuitting; }
