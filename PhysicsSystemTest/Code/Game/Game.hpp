@@ -47,6 +47,7 @@ public:
 	void CheckGameObjectOverlap( GameObject* gameObject );
 	void SetDraggedObject();
 	void DestroyGameObjects();
+	bool IsNextPointValidOnPolygon( const Vec2& point );
 
 	void CreatePolygonFromInput();
 	void DrawNewPolygonPoints() const;
@@ -54,6 +55,8 @@ public:
 
 private:
 	Vec2 m_mousePos = Vec2();
+
+	Rgba8 m_polygonLineColor = Rgba8::BLUE;
 
 	Camera m_worldCamera;
 	Camera m_uiCamera;

@@ -33,7 +33,7 @@ bool Polygon2D::IsPointInside( Vec2 const& point ) const
 
 		Vec2 lineSegment = edgeEnd - edgeStart;
 		Vec2 segmentNormal = lineSegment.GetRotated90Degrees();
-		//segmentNormal.Normalize();
+		segmentNormal.Normalize();
 		Vec2 displacementToPoint = point - edgeStart;
 		if( DotProduct2D( segmentNormal, displacementToPoint ) < 0.f )
 		{

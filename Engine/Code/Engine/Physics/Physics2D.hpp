@@ -1,11 +1,11 @@
 #pragma once
+#include "Engine/Math/Vec2.hpp"
 #include <vector>
 
 class	Rigidbody2D;
 class	Collider2D;
 class	DiscCollider2D;
 class	PolygonCollider2D;
-struct	Vec2;
 
 class Physics2D
 {
@@ -22,6 +22,12 @@ public:
 	void MoveRigidbodies( float deltaSeconds );
 	void EulerStep( float deltaSeconds, Rigidbody2D* rb );
 
+	void SetSceneGravity();
+
+	void ClearFrameData();
+	void AddGravityInDownDirection( float gravityToAdd );
+	float GetGravityAmount() const { return m_gravityAcceleration.y; }
+
 	Rigidbody2D* CreateRigidbody2D();
 	DiscCollider2D* CreateDiscCollider2D( Vec2 localPosition, float radius );
 	PolygonCollider2D* CreatePolygonCollider2D( std::vector<Vec2> polygonVerts, Vec2 localPosition );
@@ -32,7 +38,7 @@ public:
 	Collider2D* AddColliderToVector( Collider2D* newCollider );
 
 public:
-	float m_gravityAcceleration = 9.81f;
+	Vec2 m_gravityAcceleration = Vec2( 0.0f, -9.81f );
 
 	std::vector< Rigidbody2D* > m_rigidbodies2D;
 	std::vector< Rigidbody2D* > m_rigidbodies2DToBeDestroyed;

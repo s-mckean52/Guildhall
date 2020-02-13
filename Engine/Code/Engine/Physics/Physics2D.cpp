@@ -4,7 +4,6 @@
 #include "Engine/Physics/DiscCollider2D.hpp"
 #include "Engine/Physics/PolygonCollider2D.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Math/Vec2.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -38,6 +37,8 @@ void Physics2D::Update( float deltaSeconds )
 //---------------------------------------------------------------------------------------------------------
 void Physics2D::EndFrame()
 {
+	ClearFrameData();
+
 	for( int rbToBeDestroyedIndex = 0; rbToBeDestroyedIndex < m_rigidbodies2DToBeDestroyed.size(); ++rbToBeDestroyedIndex )
 	{
 		delete m_rigidbodies2DToBeDestroyed[ rbToBeDestroyedIndex ];
@@ -64,7 +65,8 @@ void Physics2D::AdvanceSimulation( float deltaSeconds )
 //---------------------------------------------------------------------------------------------------------
 void Physics2D::ApplyEffectors( float deltaSeconds )
 {
-	
+	UNUSED( deltaSeconds );
+	SetSceneGravity();
 }
 
 
@@ -74,7 +76,7 @@ void Physics2D::MoveRigidbodies( float deltaSeconds )
 	for( int rbIndex = 0; rbIndex < m_rigidbodies2D.size(); ++rbIndex )
 	{
 		Rigidbody2D* rb = m_rigidbodies2D[ rbIndex ];
-		if( rb->DoesMove() )
+		if( rb && rb->IsSimulated() )
 		{
 			EulerStep( deltaSeconds, rb );
 		}
@@ -85,13 +87,49 @@ void Physics2D::MoveRigidbodies( float deltaSeconds )
 //---------------------------------------------------------------------------------------------------------
 void Physics2D::EulerStep( float deltaSeconds, Rigidbody2D* rb )
 {
-	Vec2 acceleration = rb->GetFrameAcceleration( m_gravityAcceleration );
+	Vec2 acceleration = rb->GetFrameAcceleration();
 
 	Vec2 deltaVelocity = acceleration * deltaSeconds;
 	rb->m_velocity += deltaVelocity;
 
 	Vec2 deltaPosition = rb->m_velocity * deltaSeconds;
 	rb->SetPosition( rb->m_worldPosition + deltaPosition );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::SetSceneGravity()
+{
+	for( int rbIndex = 0; rbIndex < m_rigidbodies2D.size(); ++rbIndex )
+	{
+		Rigidbody2D* rb = m_rigidbodies2D[ rbIndex ];
+		if( rb && rb->DoesTakeForces() )
+		{
+			rb->AddForceFromAcceleration( m_gravityAcceleration );
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::ClearFrameData()
+{
+	for( int rbIndex = 0; rbIndex < m_rigidbodies2D.size(); ++rbIndex )
+	{
+		Rigidbody2D* rb = m_rigidbodies2D[ rbIndex ];
+		if( rb )
+		{
+			rb->m_frameForces = Vec2();
+			rb->m_positionLastFrame = rb->m_worldPosition;
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::AddGravityInDownDirection( float gravityToAdd )
+{
+	m_gravityAcceleration += Vec2( 0.0f, gravityToAdd );
 }
 
 
@@ -143,7 +181,7 @@ DiscCollider2D* Physics2D::CreateDiscCollider2D( Vec2 localPosition, float radiu
 PolygonCollider2D* Physics2D::CreatePolygonCollider2D( std::vector<Vec2> polygonVerts, Vec2 localPosition )
 {
 	PolygonCollider2D* newPolygonCollider = new PolygonCollider2D();
-	newPolygonCollider->SetMembers( this, &polygonVerts[ 0 ], polygonVerts.size(), localPosition );
+	newPolygonCollider->SetMembers( this, &polygonVerts[ 0 ], static_cast<unsigned int>( polygonVerts.size() ), localPosition );
 	return (PolygonCollider2D*)AddColliderToVector( newPolygonCollider );
 }
 

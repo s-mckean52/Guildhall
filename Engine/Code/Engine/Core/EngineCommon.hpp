@@ -59,6 +59,8 @@ extern const unsigned char KEY_CODE_F10;
 extern const unsigned char KEY_CODE_F11;
 extern const unsigned char KEY_CODE_F12;
 extern const unsigned char KEY_CODE_TILDE;
+extern const unsigned char KEY_CODE_PLUS;
+extern const unsigned char KEY_CODE_MINUS;
 
 extern const unsigned char MOUSE_CODE_LEFT;
 extern const unsigned char MOUSE_CODE_RIGHT;

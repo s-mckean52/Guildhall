@@ -27,9 +27,17 @@ void Rigidbody2D::TakeCollider( Collider2D* collider )
 
 
 //---------------------------------------------------------------------------------------------------------
-Vec2 Rigidbody2D::GetFrameAcceleration( float gravity )
+Vec2 Rigidbody2D::GetFrameAcceleration()
 {
-	return Vec2();
+	Vec2 acceleration = m_frameForces / m_mass;
+	return acceleration;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec2 Rigidbody2D::GetVelocity() const
+{
+	return m_velocity;
 }
 
 
@@ -55,6 +63,27 @@ void Rigidbody2D::SetEnabled( bool isEnabled )
 void Rigidbody2D::SetSimulationMode( SimulationMode simulationMode )
 {
 	m_simulationMode = simulationMode;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::SetVelocity( float deltaSeconds )
+{
+	m_velocity = ( m_worldPosition - m_positionLastFrame ) / deltaSeconds;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::SetMass( float mass )
+{
+	m_mass = mass;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::AddForceFromAcceleration( const Vec2& acceleration )
+{
+	m_frameForces += m_mass * acceleration;
 }
 
 
@@ -89,17 +118,32 @@ void Rigidbody2D::DebugRender( RenderContext* context ) const
 
 
 //---------------------------------------------------------------------------------------------------------
-bool Rigidbody2D::DoesMove() const
+bool Rigidbody2D::DoesTakeForces() const
 {
-	if( IsEnabled() )
+	if( !IsEnabled() )
 	{
 		return false;
 	}
-	else if( m_simulationMode == SIMULATION_MODE_STATIC )
+	else if( m_simulationMode == SIMULATION_MODE_STATIC || m_simulationMode == SIMULATION_MODE_KINEMATIC)
 	{
 		return false;
 	}
 	return true;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool Rigidbody2D::IsSimulated() const
+{
+	if( !IsEnabled() )
+	{
+		return false;
+	}
+	if( m_simulationMode == SIMULATION_MODE_DYNAMIC || m_simulationMode == SIMULATION_MODE_KINEMATIC )
+	{
+		return true;
+	}
+	return false;
 }
 
 

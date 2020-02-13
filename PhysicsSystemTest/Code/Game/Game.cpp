@@ -54,8 +54,10 @@ void Game::StartUp()
 	m_worldCamera.SetOutputSize( Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
 	m_worldCamera.SetPosition( m_focalPoint );
 	m_worldCamera.SetProjectionOrthographic( m_cameraHeight );
-
-	m_uiCamera.SetOrthoView( Vec2( 0, 0 ), Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
+	
+	m_uiCamera.SetOutputSize( Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
+	m_uiCamera.SetPosition( m_focalPoint );
+	m_uiCamera.SetProjectionOrthographic( m_cameraHeight );
 }
 
 
@@ -105,6 +107,9 @@ void Game::Render() const
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderUI() const
 {
+// 	std::vector<Vertex_PCU> gravityVerts;
+// 	g_testFont->AddVertsForText2D( gravityVerts, Vec2(), 30.f,  )
+
 	if( g_theConsole->IsOpen() )
 	{
 		g_theConsole->Render( *g_theRenderer, m_uiCamera, 30.f, g_testFont );
@@ -116,9 +121,9 @@ void Game::RenderUI() const
 void Game::Update( float deltaSeconds )
 {
 	UpdateGameStatesFromInput();
-
+	
 	m_physics2D->Update( deltaSeconds );
-
+	
 	UpdateGameObjects( deltaSeconds );
 
 	UpdateCameras( deltaSeconds );
@@ -223,6 +228,16 @@ void Game::UpdateGameStatesFromInput()
 	{
 		m_isQuitting = true;
 	}
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_PLUS ) )
+	{
+		m_physics2D->AddGravityInDownDirection( 0.1f );
+	}
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_MINUS ) )
+	{
+		m_physics2D->AddGravityInDownDirection( -0.1f );
+	}
 }
 
 
@@ -294,6 +309,7 @@ GameObject* Game::CreateDisc()
 	GameObject* gameObject = new GameObject();
 	gameObject->m_rigidbody = m_physics2D->CreateRigidbody2D();
 	gameObject->m_rigidbody->SetPosition( mousePos );
+	gameObject->m_rigidbody->SetMass( 1.f );
 
 	float radius = g_RNG->RollRandomFloatInRange( 20.f, 50.f );
 	DiscCollider2D* collider = m_physics2D->CreateDiscCollider2D( Vec2( 0.f, 0.f ), radius );
@@ -310,7 +326,8 @@ GameObject* Game::CreatePolygon( std::vector<Vec2> polygonPoints )
 	gameObject->m_rigidbody = m_physics2D->CreateRigidbody2D();
 	
 	Vec2 position = AveragePositions( polygonPoints );
-	gameObject->m_rigidbody->SetPosition( position );
+	gameObject->SetPosition( position );
+	gameObject->m_rigidbody->SetMass( 1.f );
 
 	for( int pointIndex = 0; pointIndex < polygonPoints.size(); ++pointIndex )
 	{
@@ -342,7 +359,7 @@ Vec2 Game::AveragePositions( std::vector<Vec2> points )
 	{
 		averagePosition += points[ pointIndex ];
 	}
-	averagePosition /= points.size();
+	averagePosition /= static_cast<float>( points.size() );
 	return averagePosition;
 }
 
@@ -428,9 +445,66 @@ void Game::DestroyGameObjects()
 
 
 //---------------------------------------------------------------------------------------------------------
+bool Game::IsNextPointValidOnPolygon( const Vec2& point )
+{
+	Vec2 start;
+	Vec2 end;
+
+	for( int polygonIndex = 0; polygonIndex < m_newPolygonToDraw.size(); ++polygonIndex )
+	{
+		if( polygonIndex != m_newPolygonToDraw.size() - 1 )
+		{
+			start = m_newPolygonToDraw[ polygonIndex ];
+			end = m_newPolygonToDraw[ polygonIndex + 1 ];
+
+			Vec2 edge = end - start;
+			Vec2 edgeNormal = edge.GetRotated90Degrees();
+			edgeNormal.Normalize();
+			Vec2 displacementStartToPoint = point - start;
+
+			if( DotProduct2D( edgeNormal, displacementStartToPoint ) < 0.f )
+			{
+				return false;
+			}
+		}
+		else if( m_newPolygonToDraw.size() > 2 )
+		{
+			start = m_newPolygonToDraw[ polygonIndex ];
+			end = m_newPolygonToDraw[ 0 ];
+
+			Vec2 edge = end - start;
+			Vec2 edgeNormal = edge.GetRotated90Degrees();
+			edgeNormal.Normalize();
+			Vec2 displacementStartToPoint = point - start;
+
+			if( DotProduct2D( edgeNormal, displacementStartToPoint ) > 0.f )
+			{
+				return false;
+			}
+		}
+
+
+	}
+
+	return true;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::CreatePolygonFromInput()
 {
-	if( g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_LEFT ) )
+	bool isValidPoint = IsNextPointValidOnPolygon( m_mousePos );
+
+	if( isValidPoint )
+	{
+		m_polygonLineColor = Rgba8::BLUE;
+	}
+	else
+	{
+		m_polygonLineColor = Rgba8::RED;
+	}
+
+	if( g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_LEFT ) && isValidPoint )
 	{
 		AddPointToNewPolygon();
 	}
@@ -456,13 +530,21 @@ void Game::DrawNewPolygonPoints() const
 {
 	for( int pointIndex = 0; pointIndex < m_newPolygonToDraw.size(); ++pointIndex )
 	{
+		Vec2 start;
+		Vec2 end;
+
 		if( pointIndex != m_newPolygonToDraw.size() - 1 )
 		{
-			Vec2 start = m_newPolygonToDraw[ pointIndex ];
-			Vec2 end = m_newPolygonToDraw[ pointIndex + 1 ];
+			start = m_newPolygonToDraw[ pointIndex ];
+			end = m_newPolygonToDraw[ pointIndex + 1 ];
 			DrawLineBetweenPoints( start, end, Rgba8::BLUE, 5.f );
 		}
-		DrawCircleAtPoint( m_newPolygonToDraw[ pointIndex ], 5.f, Rgba8::YELLOW, 3.f );
+		else
+		{
+			start = m_newPolygonToDraw[ m_newPolygonToDraw.size() - 1 ];
+			end = m_mousePos;
+			DrawLineBetweenPoints( start, end, m_polygonLineColor, 5.f );
+		}
 	}
 }
 
