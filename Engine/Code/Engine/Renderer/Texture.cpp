@@ -11,6 +11,9 @@ Texture::~Texture()
 	delete m_renderTargetView;
 	m_renderTargetView = nullptr;
 
+	delete m_shaderResourceView;
+	m_shaderResourceView = nullptr;
+
 	DX_SAFE_RELEASE( m_handle );
 }
 
@@ -37,6 +40,14 @@ Texture::Texture( RenderContext* renderContext, ID3D11Texture2D* handle )
 
 
 //---------------------------------------------------------------------------------------------------------
+Texture::Texture( const char* filePath, RenderContext* owner, ID3D11Texture2D* handle )
+	: Texture( owner, handle )
+{
+	m_imageFilePath = filePath;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 float Texture::GetAspect() const
 {
 	return static_cast<float>( m_imageTexelSize.x ) / static_cast<float>( m_imageTexelSize.y );
@@ -44,7 +55,7 @@ float Texture::GetAspect() const
 
 
 //---------------------------------------------------------------------------------------------------------
-TextureView* Texture::GetRenderTargetView()
+TextureView* Texture::CreateOrGetRenderTargetView()
 {
 	if( m_renderTargetView )
 	{
@@ -62,5 +73,27 @@ TextureView* Texture::GetRenderTargetView()
 	}
 
 	return m_renderTargetView;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+TextureView* Texture::GetOrCreateShaderResourceView()
+{
+	if( m_shaderResourceView != nullptr )
+	{
+		return m_shaderResourceView;
+	}
+
+	ID3D11Device* device = m_owner->m_device;
+	ID3D11ShaderResourceView* srv = nullptr;
+	device->CreateShaderResourceView( m_handle, nullptr, &srv );
+
+	if( srv != nullptr )
+	{
+		m_shaderResourceView = new TextureView();
+		m_shaderResourceView->m_srv = srv;
+	}
+
+	return m_shaderResourceView;
 }
 

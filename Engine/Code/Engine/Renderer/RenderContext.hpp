@@ -8,6 +8,7 @@
 #include <vector>
 
 
+class Sampler;
 class BitmapFont;
 class Window;
 class SwapChain;
@@ -17,6 +18,7 @@ class VertexBuffer;
 struct ID3D11Device;
 struct ID3D11Buffer;
 struct ID3D11DeviceContext;
+struct ID3D11BlendState;
 
 
 enum class BlendMode
@@ -71,16 +73,20 @@ public:
 	void		BindShader( const char* filepath );
 	void		BindVertexInput( VertexBuffer* vbo );
 	void		BindUniformBuffer( unsigned int slot, RenderBuffer* ubo );
+	void		BindSampler( Sampler* sampler );
 
-	void		BindTexture( const Texture* texture );
+	void		BindTexture( const Texture* constTexture );
 	Texture*	CreateOrGetTextureFromFile( const char* imageFilePath );
 	BitmapFont* CreateOrGetBitmapFontFromFile( const char* imageFilePath );
+	Shader*		GetOrCreateShader( char const* filename );
+	Texture*	CreateTextureFromColor( Rgba8 color );
 
-	Shader* GetOrCreateShader( char const* filename );
+	void ReleaseLoadedAssets();
 
 private:
-	void CreateTextureFromFile( const char* imageFilePath );
-	void CreateBitmapFontFromFile( const char* fontFilePath );
+	void CreateBlendStates();
+	bool CreateTextureFromFile( const char* imageFilePath );
+	bool CreateBitmapFontFromFile( const char* fontFilePath );
 
 private:
 	bool m_isDrawing = false;
@@ -91,12 +97,17 @@ private:
 	std::vector<Shader*>		m_loadedShaders;
 
 public:
-	ID3D11Device*			m_device		= nullptr;
-	ID3D11DeviceContext*	m_context		= nullptr;
-	SwapChain*				m_swapchain		= nullptr;
-	Shader*					m_currentShader = nullptr;
-	Shader*					m_defaultShader = nullptr;
-	VertexBuffer*			m_immediateVBO	= nullptr;
-	RenderBuffer*			m_frameUBO		= nullptr;
-	RenderBuffer*			m_cameraUBO		= nullptr;
+	ID3D11Device*			m_device				= nullptr;
+	ID3D11DeviceContext*	m_context				= nullptr;
+	SwapChain*				m_swapchain				= nullptr;
+	Shader*					m_currentShader			= nullptr;
+	Shader*					m_defaultShader			= nullptr;
+	Texture*				m_textueDefaultColor	= nullptr;
+	Sampler*				m_samplerDefault		= nullptr;
+	VertexBuffer*			m_immediateVBO			= nullptr;
+	RenderBuffer*			m_frameUBO				= nullptr;
+	RenderBuffer*			m_cameraUBO				= nullptr;
+
+	ID3D11BlendState* m_alphaBlendStateHandle		= nullptr;
+	ID3D11BlendState* m_additiveBlendStateHandle	= nullptr;
 };

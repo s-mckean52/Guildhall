@@ -26,13 +26,12 @@
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/RenderBuffer.hpp"
 #include "Engine/Core/Time.hpp"
+#include "Engine/Renderer/Sampler.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::StartUp( Window* theWindow )
 {
-/*	SetBlendMode( BlendMode::ALPHA );*/
-
 	IDXGISwapChain* swapchain;
 
 	UINT flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
@@ -80,6 +79,12 @@ void RenderContext::StartUp( Window* theWindow )
 
 	m_frameUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
 	m_cameraUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
+
+	m_samplerDefault = new Sampler( this, SAMPLER_POINT );
+	m_textueDefaultColor = CreateTextureFromColor( Rgba8::WHITE );
+
+	CreateBlendStates();
+	SetBlendMode( BlendMode::ADDITIVE );
 }
 
 
@@ -99,6 +104,11 @@ void RenderContext::EndFrame()
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::ShutDown()
 {
+	ReleaseLoadedAssets();
+
+	delete m_samplerDefault;
+	m_defaultShader = nullptr;
+
 	delete m_cameraUBO;
 	m_cameraUBO = nullptr;
 
@@ -107,9 +117,6 @@ void RenderContext::ShutDown()
 
 	delete m_immediateVBO;
 	m_immediateVBO = nullptr;
-
-	delete m_defaultShader;
-	m_defaultShader = nullptr;
 
 	delete m_swapchain;
 	m_swapchain = nullptr;
@@ -133,22 +140,20 @@ void RenderContext::UpdateFrameTime( float deltaSeconds )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::SetBlendMode( BlendMode blendMode )
 {
-	UNUSED( blendMode );
-// 	switch( blendMode )
-// 	{
-// 	case BlendMode::ALPHA:
-// 		glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
-// 		break;
-// 
-// 	case BlendMode::ADDITIVE:
-// 		glBlendFunc( GL_SRC_ALPHA, GL_ONE );
-// 		break;
-// 
-// 	default:
-// 		ERROR_AND_DIE( Stringf( "Unkown or unsupported blend mode #%i", blendMode ) );
-// 		break;
-// 	}
-	UNIMPLEMENTED_MSG( "OpenGl Blend mode stuff" );
+	float const zeroes[] = { 0, 0, 0, 0 };
+	
+	switch( blendMode )
+	{
+	case BlendMode::ALPHA:
+		m_context->OMSetBlendState( m_alphaBlendStateHandle, zeroes, ~0U );
+		break;
+	case BlendMode::ADDITIVE:
+		m_context->OMSetBlendState( m_additiveBlendStateHandle, zeroes, ~0U );
+		break;
+	default:
+		ERROR_AND_DIE( Stringf( "Unkown or unsupported blend mode #%i", blendMode ) );
+		break;
+	}
 }
 
 
@@ -162,9 +167,9 @@ void RenderContext::ClearScreen( const Rgba8& clearColor )
 	clearFloats[3] = (float)clearColor.a / 255.0f;
 
 	Texture* backbuffer = m_swapchain->GetBackBuffer();
-	TextureView* backbuffer_rtv = backbuffer->GetRenderTargetView();
+	TextureView* backbuffer_rtv = backbuffer->CreateOrGetRenderTargetView();
 
-	ID3D11RenderTargetView* rtv = backbuffer_rtv->GetRTVHandle();
+	ID3D11RenderTargetView* rtv = backbuffer_rtv->GetAsRTV();
 	m_context->ClearRenderTargetView( rtv, clearFloats );
 }
 
@@ -180,8 +185,8 @@ void RenderContext::BeginCamera( const Camera& camera )
 		colorTarget = m_swapchain->GetBackBuffer();
 	}
 
-	TextureView* view = colorTarget->GetRenderTargetView();
-	ID3D11RenderTargetView* rtv = view->GetRTVHandle();
+	TextureView* view = colorTarget->CreateOrGetRenderTargetView();
+	ID3D11RenderTargetView* rtv = view->GetAsRTV();
 	m_context->OMSetRenderTargets( 1, &rtv, nullptr );
 
 	IntVec2 outputSize = colorTarget->GetImageTexelSize();
@@ -202,7 +207,9 @@ void RenderContext::BeginCamera( const Camera& camera )
 
 	m_isDrawing = true;
 
-	BindShader( static_cast<Shader*>( nullptr ) );
+	BindShader( (Shader*)nullptr );
+	BindTexture( (Texture*)nullptr );
+	BindSampler( (Sampler*)nullptr );
 	m_lastBoundVBOHandle = nullptr;
 
 	UpdateCameraData( camera );
@@ -265,68 +272,90 @@ void RenderContext::DrawVertexArray( const std::vector<Vertex_PCU>& vertexArray 
 
 
 //---------------------------------------------------------------------------------------------------------
-void RenderContext::CreateTextureFromFile( const char* imageFilePath )
+void RenderContext::CreateBlendStates()
 {
-	UNUSED( imageFilePath );
-// 	unsigned int textureID = 0;
-// 	int imageTexelSizeX = 0;
-// 	int imageTexelSizeY = 0;
-// 	int numComponents = 0; 
-// 	int numComponentsRequested = 0;
-// 
-// 	// Load (and decompress) the image RGB(A) bytes from a file on disk into a memory buffer (array of bytes)
-// 	stbi_set_flip_vertically_on_load( 1 );
-// 	unsigned char* imageData = stbi_load( imageFilePath, &imageTexelSizeX, &imageTexelSizeY, &numComponents, numComponentsRequested );
-// 
-// 	// Check if the load was successful
-// 	GUARANTEE_OR_DIE( imageData, Stringf( "Failed to load image \"%s\"", imageFilePath ) );
-// 	GUARANTEE_OR_DIE( numComponents >= 3 && numComponents <= 4 && imageTexelSizeX > 0 && imageTexelSizeY > 0, Stringf( "ERROR loading image \"%s\" (Bpp=%i, size=%i,%i)", imageFilePath, numComponents, imageTexelSizeX, imageTexelSizeY ) );
-// 
-// 	// Enable OpenGL texturing
-// 	glEnable( GL_TEXTURE_2D );
-// 
-// 	// Tell OpenGL that our pixel data is single-byte aligned
-// 	glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-// 
-// 	// Ask OpenGL for an unused texName (ID number) to use for this texture
-// 	glGenTextures( 1, (GLuint*)&textureID );
-// 
-// 	// Tell OpenGL to bind (set) this as the currently active texture
-// 	glBindTexture( GL_TEXTURE_2D, textureID );
-// 
-// 	// Set texture clamp vs. wrap (repeat) default settings
-// 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT ); // GL_CLAMP or GL_REPEAT
-// 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT ); // GL_CLAMP or GL_REPEAT
-// 
-// 	// Set magnification (texel > pixel) and minification (texel < pixel) filters
-// 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST ); // one of: GL_NEAREST, GL_LINEAR
-// 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR ); // one of: GL_NEAREST, GL_LINEAR, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR
-// 
-// 	// Pick the appropriate OpenGL format (RGB or RGBA) for this texel data
-// 	GLenum bufferFormat = GL_RGBA; // the format our source pixel data is in; any of: GL_RGB, GL_RGBA, GL_LUMINANCE, GL_LUMINANCE_ALPHA, ...
-// 	if( numComponents == 3 )
-// 	{
-// 		bufferFormat = GL_RGB;
-// 	}
-// 	GLenum internalFormat = bufferFormat; // the format we want the texture to be on the card; technically allows us to translate into a different texture format as we upload to OpenGL
-// 
-// 	// Upload the image texel data (raw pixels bytes) to OpenGL under this textureID
-// 	glTexImage2D(			// Upload this pixel data to our new OpenGL texture
-// 		GL_TEXTURE_2D,		// Creating this as a 2d texture
-// 		0,					// Which mipmap level to use as the "root" (0 = the highest-quality, full-res image), if mipmaps are enabled
-// 		internalFormat,		// Type of texel format we want OpenGL to use for this texture internally on the video card
-// 		imageTexelSizeX,	// Texel-width of image; for maximum compatibility, use 2^N + 2^B, where N is some integer in the range [3,11], and B is the border thickness [0,1]
-// 		imageTexelSizeY,	// Texel-height of image; for maximum compatibility, use 2^M + 2^B, where M is some integer in the range [3,11], and B is the border thickness [0,1]
-// 		0,					// Border size, in texels (must be 0 or 1, recommend 0)
-// 		bufferFormat,		// Pixel format describing the composition of the pixel data in buffer
-// 		GL_UNSIGNED_BYTE,	// Pixel color components are unsigned bytes (one byte per color channel/component)
-// 		imageData );		// Address of the actual pixel data bytes/buffer in system memory
-// 
+	D3D11_BLEND_DESC alphaDesc;
+	alphaDesc.AlphaToCoverageEnable = false;
+	alphaDesc.IndependentBlendEnable = false;
+
+	alphaDesc.RenderTarget[0].BlendEnable			= true;
+	alphaDesc.RenderTarget[0].BlendOp				= D3D11_BLEND_OP_ADD;
+	alphaDesc.RenderTarget[0].SrcBlend				= D3D11_BLEND_SRC_ALPHA;
+	alphaDesc.RenderTarget[0].DestBlend				= D3D11_BLEND_INV_SRC_ALPHA;
+
+	alphaDesc.RenderTarget[0].BlendOpAlpha			= D3D11_BLEND_OP_ADD;
+	alphaDesc.RenderTarget[0].SrcBlendAlpha			= D3D11_BLEND_ONE;
+	alphaDesc.RenderTarget[0].DestBlendAlpha		= D3D11_BLEND_ZERO;
+
+	alphaDesc.RenderTarget[0].RenderTargetWriteMask	= D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	m_device->CreateBlendState( &alphaDesc, &m_alphaBlendStateHandle );
+
+
+	D3D11_BLEND_DESC additiveDesc;
+	additiveDesc.AlphaToCoverageEnable = false;
+	additiveDesc.IndependentBlendEnable = false;
+
+	additiveDesc.RenderTarget[0].BlendEnable			= true;
+	additiveDesc.RenderTarget[0].BlendOp				= D3D11_BLEND_OP_ADD;
+	additiveDesc.RenderTarget[0].SrcBlend				= D3D11_BLEND_ONE;
+	additiveDesc.RenderTarget[0].DestBlend				= D3D11_BLEND_ONE;
+
+	additiveDesc.RenderTarget[0].BlendOpAlpha			= D3D11_BLEND_OP_ADD;
+	additiveDesc.RenderTarget[0].SrcBlendAlpha			= D3D11_BLEND_ONE;
+	additiveDesc.RenderTarget[0].DestBlendAlpha			= D3D11_BLEND_ZERO;
+
+	additiveDesc.RenderTarget[0].RenderTargetWriteMask	= D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	m_device->CreateBlendState( &alphaDesc, &m_additiveBlendStateHandle );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool RenderContext::CreateTextureFromFile( const char* imageFilePath )
+{
+	int imageTexelSizeX = 0;
+	int imageTexelSizeY = 0;
+	int numComponents = 0; 
+	int numComponentsRequested = 4;
+
+	// Load (and decompress) the image RGB(A) bytes from a file on disk into a memory buffer (array of bytes)
+	stbi_set_flip_vertically_on_load( 0 );
+	unsigned char* imageData = stbi_load( imageFilePath, &imageTexelSizeX, &imageTexelSizeY, &numComponents, numComponentsRequested );
+
+	// Check if the load was successful
+	GUARANTEE_OR_DIE( imageData, Stringf( "Failed to load image \"%s\"", imageFilePath ) );
+	GUARANTEE_OR_DIE( numComponents == 4 && imageTexelSizeX > 0 && imageTexelSizeY > 0, Stringf( "ERROR loading image \"%s\" (Bpp=%i, size=%i,%i)", imageFilePath, numComponents, imageTexelSizeX, imageTexelSizeY ) );
+
+	// Describe the texture
+	D3D11_TEXTURE2D_DESC desc;
+	desc.Width				= imageTexelSizeX;
+	desc.Height				= imageTexelSizeY;
+	desc.MipLevels			= 1;
+	desc.ArraySize			= 1;
+	desc.Format				= DXGI_FORMAT_R8G8B8A8_UNORM;
+	desc.SampleDesc.Count	= 1; //MSAA
+	desc.SampleDesc.Quality	= 0;
+	desc.Usage				= D3D11_USAGE_IMMUTABLE;
+	desc.BindFlags			= D3D11_BIND_SHADER_RESOURCE;
+	desc.CPUAccessFlags		= 0;
+	desc.MiscFlags			= 0;
+
+	// Initialize Memory
+	D3D11_SUBRESOURCE_DATA initialData;
+	initialData.pSysMem				= imageData;
+	initialData.SysMemPitch			= imageTexelSizeX * 4;
+	initialData.SysMemSlicePitch	= 0; 
+
+	ID3D11Texture2D* texHandle = nullptr;
+	m_device->CreateTexture2D( &desc, &initialData, &texHandle );
+
 // 	// Free the raw image texel data now that we've sent a copy of it down to the GPU to be stored in video memory
-// 	stbi_image_free( imageData );
-// 
-// 	m_loadedTextures.push_back( new Texture( imageFilePath, textureID, IntVec2( imageTexelSizeX, imageTexelSizeY ), numComponents ) );
-	UNIMPLEMENTED_MSG( "OpenGL load texture" );
+	stbi_image_free( imageData );
+
+	Texture* newTexture = new Texture( imageFilePath, this, texHandle );
+	m_loadedTextures.push_back( newTexture );
+	return true;
 }
 
 
@@ -383,19 +412,76 @@ Shader* RenderContext::GetOrCreateShader( char const* filename )
 
 
 //---------------------------------------------------------------------------------------------------------
-void RenderContext::BindTexture( const Texture* texture )
+Texture* RenderContext::CreateTextureFromColor( Rgba8 color )
 {
-	UNUSED( texture );
-// 	if( texture )
-// 	{
-// 		glEnable( GL_TEXTURE_2D );
-// 		glBindTexture( GL_TEXTURE_2D, texture->GetTextureID() );
-// 	}
-// 	else
-// 	{
-// 		glDisable( GL_TEXTURE_2D );
-// 	}
-	UNIMPLEMENTED_MSG( "OpenGl Bind Texture" );
+	// Describe the texture
+	D3D11_TEXTURE2D_DESC desc;
+	desc.Width				= 1;
+	desc.Height				= 1;
+	desc.MipLevels			= 1;
+	desc.ArraySize			= 1;
+	desc.Format				= DXGI_FORMAT_R8G8B8A8_UNORM;
+	desc.SampleDesc.Count	= 1; //MSAA
+	desc.SampleDesc.Quality	= 0;
+	desc.Usage				= D3D11_USAGE_IMMUTABLE;
+	desc.BindFlags			= D3D11_BIND_SHADER_RESOURCE;
+	desc.CPUAccessFlags		= 0;
+	desc.MiscFlags			= 0;
+
+	// Initialize Memory
+	D3D11_SUBRESOURCE_DATA initialData;
+	initialData.pSysMem				= &color;
+	initialData.SysMemPitch			= 4;
+	initialData.SysMemSlicePitch	= 0;
+
+	ID3D11Texture2D* texHandle = nullptr;
+	m_device->CreateTexture2D( &desc, &initialData, &texHandle );
+
+	Texture* newTexture = new Texture( this, texHandle );
+	m_loadedTextures.push_back( newTexture );
+	return newTexture;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::ReleaseLoadedAssets()
+{
+	for( int textureIndex = 0; textureIndex < m_loadedTextures.size(); ++textureIndex )
+	{
+		Texture* currentTexture = m_loadedTextures[ textureIndex ];
+		delete currentTexture;
+		currentTexture = nullptr;
+	}
+
+	for( int fontIndex = 0; fontIndex < m_loadedFonts.size(); ++fontIndex )
+	{
+		BitmapFont* currentFont = m_loadedFonts[ fontIndex ];
+		delete currentFont;
+		currentFont = nullptr;
+	}
+
+	for( int shaderIndex = 0; shaderIndex < m_loadedShaders.size(); ++shaderIndex )
+	{
+		Shader* currentShader = m_loadedShaders[ shaderIndex ];
+		delete currentShader;
+		currentShader = nullptr;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::BindTexture( const Texture* constTexture )
+{
+	Texture* texture = const_cast<Texture*>( constTexture );
+	if( constTexture == nullptr )
+	{
+		texture = m_textueDefaultColor;
+	}
+
+	TextureView* shaderResourceView = texture->GetOrCreateShaderResourceView();
+	ID3D11ShaderResourceView* srvHandle = shaderResourceView->GetAsSRV();
+	m_context->PSSetShaderResources( 0, 1, &srvHandle ); //srv
+
 }
 
 
@@ -455,10 +541,24 @@ void RenderContext::BindUniformBuffer( unsigned int slot, RenderBuffer* ubo )
 
 
 //---------------------------------------------------------------------------------------------------------
-void RenderContext::CreateBitmapFontFromFile( const char* fontFilePath )
+void RenderContext::BindSampler( Sampler* sampler )
+{
+	if( sampler == nullptr )
+	{
+		sampler = m_samplerDefault;
+	}
+
+	ID3D11SamplerState* sampleHandle = sampler->GetHandle();
+	m_context->PSSetSamplers( 0, 1, &sampleHandle);
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool RenderContext::CreateBitmapFontFromFile( const char* fontFilePath )
 {
 	std::string fontImagePath = Stringf( "%s.png", fontFilePath );
 	Texture* fontTexture = CreateOrGetTextureFromFile( fontImagePath.c_str() );
 	BitmapFont* newFont = new BitmapFont( fontFilePath, fontTexture );
 	m_loadedFonts.push_back( newFont );
+	return true;
 }

@@ -26,6 +26,7 @@ public:
 	bool IsQuitting() const { return m_isQuitting; }
 
 private:
+	Texture* m_image = nullptr;
 	Camera	m_worldCamera;
 	Rgba8	m_clearColor = Rgba8::RED;
 	float	m_colorChangeDelay = 1.f;

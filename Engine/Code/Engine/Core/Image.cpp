@@ -13,7 +13,7 @@ Image::Image( const char* imageFilePath )
 	int numComponents = 0;
 	int numComponentsRequested = 0;
 
-	stbi_set_flip_vertically_on_load( 1 ); //Start position is Bottom Left;
+	stbi_set_flip_vertically_on_load( 0 ); //Start position is Bottom Left;
 	unsigned char* imageData = stbi_load( m_imageFilePath.c_str(), &m_dimensions.x, &m_dimensions.y, &numComponents, numComponentsRequested );
 
 	// Check if the load was successful
