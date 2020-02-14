@@ -56,6 +56,10 @@ void Rigidbody2D::SetPosition( Vec2 position )
 void Rigidbody2D::SetEnabled( bool isEnabled )
 {
 	m_enabled = isEnabled;
+	if( !isEnabled )
+	{
+		m_velocity = Vec2();
+	}
 }
 
 

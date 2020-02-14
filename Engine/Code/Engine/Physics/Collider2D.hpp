@@ -30,6 +30,8 @@ public:
 
 	virtual void DebugRender( RenderContext* context, Rgba8 const& borderColor, Rgba8 const& fillColor ) = 0;
 
+	Collider2DType GetType() const { return m_type; }
+
 protected:
 	virtual ~Collider2D();
 

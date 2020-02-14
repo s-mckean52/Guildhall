@@ -614,6 +614,12 @@ bool DoOBBAndDiscOverlap2D( const OBB2& obb, const Vec2& discCenter, float discR
 //---------------------------------------------------------------------------------------------------------
 bool DoPolygonAndDiscOverlap( const Polygon2D& polygon, const Vec2& discCenter, float discRadius )
 {
+	Vec2 nearestPointOnPolygon = polygon.GetClosestPoint( discCenter );
+	Vec2 displacement = nearestPointOnPolygon - discCenter;
+	if( displacement.GetLength() < discRadius )
+	{
+		return true;
+	}
 	return false;
 }
 

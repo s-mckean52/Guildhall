@@ -17,6 +17,28 @@ bool Polygon2D::IsValid() const
 //---------------------------------------------------------------------------------------------------------
 bool Polygon2D::IsConvex() const
 {
+	Vec2 currentEdgeStart;
+	Vec2 currentEdgeEnd;
+	Vec2 nextEdgeStart;
+	Vec2 nextEdgeEnd;
+
+	for( int edgeIndex = 0; edgeIndex < GetEdgeCount(); ++edgeIndex )
+	{
+		int nextEdgeIndex = ( edgeIndex + 1 ) % GetEdgeCount();
+		GetEdge( edgeIndex, currentEdgeStart, currentEdgeEnd );
+		GetEdge( nextEdgeIndex, nextEdgeStart, nextEdgeEnd );
+
+		Vec2 currentEdge = currentEdgeEnd - currentEdgeStart;
+
+		Vec2 edgeNormal = currentEdge.GetRotated90Degrees();
+		edgeNormal.Normalize();
+		Vec2 displacementCurrentEdgeStartToNextEdgeEnd = nextEdgeEnd - currentEdgeStart;
+
+		if( DotProduct2D( edgeNormal, displacementCurrentEdgeStartToNextEdgeEnd ) < 0.f )
+		{
+			return false;
+		}
+	}
 	return true;
 }
 
@@ -47,7 +69,9 @@ bool Polygon2D::IsPointInside( Vec2 const& point ) const
 //---------------------------------------------------------------------------------------------------------
 float Polygon2D::GetDistance( Vec2 const& point ) const
 {
-	return 0.f;
+	Vec2 closestPoint = GetClosestPoint( point );
+	Vec2 displacement = point - closestPoint;
+	return displacement.GetLength();
 }
 
 
@@ -59,7 +83,7 @@ Vec2 Polygon2D::GetClosestPoint( Vec2 const& point ) const
 	Vec2 edgeStart;
 	Vec2 edgeEnd;
 	Vec2 closestPoint;
-	float shortestDistanceSquared;
+	float shortestDistanceSquared = 10000.f;
 
 	for( int edgeIndex = 0; edgeIndex < GetEdgeCount(); ++edgeIndex )
 	{
@@ -67,13 +91,13 @@ Vec2 Polygon2D::GetClosestPoint( Vec2 const& point ) const
 		if( edgeIndex == 0 )
 		{
 			closestPoint = GetNearestPointOnLineSegment2D( point, edgeStart, edgeEnd );
-			Vec2 displacement = closestPoint - edgeStart;
+			Vec2 displacement = point - closestPoint;
 			shortestDistanceSquared = displacement.GetLengthSquared(); 
 		}
 		else
 		{
 			Vec2 tempClosestPoint = GetNearestPointOnLineSegment2D( point, edgeStart, edgeEnd );
-			Vec2 displacement = tempClosestPoint - edgeStart;
+			Vec2 displacement = point - tempClosestPoint;
 			float distanceSquaredToPoint = displacement.GetLengthSquared();
 			if( shortestDistanceSquared > distanceSquaredToPoint )
 			{
@@ -125,7 +149,7 @@ Polygon2D Polygon2D::GetTranslated( const Vec2& translation ) const
 		Vec2 newPointPosition = m_points[ pointIndex ] + translation;
 		newPoints.push_back( newPointPosition );
 	}
-	return MakeFromLineLoop( &newPoints[ 0 ], newPoints.size() );
+	return MakeFromLineLoop( &newPoints[ 0 ], static_cast<unsigned int>( newPoints.size() ) );
 }
 
 

@@ -107,8 +107,11 @@ void Game::Render() const
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderUI() const
 {
-// 	std::vector<Vertex_PCU> gravityVerts;
-// 	g_testFont->AddVertsForText2D( gravityVerts, Vec2(), 30.f,  )
+	std::vector<Vertex_PCU> gravityVerts;
+	std::string gravityAsString = Stringf( "%f", m_physics2D->GetGravityAmount() );
+	g_testFont->AddVertsForText2D( gravityVerts, Vec2( 10.f, CAMERA_SIZE_Y - 10.f ), 10.f, gravityAsString );
+	g_theRenderer->BindTexture( g_testFont->GetTexture() );
+	g_theRenderer->DrawVertexArray( gravityVerts );
 
 	if( g_theConsole->IsOpen() )
 	{
@@ -120,7 +123,7 @@ void Game::RenderUI() const
 //---------------------------------------------------------------------------------------------------------
 void Game::Update( float deltaSeconds )
 {
-	UpdateGameStatesFromInput();
+	UpdateGameStatesFromInput( deltaSeconds );
 	
 	m_physics2D->Update( deltaSeconds );
 	
@@ -131,7 +134,7 @@ void Game::Update( float deltaSeconds )
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::UpdateGameStatesFromInput()
+void Game::UpdateGameStatesFromInput( float deltaSeconds )
 {
 	UpdateMousePos( m_worldCamera );
 
@@ -198,6 +201,7 @@ void Game::UpdateGameStatesFromInput()
 	{
 		if( m_draggedObject )
 		{
+			m_draggedObject->m_rigidbody->SetVelocity( deltaSeconds );
 			m_draggedObject->m_isHeld = false;
 			m_draggedObject = nullptr;
 		}
@@ -229,14 +233,14 @@ void Game::UpdateGameStatesFromInput()
 		m_isQuitting = true;
 	}
 
-	if( g_theInput->IsKeyPressed( KEY_CODE_PLUS ) )
-	{
-		m_physics2D->AddGravityInDownDirection( 0.1f );
-	}
-
 	if( g_theInput->IsKeyPressed( KEY_CODE_MINUS ) )
 	{
-		m_physics2D->AddGravityInDownDirection( -0.1f );
+		m_physics2D->AddGravityInDownDirection( 1.0f * deltaSeconds);
+	}
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_PLUS ) )
+	{
+		m_physics2D->AddGravityInDownDirection( -1.0f * deltaSeconds );
 	}
 }
 
@@ -482,10 +486,7 @@ bool Game::IsNextPointValidOnPolygon( const Vec2& point )
 				return false;
 			}
 		}
-
-
 	}
-
 	return true;
 }
 

@@ -12,6 +12,7 @@
 //---------------------------------------------------------------------------------------------------------
 void PolygonCollider2D::SetMembers( Physics2D* physics, Vec2 const* localPolygonVerts, unsigned int numVerts, Vec2 localPosition )
 {
+	m_type = COLLIDER_TYPE_POLYGON2D;
 	m_physicsSystem = physics;
 	m_localPosition = localPosition;
 	m_localPolygon = Polygon2D::MakeFromLineLoop( localPolygonVerts, numVerts );
@@ -60,7 +61,7 @@ bool PolygonCollider2D::Contains( Vec2 const& position ) const
 //---------------------------------------------------------------------------------------------------------
 bool PolygonCollider2D::Intersects( Collider2D const* collider ) const
 {
-	switch( collider->m_type )
+	switch( collider->GetType() )
 	{
 	case COLLIDER_TYPE_DISC2D:
 	{
@@ -74,9 +75,7 @@ bool PolygonCollider2D::Intersects( Collider2D const* collider ) const
 		//return DoPolygonsOverlap( m_polygonVerts, colliderAsPolygon->m_polygonVerts );
 	}
 	default:
-	{
 		return false;
-	}
 	}
 }
 

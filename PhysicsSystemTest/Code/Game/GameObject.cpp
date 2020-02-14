@@ -9,11 +9,11 @@
 //---------------------------------------------------------------------------------------------------------
 GameObject::GameObject()
 {
-	m_startBorderColor = Rgba8::BLUE;
+	m_defaultBorderColor = Rgba8::BLUE;
 	m_startFillColor = Rgba8::WHITE;
 	m_startFillColor.a = 127;
 
-	m_currentBorderColor = m_startBorderColor;
+	m_currentBorderColor = m_defaultBorderColor;
 	m_currentFillColor = m_startFillColor;
 }
 
@@ -40,13 +40,15 @@ void GameObject::Update( float deltaSeconds )
 //---------------------------------------------------------------------------------------------------------
 void GameObject::UpdateColors()
 {
+	UpdateColorBasedOnPhysics();
+
 	if( m_isHovered )
 	{
 		m_currentBorderColor = Rgba8::YELLOW;
 	}
 	else if( !m_isHeld )
 	{
-		m_currentBorderColor = m_startBorderColor;
+		m_currentBorderColor = m_defaultBorderColor;
 	}
 
 	if( m_isHeld )
@@ -55,7 +57,7 @@ void GameObject::UpdateColors()
 	}
 	else if( !m_isHovered )
 	{
-		m_currentBorderColor = m_startBorderColor;
+		m_currentBorderColor = m_defaultBorderColor;
 	}
 
 	if( m_isOverlapping )
@@ -65,6 +67,26 @@ void GameObject::UpdateColors()
 	else
 	{
 		m_currentFillColor = m_startFillColor;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void GameObject::UpdateColorBasedOnPhysics()
+{
+	switch( m_rigidbody->m_simulationMode )
+	{
+	case SIMULATION_MODE_KINEMATIC:
+		m_defaultBorderColor = Rgba8::MAGENTA;
+		break;
+	case SIMULATION_MODE_DYNAMIC:
+		m_defaultBorderColor = Rgba8::BLUE;
+		break;
+	case SIMULATION_MODE_STATIC:
+		m_defaultBorderColor = Rgba8::GRAY;
+		break;
+	default:
+		break;
 	}
 }
 

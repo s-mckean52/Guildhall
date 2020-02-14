@@ -28,7 +28,7 @@ public:
 	void Update( float deltaSeconds );
 	void UpdateCameras( float deltaSeconds );
 
-	void UpdateGameStatesFromInput();
+	void UpdateGameStatesFromInput( float deltaSeconds );
 
 	void LoadAssets();
 	void LoadTextures();
@@ -57,6 +57,8 @@ private:
 	Vec2 m_mousePos = Vec2();
 
 	Rgba8 m_polygonLineColor = Rgba8::BLUE;
+
+	Vec2 m_position;
 
 	Camera m_worldCamera;
 	Camera m_uiCamera;

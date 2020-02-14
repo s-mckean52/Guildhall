@@ -30,8 +30,8 @@ const unsigned char KEY_CODE_F10			= VK_F10;
 const unsigned char KEY_CODE_F11			= VK_F11;
 const unsigned char KEY_CODE_F12			= VK_F12;
 const unsigned char KEY_CODE_TILDE			= VK_OEM_3;
-const unsigned char KEY_CODE_PLUS			= VK_ADD;
-const unsigned char KEY_CODE_MINUS			= VK_SUBTRACT;
+const unsigned char KEY_CODE_PLUS			= VK_OEM_PLUS;
+const unsigned char KEY_CODE_MINUS			= VK_OEM_MINUS;
 
 //Define Mouse Codes
 const unsigned char MOUSE_CODE_LEFT			= MK_LBUTTON;

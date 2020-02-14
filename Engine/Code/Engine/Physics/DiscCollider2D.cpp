@@ -6,6 +6,8 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Physics/Rigidbody2D.hpp"
+#include "Engine/Physics/PolygonCollider2D.hpp"
+#include "Engine/Math/Polygon2D.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -46,17 +48,20 @@ bool DiscCollider2D::Contains( Vec2 const& position ) const
 //---------------------------------------------------------------------------------------------------------
 bool DiscCollider2D::Intersects( Collider2D const* collider ) const
 {
-	switch( collider->m_type )
+	switch( collider->GetType() )
 	{
 	case COLLIDER_TYPE_DISC2D:
 	{
 		DiscCollider2D* colliderAsDisc2D = (DiscCollider2D*)collider;
 		return DoDiscsOverlap( colliderAsDisc2D->m_worldPosition, colliderAsDisc2D->m_radius, m_worldPosition, m_radius );
 	}
-	default:
+	case COLLIDER_TYPE_POLYGON2D:
 	{
-		return false;
+		PolygonCollider2D* colliderAsPolygon2D = (PolygonCollider2D*)collider;
+		return DoPolygonAndDiscOverlap( colliderAsPolygon2D->m_worldPolygon, m_worldPosition, m_radius );
 	}
+	default:
+		return false;
 	}
 }
 

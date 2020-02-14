@@ -12,6 +12,7 @@ public:
 
 	void Update( float deltaSeconds );
 	void UpdateColors();
+	void UpdateColorBasedOnPhysics();
 
 	void Draw() const;
 
@@ -25,7 +26,7 @@ public:
 	bool m_isDestroyed		= false;
 
 	Rigidbody2D* m_rigidbody = nullptr;
-	Rgba8 m_startBorderColor;
+	Rgba8 m_defaultBorderColor;
 	Rgba8 m_startFillColor;
 	Rgba8 m_currentBorderColor;
 	Rgba8 m_currentFillColor;
