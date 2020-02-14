@@ -41,6 +41,7 @@ Sampler::Sampler( RenderContext* context, SamplerType type )
 
 Sampler::~Sampler()
 {
+	m_owner = nullptr;
 	DX_SAFE_RELEASE( m_handle );
 }
 

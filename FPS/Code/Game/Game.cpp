@@ -45,7 +45,7 @@ void Game::StartUp()
 {
 	m_worldCamera.SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
-	m_image = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/wat.png" );
+	//m_image = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/wat.png" );
 }
 
 
@@ -65,7 +65,7 @@ void Game::Render() const
 
 	std::vector<Vertex_PCU> aabb2;
 	AppendVertsForAABB2D( aabb2, AABB2( -0.5f, -0.5f, 0.5f, 0.5f ), Rgba8::WHITE, Vec2( 0.f, 1.f ), Vec2( 1.f, 0.f ) );
-	g_theRenderer->BindTexture( m_image );
+	//g_theRenderer->BindTexture( m_image );
 	g_theRenderer->DrawVertexArray( aabb2 );
 
 	g_theRenderer->EndCamera( m_worldCamera );

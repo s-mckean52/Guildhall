@@ -32,12 +32,13 @@
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::StartUp( Window* theWindow )
 {
-	IDXGISwapChain* swapchain;
-
 	UINT flags = D3D11_CREATE_DEVICE_SINGLETHREADED;
 #if defined(RENDER_DEBUG)
+	CreateDebugModule();
 	flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
+
+	IDXGISwapChain* swapchain;
 
 	DXGI_SWAP_CHAIN_DESC swapchainDesc;
 	memset( &swapchainDesc, 0, sizeof( swapchainDesc ) );
@@ -72,8 +73,8 @@ void RenderContext::StartUp( Window* theWindow )
 	GUARANTEE_OR_DIE( SUCCEEDED( result ), "Failed to create rendering pipeline" );
 
 	m_swapchain = new SwapChain( this, swapchain );
-	m_defaultShader = new Shader( this );
-	m_defaultShader->CreateFromFile( "Data/Shaders/Default.hlsl" );
+	//m_defaultShader = new Shader( this );
+	m_defaultShader = GetOrCreateShader( "Data/Shaders/Default.hlsl" );
 
 	m_immediateVBO = new VertexBuffer( this, MEMORY_HINT_DYNAMIC );
 
@@ -84,7 +85,7 @@ void RenderContext::StartUp( Window* theWindow )
 	m_textueDefaultColor = CreateTextureFromColor( Rgba8::WHITE );
 
 	CreateBlendStates();
-	SetBlendMode( BlendMode::ADDITIVE );
+	SetBlendMode( BlendMode::ALPHA );
 }
 
 
@@ -105,9 +106,10 @@ void RenderContext::EndFrame()
 void RenderContext::ShutDown()
 {
 	ReleaseLoadedAssets();
+	ReleaseBlendStates();
 
 	delete m_samplerDefault;
-	m_defaultShader = nullptr;
+	m_samplerDefault = nullptr;
 
 	delete m_cameraUBO;
 	m_cameraUBO = nullptr;
@@ -123,6 +125,9 @@ void RenderContext::ShutDown()
 
 	DX_SAFE_RELEASE( m_device );
 	DX_SAFE_RELEASE( m_context );
+
+	ReportLiveObjects();
+	DestroyDebugModule();
 }
 
 
@@ -407,12 +412,13 @@ Shader* RenderContext::GetOrCreateShader( char const* filename )
 		}
 	}
 	newShader->CreateFromFile( filename );
+	m_loadedShaders.push_back( newShader );
 	return newShader;
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-Texture* RenderContext::CreateTextureFromColor( Rgba8 color )
+Texture* RenderContext::CreateTextureFromColor( Rgba8 const& color )
 {
 	// Describe the texture
 	D3D11_TEXTURE2D_DESC desc;
@@ -448,24 +454,29 @@ void RenderContext::ReleaseLoadedAssets()
 {
 	for( int textureIndex = 0; textureIndex < m_loadedTextures.size(); ++textureIndex )
 	{
-		Texture* currentTexture = m_loadedTextures[ textureIndex ];
-		delete currentTexture;
-		currentTexture = nullptr;
+		delete m_loadedTextures[ textureIndex ];
+		m_loadedTextures[ textureIndex ] = nullptr;
 	}
 
 	for( int fontIndex = 0; fontIndex < m_loadedFonts.size(); ++fontIndex )
 	{
-		BitmapFont* currentFont = m_loadedFonts[ fontIndex ];
-		delete currentFont;
-		currentFont = nullptr;
+		delete m_loadedFonts[ fontIndex ];
+		m_loadedFonts[ fontIndex ] = nullptr;
 	}
 
 	for( int shaderIndex = 0; shaderIndex < m_loadedShaders.size(); ++shaderIndex )
 	{
-		Shader* currentShader = m_loadedShaders[ shaderIndex ];
-		delete currentShader;
-		currentShader = nullptr;
+		delete m_loadedShaders[ shaderIndex ];
+		m_loadedShaders[ shaderIndex ] = nullptr;
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::ReleaseBlendStates()
+{
+	DX_SAFE_RELEASE( m_additiveBlendStateHandle );
+	DX_SAFE_RELEASE( m_alphaBlendStateHandle );
 }
 
 
@@ -561,4 +572,45 @@ bool RenderContext::CreateBitmapFontFromFile( const char* fontFilePath )
 	BitmapFont* newFont = new BitmapFont( fontFilePath, fontTexture );
 	m_loadedFonts.push_back( newFont );
 	return true;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::ReportLiveObjects()
+{
+	if( m_debug != nullptr )
+	{
+		m_debug->ReportLiveObjects( DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_DETAIL );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::CreateDebugModule()
+{
+	m_debugModule = ::LoadLibraryA( "Dxgidebug.dll" );
+	if( m_debugModule == nullptr )
+	{
+		ERROR_RECOVERABLE( "Failed to find dxgidebug.dll. No debug features enabled." );
+	}
+	else
+	{
+		typedef HRESULT( WINAPI* GetDebugModuleCB )(REFIID, void**);
+		GetDebugModuleCB cb = (GetDebugModuleCB) ::GetProcAddress( (HMODULE)m_debugModule, "DXGIGetDebugInterface" );
+		HRESULT hr = cb( __uuidof(IDXGIDebug), (void**)&m_debug );
+		GUARANTEE_OR_DIE( SUCCEEDED( hr ), "Debug module failed to initilize." );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::DestroyDebugModule()
+{
+	if( m_debug != nullptr )
+	{
+		DX_SAFE_RELEASE( m_debug );
+		FreeLibrary( (HMODULE)m_debugModule );
+		m_debug = nullptr;
+		m_debugModule = nullptr;
+	}
 }

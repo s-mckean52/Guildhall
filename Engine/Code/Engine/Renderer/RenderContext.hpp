@@ -14,12 +14,12 @@ class Window;
 class SwapChain;
 class Shader;
 class RenderBuffer;
-class VertexBuffer;
+class VertexBuffer;	
 struct ID3D11Device;
 struct ID3D11Buffer;
 struct ID3D11DeviceContext;
 struct ID3D11BlendState;
-
+struct IDXGIDebug;
 
 enum class BlendMode
 {
@@ -79,15 +79,19 @@ public:
 	Texture*	CreateOrGetTextureFromFile( const char* imageFilePath );
 	BitmapFont* CreateOrGetBitmapFontFromFile( const char* imageFilePath );
 	Shader*		GetOrCreateShader( char const* filename );
-	Texture*	CreateTextureFromColor( Rgba8 color );
+	Texture*	CreateTextureFromColor( Rgba8 const& color );
 
 	void ReleaseLoadedAssets();
+	void ReleaseBlendStates();
 
 private:
 	void CreateBlendStates();
 	bool CreateTextureFromFile( const char* imageFilePath );
 	bool CreateBitmapFontFromFile( const char* fontFilePath );
 
+	void ReportLiveObjects();
+	void CreateDebugModule();
+	void DestroyDebugModule();
 private:
 	bool m_isDrawing = false;
 	ID3D11Buffer* m_lastBoundVBOHandle = nullptr;
@@ -97,6 +101,9 @@ private:
 	std::vector<Shader*>		m_loadedShaders;
 
 public:
+	void*					m_debugModule			= nullptr;
+	IDXGIDebug*				m_debug					= nullptr;
+
 	ID3D11Device*			m_device				= nullptr;
 	ID3D11DeviceContext*	m_context				= nullptr;
 	SwapChain*				m_swapchain				= nullptr;
