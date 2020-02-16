@@ -81,12 +81,50 @@ bool PolygonCollider2D::Intersects( Collider2D const* collider ) const
 
 
 //---------------------------------------------------------------------------------------------------------
+AABB2 PolygonCollider2D::GetWorldBounds() const
+{
+	Vec2 aabbMin = Vec2( 1000000.f, 1000000.f );
+	Vec2 aabbMax = Vec2( -1000000.f, -1000000.f );
+
+
+	for( int pointIndex = 0; pointIndex < m_localPolygon.GetVertexCount(); ++pointIndex )
+	{
+		Vec2 polygonVert = m_localPolygon.GetVertexAtIndex( pointIndex );
+
+		if( polygonVert.x > aabbMax.x )
+		{
+			aabbMax.x = polygonVert.x; 
+		}
+		if( polygonVert.x < aabbMin.x )
+		{
+			aabbMin.x = polygonVert.x;
+		}
+
+		if( polygonVert.y > aabbMax.y )
+		{
+			aabbMax.y = polygonVert.y;
+		}
+		if( polygonVert.y < aabbMin.y )
+		{
+			aabbMin.y = polygonVert.y;
+		}
+	}
+
+	aabbMin += m_worldPosition;
+	aabbMax += m_worldPosition;
+
+	return AABB2( aabbMin, aabbMax );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void PolygonCollider2D::DebugRender( RenderContext* context, Rgba8 const& borderColor, Rgba8 const& fillColor )
 {
 	std::vector< Vertex_PCU > debugVerts;
 	AppendVertsForPolygon2DFilled( debugVerts, m_localPolygon, fillColor );
 	AppendVertsForPolygon2DOutline( debugVerts, m_localPolygon, borderColor, 5.f );
 	TransformVertexArray( debugVerts, 1.f, 0.f, m_worldPosition );
+	AppendVertsForAABB2OutlineAtPoint( debugVerts, GetWorldBounds(), Rgba8::CYAN, 3.f );
 
 	context->BindTexture( nullptr );
 	context->DrawVertexArray( debugVerts );

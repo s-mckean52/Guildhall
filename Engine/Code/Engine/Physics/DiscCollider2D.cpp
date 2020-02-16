@@ -67,12 +67,29 @@ bool DiscCollider2D::Intersects( Collider2D const* collider ) const
 
 
 //---------------------------------------------------------------------------------------------------------
+AABB2 DiscCollider2D::GetWorldBounds() const
+{
+	Vec2 min;
+	Vec2 max;
+
+	min.x = m_worldPosition.x - m_radius;
+	min.y = m_worldPosition.y - m_radius;
+	
+	max.x = m_worldPosition.x + m_radius;
+	max.y = m_worldPosition.y + m_radius;
+	
+	return AABB2( min, max );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void DiscCollider2D::DebugRender( RenderContext* context, Rgba8 const& borderColor, Rgba8 const& fillColor )
 {
 	std::vector< Vertex_PCU > debugVerts;
 	AppendVertsForFilledCircle( debugVerts, m_radius, fillColor );
 	AppendVertsForCircleAtPoint( debugVerts, m_radius, borderColor, 5.f );
 	TransformVertexArray( debugVerts, 1.f, 0.f, m_worldPosition );
+	AppendVertsForAABB2OutlineAtPoint( debugVerts, GetWorldBounds(), Rgba8::CYAN, 3.f );
 
 	context->BindTexture( nullptr );
 	context->DrawVertexArray( debugVerts );

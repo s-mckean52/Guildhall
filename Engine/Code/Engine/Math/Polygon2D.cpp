@@ -112,6 +112,13 @@ Vec2 Polygon2D::GetClosestPoint( Vec2 const& point ) const
 
 
 //---------------------------------------------------------------------------------------------------------
+Vec2 Polygon2D::GetVertexAtIndex( int index ) const
+{
+	return m_points[ index ];
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 int Polygon2D::GetVertexCount() const
 {
 	return static_cast<int>( m_points.size() );

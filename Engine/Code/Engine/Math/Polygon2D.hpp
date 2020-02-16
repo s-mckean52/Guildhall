@@ -11,6 +11,7 @@ public:
 	bool IsPointInside( Vec2 const& point ) const;
 	float GetDistance( Vec2 const& point ) const;
 	Vec2 GetClosestPoint( Vec2 const& point ) const;
+	Vec2 GetVertexAtIndex( int index ) const;
 
 	int GetVertexCount() const;
 	int GetEdgeCount() const;

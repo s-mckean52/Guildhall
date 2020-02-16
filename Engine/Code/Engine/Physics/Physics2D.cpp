@@ -58,7 +58,8 @@ void Physics2D::AdvanceSimulation( float deltaSeconds )
 {
 	ApplyEffectors( deltaSeconds );
 	MoveRigidbodies( deltaSeconds );
-	//Clean Up is end frame
+	DetectCollisions( deltaSeconds );
+	ResolveCollisions( deltaSeconds );
 }
 
 
@@ -81,6 +82,23 @@ void Physics2D::MoveRigidbodies( float deltaSeconds )
 			EulerStep( deltaSeconds, rb );
 		}
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::DetectCollisions( float deltaSeconds )
+{
+
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::ResolveCollisions( float deltaSeconds )
+{
+	//for each collision resolve
+
+
+	m_collisions2D.clear();
 }
 
 
