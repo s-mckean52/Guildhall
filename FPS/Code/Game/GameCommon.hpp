@@ -8,6 +8,7 @@
 struct Vec2;
 class App;
 class Game;
+class DevConsoleGame;
 class RenderContext;
 class RandomNumberGenerator;
 class InputSystem;
@@ -21,11 +22,12 @@ struct AABB2;
 //extern EventSystem* g_theEventSystem;
 extern App* g_theApp;
 extern Game* g_theGame;
+extern DevConsoleGame* g_theDevConsole;
 extern RenderContext* g_theRenderer;
 extern RandomNumberGenerator* g_RNG;
 extern InputSystem* g_theInput;
 extern AudioSystem* g_theAudio;
-extern BitmapFont* g_testFont;
+extern BitmapFont* g_devConsoleFont;
 extern Window* g_theWindow;
 
 extern SpriteSheet* g_tileSpriteSheet;
@@ -53,15 +55,19 @@ constexpr float SCREEN_SHAKE_ABBERATION				= 1.f / 2.f;
 constexpr float MAX_SCREEN_SHAKE_DISPLACEMENT		= 1.0f;
 constexpr float PLAYER_DEATH_SCREEN_SHAKE_INTENSITY = 1.f;
 
+constexpr float DEV_CONSOLE_LINE_HEIGHT				= 0.3f;
+
+
 
 // Game Specific Colors
-const Rgba8 RGBA8_BALI_HAI			( 132, 156, 169 ); //Teal Grey
-const Rgba8 RGBA8_DARK_GREY			( 50, 50, 50 );
-const Rgba8 RGBA8_MEDIUM_DARK_GREY	( 100, 100, 100 );
-const Rgba8 RGBA8_TRANSPARENT_RED	( 255, 0, 0, 0 );
+const Rgba8 RGBA8_BALI_HAI				( 132, 156, 169 ); //Teal Grey
+const Rgba8 RGBA8_DARK_GREY				( 50, 50, 50 );
+const Rgba8 RGBA8_MEDIUM_DARK_GREY		( 100, 100, 100 );
+const Rgba8 RGBA8_TRANSPARENT_RED		( 255, 0, 0, 0 );
 
-const Rgba8 RGBA8_DARK_GREEN		( 0, 150, 0 );
-const Rgba8 RGBA8_DARK_YELLOW		( 200, 170, 0 );
+const Rgba8 RGBA8_DARK_GREEN			( 0, 150, 0 );
+const Rgba8 RGBA8_DARK_YELLOW			( 200, 170, 0 );
+const Rgba8 RGBA8_HALF_TRANSPARENT_GRAY	( 127, 127, 127, 127 );
 
 
 // Common Game Functions

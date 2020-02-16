@@ -85,7 +85,6 @@ void RenderContext::StartUp( Window* theWindow )
 	m_textueDefaultColor = CreateTextureFromColor( Rgba8::WHITE );
 
 	CreateBlendStates();
-	SetBlendMode( BlendMode::ALPHA );
 }
 
 
@@ -183,6 +182,8 @@ void RenderContext::ClearScreen( const Rgba8& clearColor )
 void RenderContext::BeginCamera( const Camera& camera )
 {
 	m_context->ClearState();
+	
+	SetBlendMode( BlendMode::ALPHA );
 
 	Texture* colorTarget = camera.GetColorTarget();
 	if( colorTarget == nullptr )
@@ -325,7 +326,7 @@ bool RenderContext::CreateTextureFromFile( const char* imageFilePath )
 	int numComponentsRequested = 4;
 
 	// Load (and decompress) the image RGB(A) bytes from a file on disk into a memory buffer (array of bytes)
-	stbi_set_flip_vertically_on_load( 0 );
+	stbi_set_flip_vertically_on_load( 1 );
 	unsigned char* imageData = stbi_load( imageFilePath, &imageTexelSizeX, &imageTexelSizeY, &numComponents, numComponentsRequested );
 
 	// Check if the load was successful

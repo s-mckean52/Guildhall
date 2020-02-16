@@ -47,6 +47,14 @@ static LRESULT CALLBACK WindowsMessageHandlingProcedure( HWND windowHandle, UINT
 
 			break;
 		}
+
+		case WM_CHAR:
+		{
+			wchar_t inputCharacter = (wchar_t)wParam;
+			InputSystem* theInput = window->GetInputSystem();
+			theInput->PushToCharacterQueue( (char)inputCharacter );
+			break;
+		}
 	}
 
 	// Send back to Windows any unhandled/unconsumed messages we want other apps to see (e.g. play/pause in music apps, etc.)

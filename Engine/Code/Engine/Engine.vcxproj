@@ -193,6 +193,7 @@
     <ClCompile Include="Math\IntVec2.cpp" />
     <ClCompile Include="Math\Mat44.cpp" />
     <ClCompile Include="Math\MathUtils.cpp" />
+    <ClCompile Include="Math\MatrixUtils.cpp" />
     <ClCompile Include="Math\OBB2.cpp" />
     <ClCompile Include="Math\RandomNumberGenerator.cpp" />
     <ClCompile Include="Math\RawNoise.cpp" />
@@ -204,6 +205,7 @@
     <ClCompile Include="Renderer\BitmapFont.cpp" />
     <ClCompile Include="Renderer\buffer_attribute_t.cpp" />
     <ClCompile Include="Renderer\Camera.cpp" />
+    <ClCompile Include="Renderer\D3D11Common.cpp" />
     <ClCompile Include="Renderer\MeshUtils.cpp" />
     <ClCompile Include="Renderer\RenderBuffer.cpp" />
     <ClCompile Include="Renderer\RenderContext.cpp" />
@@ -251,6 +253,7 @@
     <ClInclude Include="Math\IntVec2.hpp" />
     <ClInclude Include="Math\Mat44.hpp" />
     <ClInclude Include="Math\MathUtils.hpp" />
+    <ClInclude Include="Math\MatrixUtils.hpp" />
     <ClInclude Include="Math\OBB2.hpp" />
     <ClInclude Include="Math\RandomNumberGenerator.hpp" />
     <ClInclude Include="Math\RawNoise.hpp" />

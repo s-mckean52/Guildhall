@@ -14,14 +14,12 @@
 #include "Engine/Renderer/MeshUtils.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/DevConsole.hpp"
-#include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/Image.hpp"
-#include "Engine/Core/NamedStrings.hpp"
+#include "Engine/Renderer/Shader.hpp"
 #include <string>
 
 
 RandomNumberGenerator*	g_RNG = nullptr;
-BitmapFont*				g_testFont = nullptr;
 SpriteSheet*			g_tileSpriteSheet = nullptr;
 SpriteSheet*			g_actorSpriteSheet = nullptr;
 
@@ -45,7 +43,8 @@ void Game::StartUp()
 {
 	m_worldCamera.SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
-	//m_image = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/wat.png" );
+	m_image				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/PlayerTankBase.png" );
+	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
 }
 
 
@@ -62,25 +61,53 @@ void Game::Render() const
 {
 	//Render worldCamera
 	g_theRenderer->BeginCamera( m_worldCamera );
+	RenderWorld();
+	g_theRenderer->EndCamera( m_worldCamera );
+}
 
+
+//---------------------------------------------------------------------------------------------------------
+void Game::RenderWorld() const
+{
 	std::vector<Vertex_PCU> aabb2;
-	AppendVertsForAABB2D( aabb2, AABB2( -0.5f, -0.5f, 0.5f, 0.5f ), Rgba8::WHITE, Vec2( 0.f, 1.f ), Vec2( 1.f, 0.f ) );
-	//g_theRenderer->BindTexture( m_image );
+	AppendVertsForAABB2D( aabb2, AABB2( 0.0f, 0.0f, 2.0f, 2.0f ), Rgba8::WHITE, Vec2( 0.f, 0.f ), Vec2( 1.f, 1.f ) );
+
+	TransformVertexArray( aabb2, 1.f, 0.f, Vec2( -3.f, -0.5f ) );
+	g_theRenderer->BindTexture( m_image );
+	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( aabb2 );
 
-	g_theRenderer->EndCamera( m_worldCamera );
-
+	TransformVertexArray( aabb2, 1.f, 0.f, Vec2( 3.f, 0.f ) );
+	g_theRenderer->BindShader( m_invertColorShader );
+	g_theRenderer->DrawVertexArray( aabb2 );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Game::Update( float deltaSeconds )
 {
-	MoveCamera( deltaSeconds );
+	if( !g_theConsole->IsOpen() )
+	{
+		UpdateFromInput( deltaSeconds );
+	}
+
 	ChangeClearColor( deltaSeconds );
 }
 
 
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateFromInput( float deltaSeconds )
+{
+	MoveCamera( deltaSeconds );
+
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
+	{
+		m_isQuitting = true;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::MoveCamera( float deltaSeconds )
 {
 	float moveSpeed = 5.f * deltaSeconds;

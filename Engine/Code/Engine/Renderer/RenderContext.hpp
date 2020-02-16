@@ -92,6 +92,7 @@ private:
 	void ReportLiveObjects();
 	void CreateDebugModule();
 	void DestroyDebugModule();
+
 private:
 	bool m_isDrawing = false;
 	ID3D11Buffer* m_lastBoundVBOHandle = nullptr;

@@ -12,6 +12,7 @@ const unsigned char KEY_CODE_ESC			= VK_ESCAPE;
 const unsigned char KEY_CODE_ENTER			= VK_RETURN;
 const unsigned char KEY_CODE_SPACEBAR		= VK_SPACE;
 const unsigned char KEY_CODE_BACKSPACE		= VK_BACK;
+const unsigned char KEY_CODE_DELETE			= VK_DELETE;
 const unsigned char KEY_CODE_UP_ARROW		= VK_UP;
 const unsigned char KEY_CODE_LEFT_ARROW		= VK_LEFT;
 const unsigned char KEY_CODE_DOWN_ARROW		= VK_DOWN;
@@ -66,6 +67,8 @@ void InputSystem::EndFrame()
 		KeyButtonState& keyState = m_keyStates[ keyIndex ];
 		keyState.m_wasPressedLastFrame = keyState.m_isPressed;
 	}
+
+	m_characters = std::queue<char>();
 }
 
 
@@ -174,5 +177,28 @@ bool InputSystem::WasKeyJustPressed( unsigned char keyCode ) const
 bool InputSystem::WasKeyJustReleased( unsigned char keyCode ) const
 {
 	return m_keyStates[ keyCode ].WasJustReleased();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::PushToCharacterQueue( char c )
+{
+	m_characters.push( c );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool InputSystem::PopFromCharacterQueue( char* out_c )
+{
+	if( m_characters.size() > 0 )
+	{
+		*out_c = m_characters.front();
+		m_characters.pop();
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 

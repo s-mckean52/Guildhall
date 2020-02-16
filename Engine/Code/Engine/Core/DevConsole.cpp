@@ -54,6 +54,7 @@ void DevConsole::Render( RenderContext& renderer, const Camera& camera, float li
 
 	int numberOfLinesToPrint = maxNumberOfLines > colorStringLength ? colorStringLength : maxNumberOfLines;
 	Vec2 textMins = camera.GetOrthoBottomLeft();
+	textMins.y += lineHeight;
 
 	for( int consoleStringIndexFromLast = 0; consoleStringIndexFromLast < numberOfLinesToPrint; ++consoleStringIndexFromLast )
 	{
@@ -64,6 +65,7 @@ void DevConsole::Render( RenderContext& renderer, const Camera& camera, float li
 		font->AddVertsForText2D( consoleVerts, textMins, lineHeight, currentColorString.m_text, currentColorString.m_color );
 
 		renderer.BindTexture( font->GetTexture() );
+		renderer.BindShader( (Shader*)nullptr );
 		renderer.DrawVertexArray( consoleVerts );
 
 		textMins.y += lineHeight;
@@ -76,5 +78,12 @@ void DevConsole::Render( RenderContext& renderer, const Camera& camera, float li
 void DevConsole::SetIsOpen( bool isOpen )
 {
 	m_isOpen = isOpen;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::ToggleIsOpen()
+{
+	m_isOpen = !m_isOpen;
 }
 

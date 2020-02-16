@@ -32,6 +32,7 @@ extern const unsigned char KEY_CODE_ESC;
 extern const unsigned char KEY_CODE_ENTER;
 extern const unsigned char KEY_CODE_SPACEBAR;
 extern const unsigned char KEY_CODE_BACKSPACE;
+extern const unsigned char KEY_CODE_DELETE;
 extern const unsigned char KEY_CODE_UP_ARROW;
 extern const unsigned char KEY_CODE_LEFT_ARROW;
 extern const unsigned char KEY_CODE_DOWN_ARROW;

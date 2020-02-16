@@ -19,31 +19,6 @@ Window*	g_theWindow = nullptr;
 const char* APP_NAME = "FPS";					// ...becomes ??? (Change this per project!)
 
 
-//------------------------------------------------------------------------------------------------
-// Given an existing OS Window, create a Rendering Context (RC) for, say, OpenGL to draw to it.
-//
-void CreateRenderContext()
-{
-	// Creates an OpenGL rendering context (RC) and binds it to the current window's device context (DC)
-// 	PIXELFORMATDESCRIPTOR pixelFormatDescriptor;
-// 	memset( &pixelFormatDescriptor, 0, sizeof( pixelFormatDescriptor ) );
-// 	pixelFormatDescriptor.nSize = sizeof( pixelFormatDescriptor );
-// 	pixelFormatDescriptor.nVersion = 1;
-// 	pixelFormatDescriptor.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-// 	pixelFormatDescriptor.iPixelType = PFD_TYPE_RGBA;
-// 	pixelFormatDescriptor.cColorBits = 24;
-// 	pixelFormatDescriptor.cDepthBits = 24;
-// 	pixelFormatDescriptor.cAccumBits = 0;
-// 	pixelFormatDescriptor.cStencilBits = 8;
-// 
-// 	int pixelFormatCode = ChoosePixelFormat( g_displayDeviceContext, &pixelFormatDescriptor );
-// 	SetPixelFormat( g_displayDeviceContext, pixelFormatCode, &pixelFormatDescriptor );
-// 	g_openGLRenderingContext = wglCreateContext( g_displayDeviceContext );
-// 	wglMakeCurrent( g_displayDeviceContext, g_openGLRenderingContext );
-	UNIMPLEMENTED_MSG( "openGL Stuff" );
-}
-
-
 //-----------------------------------------------------------------------------------------------
 int WINAPI WinMain( _In_ HINSTANCE applicationInstanceHandle, _In_opt_ HINSTANCE, _In_ LPSTR commandLineString, _In_ int )
 {

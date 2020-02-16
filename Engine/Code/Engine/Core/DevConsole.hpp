@@ -19,9 +19,11 @@ public:
 	void StartFrame();
 
 	void PrintString( const Rgba8& textColor, const std::string& devConsolePrintString );
+
 	void Render( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const;
 
 	void SetIsOpen( bool isOpen );
+	void ToggleIsOpen();
 	bool IsOpen() const { return m_isOpen; };
 
 private:

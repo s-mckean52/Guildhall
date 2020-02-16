@@ -1,6 +1,7 @@
 #include "Game/App.hpp"
-#include "Game/Game.hpp"
 #include "Game/GameCommon.hpp"
+#include "Game/Game.hpp"
+#include "Game/DevConsoleGame.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
@@ -13,13 +14,13 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Platform/Window.hpp"
 
-
-EventSystem*	g_theEventSystem = nullptr;
-RenderContext* g_theRenderer = nullptr;
-InputSystem* g_theInput = nullptr;
-AudioSystem* g_theAudio = nullptr;
-DevConsole* g_theConsole = nullptr;
-Game* g_theGame = nullptr;
+EventSystem*	g_theEventSystem	= nullptr;
+RenderContext*	g_theRenderer		= nullptr;
+InputSystem*	g_theInput			= nullptr;
+AudioSystem*	g_theAudio			= nullptr;
+DevConsole*		g_theConsole		= nullptr;
+DevConsoleGame*	g_theDevConsole		= nullptr;
+Game*			g_theGame			= nullptr;
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -30,6 +31,7 @@ void App::StartUp()
 	g_theInput = new InputSystem();
 	g_theAudio = new AudioSystem();
 	g_theConsole = new DevConsole();
+	g_theDevConsole = new DevConsoleGame();
 	g_theGame = new Game();
 
 	g_theEventSystem->StartUp();
@@ -39,6 +41,7 @@ void App::StartUp()
 	g_theWindow->SetInputSystem( g_theInput );
 
 	g_theConsole->StartUp();
+	g_theDevConsole->StartUp();
 	g_theGame->StartUp();
 
 }
@@ -62,8 +65,13 @@ void App::ShutDown()
 	delete g_theAudio;
 	g_theAudio = nullptr;
 
+	g_theConsole->ShutDown();
 	delete g_theConsole;
 	g_theConsole = nullptr;
+
+	g_theDevConsole->ShutDown();
+	delete g_theDevConsole;
+	g_theDevConsole = nullptr;
 
 	g_theGame->ShutDown();
 	delete g_theGame;
@@ -131,31 +139,26 @@ void App::Update( float deltaSeconds )
 		HandleQuitRequested();
 	}
 
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
-	{
-		HandleQuitRequested();
-	}
-
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F8 ) )
 	{
 		RestartGame();
 	}
 
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_F4 ) )
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_TILDE ) )
 	{
-		g_isDebugCamera = !g_isDebugCamera;
+		g_theConsole->ToggleIsOpen();
 	}
 
 	g_theGame->Update( deltaSeconds );
+	g_theDevConsole->Update( deltaSeconds );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void App::Render() const
 {
-	//g_theRenderer->ClearScreen( Rgba8::RED );
-
 	g_theGame->Render();
+	g_theDevConsole->Render();
 }
 
 

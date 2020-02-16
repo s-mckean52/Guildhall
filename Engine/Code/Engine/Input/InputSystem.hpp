@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/Input/XboxController.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include <queue>
 
 struct IntVec2;
 
@@ -23,16 +24,18 @@ public:
 	Vec2	GetMouseNormalizedClientPosition() const;
 
 	void ResetKeys();
-	void UpdateControllers();
 	bool HandleKeyPressed( unsigned char keyCode );
 	bool HandleKeyReleased( unsigned char keyCode );
 
+	void UpdateControllers();
 	const XboxController& GetXboxController( int controllerID );
 
 	bool IsKeyPressed( unsigned char keyCode ) const;
 	bool WasKeyJustPressed( unsigned char keyCode ) const;
 	bool WasKeyJustReleased( unsigned char keyCode ) const;
 
+	void PushToCharacterQueue( char c );
+	bool PopFromCharacterQueue( char* c );
 
 private:
 	Vec2 m_mouseNormalizedPos;
@@ -44,4 +47,6 @@ private:
 		XboxController(2),
 		XboxController(3)
 	};
+
+	std::queue<char> m_characters;
 };

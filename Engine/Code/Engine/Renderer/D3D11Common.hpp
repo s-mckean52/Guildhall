@@ -11,3 +11,7 @@
 #include <d3d11.h>  // d3d11 specific objects
 #include <dxgi.h>   // shared library used across multiple dx graphical interfaces
 #include <dxgidebug.h>  // debug utility (mostly used for reporting and analytics)
+
+struct Vec2;
+
+Vec2 FixUV( const Vec2& uv );
