@@ -71,9 +71,10 @@ void Rigidbody2D::SetSimulationMode( SimulationMode simulationMode )
 
 
 //---------------------------------------------------------------------------------------------------------
-void Rigidbody2D::SetVelocity( float deltaSeconds )
+void Rigidbody2D::SetVelocity( Vec2 const& newVelocity )
 {
-	m_velocity = ( m_worldPosition - m_positionLastFrame ) / deltaSeconds;
+	m_velocity = newVelocity;
+	//m_velocity = ( m_worldPosition - m_positionLastFrame ) / deltaSeconds;
 }
 
 

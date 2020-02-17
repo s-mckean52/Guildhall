@@ -201,7 +201,10 @@ void Game::UpdateGameStatesFromInput( float deltaSeconds )
 	{
 		if( m_draggedObject )
 		{
-			m_draggedObject->m_rigidbody->SetVelocity( deltaSeconds );
+			Rigidbody2D* draggedRb = m_draggedObject->m_rigidbody;
+			Vec2 velocity = ( draggedRb->m_worldPosition - draggedRb->m_positionLastFrame ) / deltaSeconds;
+			m_draggedObject->m_rigidbody->SetVelocity( velocity );
+
 			m_draggedObject->m_isHeld = false;
 			m_draggedObject = nullptr;
 		}

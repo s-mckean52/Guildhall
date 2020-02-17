@@ -24,7 +24,7 @@ public:
 	void SetPosition( Vec2 position );
 	void SetEnabled( bool enable );
 	void SetSimulationMode( SimulationMode simulationMode );
-	void SetVelocity( float deltaSeconds );
+	void SetVelocity( Vec2 const& newVelocity );
 	void SetMass( float mass );
 
 	void AddForceFromAcceleration( const Vec2& acceleration );
