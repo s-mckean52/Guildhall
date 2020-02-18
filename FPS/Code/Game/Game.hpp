@@ -41,5 +41,6 @@ private:
 	float	m_colorChangeDelay = 1.f;
 	
 	Camera	m_worldCamera;
+	Camera	m_devConsoleCamera;
 	bool	m_isQuitting = false;
 };

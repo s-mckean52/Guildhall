@@ -1,7 +1,6 @@
 #include "Game/App.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/Game.hpp"
-#include "Game/DevConsoleGame.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
@@ -19,7 +18,6 @@ RenderContext*	g_theRenderer		= nullptr;
 InputSystem*	g_theInput			= nullptr;
 AudioSystem*	g_theAudio			= nullptr;
 DevConsole*		g_theConsole		= nullptr;
-DevConsoleGame*	g_theDevConsole		= nullptr;
 Game*			g_theGame			= nullptr;
 
 
@@ -29,9 +27,9 @@ void App::StartUp()
 	g_theEventSystem = new EventSystem();
 	g_theRenderer = new RenderContext();
 	g_theInput = new InputSystem();
+	g_theEventSystem = new EventSystem();
 	g_theAudio = new AudioSystem();
 	g_theConsole = new DevConsole();
-	g_theDevConsole = new DevConsoleGame();
 	g_theGame = new Game();
 
 	g_theEventSystem->StartUp();
@@ -40,10 +38,11 @@ void App::StartUp()
 	g_theInput->StartUp();
 	g_theWindow->SetInputSystem( g_theInput );
 
-	g_theConsole->StartUp();
-	g_theDevConsole->StartUp();
+	g_theConsole->StartUp( g_theInput, g_theEventSystem );
 	g_theGame->StartUp();
 
+	g_theEventSystem->SubscribeEventCallbackFunction( "quit", QuitRequested );
+	g_theEventSystem->SubscribeEventCallbackFunction( "help", HelpCommand );
 }
 
 
@@ -69,10 +68,6 @@ void App::ShutDown()
 	delete g_theConsole;
 	g_theConsole = nullptr;
 
-	g_theDevConsole->ShutDown();
-	delete g_theDevConsole;
-	g_theDevConsole = nullptr;
-
 	g_theGame->ShutDown();
 	delete g_theGame;
 	g_theGame = nullptr;
@@ -90,6 +85,23 @@ void App::RestartGame()
 	g_theGame->StartUp();
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+STATIC void App::QuitRequested()
+{
+	g_theApp->HandleQuitRequested();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+STATIC void App::HelpCommand()
+{
+	Strings registeredCommands = g_theEventSystem->GetEventNames();
+	for( int commandIndex = 0; commandIndex < registeredCommands.size(); ++commandIndex )
+	{
+		g_theConsole->PrintString( Rgba8::YELLOW, registeredCommands[ commandIndex ] );
+	}
+}
 
 //---------------------------------------------------------------------------------------------------------
 void App::RunFrame()
@@ -134,6 +146,9 @@ void App::Update( float deltaSeconds )
 {
 	g_theRenderer->UpdateFrameTime( deltaSeconds );
 
+	g_theGame->Update( deltaSeconds );
+	g_theConsole->Update( deltaSeconds );
+
 	if( g_theGame->IsQuitting() || g_theWindow->IsQuitting() )
 	{
 		HandleQuitRequested();
@@ -148,9 +163,6 @@ void App::Update( float deltaSeconds )
 	{
 		g_theConsole->ToggleIsOpen();
 	}
-
-	g_theGame->Update( deltaSeconds );
-	g_theDevConsole->Update( deltaSeconds );
 }
 
 
@@ -158,7 +170,6 @@ void App::Update( float deltaSeconds )
 void App::Render() const
 {
 	g_theGame->Render();
-	g_theDevConsole->Render();
 }
 
 

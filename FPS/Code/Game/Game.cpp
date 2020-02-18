@@ -20,8 +20,7 @@
 
 
 RandomNumberGenerator*	g_RNG = nullptr;
-SpriteSheet*			g_tileSpriteSheet = nullptr;
-SpriteSheet*			g_actorSpriteSheet = nullptr;
+BitmapFont*				g_devConsoleFont = nullptr;
 
 bool					g_isDebugDraw = false;
 bool					g_isDebugCamera = false;
@@ -42,9 +41,11 @@ Game::Game()
 void Game::StartUp()
 {
 	m_worldCamera.SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
+	m_devConsoleCamera.SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
 	m_image				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/PlayerTankBase.png" );
 	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
+	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 }
 
 
@@ -63,6 +64,10 @@ void Game::Render() const
 	g_theRenderer->BeginCamera( m_worldCamera );
 	RenderWorld();
 	g_theRenderer->EndCamera( m_worldCamera );
+
+	g_theRenderer->BeginCamera( m_devConsoleCamera );
+	g_theConsole->Render( *g_theRenderer, m_devConsoleCamera, DEV_CONSOLE_LINE_HEIGHT, g_devConsoleFont );
+	g_theRenderer->EndCamera( m_devConsoleCamera );
 }
 
 

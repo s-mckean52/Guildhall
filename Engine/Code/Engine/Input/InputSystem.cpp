@@ -183,6 +183,8 @@ bool InputSystem::WasKeyJustReleased( unsigned char keyCode ) const
 //---------------------------------------------------------------------------------------------------------
 void InputSystem::PushToCharacterQueue( char c )
 {
+	if( c == KEY_CODE_BACKSPACE || c == KEY_CODE_DELETE ) return;
+
 	m_characters.push( c );
 }
 

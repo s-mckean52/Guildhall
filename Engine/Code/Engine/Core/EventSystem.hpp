@@ -3,6 +3,7 @@
 #include <vector>
 
 typedef unsigned int EntityID;
+typedef std::vector< std::string > Strings;
 typedef void( *EventCallbackFunctionPtrType )();
 //typedef bool( *EventCallbackFunctionPtrType )();
 
@@ -16,6 +17,7 @@ public:
 	void StartFrame();
 	void EndFrame();
 
+	Strings GetEventNames();
 	void SubscribeEventCallbackFunction( std::string eventName, EventCallbackFunctionPtrType functionToCall ); 
 	void UnsubscribeEventCallbackFunction( std::string eventName, EventCallbackFunctionPtrType functionToCall ); 
 	void FireEvent( std::string eventToFire );

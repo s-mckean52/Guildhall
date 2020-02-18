@@ -32,6 +32,21 @@ void EventSystem::EndFrame()
 
 
 //---------------------------------------------------------------------------------------------------------
+Strings EventSystem::GetEventNames()
+{
+	Strings eventNames;
+
+	for( int eventIndex = 0; eventIndex < m_eventSubscriptions.size(); ++eventIndex )
+	{
+		std::string eventName = m_eventSubscriptions[ eventIndex ]->GetEventName();
+		eventNames.push_back( eventName );
+	}
+
+	return eventNames;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void EventSystem::SubscribeEventCallbackFunction( std::string eventName, EventCallbackFunctionPtrType functionToCall )
 {
 	EventSubscription* newEventSubscription = new EventSubscription( eventName, functionToCall );

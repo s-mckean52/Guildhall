@@ -8,21 +8,19 @@
 struct Vec2;
 class App;
 class Game;
-class DevConsoleGame;
 class RenderContext;
 class RandomNumberGenerator;
 class InputSystem;
 class AudioSystem;
 class BitmapFont;
 class SpriteSheet;
-//class EventSystem;
+class EventSystem;
 class Window;
 struct AABB2;
 
-//extern EventSystem* g_theEventSystem;
+extern EventSystem* g_theEventSystem;
 extern App* g_theApp;
 extern Game* g_theGame;
-extern DevConsoleGame* g_theDevConsole;
 extern RenderContext* g_theRenderer;
 extern RandomNumberGenerator* g_RNG;
 extern InputSystem* g_theInput;

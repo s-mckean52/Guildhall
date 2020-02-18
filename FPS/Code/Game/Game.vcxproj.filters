@@ -45,9 +45,6 @@
     <ClCompile Include="Main_Windows.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
-    <ClCompile Include="DevConsoleGame.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -63,9 +60,6 @@
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="GameCommon.hpp">
-      <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="DevConsoleGame.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>

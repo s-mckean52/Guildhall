@@ -13,6 +13,8 @@ public:
 	void RunFrame();
 	void RestartGame();
 
+	static void HelpCommand();
+	static void QuitRequested();
 	bool HandleQuitRequested();
 
 	const bool IsQuitting() const { return m_isQuitting; }

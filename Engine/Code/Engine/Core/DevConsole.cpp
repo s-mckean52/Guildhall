@@ -3,6 +3,9 @@
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
+#include "Engine/Input/InputSystem.hpp"
+#include "Engine/Core/EventSystem.hpp"
+#include "Engine/Core/Vertex_PCU.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -12,8 +15,10 @@ DevConsole::DevConsole()
 
 
 //---------------------------------------------------------------------------------------------------------
-void DevConsole::StartUp()
+void DevConsole::StartUp( InputSystem* theInput, EventSystem* theEventSystem )
 {
+	m_theInput = theInput;
+	m_theEventSystem = theEventSystem;
 }
 
 
@@ -36,6 +41,17 @@ void DevConsole::StartFrame()
 
 
 //---------------------------------------------------------------------------------------------------------
+void DevConsole::Update( float deltaSeconds )
+{
+	UNUSED( deltaSeconds );
+	if( IsOpen() )
+	{
+		ProcessInput();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void DevConsole::PrintString( const Rgba8& textColor, const std::string& devConsolePrintString )
 {
 	ColorString newString( textColor, devConsolePrintString );
@@ -45,6 +61,17 @@ void DevConsole::PrintString( const Rgba8& textColor, const std::string& devCons
 
 //---------------------------------------------------------------------------------------------------------
 void DevConsole::Render( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const
+{
+	if( !IsOpen() ) return;
+
+	RenderOutput( renderer, camera, lineHeight, font );
+	RenderCursor( renderer, camera, lineHeight, font );
+	RenderCurrentInput( renderer, camera, lineHeight, font );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::RenderOutput( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const
 {
 	std::vector<Vertex_PCU> consoleVerts;
 	Vec2 cameraDimensions = camera.GetCameraDimensions();
@@ -75,15 +102,171 @@ void DevConsole::Render( RenderContext& renderer, const Camera& camera, float li
 
 
 //---------------------------------------------------------------------------------------------------------
+void DevConsole::RenderCurrentInput( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const
+{
+	if( m_currentInput == "" ) return;
+
+	std::vector<Vertex_PCU> inputVerts;
+	font->AddVertsForText2D( inputVerts, camera.GetOrthoBottomLeft(), lineHeight, m_currentInput );
+
+	renderer.BindTexture( font->GetTexture() );
+	renderer.BindShader( (Shader*)nullptr );
+	renderer.DrawVertexArray( inputVerts );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::RenderCursor( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const
+{
+	float cursorAspect = 0.5f;
+	std::vector<Vertex_PCU> cursorVerts;
+	std::string beforeString = m_currentInput.substr( 0, m_cursorIndex );
+	
+	Vec2 inputDimensions = font->GetDimensionsForText2D( lineHeight, beforeString );
+	Vec2 cursorDimensions = font->GetDimensionsForText2D( lineHeight, "|" ) * cursorAspect;
+	Vec2 cursorPosition = camera.GetOrthoBottomLeft();
+	cursorPosition.x -= cursorDimensions.x * 0.4f;
+	cursorPosition.x += inputDimensions.x;
+
+	font->AddVertsForText2D( cursorVerts, cursorPosition, lineHeight, "|", Rgba8::WHITE, cursorAspect );
+
+	renderer.BindTexture( font->GetTexture() );
+	renderer.BindShader( (Shader*)nullptr );
+	renderer.DrawVertexArray( cursorVerts );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::ProcessInput()
+{
+	if( HandleKeyPresses() ) return;
+
+	char inputCharacter;
+	while( m_theInput->PopFromCharacterQueue( &inputCharacter ) )
+	{
+		AddCharacterToInput( inputCharacter );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::AddCharacterToInput( char c )
+{
+	m_currentInput += Stringf( "%c", c );
+	m_cursorIndex++;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::HandleEscapeKey()
+{
+	if( m_currentInput != "" )
+	{
+		m_currentInput = "";
+	}
+	else
+	{
+		g_theConsole->ToggleIsOpen();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool DevConsole::HandleBackspace()
+{
+	if( m_cursorIndex <= 0 ) return false;
+
+	m_currentInput.erase( m_cursorIndex - 1, 1 );
+	m_cursorIndex--;
+	return true;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool DevConsole::HandleDelete()
+{
+	m_currentInput.erase( m_cursorIndex, 1 );
+	return true;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool DevConsole::HandleKeyPresses()
+{
+	if( m_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
+	{
+		HandleEscapeKey();
+		return true;
+	}
+
+	if( m_theInput->WasKeyJustPressed( KEY_CODE_ENTER ) )
+	{
+		SubmitCommand();
+		return true;
+	}
+
+	if( m_theInput->WasKeyJustPressed( KEY_CODE_BACKSPACE ) )
+	{
+		return HandleBackspace();
+	}
+
+	if( m_theInput->WasKeyJustPressed( KEY_CODE_DELETE ) )
+	{
+		return HandleDelete();
+	}
+
+	if( m_theInput->WasKeyJustPressed( KEY_CODE_LEFT_ARROW ) )
+	{
+		if( m_cursorIndex > 0 )
+		{
+			m_cursorIndex--;
+		}
+	}
+
+	if( m_theInput->WasKeyJustPressed( KEY_CODE_RIGHT_ARROW ) )
+	{
+		if( m_cursorIndex < m_currentInput.size() )
+		{
+			m_cursorIndex++;
+		}
+	}
+
+	return false;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::SubmitCommand()
+{
+	Strings availableCommands = m_theEventSystem->GetEventNames();
+	for( int commandIndex = 0; commandIndex < availableCommands.size(); ++commandIndex )
+	{
+		std::string command = availableCommands[ commandIndex ];
+		if( command == m_currentInput )
+		{
+			m_theEventSystem->FireEvent( m_currentInput );
+			m_currentInput = "";
+			return;
+		}
+	}
+	
+	std::string commandString = m_currentInput + " is not a supported command";
+	PrintString( Rgba8::RED, commandString );
+	m_currentInput = "";
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void DevConsole::SetIsOpen( bool isOpen )
 {
 	m_isOpen = isOpen;
+	m_currentInput = "";
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void DevConsole::ToggleIsOpen()
 {
-	m_isOpen = !m_isOpen;
+	SetIsOpen( !m_isOpen );
 }
 
