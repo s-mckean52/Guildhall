@@ -29,7 +29,9 @@ const unsigned char KEY_CODE_F9				= VK_F9;
 const unsigned char KEY_CODE_F10			= VK_F10;
 const unsigned char KEY_CODE_F11			= VK_F11;
 const unsigned char KEY_CODE_F12			= VK_F12;
-const unsigned char KEY_CODE_TILDE			= VK_OEM_3;	
+const unsigned char KEY_CODE_TILDE			= VK_OEM_3;
+const unsigned char KEY_CODE_HOME			= VK_HOME;
+const unsigned char KEY_CODE_END			= VK_END;
 
 
 //---------------------------------------------------------------------------------------------------------

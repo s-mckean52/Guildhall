@@ -50,6 +50,8 @@ extern const unsigned char KEY_CODE_F10;
 extern const unsigned char KEY_CODE_F11;
 extern const unsigned char KEY_CODE_F12;
 extern const unsigned char KEY_CODE_TILDE;
+extern const unsigned char KEY_CODE_HOME;
+extern const unsigned char KEY_CODE_END;
 
 
 //---------------------------------------------------------------------------------------------------------

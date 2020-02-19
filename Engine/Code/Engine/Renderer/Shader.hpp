@@ -49,6 +49,7 @@ public:
 	Shader( RenderContext* context );
 	~Shader();
 	bool CreateFromFile( std::string const& filename );
+	bool CreateFromSourceCode( const char* sourceCode );
 	void CreateRasterState();
 
 	const char*			GetFilePath() const;

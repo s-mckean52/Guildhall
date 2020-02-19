@@ -47,7 +47,19 @@ void DevConsole::Update( float deltaSeconds )
 	if( IsOpen() )
 	{
 		ProcessInput();
+		UpdateCursorBlinkTime( deltaSeconds );
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::UpdateCursorBlinkTime( float deltaSeconds )
+{
+	if( m_cursorTime >= m_cursorBlinkDelay + m_cursorHideTime )
+	{
+		m_cursorTime = 0.f;
+	}
+	m_cursorTime += deltaSeconds;
 }
 
 
@@ -65,7 +77,12 @@ void DevConsole::Render( RenderContext& renderer, const Camera& camera, float li
 	if( !IsOpen() ) return;
 
 	RenderOutput( renderer, camera, lineHeight, font );
-	RenderCursor( renderer, camera, lineHeight, font );
+
+	if( ShowCursor() )
+	{
+		RenderCursor( renderer, camera, lineHeight, font );
+	}
+
 	RenderCurrentInput( renderer, camera, lineHeight, font );
 }
 
@@ -137,14 +154,29 @@ void DevConsole::RenderCursor( RenderContext& renderer, const Camera& camera, fl
 
 
 //---------------------------------------------------------------------------------------------------------
+bool DevConsole::ShowCursor() const
+{
+	if( m_cursorTime >= m_cursorBlinkDelay && m_cursorTime <= m_cursorBlinkDelay + m_cursorHideTime )
+	{
+		return false;
+	}
+	return true;
+}
+
+//---------------------------------------------------------------------------------------------------------
 void DevConsole::ProcessInput()
 {
-	if( HandleKeyPresses() ) return;
+	if( HandleKeyPresses() )
+	{
+		m_cursorTime = 0.f;
+		return;
+	}
 
 	char inputCharacter;
 	while( m_theInput->PopFromCharacterQueue( &inputCharacter ) )
 	{
 		AddCharacterToInput( inputCharacter );
+		m_cursorTime = 0.f;
 	}
 }
 
@@ -221,6 +253,7 @@ bool DevConsole::HandleKeyPresses()
 		{
 			m_cursorIndex--;
 		}
+		return true;
 	}
 
 	if( m_theInput->WasKeyJustPressed( KEY_CODE_RIGHT_ARROW ) )
@@ -229,6 +262,46 @@ bool DevConsole::HandleKeyPresses()
 		{
 			m_cursorIndex++;
 		}
+		return true;
+	}
+
+	if( m_theInput->WasKeyJustPressed( KEY_CODE_UP_ARROW ) )
+	{
+		int numPreviousCommands = m_previousCommands.size();
+		if( m_previousCommandIndex < numPreviousCommands )
+		{
+			++m_previousCommandIndex;
+			m_currentInput = m_previousCommands[ numPreviousCommands - m_previousCommandIndex ];
+			return true;
+		}
+	}
+
+	if( m_theInput->WasKeyJustPressed( KEY_CODE_DOWN_ARROW ) )
+	{
+		int numPreviousCommands = m_previousCommands.size();
+		if( m_previousCommandIndex > 0 )
+		{
+			--m_previousCommandIndex;
+			if( m_previousCommandIndex == 0 )
+			{
+				m_currentInput = "";
+			}
+			else
+			{
+				m_currentInput = m_previousCommands[ numPreviousCommands - m_previousCommandIndex ];
+			}
+			return true;
+		}
+	}
+
+	if( m_theInput->WasKeyJustPressed( KEY_CODE_HOME ) )
+	{
+		m_cursorIndex = 0;
+	}
+
+	if( m_theInput->WasKeyJustPressed( KEY_CODE_END ) )
+	{
+		m_cursorIndex = static_cast<int>( m_currentInput.length() );
 	}
 
 	return false;
@@ -238,6 +311,8 @@ bool DevConsole::HandleKeyPresses()
 //---------------------------------------------------------------------------------------------------------
 void DevConsole::SubmitCommand()
 {
+	m_previousCommands.push_back( m_currentInput );
+
 	Strings availableCommands = m_theEventSystem->GetEventNames();
 	for( int commandIndex = 0; commandIndex < availableCommands.size(); ++commandIndex )
 	{
@@ -245,7 +320,10 @@ void DevConsole::SubmitCommand()
 		if( command == m_currentInput )
 		{
 			m_theEventSystem->FireEvent( m_currentInput );
+		
 			m_currentInput = "";
+			m_cursorIndex = 0;
+			m_previousCommandIndex = 0;
 			return;
 		}
 	}
@@ -253,6 +331,8 @@ void DevConsole::SubmitCommand()
 	std::string commandString = m_currentInput + " is not a supported command";
 	PrintString( Rgba8::RED, commandString );
 	m_currentInput = "";
+	m_cursorIndex = 0;
+	m_previousCommandIndex = 0;
 }
 
 

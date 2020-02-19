@@ -204,6 +204,7 @@
     <ClCompile Include="Platform\Window.cpp" />
     <ClCompile Include="Renderer\BitmapFont.cpp" />
     <ClCompile Include="Renderer\buffer_attribute_t.cpp" />
+    <ClCompile Include="Renderer\BuiltInShader.cpp" />
     <ClCompile Include="Renderer\Camera.cpp" />
     <ClCompile Include="Renderer\D3D11Common.cpp" />
     <ClCompile Include="Renderer\MeshUtils.cpp" />
@@ -264,6 +265,7 @@
     <ClInclude Include="Platform\Window.hpp" />
     <ClInclude Include="Renderer\BitmapFont.hpp" />
     <ClInclude Include="Renderer\buffer_attribute_t.hpp" />
+    <ClInclude Include="Renderer\BuiltInShader.hpp" />
     <ClInclude Include="Renderer\Camera.hpp" />
     <ClInclude Include="Renderer\D3D11Common.hpp" />
     <ClInclude Include="Renderer\MeshUtils.hpp" />

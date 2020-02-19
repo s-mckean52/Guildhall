@@ -27,6 +27,7 @@
 #include "Engine/Renderer/RenderBuffer.hpp"
 #include "Engine/Core/Time.hpp"
 #include "Engine/Renderer/Sampler.hpp"
+#include "Engine/Renderer/BuiltInShader.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -73,8 +74,8 @@ void RenderContext::StartUp( Window* theWindow )
 	GUARANTEE_OR_DIE( SUCCEEDED( result ), "Failed to create rendering pipeline" );
 
 	m_swapchain = new SwapChain( this, swapchain );
-	//m_defaultShader = new Shader( this );
-	m_defaultShader = GetOrCreateShader( "Data/Shaders/Default.hlsl" );
+	m_defaultShader = CreateShaderFromSourceCode( BuiltInShader::BUILT_IN_DEFAULT.m_sourceCode );
+	m_errorShader = CreateShaderFromSourceCode( BuiltInShader::BUILT_IN_ERROR.m_sourceCode );
 
 	m_immediateVBO = new VertexBuffer( this, MEMORY_HINT_DYNAMIC );
 
@@ -153,6 +154,9 @@ void RenderContext::SetBlendMode( BlendMode blendMode )
 		break;
 	case BlendMode::ADDITIVE:
 		m_context->OMSetBlendState( m_additiveBlendStateHandle, zeroes, ~0U );
+		break;
+	case BlendMode::DISABLED:
+		m_context->OMSetBlendState( m_disabledBlendStateHandle, zeroes, ~0U );
 		break;
 	default:
 		ERROR_AND_DIE( Stringf( "Unkown or unsupported blend mode #%i", blendMode ) );
@@ -314,6 +318,24 @@ void RenderContext::CreateBlendStates()
 	additiveDesc.RenderTarget[0].RenderTargetWriteMask	= D3D11_COLOR_WRITE_ENABLE_ALL;
 
 	m_device->CreateBlendState( &alphaDesc, &m_additiveBlendStateHandle );
+
+
+	D3D11_BLEND_DESC disabledDesc;
+	disabledDesc.AlphaToCoverageEnable = false;
+	disabledDesc.IndependentBlendEnable = false;
+
+	disabledDesc.RenderTarget[0].BlendEnable			= true;
+	disabledDesc.RenderTarget[0].BlendOp				= D3D11_BLEND_OP_ADD;
+	disabledDesc.RenderTarget[0].SrcBlend				= D3D11_BLEND_ONE;
+	disabledDesc.RenderTarget[0].DestBlend				= D3D11_BLEND_ZERO;
+
+	disabledDesc.RenderTarget[0].BlendOpAlpha			= D3D11_BLEND_OP_ADD;
+	disabledDesc.RenderTarget[0].SrcBlendAlpha			= D3D11_BLEND_ONE;
+	disabledDesc.RenderTarget[0].DestBlendAlpha			= D3D11_BLEND_ZERO;
+
+	disabledDesc.RenderTarget[0].RenderTargetWriteMask	= D3D11_COLOR_WRITE_ENABLE_ALL;
+
+	m_device->CreateBlendState( &disabledDesc, &m_disabledBlendStateHandle );
 }
 
 
@@ -412,11 +434,29 @@ Shader* RenderContext::GetOrCreateShader( char const* filename )
 			return shader;
 		}
 	}
-	newShader->CreateFromFile( filename );
-	m_loadedShaders.push_back( newShader );
-	return newShader;
+
+	if( newShader->CreateFromFile( filename ) )
+	{
+		m_loadedShaders.push_back( newShader );
+		return newShader;
+	}
+
+	delete newShader;
+	return m_errorShader;
 }
 
+
+Shader* RenderContext::CreateShaderFromSourceCode( char const* sourceCode )
+{
+	Shader* newShader = new Shader( this );
+	if( newShader->CreateFromSourceCode( sourceCode ) )
+	{
+		m_loadedShaders.push_back( newShader );
+		return newShader;
+	}
+	delete newShader;
+	return m_errorShader;
+}
 
 //---------------------------------------------------------------------------------------------------------
 Texture* RenderContext::CreateTextureFromColor( Rgba8 const& color )
@@ -478,6 +518,7 @@ void RenderContext::ReleaseBlendStates()
 {
 	DX_SAFE_RELEASE( m_additiveBlendStateHandle );
 	DX_SAFE_RELEASE( m_alphaBlendStateHandle );
+	DX_SAFE_RELEASE( m_disabledBlendStateHandle );
 }
 
 

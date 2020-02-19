@@ -88,11 +88,12 @@ bool ShaderStage::Compile( RenderContext* ctx, std::string const& filename, void
 				errorString );
 			DX_SAFE_RELEASE( errors );
 
-			DEBUGBREAK();
+			//DEBUGBREAK();
 		}
 		else {
 			DebuggerPrintf( "Failed with HRESULT: %u", hr );
 		}
+		return false;
 	}
 	else
 	{
@@ -178,6 +179,18 @@ bool Shader::CreateFromFile( std::string const& filename )
 	m_fragmentStage.Compile( m_owner, filename, source, file_size, SHADER_TYPE_FRAGMENT );
 
 	delete[] source;
+
+	return m_vertexStage.IsValid() && m_fragmentStage.IsValid();
+}
+
+
+bool Shader::CreateFromSourceCode( const char* sourceCode )
+{
+	size_t size = strlen( sourceCode );
+	void* source = (void*)sourceCode;
+	   
+	m_vertexStage.Compile( m_owner, "Created From Source", source, size, SHADER_TYPE_VERTEX );
+	m_fragmentStage.Compile( m_owner, "Created From Source", source, size, SHADER_TYPE_FRAGMENT );
 
 	return m_vertexStage.IsValid() && m_fragmentStage.IsValid();
 }

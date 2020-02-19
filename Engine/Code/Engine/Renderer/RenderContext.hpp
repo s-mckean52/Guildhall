@@ -25,6 +25,7 @@ enum class BlendMode
 {
 	ALPHA,
 	ADDITIVE,
+	DISABLED,
 };
 
 enum BufferSlot
@@ -79,6 +80,7 @@ public:
 	Texture*	CreateOrGetTextureFromFile( const char* imageFilePath );
 	BitmapFont* CreateOrGetBitmapFontFromFile( const char* imageFilePath );
 	Shader*		GetOrCreateShader( char const* filename );
+	Shader*		CreateShaderFromSourceCode( char const* sourceCode);
 	Texture*	CreateTextureFromColor( Rgba8 const& color );
 
 	void ReleaseLoadedAssets();
@@ -110,6 +112,7 @@ public:
 	SwapChain*				m_swapchain				= nullptr;
 	Shader*					m_currentShader			= nullptr;
 	Shader*					m_defaultShader			= nullptr;
+	Shader*					m_errorShader			= nullptr;
 	Texture*				m_textueDefaultColor	= nullptr;
 	Sampler*				m_samplerDefault		= nullptr;
 	VertexBuffer*			m_immediateVBO			= nullptr;
@@ -118,4 +121,5 @@ public:
 
 	ID3D11BlendState* m_alphaBlendStateHandle		= nullptr;
 	ID3D11BlendState* m_additiveBlendStateHandle	= nullptr;
+	ID3D11BlendState* m_disabledBlendStateHandle	= nullptr;
 };
