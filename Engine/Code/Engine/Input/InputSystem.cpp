@@ -209,3 +209,31 @@ bool InputSystem::PopFromCharacterQueue( char* out_c )
 	}
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::AddStringToClipboard( std::string stringToAdd )
+{
+	if( !OpenClipboard( nullptr ) ) return;
+	if( !EmptyClipboard() ) return;
+
+	HGLOBAL hGlob = GlobalAlloc( GMEM_FIXED, 64 );
+	strcpy_s( (char*)hGlob, 64, stringToAdd.c_str() );
+	SetClipboardData( CF_TEXT, hGlob );
+
+	CloseClipboard();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string InputSystem::GetStringFromClipboard()
+{
+	std::string stringFromClipboard = ""; 
+
+	if( !OpenClipboard( nullptr ) ) 
+		return stringFromClipboard;
+
+	stringFromClipboard = (char*)GetClipboardData( CF_TEXT );
+	CloseClipboard();
+
+	return stringFromClipboard;
+}

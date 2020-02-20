@@ -33,6 +33,7 @@ public:
 	void PrintString( const Rgba8& textColor, const std::string& devConsolePrintString );
 
 	void Render( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const;
+	void RenderBackground( RenderContext& renderer, const Camera& camera ) const;
 	void RenderOutput( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const;
 	void RenderCurrentInput( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const;
 	void RenderCursor( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const;
@@ -60,6 +61,8 @@ public:
 	void HandleCopy();
 	void HandlePaste();
 
+	void ScrollPreviousCommands( int numCommands );
+
 	void SetIsOpen( bool isOpen );
 	void ToggleIsOpen();
 	bool IsOpen() const { return m_isOpen; };
@@ -74,6 +77,7 @@ private:
 	float m_cursorBlinkDelay = 0.65f;
 
 	Rgba8 m_selectionColor = Rgba8( 0, 0, 200, 80 );
+	Rgba8 m_backgroundColor = Rgba8( 50, 50, 50, 175 );
 
 	bool m_isOpen = false;
 	InputSystem* m_theInput = nullptr;

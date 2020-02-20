@@ -42,7 +42,7 @@ Project: FPS
 ## Extras
 asdfasdf
 - [x] *X03.01 : 03pts*: Built-in error shader to use when a shader fails to compile.   
-- [-] *X03.02 : 04pts*: AutoComplete
 - [x] *X03.04 : 04pts*: Command History
 - [x] *X03.06 : 05pts*: Text Selection 
+- [x] *X03.10 : 04pts*: Cut, Copy & Paste from Window's Clipboard (Requires X03.04)
 - [x] *X03.24 : 02pts*: Navigation Hotkeys, Home, End, Ctrl + Arrows

@@ -37,6 +37,9 @@ public:
 	void PushToCharacterQueue( char c );
 	bool PopFromCharacterQueue( char* c );
 
+	void		AddStringToClipboard( std::string stringToAdd );
+	std::string	GetStringFromClipboard();
+
 private:
 	Vec2 m_mouseNormalizedPos;
 	KeyButtonState m_keyStates[ NUM_KEYS ];

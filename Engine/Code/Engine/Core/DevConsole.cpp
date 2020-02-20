@@ -78,10 +78,28 @@ void DevConsole::Render( RenderContext& renderer, const Camera& camera, float li
 {
 	if( !IsOpen() ) return;
 
+	RenderBackground( renderer, camera );
 	RenderOutput( renderer, camera, lineHeight, font );
 	RenderCursor( renderer, camera, lineHeight, font );
 	RenderCurrentInput( renderer, camera, lineHeight, font );
 	RenderSelection( renderer, camera, lineHeight, font );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::RenderBackground( RenderContext& renderer, const Camera& camera ) const
+{
+	AABB2 backgroundQuad;
+	std::vector<Vertex_PCU> backgroundVerts;
+
+	backgroundQuad.mins = camera.GetOrthoBottomLeft();
+	backgroundQuad.maxes = camera.GetOrthoTopRight();
+
+	AppendVertsForAABB2D( backgroundVerts, backgroundQuad, m_backgroundColor );
+
+	renderer.BindTexture( (Texture*)nullptr );
+	renderer.BindShader( (Shader*)nullptr );
+	renderer.DrawVertexArray( backgroundVerts );
 }
 
 
@@ -249,7 +267,7 @@ void DevConsole::HandleEscapeKey()
 {
 	if( m_currentInput != "" )
 	{
-		m_currentInput = "";
+		ResetInput();
 	}
 	else
 	{
@@ -340,28 +358,28 @@ bool DevConsole::HandleKeyPresses()
 
 	if( m_theInput->WasKeyJustPressed( KEY_CODE_UP_ARROW ) )
 	{
-		int numPreviousCommands = m_previousCommands.size();
+		int numPreviousCommands = static_cast<int>( m_previousCommands.size() );
 		if( m_previousCommandIndex < numPreviousCommands )
 		{
 			++m_previousCommandIndex;
-			m_currentInput = m_previousCommands[ numPreviousCommands - m_previousCommandIndex ];
+			ScrollPreviousCommands( numPreviousCommands );
 			return true;
 		}
 	}
 
 	if( m_theInput->WasKeyJustPressed( KEY_CODE_DOWN_ARROW ) )
 	{
-		int numPreviousCommands = m_previousCommands.size();
+		int numPreviousCommands = static_cast<int>( m_previousCommands.size() );
 		if( m_previousCommandIndex > 0 )
 		{
 			--m_previousCommandIndex;
 			if( m_previousCommandIndex == 0 )
 			{
-				m_currentInput = "";
+				ResetInput();
 			}
 			else
 			{
-				m_currentInput = m_previousCommands[ numPreviousCommands - m_previousCommandIndex ];
+				ScrollPreviousCommands( numPreviousCommands );
 			}
 			return true;
 		}
@@ -369,11 +387,13 @@ bool DevConsole::HandleKeyPresses()
 
 	if( m_theInput->WasKeyJustPressed( KEY_CODE_HOME ) )
 	{
+		m_selectionOffset = 0;
 		m_cursorPosition = 0;
 	}
 
 	if( m_theInput->WasKeyJustPressed( KEY_CODE_END ) )
 	{
+		m_selectionOffset = 0;
 		m_cursorPosition = static_cast<int>( m_currentInput.length() );
 	}
 
@@ -433,7 +453,7 @@ void DevConsole::SubmitCommand()
 void DevConsole::SetIsOpen( bool isOpen )
 {
 	m_isOpen = isOpen;
-	m_currentInput = "";
+	ResetInput();
 }
 
 
@@ -458,13 +478,15 @@ void DevConsole::ResetInput()
 void DevConsole::HandleCut()
 {
 	HandleCopy();
-	HandleDelete();
+	DeleteSelection();
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void DevConsole::HandleCopy()
 {
+	if( m_selectionOffset == 0 ) return;
+
 	int startPos;
 	int endPos;
 	std::string copiedString = "";
@@ -473,15 +495,30 @@ void DevConsole::HandleCopy()
 	int range = endPos - startPos;
 
 	copiedString = m_currentInput.substr( startPos, range );
+	m_theInput->AddStringToClipboard( copiedString );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void DevConsole::HandlePaste()
 {
-	std::string stringToPaste = "paste";
+	if( m_selectionOffset != 0 )
+	{
+		DeleteSelection();
+	}
+
+	std::string stringToPaste = m_theInput->GetStringFromClipboard();
 	m_currentInput.insert( m_cursorPosition, stringToPaste );
-	m_cursorPosition += stringToPaste.size();
+	m_cursorPosition += static_cast<int>( stringToPaste.size() );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::ScrollPreviousCommands( int numCommands )
+{
+	int previousCommandFromBack = numCommands - m_previousCommandIndex;
+	m_currentInput = m_previousCommands[ previousCommandFromBack ];
+	m_cursorPosition = static_cast<int>(m_currentInput.size());
 }
 
 
