@@ -10,6 +10,9 @@ Camera::~Camera()
 {
 	delete m_uniformBuffer;
 	m_uniformBuffer = nullptr;
+
+	delete m_colorTarget;
+	m_colorTarget = nullptr;
 }
 
 

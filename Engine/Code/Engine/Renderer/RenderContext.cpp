@@ -225,7 +225,6 @@ void RenderContext::BeginCamera( const Camera& camera )
 }
 
 
-
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::UpdateCameraData( Camera const& camera )
 {
@@ -236,6 +235,7 @@ void RenderContext::UpdateCameraData( Camera const& camera )
 	RenderBuffer* cameraUBO = camera.GetUBO();
 	cameraUBO->Update( &cameraData, sizeof( cameraData ), sizeof( cameraData ) );
 }
+
 
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::EndCamera( const Camera& camera )

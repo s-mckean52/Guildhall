@@ -58,6 +58,12 @@ void Game::ShutDown()
 {
 	delete g_RNG;
 	g_RNG = nullptr;
+
+	delete m_worldCamera;
+	m_worldCamera = nullptr;
+
+	delete m_devConsoleCamera;
+	m_devConsoleCamera = nullptr;
 }
 
 

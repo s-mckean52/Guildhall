@@ -49,13 +49,13 @@ void App::StartUp()
 //---------------------------------------------------------------------------------------------------------
 void App::ShutDown()
 {
+	g_theGame->ShutDown();
+	delete g_theGame;
+	g_theGame = nullptr;
+
 	g_theEventSystem->ShutDown();
 	delete g_theEventSystem;
 	g_theEventSystem = nullptr;
-
-	g_theRenderer->ShutDown();
-	delete g_theRenderer;
-	g_theRenderer = nullptr;
 
 	g_theInput->ShutDown();
 	delete g_theInput;
@@ -68,9 +68,9 @@ void App::ShutDown()
 	delete g_theConsole;
 	g_theConsole = nullptr;
 
-	g_theGame->ShutDown();
-	delete g_theGame;
-	g_theGame = nullptr;
+	g_theRenderer->ShutDown();
+	delete g_theRenderer;
+	g_theRenderer = nullptr;
 }
 
 
