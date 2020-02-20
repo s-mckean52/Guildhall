@@ -1,13 +1,15 @@
 #pragma once
+#include <string>
 
 struct BuiltInShader
 {
 public:
+	std::string m_name = "";
 	const char* m_sourceCode = "";
 
 public:
-	BuiltInShader( const char* sourceCode );
+	BuiltInShader( std::string name, const char* sourceCode );
 
-	static BuiltInShader BUILT_IN_DEFAULT;
-	static BuiltInShader BUILT_IN_ERROR;
+	static const char* BUILT_IN_DEFAULT;
+	static const char* BUILT_IN_ERROR;
 };

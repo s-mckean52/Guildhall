@@ -6,6 +6,8 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
+#include "Engine/Renderer/MeshUtils.hpp"
+#include "Engine/Math/AABB2.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -77,13 +79,9 @@ void DevConsole::Render( RenderContext& renderer, const Camera& camera, float li
 	if( !IsOpen() ) return;
 
 	RenderOutput( renderer, camera, lineHeight, font );
-
-	if( ShowCursor() )
-	{
-		RenderCursor( renderer, camera, lineHeight, font );
-	}
-
+	RenderCursor( renderer, camera, lineHeight, font );
 	RenderCurrentInput( renderer, camera, lineHeight, font );
+	RenderSelection( renderer, camera, lineHeight, font );
 }
 
 
@@ -135,9 +133,11 @@ void DevConsole::RenderCurrentInput( RenderContext& renderer, const Camera& came
 //---------------------------------------------------------------------------------------------------------
 void DevConsole::RenderCursor( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const
 {
+	if( !ShowCursor() ) return;
+
 	float cursorAspect = 0.5f;
 	std::vector<Vertex_PCU> cursorVerts;
-	std::string beforeString = m_currentInput.substr( 0, m_cursorIndex );
+	std::string beforeString = m_currentInput.substr( 0, m_cursorPosition + m_selectionOffset );
 	
 	Vec2 inputDimensions = font->GetDimensionsForText2D( lineHeight, beforeString );
 	Vec2 cursorDimensions = font->GetDimensionsForText2D( lineHeight, "|" ) * cursorAspect;
@@ -150,6 +150,38 @@ void DevConsole::RenderCursor( RenderContext& renderer, const Camera& camera, fl
 	renderer.BindTexture( font->GetTexture() );
 	renderer.BindShader( (Shader*)nullptr );
 	renderer.DrawVertexArray( cursorVerts );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::RenderSelection( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const
+{
+	if( m_selectionOffset == 0 ) return;
+
+	AABB2 selectionBox;
+	std::vector<Vertex_PCU> selectionVerts;
+	int startPos = 0;
+	int endPos = 0;
+
+	GetSelectionRange( startPos, endPos );
+
+	int range = endPos - startPos;
+
+	std::string beforeString = m_currentInput.substr( 0, startPos );
+	std::string selectedString = m_currentInput.substr( startPos, range );
+
+	Vec2 beforeDimensions = font->GetDimensionsForText2D( lineHeight, beforeString );
+	Vec2 selectionDimensions = font->GetDimensionsForText2D( lineHeight, selectedString );
+
+	selectionBox.mins = camera.GetOrthoBottomLeft();
+	selectionBox.mins.x += beforeDimensions.x;
+	selectionBox.maxes = selectionBox.mins + selectionDimensions;
+
+	AppendVertsForAABB2D( selectionVerts, selectionBox, m_selectionColor );
+
+	renderer.BindTexture( (Texture*)nullptr );
+	renderer.BindShader( (Shader*)nullptr );
+	renderer.DrawVertexArray( selectionVerts );
 }
 
 
@@ -184,8 +216,31 @@ void DevConsole::ProcessInput()
 //---------------------------------------------------------------------------------------------------------
 void DevConsole::AddCharacterToInput( char c )
 {
-	m_currentInput += Stringf( "%c", c );
-	m_cursorIndex++;
+	if( c == KEY_CODE_BACKSPACE )
+	{
+		HandleBackspace();
+	}
+	else if( c == KEY_CODE_COPY )
+	{
+		HandleCopy();
+	}
+	else if( c == KEY_CODE_PASTE )
+	{
+		HandlePaste();
+	}
+	else if( c == KEY_CODE_CUT )
+	{
+		HandleCut();
+	}
+	else
+	{
+		if( m_selectionOffset != 0 )
+		{
+			DeleteSelection();
+		}
+		m_currentInput.insert( m_cursorPosition, 1, c );
+		++m_cursorPosition;
+	}
 }
 
 
@@ -206,10 +261,16 @@ void DevConsole::HandleEscapeKey()
 //---------------------------------------------------------------------------------------------------------
 bool DevConsole::HandleBackspace()
 {
-	if( m_cursorIndex <= 0 ) return false;
+	if( m_selectionOffset == 0 && m_cursorPosition > 0 )
+	{
+		m_currentInput.erase( m_cursorPosition - 1, 1 );
+		--m_cursorPosition;
+	}
+	else
+	{
+		DeleteSelection();
+	}
 
-	m_currentInput.erase( m_cursorIndex - 1, 1 );
-	m_cursorIndex--;
 	return true;
 }
 
@@ -217,7 +278,14 @@ bool DevConsole::HandleBackspace()
 //---------------------------------------------------------------------------------------------------------
 bool DevConsole::HandleDelete()
 {
-	m_currentInput.erase( m_cursorIndex, 1 );
+	if( m_selectionOffset == 0 )
+	{
+		m_currentInput.erase( m_cursorPosition, 1 );
+	}
+	else
+	{
+		DeleteSelection();
+	}
 	return true;
 }
 
@@ -225,6 +293,19 @@ bool DevConsole::HandleDelete()
 //---------------------------------------------------------------------------------------------------------
 bool DevConsole::HandleKeyPresses()
 {
+	bool ctrlHeld = false;
+	bool shiftHeld = false;
+
+	if( m_theInput->IsKeyPressed( KEY_CODE_CTRL ) )
+	{
+		ctrlHeld = true;
+	}
+
+	if( m_theInput->IsKeyPressed( KEY_CODE_SHIFT ) )
+	{
+		shiftHeld = true;
+	}
+
 	if( m_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
 	{
 		HandleEscapeKey();
@@ -249,20 +330,12 @@ bool DevConsole::HandleKeyPresses()
 
 	if( m_theInput->WasKeyJustPressed( KEY_CODE_LEFT_ARROW ) )
 	{
-		if( m_cursorIndex > 0 )
-		{
-			m_cursorIndex--;
-		}
-		return true;
+		return MoveCursor( LEFT, shiftHeld, ctrlHeld );
 	}
 
 	if( m_theInput->WasKeyJustPressed( KEY_CODE_RIGHT_ARROW ) )
 	{
-		if( m_cursorIndex < m_currentInput.size() )
-		{
-			m_cursorIndex++;
-		}
-		return true;
+		return MoveCursor( RIGHT, shiftHeld, ctrlHeld );
 	}
 
 	if( m_theInput->WasKeyJustPressed( KEY_CODE_UP_ARROW ) )
@@ -296,15 +369,40 @@ bool DevConsole::HandleKeyPresses()
 
 	if( m_theInput->WasKeyJustPressed( KEY_CODE_HOME ) )
 	{
-		m_cursorIndex = 0;
+		m_cursorPosition = 0;
 	}
 
 	if( m_theInput->WasKeyJustPressed( KEY_CODE_END ) )
 	{
-		m_cursorIndex = static_cast<int>( m_currentInput.length() );
+		m_cursorPosition = static_cast<int>( m_currentInput.length() );
 	}
 
 	return false;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::SelectText( Direction direction )
+{
+	switch( direction )
+	{
+	case LEFT:
+		--m_selectionOffset;
+		break;
+	case RIGHT:
+		++m_selectionOffset;
+		break;
+	}
+
+	int currentCursorPosition = m_cursorPosition + m_selectionOffset;
+	if( currentCursorPosition < 0 )
+	{
+		++m_selectionOffset;
+	}
+	else if( currentCursorPosition > m_currentInput.size() )
+	{
+		--m_selectionOffset;
+	}
 }
 
 
@@ -320,19 +418,14 @@ void DevConsole::SubmitCommand()
 		if( command == m_currentInput )
 		{
 			m_theEventSystem->FireEvent( m_currentInput );
-		
-			m_currentInput = "";
-			m_cursorIndex = 0;
-			m_previousCommandIndex = 0;
+			ResetInput();
 			return;
 		}
 	}
 	
 	std::string commandString = m_currentInput + " is not a supported command";
 	PrintString( Rgba8::RED, commandString );
-	m_currentInput = "";
-	m_cursorIndex = 0;
-	m_previousCommandIndex = 0;
+	ResetInput();
 }
 
 
@@ -350,3 +443,174 @@ void DevConsole::ToggleIsOpen()
 	SetIsOpen( !m_isOpen );
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::ResetInput()
+{
+	m_currentInput = "";
+	m_cursorPosition = 0;
+	m_selectionOffset = 0;
+	m_previousCommandIndex = 0;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::HandleCut()
+{
+	HandleCopy();
+	HandleDelete();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::HandleCopy()
+{
+	int startPos;
+	int endPos;
+	std::string copiedString = "";
+
+	GetSelectionRange( startPos, endPos );
+	int range = endPos - startPos;
+
+	copiedString = m_currentInput.substr( startPos, range );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::HandlePaste()
+{
+	std::string stringToPaste = "paste";
+	m_currentInput.insert( m_cursorPosition, stringToPaste );
+	m_cursorPosition += stringToPaste.size();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::DeleteSelection()
+{
+	int startPos;
+	int endPos;
+
+	GetSelectionRange( startPos, endPos );
+
+	int range = endPos - startPos;
+
+	m_currentInput.erase( static_cast<size_t>( startPos ), range );
+	m_cursorPosition = startPos;
+	m_selectionOffset = 0;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::JumpWord( Direction direction )
+{
+	bool isWhiteSpace = false;
+	std::vector<int> wordStartIndexes;
+	wordStartIndexes.push_back( 0 );
+	for( int inputIndex = 0; inputIndex < m_currentInput.size(); ++inputIndex )
+	{
+		if( isspace( m_currentInput[ inputIndex ] ) )
+		{
+			isWhiteSpace = true;
+		}
+		else
+		{
+			if( isWhiteSpace )
+			{
+				wordStartIndexes.push_back( inputIndex );
+				isWhiteSpace = false;
+			}
+		}
+	}
+	wordStartIndexes.push_back( static_cast<int>( m_currentInput.size() ) );
+	
+	for( int wordStartIndex = 0; wordStartIndex < wordStartIndexes.size(); ++wordStartIndex )
+	{
+		int currentWordStart = wordStartIndexes[ wordStartIndex ];
+		if( direction == LEFT && currentWordStart >= m_cursorPosition )
+		{
+			if( m_cursorPosition == 0 ) break;
+			m_cursorPosition = wordStartIndexes[ wordStartIndex - 1 ];
+			break;
+		}
+		else if( direction == RIGHT && currentWordStart > m_cursorPosition )
+		{
+			m_cursorPosition = currentWordStart;
+			break;
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::GetSelectionRange( int& out_start, int& out_end ) const
+{
+	if( m_selectionOffset < 0 )
+	{
+		out_start = m_cursorPosition + m_selectionOffset;
+		out_end = m_cursorPosition;
+	}
+	else
+	{
+		out_start = m_cursorPosition;
+		out_end = m_cursorPosition + m_selectionOffset;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::EndSelection( Direction direction )
+{
+	if( m_selectionOffset == 0 ) return;
+
+	int startPos = 0;
+	int endPos = 0;
+
+	GetSelectionRange( startPos, endPos );
+
+	switch( direction )
+	{
+	case LEFT:
+		m_cursorPosition = startPos;
+		break;
+	case RIGHT:
+		m_cursorPosition = endPos;
+		break;
+	default:
+		break;
+	}
+
+	m_selectionOffset = 0;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool DevConsole::MoveCursor( Direction directionToMove, bool isShiftHeld, bool isCtrlHeld )
+{
+	if( isShiftHeld )
+	{
+		SelectText( directionToMove );
+		return true;
+	}
+	else if( m_selectionOffset != 0 )
+	{
+		EndSelection( directionToMove );
+		return true;
+	}
+	
+	if( isCtrlHeld )
+	{
+		JumpWord( directionToMove );
+		return true;
+	}
+
+	if( m_cursorPosition > 0 && directionToMove == LEFT)
+	{
+		--m_cursorPosition;
+	}
+	else if( m_cursorPosition < m_currentInput.size() && directionToMove == RIGHT )
+	{
+		++m_cursorPosition;
+	}
+	return true;
+}

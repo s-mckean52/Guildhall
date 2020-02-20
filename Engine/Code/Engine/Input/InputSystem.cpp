@@ -17,6 +17,11 @@ const unsigned char KEY_CODE_UP_ARROW		= VK_UP;
 const unsigned char KEY_CODE_LEFT_ARROW		= VK_LEFT;
 const unsigned char KEY_CODE_DOWN_ARROW		= VK_DOWN;
 const unsigned char KEY_CODE_RIGHT_ARROW	= VK_RIGHT;
+const unsigned char KEY_CODE_SHIFT			= VK_SHIFT;
+const unsigned char KEY_CODE_CTRL			= VK_CONTROL;
+const unsigned char KEY_CODE_COPY			= 0x03;
+const unsigned char KEY_CODE_PASTE			= 0x16;
+const unsigned char KEY_CODE_CUT			= 0x18;
 const unsigned char KEY_CODE_F1				= VK_F1;
 const unsigned char KEY_CODE_F2				= VK_F2;
 const unsigned char KEY_CODE_F3				= VK_F3;
@@ -185,8 +190,6 @@ bool InputSystem::WasKeyJustReleased( unsigned char keyCode ) const
 //---------------------------------------------------------------------------------------------------------
 void InputSystem::PushToCharacterQueue( char c )
 {
-	if( c == KEY_CODE_BACKSPACE || c == KEY_CODE_DELETE ) return;
-
 	m_characters.push( c );
 }
 

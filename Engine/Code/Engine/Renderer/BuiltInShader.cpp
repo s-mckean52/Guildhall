@@ -3,14 +3,15 @@
 
 
 //---------------------------------------------------------------------------------------------------------
-BuiltInShader::BuiltInShader( const char* sourceCode )
+BuiltInShader::BuiltInShader( std::string name, const char* sourceCode )
 {
+	m_name = name;
 	m_sourceCode = sourceCode;
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC BuiltInShader BuiltInShader::BUILT_IN_DEFAULT( R"(
+STATIC const char* BuiltInShader::BUILT_IN_DEFAULT( R"(
 	struct vs_input_t
 	{
 		float3 position : POSITION;
@@ -76,7 +77,7 @@ STATIC BuiltInShader BuiltInShader::BUILT_IN_DEFAULT( R"(
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC BuiltInShader BuiltInShader::BUILT_IN_ERROR( R"(
+STATIC const char* BuiltInShader::BUILT_IN_ERROR( R"(
 	struct vs_input_t
 	{
 		float3 position : POSITION;

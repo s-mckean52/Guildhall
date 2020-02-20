@@ -74,8 +74,8 @@ void RenderContext::StartUp( Window* theWindow )
 	GUARANTEE_OR_DIE( SUCCEEDED( result ), "Failed to create rendering pipeline" );
 
 	m_swapchain = new SwapChain( this, swapchain );
-	m_defaultShader = CreateShaderFromSourceCode( BuiltInShader::BUILT_IN_DEFAULT.m_sourceCode );
-	m_errorShader = CreateShaderFromSourceCode( BuiltInShader::BUILT_IN_ERROR.m_sourceCode );
+	m_defaultShader = CreateShaderFromSourceCode( BuiltInShader::BUILT_IN_DEFAULT );
+	m_errorShader = CreateShaderFromSourceCode( BuiltInShader::BUILT_IN_ERROR );
 
 	m_immediateVBO = new VertexBuffer( this, MEMORY_HINT_DYNAMIC );
 
