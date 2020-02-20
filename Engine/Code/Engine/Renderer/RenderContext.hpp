@@ -117,7 +117,6 @@ public:
 	Sampler*				m_samplerDefault		= nullptr;
 	VertexBuffer*			m_immediateVBO			= nullptr;
 	RenderBuffer*			m_frameUBO				= nullptr;
-	RenderBuffer*			m_cameraUBO				= nullptr;
 
 	ID3D11BlendState* m_alphaBlendStateHandle		= nullptr;
 	ID3D11BlendState* m_additiveBlendStateHandle	= nullptr;

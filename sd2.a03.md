@@ -1,8 +1,8 @@
 Project: FPS
 - [x] *15pts*: Get a Working Orthographic Camera
     - [x] *05pts*: Implement `MakeOrthographicProjectionMatrixD3D` in `Engine/Math/MatrixUtils.hpp`, `.cpp`.  
-    - [ ] *05pts*: Camera now owns a `UniformBuffer` for their matrices
-    - [ ] *05pts*: Camera updates and binds their uniform buffer in `BeginCamera`
+    - [x] *05pts*: Camera now owns a `UniformBuffer` for their matrices
+    - [x] *05pts*: Camera updates and binds their uniform buffer in `BeginCamera`
 - [x] *18pts*: Get Working Textures
     - [x] *04pts*: Be able to create a `Texture` from an Image/File
     - [x] *04pts*: `TextureView` supports shader resource views (srv)

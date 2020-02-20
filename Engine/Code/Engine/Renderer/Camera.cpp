@@ -1,6 +1,24 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/Texture.hpp"
+#include "Engine/Renderer/RenderBuffer.hpp"
+#include "Engine/Renderer/RenderContext.hpp"
+
+
+//---------------------------------------------------------------------------------------------------------
+Camera::~Camera()
+{
+	delete m_uniformBuffer;
+	m_uniformBuffer = nullptr;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Camera::Camera( RenderContext* renderer )
+{
+	m_uniformBuffer = new RenderBuffer( renderer, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
+}
+
 
 //---------------------------------------------------------------------------------------------------------
 void Camera::SetPosition( const Vec3& position )
@@ -79,6 +97,13 @@ bool Camera::ShouldClearColor() const
 Texture* Camera::GetColorTarget() const
 {
 	return m_colorTarget;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+RenderBuffer* Camera::GetUBO() const
+{
+	return m_uniformBuffer;
 }
 
 

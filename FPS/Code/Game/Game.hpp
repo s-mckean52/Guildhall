@@ -40,7 +40,7 @@ private:
 	Rgba8	m_clearColor = Rgba8::RED;
 	float	m_colorChangeDelay = 1.f;
 	
-	Camera	m_worldCamera;
-	Camera	m_devConsoleCamera;
+	Camera*	m_worldCamera = nullptr;
+	Camera*	m_devConsoleCamera = nullptr;
 	bool	m_isQuitting = false;
 };

@@ -80,7 +80,6 @@ void RenderContext::StartUp( Window* theWindow )
 	m_immediateVBO = new VertexBuffer( this, MEMORY_HINT_DYNAMIC );
 
 	m_frameUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
-	m_cameraUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
 
 	m_samplerDefault = new Sampler( this, SAMPLER_POINT );
 	m_textueDefaultColor = CreateTextureFromColor( Rgba8::WHITE );
@@ -110,9 +109,6 @@ void RenderContext::ShutDown()
 
 	delete m_samplerDefault;
 	m_samplerDefault = nullptr;
-
-	delete m_cameraUBO;
-	m_cameraUBO = nullptr;
 
 	delete m_frameUBO;
 	m_frameUBO = nullptr;
@@ -225,7 +221,7 @@ void RenderContext::BeginCamera( const Camera& camera )
 	UpdateCameraData( camera );
 
 	BindUniformBuffer( UBO_FRAME_SLOT, m_frameUBO );
-	BindUniformBuffer( UBO_CAMERA_SLOT, m_cameraUBO );
+	BindUniformBuffer( UBO_CAMERA_SLOT, camera.GetUBO() );
 }
 
 
@@ -237,7 +233,8 @@ void RenderContext::UpdateCameraData( Camera const& camera )
 	cameraData.projection = camera.GetProjectionMatrix();
 	cameraData.view = Mat44::CreateTranslationXYZ( -camera.m_position );
 
-	m_cameraUBO->Update( &cameraData, sizeof( cameraData ), sizeof( cameraData ) );
+	RenderBuffer* cameraUBO = camera.GetUBO();
+	cameraUBO->Update( &cameraData, sizeof( cameraData ), sizeof( cameraData ) );
 }
 
 //---------------------------------------------------------------------------------------------------------

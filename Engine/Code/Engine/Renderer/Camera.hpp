@@ -12,17 +12,19 @@ enum CameraClearBitFlag : unsigned int
 };
 
 struct Texture;
+class RenderBuffer;
+class RenderContext;
 
 class Camera
 {
 public:
 	Vec3 m_position;
 
-private: 
+private:
 	Vec2 m_bottomLeft;
 	Vec2 m_topRight;
 
-
+	RenderBuffer* m_uniformBuffer = nullptr;
 	Mat44 m_projection;
 	Mat44 m_view;
 
@@ -32,20 +34,22 @@ private:
 	Texture* m_colorTarget = nullptr;
 
 public:
-	~Camera() {};
 	Camera() {};
+	Camera( RenderContext* renderer );
+	~Camera();
 
 	void SetPosition( const Vec3& position );
 	void Translate( const Vec3& translation );
 
-	Rgba8		GetClearColor() const;
-	Vec2		GetCameraDimensions() const;
-	Vec2		GetOrthoBottomLeft() const;
-	Vec2		GetOrthoTopRight() const;
-	Mat44		GetProjectionMatrix() const;
-	Mat44		GetViewMatrix() const;
-	Texture*	GetColorTarget() const;
-	bool		ShouldClearColor() const;
+	Rgba8			GetClearColor() const;
+	Vec2			GetCameraDimensions() const;
+	Vec2			GetOrthoBottomLeft() const;
+	Vec2			GetOrthoTopRight() const;
+	Mat44			GetProjectionMatrix() const;
+	Mat44			GetViewMatrix() const;
+	Texture*		GetColorTarget() const;
+	RenderBuffer*	GetUBO() const;
+	bool			ShouldClearColor() const;
 
 	void SetClearMode( unsigned int clearFlags, Rgba8 color, float depth = 0.0f, unsigned int stencil = 0 );
 	void SetColorTarget( Texture* texture );

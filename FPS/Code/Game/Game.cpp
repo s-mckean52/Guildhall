@@ -16,6 +16,7 @@
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/Image.hpp"
 #include "Engine/Renderer/Shader.hpp"
+#include "Engine/Renderer/Camera.hpp"
 #include <string>
 
 
@@ -40,8 +41,11 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
-	m_worldCamera.SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
-	m_devConsoleCamera.SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
+	m_worldCamera = new Camera( g_theRenderer );
+	m_devConsoleCamera = new Camera( g_theRenderer );
+
+	m_worldCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
+	m_devConsoleCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
 	m_image				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/PlayerTankBase.png" );
 	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
@@ -61,13 +65,13 @@ void Game::ShutDown()
 void Game::Render() const
 {
 	//Render worldCamera
-	g_theRenderer->BeginCamera( m_worldCamera );
+	g_theRenderer->BeginCamera( *m_worldCamera );
 	RenderWorld();
-	g_theRenderer->EndCamera( m_worldCamera );
+	g_theRenderer->EndCamera( *m_worldCamera );
 
-	g_theRenderer->BeginCamera( m_devConsoleCamera );
-	g_theConsole->Render( *g_theRenderer, m_devConsoleCamera, DEV_CONSOLE_LINE_HEIGHT, g_devConsoleFont );
-	g_theRenderer->EndCamera( m_devConsoleCamera );
+	g_theRenderer->BeginCamera( *m_devConsoleCamera );
+	g_theConsole->Render( *g_theRenderer, *m_devConsoleCamera, DEV_CONSOLE_LINE_HEIGHT, g_devConsoleFont );
+	g_theRenderer->EndCamera( *m_devConsoleCamera );
 }
 
 
@@ -118,19 +122,19 @@ void Game::MoveCamera( float deltaSeconds )
 	float moveSpeed = 5.f * deltaSeconds;
 	if( g_theInput->IsKeyPressed( 'W' ) )
 	{
-		m_worldCamera.Translate( Vec3( 0.f, moveSpeed, 0.f ) );
+		m_worldCamera->Translate( Vec3( 0.f, moveSpeed, 0.f ) );
 	}	
 	if( g_theInput->IsKeyPressed( 'A' ) )
 	{
-		m_worldCamera.Translate( Vec3( -moveSpeed, 0.f, 0.f ) );
+		m_worldCamera->Translate( Vec3( -moveSpeed, 0.f, 0.f ) );
 	}	
 	if( g_theInput->IsKeyPressed( 'S' ) )
 	{
-		m_worldCamera.Translate( Vec3( 0.f, -moveSpeed, 0.f ) );
+		m_worldCamera->Translate( Vec3( 0.f, -moveSpeed, 0.f ) );
 	}	
 	if( g_theInput->IsKeyPressed( 'D' ) )
 	{
-		m_worldCamera.Translate( Vec3( moveSpeed, 0.f, 0.f ) );
+		m_worldCamera->Translate( Vec3( moveSpeed, 0.f, 0.f ) );
 	}
 }
 
@@ -149,7 +153,7 @@ void Game::ChangeClearColor( float deltaSeconds )
 		m_clearColor.r = 0;
 	}
 
-	m_worldCamera.SetClearMode( CLEAR_COLOR_BIT, m_clearColor, 0.0f, 0 );
+	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT, m_clearColor, 0.0f, 0 );
 }
 
 //---------------------------------------------------------------------------------------------------------
