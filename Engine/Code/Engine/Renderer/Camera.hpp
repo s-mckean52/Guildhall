@@ -3,6 +3,7 @@
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/Mat44.hpp"
+#include "Engine/Math/Transform.hpp"
 
 enum CameraClearBitFlag : unsigned int
 {
@@ -10,28 +11,15 @@ enum CameraClearBitFlag : unsigned int
 	CLEAR_DEPTH_BIT		= ( 1 << 1 ),
 	CLEAR_STENCIL_BIT	= ( 1 << 2 ),
 };
+typedef unsigned int CameraClearFlags;
 
-struct Texture;
-class RenderBuffer;
-class RenderContext;
+class	RenderBuffer;
+class	RenderContext;
+struct	Texture;
+struct	Vec4;
 
 class Camera
 {
-public:
-	Vec3 m_position;
-
-private:
-	Vec2 m_bottomLeft;
-	Vec2 m_topRight;
-
-	RenderBuffer* m_uniformBuffer = nullptr;
-	Mat44 m_projection;
-	Mat44 m_view;
-
-	Rgba8			m_clearColor	= Rgba8::BLACK;
-	unsigned int	m_clearMode		= 0;
-
-	Texture* m_colorTarget = nullptr;
 
 public:
 	Camera() {};
@@ -43,17 +31,42 @@ public:
 
 	Rgba8			GetClearColor() const;
 	Vec2			GetCameraDimensions() const;
-	Vec2			GetOrthoBottomLeft() const;
-	Vec2			GetOrthoTopRight() const;
+	Vec3			GetOrthoBottomLeft() const;
+	Vec3			GetOrthoTopRight() const;
+	Vec3			GetPosition() const;
 	Mat44			GetProjectionMatrix() const;
-	Mat44			GetViewMatrix() const;
 	Texture*		GetColorTarget() const;
 	RenderBuffer*	GetUBO() const;
 	bool			ShouldClearColor() const;
 
-	void SetClearMode( unsigned int clearFlags, Rgba8 color, float depth = 0.0f, unsigned int stencil = 0 );
+	Mat44			GetViewMatrix();
+	Vec3			NDCToWorldCoords( Vec4 ndcCoords ) const;
+
+	void SetClearMode( CameraClearFlags clearFlags, Rgba8 color, float depth = 0.0f, unsigned int stencil = 0 );
 	void SetColorTarget( Texture* texture );
 
 	void SetOrthoView( const Vec2& bottomLeft, const Vec2& topRight );
 	void Translate2D( const Vec2& translation2D );
+
+	void SetDepthStencilTarget( Texture* texture );
+	void SetPitchYawRollRotationDegrees( float pitch, float yaw, float roll );
+
+	void SetProjectionOrthographic( float size, float nearZ, float farZ );
+	void SetProjectionPerspective( float fov, float nearZ, float farZ );
+
+private:
+	Mat44 m_projection;
+	Mat44 m_view;
+
+	Transform m_transform;
+
+	Texture* m_colorTarget = nullptr;
+	Texture* m_depthStencilTarget = nullptr;
+
+	RenderBuffer* m_uniformBuffer = nullptr;
+
+	CameraClearFlags	m_clearMode		= 0;
+	Rgba8				m_clearColor	= Rgba8::WHITE;
+	float				m_clearDepth	= 1.0f;
+	float				m_clearStencil	= 0.0f;
 };

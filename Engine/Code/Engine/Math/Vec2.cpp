@@ -2,6 +2,7 @@
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/Vec3.hpp"
 
 
 //-----------------------------------------------------------------------------------------------
@@ -16,6 +17,14 @@ Vec2::Vec2( const Vec2& copy )
 Vec2::Vec2( float initialX, float initialY )
 	: x( initialX )
 	, y( initialY )
+{
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec2::Vec2( const Vec3& copyFrom )
+	: x( copyFrom.x )
+	, y( copyFrom.y )
 {
 }
 
@@ -367,6 +376,14 @@ void Vec2::operator/=( const float uniformDivisor )
 
 //-----------------------------------------------------------------------------------------------
 void Vec2::operator=( const Vec2& copyFrom )
+{
+	x = copyFrom.x;
+	y = copyFrom.y;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Vec2::operator=( const Vec3& copyFrom )
 {
 	x = copyFrom.x;
 	y = copyFrom.y;

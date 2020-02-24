@@ -163,6 +163,35 @@ const Vec4 Mat44::TransformHomogeneousPoint3D( const Vec4& point ) const
 
 
 //---------------------------------------------------------------------------------------------------------
+const Mat44 Mat44::GetTransformMatrixBy( const Mat44& transformationMatrix ) const
+{
+	Mat44 returnMatrix = Mat44();
+
+	returnMatrix.Ix = (Ix * transformationMatrix.Ix) + (Jx * transformationMatrix.Iy) + (Kx * transformationMatrix.Iz) + (Tx * transformationMatrix.Iw);
+	returnMatrix.Jx = (Ix * transformationMatrix.Jx) + (Jx * transformationMatrix.Jy) + (Kx * transformationMatrix.Jz) + (Tx * transformationMatrix.Jw);
+	returnMatrix.Kx = (Ix * transformationMatrix.Kx) + (Jx * transformationMatrix.Ky) + (Kx * transformationMatrix.Kz) + (Tx * transformationMatrix.Kw);
+	returnMatrix.Tx = (Ix * transformationMatrix.Tx) + (Jx * transformationMatrix.Ty) + (Kx * transformationMatrix.Tz) + (Tx * transformationMatrix.Tw);
+
+	returnMatrix.Iy = (Iy * transformationMatrix.Ix) + (Jy * transformationMatrix.Iy) + (Ky * transformationMatrix.Iz) + (Ty * transformationMatrix.Iw);
+	returnMatrix.Jy = (Iy * transformationMatrix.Jx) + (Jy * transformationMatrix.Jy) + (Ky * transformationMatrix.Jz) + (Ty * transformationMatrix.Jw);
+	returnMatrix.Ky = (Iy * transformationMatrix.Kx) + (Jy * transformationMatrix.Ky) + (Ky * transformationMatrix.Kz) + (Ty * transformationMatrix.Kw);
+	returnMatrix.Ty = (Iy * transformationMatrix.Tx) + (Jy * transformationMatrix.Ty) + (Ky * transformationMatrix.Tz) + (Ty * transformationMatrix.Tw);
+
+	returnMatrix.Iz = (Iz * transformationMatrix.Ix) + (Jz * transformationMatrix.Iy) + (Kz * transformationMatrix.Iz) + (Tz * transformationMatrix.Iw);
+	returnMatrix.Jz = (Iz * transformationMatrix.Jx) + (Jz * transformationMatrix.Jy) + (Kz * transformationMatrix.Jz) + (Tz * transformationMatrix.Jw);
+	returnMatrix.Kz = (Iz * transformationMatrix.Kx) + (Jz * transformationMatrix.Ky) + (Kz * transformationMatrix.Kz) + (Tz * transformationMatrix.Kw);
+	returnMatrix.Tz = (Iz * transformationMatrix.Tx) + (Jz * transformationMatrix.Ty) + (Kz * transformationMatrix.Tz) + (Tz * transformationMatrix.Tw);
+
+	returnMatrix.Iw = (Iw * transformationMatrix.Ix) + (Jw * transformationMatrix.Iy) + (Kw * transformationMatrix.Iz) + (Tw * transformationMatrix.Iw);
+	returnMatrix.Jw = (Iw * transformationMatrix.Jx) + (Jw * transformationMatrix.Jy) + (Kw * transformationMatrix.Jz) + (Tw * transformationMatrix.Jw);
+	returnMatrix.Kw = (Iw * transformationMatrix.Kx) + (Jw * transformationMatrix.Ky) + (Kw * transformationMatrix.Kz) + (Tw * transformationMatrix.Kw);
+	returnMatrix.Tw = (Iw * transformationMatrix.Tx) + (Jw * transformationMatrix.Ty) + (Kw * transformationMatrix.Tz) + (Tw * transformationMatrix.Tw);
+
+	return returnMatrix;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 const Vec2 Mat44::GetIBasis2D() const
 {
 	return Vec2( Ix, Iy );
@@ -673,7 +702,7 @@ const Mat44 Mat44::CreateOrthographicProjection( const Vec3& min, const Vec3& ma
 	Vec3 diff = max - min;
 	Vec3 sum = max + min;
 
-	float mat[] ={
+	float mat[] = {
 		2.0f / diff.x,		0.0f,				0.0f,				0.0f,
 		0.0f,				2.0f / diff.y,		0.0f,				0.0f,
 		0.0f,				0.0f,				1.0f / diff.z,		0.0f,
@@ -682,3 +711,46 @@ const Mat44 Mat44::CreateOrthographicProjection( const Vec3& min, const Vec3& ma
 
 	return Mat44( mat );
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+const Mat44 Mat44::CreatePerspectiveProjection( float fieldOfViewDegrees, float aspectRatio, float nearZ, float farZ )
+{
+	float height = 1.0f / TanDegrees( fieldOfViewDegrees * 0.5f );
+	float zRange = farZ - nearZ;
+	float inverseZRange = 1.0f / zRange;
+
+	float mat[] = {
+		height / aspectRatio,		0,			0,							0,
+		0,							height,		0,							0,
+		0,							0,			farZ * inverseZRange,		-nearZ * farZ * inverseZRange,
+		0,							0,			1,							0
+	};
+
+	return Mat44( mat );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+// void Mat44::operator=( const Mat44& copyFrom )
+// {
+// 	Ix = copyFrom.Ix;
+// 	Iy = copyFrom.Iy;
+// 	Iz = copyFrom.Iz;
+// 	Iw = copyFrom.Iw;
+// 
+// 	Jx = copyFrom.Jx;
+// 	Jy = copyFrom.Jy;
+// 	Jz = copyFrom.Jz;
+// 	Jw = copyFrom.Jw;
+// 	
+// 	Kx = copyFrom.Kx;
+// 	Ky = copyFrom.Ky;
+// 	Kz = copyFrom.Kz;
+// 	Kw = copyFrom.Kw;
+// 
+// 	Tx = copyFrom.Tx;
+// 	Ty = copyFrom.Ty;
+// 	Tz = copyFrom.Tz;
+// 	Tw = copyFrom.Tw;
+// }

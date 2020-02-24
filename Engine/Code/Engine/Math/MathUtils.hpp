@@ -17,6 +17,7 @@ float		ConvertDegreesToRadians	( float degrees );
 float		ConvertRadiansToDegrees	( float radians );
 float		CosDegrees				( float degrees );
 float		SinDegrees				( float degrees );
+float		TanDegrees				( float degrees );
 float		Atan2Degrees			( float y, float x );
 
 float		GetDistance2D			( const Vec2& positionA, const Vec2& positionB );

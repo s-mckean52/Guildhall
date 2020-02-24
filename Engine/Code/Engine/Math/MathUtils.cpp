@@ -39,6 +39,13 @@ float SinDegrees( float degrees )
 
 
 //---------------------------------------------------------------------------------------------------------
+float TanDegrees( float degrees )
+{
+	return tanf( ConvertDegreesToRadians( degrees ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 float Atan2Degrees( float y, float x )
 {
 	return ConvertRadiansToDegrees( atan2f( y, x ) );
