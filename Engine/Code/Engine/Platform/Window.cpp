@@ -2,6 +2,7 @@
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/EventSystem.hpp"
+#include "Engine/Math/AABB2.hpp"
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -53,6 +54,28 @@ static LRESULT CALLBACK WindowsMessageHandlingProcedure( HWND windowHandle, UINT
 			wchar_t inputCharacter = (wchar_t)wParam;
 			InputSystem* theInput = window->GetInputSystem();
 			theInput->PushToCharacterQueue( (char)inputCharacter );
+			break;
+		}
+
+		case WM_ACTIVATE:
+		{
+			RECT windowRect;
+			::GetWindowRect( windowHandle, &windowRect );
+
+			AABB2 windowDimensions = AABB2(	static_cast<float>( windowRect.left ),
+											static_cast<float>( windowRect.bottom ), 
+											static_cast<float>( windowRect.right ),
+											static_cast<float>( windowRect.top ) );
+
+			InputSystem* theInput = window->GetInputSystem();
+			if( wParam == WA_ACTIVE )
+			{
+				theInput->ClipSystemCursor( &windowDimensions );
+			}
+			else if( wParam == WA_INACTIVE )
+			{
+				theInput->ClipSystemCursor( nullptr );
+			}
 			break;
 		}
 	}
@@ -208,6 +231,22 @@ void Window::SetInputSystem( InputSystem* input )
 void Window::SetIsQuitting( bool isQuitting )
 {
 	m_isQuitting = isQuitting;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec2 Window::GetClientCenter() const
+{
+	RECT clientRect;
+	::GetClientRect( (HWND)m_hwnd, &clientRect );
+
+	float width = static_cast<float>( clientRect.right - clientRect.left );
+	float height = static_cast<float>( clientRect.top - clientRect.bottom );
+
+	float horizontalCenter = clientRect.left + ( width * 0.5f );
+	float verticalCenter = clientRect.bottom + ( height * 0.5f );
+
+	return Vec2( horizontalCenter, verticalCenter );
 }
 
 

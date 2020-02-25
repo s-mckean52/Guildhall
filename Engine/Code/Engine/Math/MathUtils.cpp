@@ -296,9 +296,26 @@ void TransformVertexArray( int numVerticies, Vertex_PCU* vertexArray, float scal
 
 
 //---------------------------------------------------------------------------------------------------------
-void TransformVertexArray( std::vector<Vertex_PCU>& vertexArray, float scale, float rotation, const Vec2 translation )
+void TranslateVertexArray( int numVerticies, Vertex_PCU* vertexArray, const Vec3& translation )
+{
+	for( int vertIndex = 0; vertIndex < numVerticies; ++vertIndex )
+	{
+		vertexArray[ vertIndex ].m_position += translation;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void TransformVertexArray( std::vector<Vertex_PCU>& vertexArray, float scale, float rotation, const Vec2& translation )
 {
 	TransformVertexArray( static_cast<int>( vertexArray.size() ), &vertexArray[ 0 ], scale, rotation, translation );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void TranslateVertexArray( std::vector<Vertex_PCU>& vertexArray, const Vec3& translation )
+{
+	TranslateVertexArray( static_cast<int>( vertexArray.size() ), &vertexArray[ 0 ], translation );
 }
 
 

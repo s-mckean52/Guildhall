@@ -22,14 +22,6 @@ Vec2::Vec2( float initialX, float initialY )
 
 
 //---------------------------------------------------------------------------------------------------------
-Vec2::Vec2( const Vec3& copyFrom )
-	: x( copyFrom.x )
-	, y( copyFrom.y )
-{
-}
-
-
-//---------------------------------------------------------------------------------------------------------
 Vec2 Vec2::MakeFromPolarDegrees( float degrees, float r )
 {
 	return Vec2( r * CosDegrees( degrees ), r * SinDegrees( degrees ) );

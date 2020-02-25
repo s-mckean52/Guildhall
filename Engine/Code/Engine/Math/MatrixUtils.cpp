@@ -35,6 +35,13 @@ void RotateMatrixPitchYawRollDegrees( Mat44& matrixToRotate, Vec3 const& pitchYa
 
 
 //---------------------------------------------------------------------------------------------------------
+bool MatrixIsOrthoNormal( Mat44 const& matrix )
+{
+	return true;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void MatrixTranspose( Mat44& matrix )
 {
 	float mat[] = {

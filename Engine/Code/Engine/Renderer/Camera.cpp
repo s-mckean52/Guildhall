@@ -52,7 +52,7 @@ Rgba8 Camera::GetClearColor() const
 //---------------------------------------------------------------------------------------------------------
 Vec2 Camera::GetCameraDimensions() const
 {
-	return Vec2( 0.0f, 0.0f );
+	return Vec2( 16.0f, 9.0f );
 }
 
 
@@ -61,7 +61,7 @@ void Camera::SetOrthoView( const Vec2& bottomLeft, const Vec2& topRight )
 {
 	float height = topRight.y - bottomLeft.y;
 
-	SetProjectionOrthographic( height, 0.f, 1.f );
+	SetProjectionOrthographic( height, 0.f, -1.f );
 }
 
 
@@ -96,13 +96,18 @@ Mat44 Camera::GetProjectionMatrix() const
 
 
 //---------------------------------------------------------------------------------------------------------
-Mat44 Camera::GetViewMatrix()
+Mat44 Camera::GetViewMatrix() const
+{
+	return m_view;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::UpdateViewMatrix()
 {
 	Mat44 cameraModel = m_transform.ToMatrix();
 	MatrixInvertOrthoNormal( cameraModel );
 	m_view = cameraModel;
-
-	return m_view;
 }
 
 
@@ -179,6 +184,15 @@ void Camera::SetPitchYawRollRotationDegrees( float pitch, float yaw, float roll 
 
 
 //---------------------------------------------------------------------------------------------------------
+void Camera::AddPitchYawRollRotationDegrees( float pitch, float yaw, float roll )
+{
+	Vec3 pitchYawRoll = m_transform.GetRotationPitchYawRollDegrees();
+	pitchYawRoll += Vec3( pitch, yaw, roll );
+	m_transform.SetRotationFromPitchRollYawDegrees( pitchYawRoll.x, pitchYawRoll.y , pitchYawRoll.z );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Camera::SetProjectionOrthographic( float height, float nearZ, float farZ )
 {
 	float aspect = 16.f / 9.f;
@@ -195,6 +209,19 @@ void Camera::SetProjectionOrthographic( float height, float nearZ, float farZ )
 //---------------------------------------------------------------------------------------------------------
 void Camera::SetProjectionPerspective( float fieldOfViewDegrees, float nearZ, float farZ )
 {
-	m_projection = Mat44::CreatePerspectiveProjection( fieldOfViewDegrees, 16.0f/9.0f, nearZ, farZ );
+	m_projection = Mat44::CreatePerspectiveProjection( fieldOfViewDegrees, 16.0f / 9.0f, nearZ, farZ );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::UpdateCameraUBO()
+{
+	camera_data_t cameraData;
+	cameraData.projection = m_projection;
+	
+	UpdateViewMatrix();
+	cameraData.view = m_view;
+
+	m_uniformBuffer->Update( &cameraData, sizeof( cameraData ), sizeof( cameraData ) );
 }
 

@@ -60,8 +60,7 @@ public:
 	
 	void SetBlendMode( BlendMode blendMode );
 	void ClearScreen( const Rgba8& clearColor );
-	void BeginCamera( const Camera& camera );
-	void UpdateCameraData( Camera const& camera );
+	void BeginCamera( Camera& camera );
 	void EndCamera( const Camera& camera );
 
 	bool IsDrawing() const { return m_isDrawing; }

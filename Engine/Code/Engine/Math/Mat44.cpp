@@ -12,23 +12,23 @@ const Mat44 Mat44::IDENTITY = Mat44();
 Mat44::Mat44( float* sixteenValuesBasisMajor )
 {
 	Ix = sixteenValuesBasisMajor[ 0 ];
-	Iy = sixteenValuesBasisMajor[ 1 ];
-	Iz = sixteenValuesBasisMajor[ 2 ];
-	Iw = sixteenValuesBasisMajor[ 3 ];
+	Jx = sixteenValuesBasisMajor[ 1 ];
+	Kx = sixteenValuesBasisMajor[ 2 ];
+	Tx = sixteenValuesBasisMajor[ 3 ];
 
-	Jx = sixteenValuesBasisMajor[ 4 ];
+	Iy = sixteenValuesBasisMajor[ 4 ];
 	Jy = sixteenValuesBasisMajor[ 5 ];
-	Jz = sixteenValuesBasisMajor[ 6 ];
-	Jw = sixteenValuesBasisMajor[ 7 ];
+	Ky = sixteenValuesBasisMajor[ 6 ];
+	Ty = sixteenValuesBasisMajor[ 7 ];
 	
-	Kx = sixteenValuesBasisMajor[ 8 ];
-	Ky = sixteenValuesBasisMajor[ 9 ];
+	Iz = sixteenValuesBasisMajor[ 8 ];
+	Jz = sixteenValuesBasisMajor[ 9 ];
 	Kz = sixteenValuesBasisMajor[ 10 ];
-	Kw = sixteenValuesBasisMajor[ 11 ];
+	Tz = sixteenValuesBasisMajor[ 11 ];
 	
-	Tx = sixteenValuesBasisMajor[ 12 ];
-	Ty = sixteenValuesBasisMajor[ 13 ];
-	Tz = sixteenValuesBasisMajor[ 14 ];
+	Iw = sixteenValuesBasisMajor[ 12 ];
+	Jw = sixteenValuesBasisMajor[ 13 ];
+	Kw = sixteenValuesBasisMajor[ 14 ];
 	Tw = sixteenValuesBasisMajor[ 15 ];
 }
 
@@ -721,10 +721,10 @@ const Mat44 Mat44::CreatePerspectiveProjection( float fieldOfViewDegrees, float 
 	float inverseZRange = 1.0f / zRange;
 
 	float mat[] = {
-		height / aspectRatio,		0,			0,							0,
-		0,							height,		0,							0,
-		0,							0,			farZ * inverseZRange,		-nearZ * farZ * inverseZRange,
-		0,							0,			1,							0
+	height / aspectRatio,			0,								0,									0,
+						0,		height,								0,									0,
+						0,			0,			-farZ * inverseZRange,		nearZ * farZ * inverseZRange,
+						0,			0,								-1,									0
 	};
 
 	return Mat44( mat );

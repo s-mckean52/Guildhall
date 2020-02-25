@@ -3,6 +3,7 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Platform/Window.hpp"
 
 //extern HWND g_hWnd;
 
@@ -52,16 +53,16 @@ InputSystem::~InputSystem()
 
 
 //---------------------------------------------------------------------------------------------------------
-void InputSystem::StartUp()
+void InputSystem::StartUp( Window* theWindow )
 {
-
+	m_theWindow = theWindow;
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void InputSystem::BeginFrame()
 {
-	//UpdateMouse();
+	UpdateMouse();
 	UpdateControllers();
 }
 
@@ -89,20 +90,17 @@ void InputSystem::ShutDown()
 //---------------------------------------------------------------------------------------------------------
 void InputSystem::UpdateMouse()
 {
-// 	POINT screenMousePos;
-// 	GetCursorPos( &screenMousePos );
-// 	ScreenToClient( g_hWnd, &screenMousePos );
-// 	Vec2 mouseClientPos( static_cast<float>(screenMousePos.x), static_cast<float>(screenMousePos.y) );
-// 
-// 	RECT clientRect;
-// 	GetClientRect( g_hWnd, &clientRect );
-// 	AABB2 clientBounds( static_cast<float>( clientRect.left ),
-// 						static_cast<float>( clientRect.bottom ),
-// 						static_cast<float>( clientRect.right ),
-// 						static_cast<float>( clientRect.top ) ); //Windows ( 0, 0 ) is top left
-// 
-// 	m_mouseNormalizedPos = clientBounds.GetUVForPoint( mouseClientPos );
-	UNIMPLEMENTED_MSG( "Mouse input to not use hwnd" );
+	switch( m_mouseMode )
+	{
+	case MOUSE_MODE_ABSOLUTE:
+		UpdateAbsoluteMode();
+		break;
+	case MOUSE_MODE_RELATIVE:
+		UpdateRelativeMode();
+		break;
+	default:
+		break;
+	}
 }
 
 
@@ -110,7 +108,7 @@ void InputSystem::UpdateMouse()
 IntVec2 InputSystem::GetMouseRawDesktopPosition() const
 {
 	POINT rawMouseDesktopPos;
-	GetCursorPos( &rawMouseDesktopPos );
+	::GetCursorPos( &rawMouseDesktopPos );
 	return IntVec2( rawMouseDesktopPos.x, rawMouseDesktopPos.y );
 }
 
@@ -119,6 +117,115 @@ IntVec2 InputSystem::GetMouseRawDesktopPosition() const
 Vec2 InputSystem::GetMouseNormalizedClientPosition() const
 {
 	return m_mouseNormalizedPos;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec2 InputSystem::GetCursorRelativeMovement() const
+{
+	return m_cursorRelativeMovement;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::ShowSystemCursor( bool isShown )
+{
+	if( isShown )
+	{
+		while( ::ShowCursor( isShown ) < 0 ) {}
+		return;
+	}
+	else
+	{
+		while( ::ShowCursor( isShown ) > 0 ) {}
+		return;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::ClipSystemCursor( AABB2 const* windowDimensions )
+{
+	RECT* windowRect = nullptr;
+	if( windowDimensions != nullptr )
+	{
+		windowRect = new RECT();
+		windowRect->left	= (LONG)windowDimensions->mins.x;
+		windowRect->bottom	= (LONG)windowDimensions->mins.y;
+		windowRect->right	= (LONG)windowDimensions->maxes.x;
+		windowRect->top		= (LONG)windowDimensions->maxes.y;
+	}
+	::ClipCursor( windowRect );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::RecenterCursor()
+{
+	Vec2 windowCenter = m_theWindow->GetClientCenter();
+	SetCursorPos( static_cast<int>( windowCenter.x ), static_cast<int>( windowCenter.y ) );
+
+	//Eliminate Drift
+	POINT point;
+	GetCursorPos( &point );
+	windowCenter = Vec2( static_cast<float>( point.x ), static_cast<float>( point.y ) );
+
+	m_cursorPositionLastFrame = windowCenter;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::UpdateRelativeMode()
+{
+	POINT point;
+	::GetCursorPos( &point );
+	Vec2 cursorPositionThisFrame = Vec2( static_cast<float>( point.x ), static_cast<float>( point.y ) );
+	m_cursorRelativeMovement = cursorPositionThisFrame - m_cursorPositionLastFrame;
+	RecenterCursor();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::UpdateAbsoluteMode()
+{
+	POINT screenMousePos;
+	::GetCursorPos( &screenMousePos );
+	::ScreenToClient( (HWND)m_theWindow->m_hwnd, &screenMousePos );
+	Vec2 mouseClientPos( static_cast<float>(screenMousePos.x), static_cast<float>(screenMousePos.y) );
+
+	RECT clientRect;
+	::GetClientRect( (HWND)m_theWindow->m_hwnd, &clientRect );
+	AABB2 clientBounds( static_cast<float>(clientRect.left),
+		static_cast<float>(clientRect.bottom),
+		static_cast<float>(clientRect.right),
+		static_cast<float>(clientRect.top) ); //Windows ( 0, 0 ) is top left
+
+	m_mouseNormalizedPos = clientBounds.GetUVForPoint( mouseClientPos );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::SetCursorMode( MousePositionMode mode )
+{
+	m_mouseMode = mode;
+	switch( mode )
+	{
+	case MOUSE_MODE_ABSOLUTE:
+	{
+		m_isCursorLocked = false;
+		ShowSystemCursor( true );
+		break;
+	}
+	case MOUSE_MODE_RELATIVE:
+	{
+		m_isCursorLocked = true;
+		ShowSystemCursor( false );
+		RecenterCursor();
+		break;
+	}
+	default:
+		break;
+	}
 }
 
 

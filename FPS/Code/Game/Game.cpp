@@ -17,6 +17,8 @@
 #include "Engine/Core/Image.hpp"
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/Camera.hpp"
+#include "Engine/Math/Vec4.hpp"
+#include "Engine/Math/Transform.hpp"
 #include <string>
 
 
@@ -41,10 +43,12 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
+	g_theInput->SetCursorMode( MOUSE_MODE_RELATIVE );
 	m_worldCamera = new Camera( g_theRenderer );
 	m_devConsoleCamera = new Camera( g_theRenderer );
 
-	m_worldCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
+	m_worldCamera->SetProjectionPerspective( 60.f, -0.1f, -100.f );
+	//m_worldCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 	m_devConsoleCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
 	m_image				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/PlayerTankBase.png" );
@@ -85,16 +89,30 @@ void Game::Render() const
 void Game::RenderWorld() const
 {
 	std::vector<Vertex_PCU> aabb2;
-	AppendVertsForAABB2D( aabb2, AABB2( 0.0f, 0.0f, 2.0f, 2.0f ), Rgba8::WHITE, Vec2( 0.f, 0.f ), Vec2( 1.f, 1.f ) );
+	AppendVertsForAABB2D( aabb2, AABB2( -1.0f, -1.0f, 1.0f, 1.0f ), Rgba8::WHITE, Vec2( 0.f, 0.f ), Vec2( 1.f, 1.f ) );
 
-	TransformVertexArray( aabb2, 1.f, 0.f, Vec2( -3.f, -0.5f ) );
+	TranslateVertexArray( aabb2 , Vec3( 0.f, 0.f, -10.f ) );
 	g_theRenderer->BindTexture( m_image );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( aabb2 );
+}
 
-	TransformVertexArray( aabb2, 1.f, 0.f, Vec2( 3.f, 0.f ) );
-	g_theRenderer->BindShader( m_invertColorShader );
-	g_theRenderer->DrawVertexArray( aabb2 );
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateBasedOnMouseMovement()
+{
+	Vec2 relativeMovement = g_theInput->GetCursorRelativeMovement();
+	m_worldCamera->AddPitchYawRollRotationDegrees( relativeMovement.y, relativeMovement.x, 0.f );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::TranslateCamera( Camera& camera, const Vec3& directionToMove )
+{
+	//Mat44 cameraView = camera.GetViewMatrix();
+	Mat44 cameraView = camera.GetTransform().ToMatrix();
+	Vec3 translation = cameraView.TransformVector3D( directionToMove );
+	camera.Translate( translation );
 }
 
 
@@ -113,7 +131,9 @@ void Game::Update( float deltaSeconds )
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateFromInput( float deltaSeconds )
 {
-	MoveCamera( deltaSeconds );
+	UpdateBasedOnMouseMovement();
+
+	MoveWorldCamera( deltaSeconds );
 
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
 	{
@@ -123,24 +143,39 @@ void Game::UpdateFromInput( float deltaSeconds )
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::MoveCamera( float deltaSeconds )
+void Game::MoveWorldCamera( float deltaSeconds )
 {
 	float moveSpeed = 5.f * deltaSeconds;
+	if( g_theInput->IsKeyPressed( KEY_CODE_SHIFT ) )
+	{
+		moveSpeed *= 2.f;
+	}
+
 	if( g_theInput->IsKeyPressed( 'W' ) )
 	{
-		m_worldCamera->Translate( Vec3( 0.f, moveSpeed, 0.f ) );
-	}	
-	if( g_theInput->IsKeyPressed( 'A' ) )
-	{
-		m_worldCamera->Translate( Vec3( -moveSpeed, 0.f, 0.f ) );
+		TranslateCamera( *m_worldCamera, Vec3( 0.f, 0.f, -moveSpeed ) );
 	}	
 	if( g_theInput->IsKeyPressed( 'S' ) )
 	{
-		m_worldCamera->Translate( Vec3( 0.f, -moveSpeed, 0.f ) );
+		TranslateCamera( *m_worldCamera, Vec3( 0.f, 0.f, moveSpeed ) );
+	}	
+
+	if( g_theInput->IsKeyPressed( 'A' ) )
+	{
+		TranslateCamera( *m_worldCamera, Vec3( -moveSpeed, 0.f, 0.f ) );
 	}	
 	if( g_theInput->IsKeyPressed( 'D' ) )
 	{
-		m_worldCamera->Translate( Vec3( moveSpeed, 0.f, 0.f ) );
+		TranslateCamera( *m_worldCamera, Vec3( moveSpeed, 0.f, 0.f ) );
+	}
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_SPACEBAR ) )
+	{
+		TranslateCamera( *m_worldCamera, Vec3( 0.f, moveSpeed, 0.f ) );
+	}
+	if( g_theInput->IsKeyPressed( 'C' ) )
+	{
+		TranslateCamera( *m_worldCamera, Vec3( 0.f, -moveSpeed, 0.f ) );
 	}
 }
 

@@ -113,7 +113,7 @@ void DevConsole::RenderOutput( RenderContext& renderer, const Camera& camera, fl
 	int colorStringLength = static_cast<int>( m_colorStrings.size() );
 
 	int numberOfLinesToPrint = maxNumberOfLines > colorStringLength ? colorStringLength : maxNumberOfLines;
-	Vec2 textMins = camera.GetOrthoBottomLeft();
+	Vec3 textMins = camera.GetOrthoBottomLeft();
 	textMins.y += lineHeight;
 
 	for( int consoleStringIndexFromLast = 0; consoleStringIndexFromLast < numberOfLinesToPrint; ++consoleStringIndexFromLast )
@@ -122,7 +122,7 @@ void DevConsole::RenderOutput( RenderContext& renderer, const Camera& camera, fl
 
 		ColorString currentColorString = m_colorStrings[ consoleStringIndex ];
 
-		font->AddVertsForText2D( consoleVerts, textMins, lineHeight, currentColorString.m_text, currentColorString.m_color );
+		font->AddVertsForText2D( consoleVerts, Vec2( textMins.x, textMins.y ), lineHeight, currentColorString.m_text, currentColorString.m_color );
 
 		renderer.BindTexture( font->GetTexture() );
 		renderer.BindShader( (Shader*)nullptr );
@@ -140,7 +140,8 @@ void DevConsole::RenderCurrentInput( RenderContext& renderer, const Camera& came
 	if( m_currentInput == "" ) return;
 
 	std::vector<Vertex_PCU> inputVerts;
-	font->AddVertsForText2D( inputVerts, camera.GetOrthoBottomLeft(), lineHeight, m_currentInput );
+	Vec3 textMins = camera.GetOrthoBottomLeft();
+	font->AddVertsForText2D( inputVerts, Vec2( textMins.x, textMins.y ), lineHeight, m_currentInput );
 
 	renderer.BindTexture( font->GetTexture() );
 	renderer.BindShader( (Shader*)nullptr );
@@ -159,11 +160,11 @@ void DevConsole::RenderCursor( RenderContext& renderer, const Camera& camera, fl
 	
 	Vec2 inputDimensions = font->GetDimensionsForText2D( lineHeight, beforeString );
 	Vec2 cursorDimensions = font->GetDimensionsForText2D( lineHeight, "|" ) * cursorAspect;
-	Vec2 cursorPosition = camera.GetOrthoBottomLeft();
+	Vec3 cursorPosition = camera.GetOrthoBottomLeft();
 	cursorPosition.x -= cursorDimensions.x * 0.4f;
 	cursorPosition.x += inputDimensions.x;
 
-	font->AddVertsForText2D( cursorVerts, cursorPosition, lineHeight, "|", Rgba8::WHITE, cursorAspect );
+	font->AddVertsForText2D( cursorVerts, Vec2( cursorPosition.x, cursorPosition.y ), lineHeight, "|", Rgba8::WHITE, cursorAspect );
 
 	renderer.BindTexture( font->GetTexture() );
 	renderer.BindShader( (Shader*)nullptr );

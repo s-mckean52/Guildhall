@@ -13,6 +13,46 @@ void Transform::SetPosition( Vec3 const& position )
 //---------------------------------------------------------------------------------------------------------
 void Transform::SetRotationFromPitchRollYawDegrees( float pitch, float roll, float yaw )
 {
+	float halfPitchRange = 90.f;
+	float halfRollRange = 180.f;
+	float halfYawRange = 180.f;
+
+	while( pitch < -halfPitchRange || pitch > halfPitchRange )
+	{
+		if( pitch < -halfPitchRange )
+		{
+			pitch += halfPitchRange * 2.f;
+		}
+		else if( pitch > halfPitchRange )
+		{
+			pitch -= halfPitchRange * 2.f;
+		}
+	}
+
+	while( roll < -halfRollRange || roll > halfRollRange )
+	{
+		if( roll < -halfRollRange )
+		{
+			roll += halfRollRange * 2.f;
+		}
+		else if( roll > halfRollRange )
+		{
+			roll -= halfRollRange * 2.f;
+		}
+	}
+
+	while( yaw < -halfYawRange || yaw > halfYawRange )
+	{
+		if( yaw < -halfYawRange )
+		{
+			yaw += halfYawRange * 2.f;
+		}
+		else if( yaw > halfYawRange )
+		{
+			yaw -= halfYawRange * 2.f;
+		}
+	}
+
 	m_rotationPitchYawRollDegrees = Vec3( pitch, roll, yaw );
 }
 

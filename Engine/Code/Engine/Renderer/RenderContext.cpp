@@ -179,7 +179,7 @@ void RenderContext::ClearScreen( const Rgba8& clearColor )
 
 
 //---------------------------------------------------------------------------------------------------------
-void RenderContext::BeginCamera( const Camera& camera )
+void RenderContext::BeginCamera( Camera& camera )
 {
 	m_context->ClearState();
 	
@@ -218,22 +218,10 @@ void RenderContext::BeginCamera( const Camera& camera )
 	BindSampler( (Sampler*)nullptr );
 	m_lastBoundVBOHandle = nullptr;
 
-	UpdateCameraData( camera );
+	camera.UpdateCameraUBO();
 
 	BindUniformBuffer( UBO_FRAME_SLOT, m_frameUBO );
 	BindUniformBuffer( UBO_CAMERA_SLOT, camera.GetUBO() );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void RenderContext::UpdateCameraData( Camera const& camera )
-{
-	camera_data_t cameraData;
-	cameraData.projection = camera.GetProjectionMatrix();
-	cameraData.view = Mat44::CreateTranslationXYZ( -camera.GetPosition() );
-
-	RenderBuffer* cameraUBO = camera.GetUBO();
-	cameraUBO->Update( &cameraData, sizeof( cameraData ), sizeof( cameraData ) );
 }
 
 

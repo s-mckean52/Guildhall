@@ -37,9 +37,10 @@ public:
 	Mat44			GetProjectionMatrix() const;
 	Texture*		GetColorTarget() const;
 	RenderBuffer*	GetUBO() const;
-	bool			ShouldClearColor() const;
+	Transform		GetTransform() const { return m_transform; }
 
-	Mat44			GetViewMatrix();
+	bool			ShouldClearColor() const;
+	Mat44			GetViewMatrix() const;
 	Vec3			NDCToWorldCoords( Vec4 ndcCoords ) const;
 
 	void SetClearMode( CameraClearFlags clearFlags, Rgba8 color, float depth = 0.0f, unsigned int stencil = 0 );
@@ -50,9 +51,14 @@ public:
 
 	void SetDepthStencilTarget( Texture* texture );
 	void SetPitchYawRollRotationDegrees( float pitch, float yaw, float roll );
+	void AddPitchYawRollRotationDegrees( float pitch, float yaw, float roll );
 
 	void SetProjectionOrthographic( float size, float nearZ, float farZ );
 	void SetProjectionPerspective( float fov, float nearZ, float farZ );
+
+	void UpdateCameraUBO();
+	void UpdateViewMatrix();
+
 
 private:
 	Mat44 m_projection;

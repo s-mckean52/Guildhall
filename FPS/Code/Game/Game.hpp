@@ -22,18 +22,22 @@ public:
 
 	//Input
 	void UpdateFromInput( float deltaSeconds );
-	void MoveCamera( float deltaSeconds );
+	void MoveWorldCamera( float deltaSeconds );
 
 	//Rendering
 	void RenderWorld() const;
 
 	//Other
+	void UpdateBasedOnMouseMovement();
+	void TranslateCamera( Camera& camera, const Vec3& directionToMove );
 	void ChangeClearColor( float deltaSeconds );
 	void UpdateCameras( float deltaSeconds );
 
 	bool IsQuitting() const { return m_isQuitting; }
 
 private:
+	float m_distanceFromCamera = -1.f;
+
 	Texture* m_image			= nullptr;
 	Shader* m_invertColorShader	= nullptr;
 

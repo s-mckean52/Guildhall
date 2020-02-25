@@ -45,9 +45,12 @@ const Vec3	TransformPosition3DXY	( const Vec3& position, float uniformScale, flo
 const Vec3	TransformPosition3DXY	( const Vec3& position, const Vec2& basisI, const Vec2& basisJ, const Vec2& translation );
 
 void		TransformVertexArray	( int numVerticies, Vertex_PCU* vertexArray, float scale, float rotation, const Vec2& translation );
-void		TransformVertexArray	( std::vector<Vertex_PCU>& vertexArray, float scale, float rotation, const Vec2 translation );
+void		TransformVertexArray	( std::vector<Vertex_PCU>& vertexArray, float scale, float rotation, const Vec2& translation );
 
-int			PositiveMod						( int numberToMod, int numberToModBy );
+void		TranslateVertexArray	( int numVerticies, Vertex_PCU* vertexArray, const Vec3& translation );
+void		TranslateVertexArray	( std::vector<Vertex_PCU>& vertexArray, const Vec3& translation );
+
+int			PositiveMod( int numberToMod, int numberToModBy );
 int			RoundDownToInt					( float valueToRound );
 float		GetShortestAngularDisplacement	( float startAngle, float endAngle );
 float		GetTurnedToward					( float startAngle, float endAngle, float amountToTurnDegrees );

@@ -35,7 +35,7 @@ void App::StartUp()
 	g_theEventSystem->StartUp();
 	g_theRenderer->StartUp( g_theWindow );
 	
-	g_theInput->StartUp();
+	g_theInput->StartUp( g_theWindow );
 	g_theWindow->SetInputSystem( g_theInput );
 
 	g_theConsole->StartUp( g_theInput, g_theEventSystem );
@@ -133,6 +133,21 @@ bool App::HandleQuitRequested()
 
 
 //---------------------------------------------------------------------------------------------------------
+void App::OpenDevConsole()
+{
+	g_theConsole->ToggleIsOpen();
+	if( g_theConsole->IsOpen() )
+	{
+		g_theInput->SetCursorMode( MOUSE_MODE_ABSOLUTE );
+	}
+	else
+	{
+		g_theInput->SetCursorMode(MOUSE_MODE_RELATIVE );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void App::BeginFrame()
 {
 	g_theRenderer->BeginFrame();
@@ -161,7 +176,7 @@ void App::Update( float deltaSeconds )
 
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_TILDE ) )
 	{
-		g_theConsole->ToggleIsOpen();
+		OpenDevConsole();
 	}
 }
 

@@ -9,6 +9,7 @@ Mat44 MakePerspectiveProjectionMatrixD3D( float fieldOfViewDegrees, float aspect
 void RotateMatrixPitchYawRollDegrees( Mat44& matrixToRotate, float pitchDegrees, float rollDegrees, float yawDegrees );
 void RotateMatrixPitchYawRollDegrees( Mat44& matrixToRotate, Vec3 const& pitchYawRollDegrees  );
 
+bool MatrixIsOrthoNormal( Mat44 const& matrix );
 void MatrixTranspose( Mat44& matrix );
 void MatrixInvertOrthoNormal( Mat44& matrix );
 void MatrixInvert( Mat44& matrix );

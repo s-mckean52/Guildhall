@@ -21,6 +21,7 @@ public:
 	InputSystem*	GetInputSystem()	const { return m_theInput; }
 	unsigned int	GetClientWidth()	const { return m_width; }
 	unsigned int	GetClientHeight()	const { return m_height; }
+	Vec2			GetClientCenter()	const;
 
 public:
 	void* m_hwnd;
