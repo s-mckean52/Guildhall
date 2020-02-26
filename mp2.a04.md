@@ -4,9 +4,9 @@
 	- [x] **Easier Option**: Implement this using `AABB2` bounding boxes
     - [ ] **Challenge Option**: Implement this using a bounding `Disc`
     - [x] Update this bounds whenever you update the world shape of the object.
-- [ ] Switch `Collider2D::Intersects` to be non-virtual, and instead use a matrix lookup
-    - [ ] Use a *mid-phase* check to early out of a collision by comparing the bounds first.
-    - [ ] If passes the bounds check, lookup and call the appropriate callback
+- [x] Switch `Collider2D::Intersects` to be non-virtual, and instead use a matrix lookup
+    - [x] Use a *mid-phase* check to early out of a collision by comparing the bounds first.
+    - [x] If passes the bounds check, lookup and call the appropriate callback
 - [ ] Add `Collider2D::GetManifold` that also uses a collision matrix or half matrix
     - [ ] Again do an early out using the bounds.
     - [ ] Implement a disc versus disc manifold

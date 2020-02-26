@@ -51,6 +51,8 @@ bool Collider2D::Intersects( Collider2D const* other ) const
 	Collider2DType myType = GetType();
 	Collider2DType otherType = other->GetType();
 
+	if( !WorldBoundsIntersect( other ) ) return false;
+
 	if( myType <= otherType )
 	{
 		int collisionCheckIndex = otherType * NUM_COLLIDER_TYPE + myType;
@@ -63,6 +65,13 @@ bool Collider2D::Intersects( Collider2D const* other ) const
 		collision_check_cb collisionCallback = s_collisionCheck[collisionCheckIndex];
 		return collisionCallback( other, this );
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool Collider2D::WorldBoundsIntersect( Collider2D const* other ) const
+{
+	return DoAABB2sOverlap( GetWorldBounds(), other->GetWorldBounds() );
 }
 
 

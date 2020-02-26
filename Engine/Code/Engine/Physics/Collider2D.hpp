@@ -16,22 +16,8 @@ class	Rigidbody2D;
 class	Collider2D;
 struct	Vec2;
 struct	Rgba8;
-struct	AABB2;
 
-
-//---------------------------------------------------------------------------------------------------------
-// Collision Matrix
 typedef bool(*collision_check_cb)(Collider2D const*, Collider2D const*);
-
-// static bool DiscVDiscCollisionCheck( Collider2D const* col0, Collider2D const* col1 );
-// static bool DiscVPolygonCollisionCheck( Collider2D const* col0, Collider2D const* col1 );
-// static bool PolygonVPolygonCollisionCheck( Collider2D const* col0, Collider2D const* col1 );
-// 
-// static collision_check_cb s_collisionCheck[ NUM_COLLIDER_TYPE * NUM_COLLIDER_TYPE ] = {
-// 	/*				disc,							polygon		*/
-// 	/*	   disc	*/	DiscVDiscCollisionCheck,		nullptr,
-// 	/*	polygon	*/	DiscVPolygonCollisionCheck,		PolygonVPolygonCollisionCheck,
-// };
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -49,8 +35,11 @@ public:
 
 	virtual void DebugRender( RenderContext* context, Rgba8 const& borderColor, Rgba8 const& fillColor ) = 0;
 
-	bool Intersects( Collider2D const* other ) const;
-	Collider2DType GetType() const { return m_type; }
+	Collider2DType	GetType() const				{ return m_type; }
+	AABB2			GetWorldBounds() const		{ return m_worldBounds; }
+
+	bool			Intersects( Collider2D const* other ) const;
+	bool			WorldBoundsIntersect( Collider2D const* other ) const;
 
 protected:
 	virtual ~Collider2D();

@@ -369,19 +369,19 @@ int RoundDownToInt( float valueToRound )
 //---------------------------------------------------------------------------------------------------------
 bool DoAABB2sOverlap( const AABB2& boxA, const AABB2& boxB )
 {
-	if( boxA.maxes.x > boxB.mins.x )
+	if( boxA.maxes.x < boxB.mins.x )
 	{
 		return false;
 	}
-	else if( boxB.maxes.x > boxA.mins.x )
+	else if( boxB.maxes.x < boxA.mins.x )
 	{
 		return false;
 	}
-	else if( boxA.maxes.y > boxB.mins.y )
+	else if( boxA.maxes.y < boxB.mins.y )
 	{
 		return false;
 	}
-	else if( boxB.maxes.y > boxA.mins.y )
+	else if( boxB.maxes.y < boxA.mins.y )
 	{
 		return false;
 	}
