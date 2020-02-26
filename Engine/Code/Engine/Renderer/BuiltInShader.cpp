@@ -33,6 +33,11 @@ STATIC const char* BuiltInShader::BUILT_IN_DEFAULT( R"(
 		float4x4 VIEW;
 	}
 
+	cbuffer model_constants : register(b2)
+	{
+		float4x4 MODEL;
+	}
+
 	Texture2D <float4> tDiffuse	: register(t0);
 	SamplerState sSampler : register(s0);
 
@@ -60,7 +65,8 @@ STATIC const char* BuiltInShader::BUILT_IN_DEFAULT( R"(
 		v2f.uv = input.uv;
 
 		float4 worldPos = float4( input.position, 1 );
-		float4 cameraPos = mul( VIEW, worldPos );
+		float4 modelPos = mul( MODEL, worldPos );
+		float4 cameraPos = mul( VIEW, modelPos );
 		float4 clipPos = mul( PROJECTION, cameraPos );
 
 		v2f.position = clipPos;
@@ -99,6 +105,11 @@ STATIC const char* BuiltInShader::BUILT_IN_ERROR( R"(
 		float4x4 VIEW;
 	}
 
+	cbuffer model_constants : register(b2)
+	{
+		float4x4 MODEL;
+	}
+
 	Texture2D <float4> tDiffuse	: register(t0);
 	SamplerState sSampler : register(s0);
 
@@ -126,7 +137,8 @@ STATIC const char* BuiltInShader::BUILT_IN_ERROR( R"(
 		v2f.uv = input.uv;
 
 		float4 worldPos = float4( input.position, 1 );
-		float4 cameraPos = mul( VIEW, worldPos );
+		float4 modelPos = mul( MODEL, worldPos );
+		float4 cameraPos = mul( VIEW, modelPos );
 		float4 clipPos = mul( PROJECTION, cameraPos );
 
 		v2f.position = clipPos;

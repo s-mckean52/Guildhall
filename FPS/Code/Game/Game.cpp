@@ -49,64 +49,64 @@ void Game::StartUp()
 		//Front
 		Vertex_PCU( Vec3( 0.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
 		Vertex_PCU( Vec3( 2.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( 2.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
 		Vertex_PCU( Vec3( 0.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( 2.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
 
 		//Right
 		Vertex_PCU( Vec3( 2.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
 		Vertex_PCU( Vec3( 2.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( 2.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
 		Vertex_PCU( Vec3( 2.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( 2.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
 
 		//Back
-		Vertex_PCU( Vec3( 0.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
 		Vertex_PCU( Vec3( 2.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( 0.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
 		Vertex_PCU( Vec3( 2.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
 		Vertex_PCU( Vec3( 0.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
 
 		//Left
 		Vertex_PCU( Vec3( 0.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
 		Vertex_PCU( Vec3( 0.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( 0.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
 		Vertex_PCU( Vec3( 0.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( 0.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
 
 		//Top
 		Vertex_PCU( Vec3( 0.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
 		Vertex_PCU( Vec3( 2.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( 2.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
 		Vertex_PCU( Vec3( 0.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( 2.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
 
 		//Bottom
-		Vertex_PCU( Vec3( 0.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( Vec3( 2.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
 		Vertex_PCU( Vec3( 2.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
 		Vertex_PCU( Vec3( 0.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( 2.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( 0.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
 	};
 
 	unsigned int cubeIndicies[] ={
 		//front
-		0, 1, 2,
-		0, 2, 3,
+		0, 1, 3,
+		0, 3, 2,
 
 		//Right
-		4, 5, 6,
-		4, 6, 7,
+		4, 5, 7,
+		4, 7, 6,
 
 		//Back
-		8, 9, 10,
-		8, 10, 11,
+		8, 9, 11,
+		8, 11, 10,
 
 		//Right
-		12, 13, 14,
-		12, 14, 15,
+		12, 13, 15,
+		12, 15, 14,
 
 		//Top
-		16, 17, 18,
-		16, 18, 19,
+		16, 17, 19,
+		16, 19, 18,
 
 		//Bottom
-		20, 21, 22,
-		20, 22, 23,
+		20, 21, 23,
+		20, 23, 22,
 	};
 
 	g_theEventSystem->SubscribeEventCallbackFunction( "GainFocus", GainFocus );
@@ -177,9 +177,9 @@ void Game::RenderWorld() const
 	g_theRenderer->DrawVertexArray( aabb2 );
 
 	Mat44 model = m_cubeTransform->ToMatrix();
+	g_theRenderer->SetModelMatrix( model );
 	g_theRenderer->BindTexture( m_image );
 	g_theRenderer->BindShader( (Shader*)nullptr );
-	g_theRenderer->SetModelMatrix( model );
 	g_theRenderer->DrawMesh( m_meshCube );
 }
 

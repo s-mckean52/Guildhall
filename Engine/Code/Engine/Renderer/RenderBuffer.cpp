@@ -68,9 +68,8 @@ bool RenderBuffer::Update( void const* data, size_t dataByteSize, size_t element
 	if( !IsCompatible( dataByteSize, elementByteSize ) )
 	{
 		CleanUp();
+		Create( dataByteSize, elementByteSize );
 	}
-
-	Create( dataByteSize, elementByteSize );
 
 	//Update the buffer
 	ID3D11DeviceContext* context = m_owner->m_context;
@@ -97,6 +96,9 @@ bool RenderBuffer::Update( void const* data, size_t dataByteSize, size_t element
 //---------------------------------------------------------------------------------------------------------
 bool RenderBuffer::Create( size_t dataByteSize, size_t elementByteSize )
 {
+	m_bufferByteSize = dataByteSize;
+	m_elementByteSize = elementByteSize;
+
 	ID3D11Device* device = m_owner->m_device;
 
 	D3D11_BUFFER_DESC desc;

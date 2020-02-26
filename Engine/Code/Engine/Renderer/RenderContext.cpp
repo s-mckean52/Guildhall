@@ -77,8 +77,8 @@ void RenderContext::StartUp( Window* theWindow )
 	GUARANTEE_OR_DIE( SUCCEEDED( result ), "Failed to create rendering pipeline" );
 
 	m_swapchain = new SwapChain( this, swapchain );
-	m_defaultShader = CreateShaderFromSourceCode( BuiltInShader::BUILT_IN_DEFAULT );
 	m_errorShader = CreateShaderFromSourceCode( BuiltInShader::BUILT_IN_ERROR );
+	m_defaultShader = CreateShaderFromSourceCode( BuiltInShader::BUILT_IN_DEFAULT );
 
 	m_immediateVBO = new VertexBuffer( this, MEMORY_HINT_DYNAMIC );
 
@@ -624,7 +624,7 @@ void RenderContext::BindIndexBuffer( IndexBuffer* ibo )
 	UINT offset = 0;
 
 	m_context->IASetIndexBuffer( iboHandle, DXGI_FORMAT_R32_UINT, offset );
-		//m_context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+	//m_context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 }
 
 
