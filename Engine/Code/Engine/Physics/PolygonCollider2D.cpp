@@ -41,6 +41,7 @@ void PolygonCollider2D::UpdateWorldShape()
 	}
 
 	m_worldPolygon = m_localPolygon.GetTranslated( m_worldPosition );
+	SetWorldBounds();
 }
 
 
@@ -59,29 +60,29 @@ bool PolygonCollider2D::Contains( Vec2 const& position ) const
 
 
 //---------------------------------------------------------------------------------------------------------
-bool PolygonCollider2D::Intersects( Collider2D const* collider ) const
-{
-	switch( collider->GetType() )
-	{
-	case COLLIDER_TYPE_DISC2D:
-	{
-		DiscCollider2D* colliderAsDisc2D = (DiscCollider2D*)collider;
-		return DoPolygonAndDiscOverlap( m_worldPolygon, colliderAsDisc2D->m_worldPosition, colliderAsDisc2D->m_radius );
-	}
-	case COLLIDER_TYPE_POLYGON2D:
-	{
-		return false;
-		//PolygonCollider2D* colliderAsPolygon = (PolygonCollider2D*)collider;
-		//return DoPolygonsOverlap( m_polygonVerts, colliderAsPolygon->m_polygonVerts );
-	}
-	default:
-		return false;
-	}
-}
+// bool PolygonCollider2D::Intersects( Collider2D const* collider ) const
+// {
+// 	switch( collider->GetType() )
+// 	{
+// 	case COLLIDER_TYPE_DISC2D:
+// 	{
+// 		DiscCollider2D* colliderAsDisc2D = (DiscCollider2D*)collider;
+// 		return DoPolygonAndDiscOverlap( m_worldPolygon, colliderAsDisc2D->m_worldPosition, colliderAsDisc2D->m_radius );
+// 	}
+// 	case COLLIDER_TYPE_POLYGON2D:
+// 	{
+// 		return false;
+// 		//PolygonCollider2D* colliderAsPolygon = (PolygonCollider2D*)collider;
+// 		//return DoPolygonsOverlap( m_polygonVerts, colliderAsPolygon->m_polygonVerts );
+// 	}
+// 	default:
+// 		return false;
+// 	}
+// }
 
 
 //---------------------------------------------------------------------------------------------------------
-AABB2 PolygonCollider2D::GetWorldBounds() const
+void PolygonCollider2D::SetWorldBounds()
 {
 	Vec2 aabbMin = Vec2( 1000000.f, 1000000.f );
 	Vec2 aabbMax = Vec2( -1000000.f, -1000000.f );
@@ -113,7 +114,7 @@ AABB2 PolygonCollider2D::GetWorldBounds() const
 	aabbMin += m_worldPosition;
 	aabbMax += m_worldPosition;
 
-	return AABB2( aabbMin, aabbMax );
+	m_worldBounds = AABB2( aabbMin, aabbMax );
 }
 
 
@@ -124,7 +125,7 @@ void PolygonCollider2D::DebugRender( RenderContext* context, Rgba8 const& border
 	AppendVertsForPolygon2DFilled( debugVerts, m_localPolygon, fillColor );
 	AppendVertsForPolygon2DOutline( debugVerts, m_localPolygon, borderColor, 5.f );
 	TransformVertexArray( debugVerts, 1.f, 0.f, m_worldPosition );
-	AppendVertsForAABB2OutlineAtPoint( debugVerts, GetWorldBounds(), Rgba8::CYAN, 3.f );
+	AppendVertsForAABB2OutlineAtPoint( debugVerts, m_worldBounds, Rgba8::CYAN, 3.f );
 
 	context->BindTexture( nullptr );
 	context->DrawVertexArray( debugVerts );

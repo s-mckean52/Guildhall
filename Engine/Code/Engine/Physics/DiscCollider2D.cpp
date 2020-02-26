@@ -8,6 +8,7 @@
 #include "Engine/Physics/Rigidbody2D.hpp"
 #include "Engine/Physics/PolygonCollider2D.hpp"
 #include "Engine/Math/Polygon2D.hpp"
+#include "Engine/Physics/Collision2D.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -28,6 +29,7 @@ void DiscCollider2D::UpdateWorldShape()
 	{
 		m_worldPosition = m_localPosition;
 	}
+	SetWorldBounds();
 }
 
 
@@ -46,28 +48,28 @@ bool DiscCollider2D::Contains( Vec2 const& position ) const
 
 
 //---------------------------------------------------------------------------------------------------------
-bool DiscCollider2D::Intersects( Collider2D const* collider ) const
-{
-	switch( collider->GetType() )
-	{
-	case COLLIDER_TYPE_DISC2D:
-	{
-		DiscCollider2D* colliderAsDisc2D = (DiscCollider2D*)collider;
-		return DoDiscsOverlap( colliderAsDisc2D->m_worldPosition, colliderAsDisc2D->m_radius, m_worldPosition, m_radius );
-	}
-	case COLLIDER_TYPE_POLYGON2D:
-	{
-		PolygonCollider2D* colliderAsPolygon2D = (PolygonCollider2D*)collider;
-		return DoPolygonAndDiscOverlap( colliderAsPolygon2D->m_worldPolygon, m_worldPosition, m_radius );
-	}
-	default:
-		return false;
-	}
-}
+// bool DiscCollider2D::Intersects( Collider2D const* collider ) const
+// {
+// 	switch( collider->GetType() )
+// 	{
+// 	case COLLIDER_TYPE_DISC2D:
+// 	{
+// 		DiscCollider2D* colliderAsDisc2D = (DiscCollider2D*)collider;
+// 		return DoDiscsOverlap( colliderAsDisc2D->m_worldPosition, colliderAsDisc2D->m_radius, m_worldPosition, m_radius );
+// 	}
+// 	case COLLIDER_TYPE_POLYGON2D:
+// 	{
+// 		PolygonCollider2D* colliderAsPolygon2D = (PolygonCollider2D*)collider;
+// 		return DoPolygonAndDiscOverlap( colliderAsPolygon2D->m_worldPolygon, m_worldPosition, m_radius );
+// 	}
+// 	default:
+// 		return false;
+// 	}
+// }
 
 
 //---------------------------------------------------------------------------------------------------------
-AABB2 DiscCollider2D::GetWorldBounds() const
+void DiscCollider2D::SetWorldBounds()
 {
 	Vec2 min;
 	Vec2 max;
@@ -78,7 +80,7 @@ AABB2 DiscCollider2D::GetWorldBounds() const
 	max.x = m_worldPosition.x + m_radius;
 	max.y = m_worldPosition.y + m_radius;
 	
-	return AABB2( min, max );
+	m_worldBounds = AABB2( min, max );
 }
 
 
@@ -89,7 +91,7 @@ void DiscCollider2D::DebugRender( RenderContext* context, Rgba8 const& borderCol
 	AppendVertsForFilledCircle( debugVerts, m_radius, fillColor );
 	AppendVertsForCircleAtPoint( debugVerts, m_radius, borderColor, 5.f );
 	TransformVertexArray( debugVerts, 1.f, 0.f, m_worldPosition );
-	AppendVertsForAABB2OutlineAtPoint( debugVerts, GetWorldBounds(), Rgba8::CYAN, 3.f );
+	AppendVertsForAABB2OutlineAtPoint( debugVerts, m_worldBounds, Rgba8::CYAN, 3.f );
 
 	context->BindTexture( nullptr );
 	context->DrawVertexArray( debugVerts );

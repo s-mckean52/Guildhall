@@ -317,6 +317,7 @@ GameObject* Game::CreateDisc()
 	gameObject->m_rigidbody = m_physics2D->CreateRigidbody2D();
 	gameObject->m_rigidbody->SetPosition( mousePos );
 	gameObject->m_rigidbody->SetMass( 1.f );
+	gameObject->m_rigidbody->SetSimulationMode( SIMULATION_MODE_DYNAMIC );
 
 	float radius = g_RNG->RollRandomFloatInRange( 20.f, 50.f );
 	DiscCollider2D* collider = m_physics2D->CreateDiscCollider2D( Vec2( 0.f, 0.f ), radius );
@@ -331,6 +332,7 @@ GameObject* Game::CreatePolygon( std::vector<Vec2> polygonPoints )
 {
 	GameObject* gameObject = new GameObject();
 	gameObject->m_rigidbody = m_physics2D->CreateRigidbody2D();
+	gameObject->m_rigidbody->SetSimulationMode( SIMULATION_MODE_STATIC );
 	
 	Vec2 position = AveragePositions( polygonPoints );
 	gameObject->SetPosition( position );

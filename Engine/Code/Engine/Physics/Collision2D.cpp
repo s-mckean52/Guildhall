@@ -1,5 +1,6 @@
 #include "Engine/Physics/Collision2D.hpp"
 #include "Engine/Physics/Collider2D.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
