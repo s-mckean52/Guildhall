@@ -21,6 +21,7 @@
 #include "Engine/Math/Transform.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Renderer/GPUMesh.hpp"
+#include "Engine/Math/MatrixUtils.hpp"
 #include <string>
 
 
@@ -47,40 +48,40 @@ void Game::StartUp()
 {
 	Vertex_PCU cubeVerticies[] ={
 		//Front
-		Vertex_PCU( Vec3( 0.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( Vec3( 2.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( 0.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( Vec3( 2.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+		Vertex_PCU( Vec3( -1.f, -1.f, 1.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( 1.f, -1.f, 1.f ),		Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( -1.f, 1.f, 1.f ),		Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( 1.f, 1.f, 1.f ),		Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
 
 		//Right
-		Vertex_PCU( Vec3( 2.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( Vec3( 2.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( 2.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( Vec3( 2.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+		Vertex_PCU( Vec3( 1.f, -1.f, 1.f ),		Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( 1.f, -1.f, -1.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( 1.f, 1.f, 1.f ),		Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( 1.f, 1.f, -1.f ),		Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
 
 		//Back
-		Vertex_PCU( Vec3( 2.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( 0.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( Vec3( 2.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
-		Vertex_PCU( Vec3( 0.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( 1.f, -1.f, -1.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( -1.f, -1.f, -1.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( 1.f, 1.f, -1.f ),		Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+		Vertex_PCU( Vec3( -1.f, 1.f, -1.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
 
 		//Left
-		Vertex_PCU( Vec3( 0.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( Vec3( 0.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( 0.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( Vec3( 0.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+		Vertex_PCU( Vec3( -1.f, -1.f, -1.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( -1.f, -1.f, 1.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( -1.f, 1.f, -1.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( -1.f, 1.f, 1.f ),		Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
 
 		//Top
-		Vertex_PCU( Vec3( 0.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( Vec3( 2.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( 0.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( Vec3( 2.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+		Vertex_PCU( Vec3( -1.f, 1.f, 1.f ),		Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( 1.f, 1.f, 1.f ),		Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( -1.f, 1.f, -1.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( 1.f, 1.f, -1.f ),		Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
 
 		//Bottom
-		Vertex_PCU( Vec3( 2.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
-		Vertex_PCU( Vec3( 0.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( Vec3( 2.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( 0.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( 1.f, -1.f, -1.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+		Vertex_PCU( Vec3( -1.f, -1.f, -1.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( 1.f, -1.f, 1.f ),		Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( -1.f, -1.f, 1.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
 	};
 
 	unsigned int cubeIndicies[] ={
@@ -171,16 +172,18 @@ void Game::RenderWorld() const
 	std::vector<Vertex_PCU> aabb2;
 	AppendVertsForAABB2D( aabb2, AABB2( -1.0f, -1.0f, 1.0f, 1.0f ), Rgba8::WHITE, Vec2( 0.f, 0.f ), Vec2( 1.f, 1.f ) );
 
+	Mat44 model = m_cubeTransform->ToMatrix();
+	g_theRenderer->SetModelMatrix( model );
+	g_theRenderer->BindTexture( nullptr );
+	g_theRenderer->BindShader( (Shader*)nullptr );
+	g_theRenderer->DrawMesh( m_meshCube );
+
 	TranslateVertexArray( aabb2 , Vec3( 0.f, 0.f, -10.f ) );
+	g_theRenderer->SetModelMatrix( Mat44::IDENTITY );
 	g_theRenderer->BindTexture( m_image );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( aabb2 );
 
-	Mat44 model = m_cubeTransform->ToMatrix();
-	g_theRenderer->SetModelMatrix( model );
-	g_theRenderer->BindTexture( m_image );
-	g_theRenderer->BindShader( (Shader*)nullptr );
-	g_theRenderer->DrawMesh( m_meshCube );
 }
 
 
@@ -189,6 +192,13 @@ void Game::UpdateBasedOnMouseMovement()
 {
 	Vec2 relativeMovement = g_theInput->GetCursorRelativeMovement();
 	m_worldCamera->AddPitchYawRollRotationDegrees( relativeMovement.y, relativeMovement.x, 0.f );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateCubeRotation( float deltaSeconds )
+{
+	m_cubeTransform->AddRotationPitchYawRollDegrees( 0.f, 90.f * deltaSeconds, 0.f );
 }
 
 
@@ -208,6 +218,7 @@ void Game::Update( float deltaSeconds )
 	if( !g_theConsole->IsOpen() )
 	{
 		UpdateFromInput( deltaSeconds );
+		UpdateCubeRotation( deltaSeconds );
 	}
 
 	ChangeClearColor( deltaSeconds );

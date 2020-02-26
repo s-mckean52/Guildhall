@@ -12,38 +12,47 @@ void Transform::SetPosition( Vec3 const& position )
 
 
 //---------------------------------------------------------------------------------------------------------
-void Transform::SetRotationFromPitchYawRollDegrees( float pitch, float yaw, float roll )
+void Transform::SetRotationFromPitchYawRollDegrees( float pitchDegrees, float yawDegrees, float rollDegrees )
 {
 	float halfPitchRange = 90.f;
 	float halfRollRange = 180.f;
 	float halfYawRange = 180.f;
 
-	Clamp( pitch, -halfPitchRange, halfPitchRange );
+	Clamp( pitchDegrees, -halfPitchRange, halfPitchRange );
 
-	while( yaw < -halfYawRange || yaw > halfYawRange )
+	while( yawDegrees < -halfYawRange || yawDegrees > halfYawRange )
 	{
-		if( yaw < -halfYawRange )
+		if( yawDegrees < -halfYawRange )
 		{
-			yaw += 360.f;
+			yawDegrees += 360.f;
 		}
-		else if( yaw > halfYawRange )
+		else if( yawDegrees > halfYawRange )
 		{
-			yaw -= 360.f;
+			yawDegrees -= 360.f;
 		}
 	}
 
-	while( roll < -halfRollRange || roll > halfRollRange )
+	while( rollDegrees < -halfRollRange || rollDegrees > halfRollRange )
 	{
-		if( roll < -halfRollRange )
+		if( rollDegrees < -halfRollRange )
 		{
-			roll += 360.f;
+			rollDegrees += 360.f;
 		}
-		else if( roll > halfRollRange )
+		else if( rollDegrees > halfRollRange )
 		{
-			roll -= 360.f;
+			rollDegrees -= 360.f;
 		}
 	}
-	m_rotationPitchYawRollDegrees = Vec3( pitch, yaw, roll );
+	m_rotationPitchYawRollDegrees = Vec3( pitchDegrees, yawDegrees, rollDegrees );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Transform::AddRotationPitchYawRollDegrees( float pitchDegrees, float yawDegrees, float rollDegrees )
+{
+	m_rotationPitchYawRollDegrees.x += pitchDegrees;
+	m_rotationPitchYawRollDegrees.y += yawDegrees;
+	m_rotationPitchYawRollDegrees.z += rollDegrees;
 }
 
 

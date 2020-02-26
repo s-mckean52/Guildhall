@@ -31,6 +31,7 @@ public:
 
 	//Other
 	void UpdateBasedOnMouseMovement();
+	void UpdateCubeRotation( float deltaSeconds );
 	void TranslateCamera( Camera& camera, const Vec3& directionToMove );
 	void ChangeClearColor( float deltaSeconds );
 	void UpdateCameras( float deltaSeconds );

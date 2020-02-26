@@ -12,7 +12,9 @@ public:
 	Vec3 GetRotationPitchYawRollDegrees() const		{ return m_rotationPitchYawRollDegrees; }
 
 	void SetPosition( Vec3 const& position );
-	void SetRotationFromPitchYawRollDegrees( float pitch, float yaw, float roll );
+	void SetRotationFromPitchYawRollDegrees( float pitchDegrees, float yawDegrees, float rollDegrees );
+
+	void AddRotationPitchYawRollDegrees( float pitchDegrees, float yawDegrees, float rollDegrees );
 
 	void Translate( Vec3 const& translation );
 
