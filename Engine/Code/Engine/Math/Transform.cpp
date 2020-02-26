@@ -1,6 +1,7 @@
 #include "Engine/Math/Transform.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/MatrixUtils.hpp"
+#include "Engine/Math/MathUtils.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -11,21 +12,23 @@ void Transform::SetPosition( Vec3 const& position )
 
 
 //---------------------------------------------------------------------------------------------------------
-void Transform::SetRotationFromPitchRollYawDegrees( float pitch, float roll, float yaw )
+void Transform::SetRotationFromPitchYawRollDegrees( float pitch, float yaw, float roll )
 {
 	float halfPitchRange = 90.f;
 	float halfRollRange = 180.f;
 	float halfYawRange = 180.f;
 
-	while( pitch < -halfPitchRange || pitch > halfPitchRange )
+	Clamp( pitch, -halfPitchRange, halfPitchRange );
+
+	while( yaw < -halfYawRange || yaw > halfYawRange )
 	{
-		if( pitch < -halfPitchRange )
+		if( yaw < -halfYawRange )
 		{
-			pitch += halfPitchRange * 2.f;
+			yaw += 360.f;
 		}
-		else if( pitch > halfPitchRange )
+		else if( yaw > halfYawRange )
 		{
-			pitch -= halfPitchRange * 2.f;
+			yaw -= 360.f;
 		}
 	}
 
@@ -33,27 +36,14 @@ void Transform::SetRotationFromPitchRollYawDegrees( float pitch, float roll, flo
 	{
 		if( roll < -halfRollRange )
 		{
-			roll += halfRollRange * 2.f;
+			roll += 360.f;
 		}
 		else if( roll > halfRollRange )
 		{
-			roll -= halfRollRange * 2.f;
+			roll -= 360.f;
 		}
 	}
-
-	while( yaw < -halfYawRange || yaw > halfYawRange )
-	{
-		if( yaw < -halfYawRange )
-		{
-			yaw += halfYawRange * 2.f;
-		}
-		else if( yaw > halfYawRange )
-		{
-			yaw -= halfYawRange * 2.f;
-		}
-	}
-
-	m_rotationPitchYawRollDegrees = Vec3( pitch, roll, yaw );
+	m_rotationPitchYawRollDegrees = Vec3( pitch, yaw, roll );
 }
 
 
@@ -67,9 +57,11 @@ void Transform::Translate( Vec3 const& translation )
 //---------------------------------------------------------------------------------------------------------
 Mat44 Transform::ToMatrix() const
 {
-	Mat44 transformationMatrix = Mat44::CreateNonUniformScaleXYZ( m_scale );
+	Mat44 transformationMatrix = Mat44::CreateTranslationXYZ( m_position );
+
 	RotateMatrixPitchYawRollDegrees( transformationMatrix, m_rotationPitchYawRollDegrees );
-	transformationMatrix.Translate3D( m_position );
+
+	transformationMatrix.ScaleNonUniform3D( m_scale );
 	
 	return transformationMatrix;
 }

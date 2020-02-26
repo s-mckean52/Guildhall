@@ -1,6 +1,8 @@
 #include "Engine/Math/MatrixUtils.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/Vec3.hpp"
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
 Mat44 MakeOrthographicProjectionMatrixD3D( float minX, float maxX, float minY, float maxY, float minZ, float maxZ )
 {
@@ -19,11 +21,19 @@ Mat44 MakePerspectiveProjectionMatrixD3D( float fieldOfViewDegrees, float aspect
 
 
 //---------------------------------------------------------------------------------------------------------
-void RotateMatrixPitchYawRollDegrees( Mat44& matrixToRotate, float pitch, float roll, float yaw )
+void RotateMatrixPitchYawRollDegrees( Mat44& matrixToRotate, float pitchDegrees, float yawDegrees, float rollDegrees )
 {
-	matrixToRotate.RotateXDegrees( pitch );
-	matrixToRotate.RotateZDegrees( yaw );
-	matrixToRotate.RotateYDegrees( roll );
+// 	Mat44 xRotation = Mat44::CreateXRotationDegrees( pitchDegrees );
+// 	Mat44 yRotation = Mat44::CreateYRotationDegrees( yawDegrees );
+// 	Mat44 zRotation = Mat44::CreateZRotationDegrees( rollDegrees );
+// 
+// 	matrixToRotate.TransformBy( yRotation );
+// 	matrixToRotate.TransformBy( xRotation );
+// 	matrixToRotate.TransformBy( zRotation );
+
+	matrixToRotate.RotateYDegrees( yawDegrees );
+	matrixToRotate.RotateXDegrees( pitchDegrees );
+	matrixToRotate.RotateZDegrees( rollDegrees );
 }
 
 
@@ -37,6 +47,32 @@ void RotateMatrixPitchYawRollDegrees( Mat44& matrixToRotate, Vec3 const& pitchYa
 //---------------------------------------------------------------------------------------------------------
 bool MatrixIsOrthoNormal( Mat44 const& matrix )
 {
+	Vec3 iBasis = matrix.GetIBasis3D();
+	Vec3 jBasis = matrix.GetJBasis3D();
+	Vec3 kBasis = matrix.GetKBasis3D();
+
+	float iBasisLength = iBasis.GetLength();
+	float jBasisLength = jBasis.GetLength();
+	float kBasisLength = kBasis.GetLength();
+
+	if( !ApproximatelyEqual( iBasisLength, 1.f ) || 
+		!ApproximatelyEqual( jBasisLength, 1.f ) || 
+		!ApproximatelyEqual( kBasisLength, 1.f ) )
+	{
+		return false;
+	}
+
+	float iBasisDotJBasis = DotProduct3D( iBasis, jBasis );
+	float iBasisDotKBasis = DotProduct3D( iBasis, kBasis );
+	float jBasisDotKBasis = DotProduct3D( jBasis, kBasis );
+
+	if( !ApproximatelyEqual( iBasisDotJBasis, 0.f ) ||
+		!ApproximatelyEqual( iBasisDotKBasis, 0.f ) || 
+		!ApproximatelyEqual( jBasisDotKBasis, 0.f ) )
+	{
+		return false;
+	}
+
 	return true;
 }
 
@@ -58,6 +94,8 @@ void MatrixTranspose( Mat44& matrix )
 //---------------------------------------------------------------------------------------------------------
 void MatrixInvertOrthoNormal( Mat44& matrix )
 {
+	GUARANTEE_OR_DIE( MatrixIsOrthoNormal( matrix ), "Tried to invert non-orthonormal matrix with InvertOrthoNormal");
+
 	Mat44 inverseMatrix = matrix;
 	inverseMatrix.SetTranslation3D( Vec3( 0.0f ) );
 	MatrixTranspose( inverseMatrix );

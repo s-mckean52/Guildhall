@@ -34,12 +34,12 @@ void App::StartUp()
 
 	g_theEventSystem->StartUp();
 	g_theRenderer->StartUp( g_theWindow );
-	
 	g_theInput->StartUp( g_theWindow );
-	g_theWindow->SetInputSystem( g_theInput );
-
 	g_theConsole->StartUp( g_theInput, g_theEventSystem );
 	g_theGame->StartUp();
+	
+	g_theWindow->SetInputSystem( g_theInput );
+	g_theWindow->SetEventSystem( g_theEventSystem );
 
 	g_theEventSystem->SubscribeEventCallbackFunction( "quit", QuitRequested );
 	g_theEventSystem->SubscribeEventCallbackFunction( "help", HelpCommand );
@@ -138,11 +138,11 @@ void App::OpenDevConsole()
 	g_theConsole->ToggleIsOpen();
 	if( g_theConsole->IsOpen() )
 	{
-		g_theInput->SetCursorMode( MOUSE_MODE_ABSOLUTE );
+		g_theEventSystem->FireEvent( "LoseFocus" );
 	}
 	else
 	{
-		g_theInput->SetCursorMode(MOUSE_MODE_RELATIVE );
+		g_theEventSystem->FireEvent( "GainFocus" );
 	}
 }
 

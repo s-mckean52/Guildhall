@@ -35,6 +35,11 @@ cbuffer camera_constants : register(b1)
 	float4x4 VIEW;		//WORLD_TO_CAMERA
 }
 
+cbuffer model_constants : register(b2)
+{
+	float4x4 MODEL;
+}
+
 Texture2D <float4> tDiffuse	: register(t0);
 SamplerState sSampler		: register(s0);
 

@@ -14,7 +14,10 @@ class Window;
 class SwapChain;
 class Shader;
 class RenderBuffer;
-class VertexBuffer;	
+class VertexBuffer;
+class IndexBuffer;
+class Transform;
+class GPUMesh;
 struct ID3D11Device;
 struct ID3D11Buffer;
 struct ID3D11DeviceContext;
@@ -30,8 +33,9 @@ enum class BlendMode
 
 enum BufferSlot
 {
-	UBO_FRAME_SLOT = 0,
-	UBO_CAMERA_SLOT = 1,
+	UBO_FRAME_SLOT			= 0,
+	UBO_CAMERA_SLOT			= 1,
+	UBO_MODEL_MATRIX_SLOT	= 2,
 };
 
 struct frame_data_t
@@ -46,6 +50,11 @@ struct camera_data_t
 {				  
 	Mat44 projection;
 	Mat44 view;
+};
+
+struct model_matrix_t
+{
+	Mat44 model;
 };
 
 class RenderContext
@@ -66,12 +75,17 @@ public:
 	bool IsDrawing() const { return m_isDrawing; }
 	
 	void Draw( int numVertices, int vertexOffset = 0 );
+	void DrawIndexed( int numIndicies, int indexOffset = 0, int vertexOffset = 0 );
 	void DrawVertexArray( int numVerticies, const Vertex_PCU* verticies );
 	void DrawVertexArray( const std::vector<Vertex_PCU>& vertexArray );
+	void DrawMesh( GPUMesh* mesh );
+
+	void		SetModelMatrix( Mat44 const& modelMatrix );
 	
 	void		BindShader( Shader* shader );
 	void		BindShader( const char* filepath );
 	void		BindVertexInput( VertexBuffer* vbo );
+	void		BindIndexBuffer( IndexBuffer* ibo );
 	void		BindUniformBuffer( unsigned int slot, RenderBuffer* ubo );
 	void		BindSampler( Sampler* sampler );
 
@@ -116,6 +130,7 @@ public:
 	Sampler*				m_samplerDefault		= nullptr;
 	VertexBuffer*			m_immediateVBO			= nullptr;
 	RenderBuffer*			m_frameUBO				= nullptr;
+	RenderBuffer*			m_modelUBO				= nullptr;
 
 	ID3D11BlendState* m_alphaBlendStateHandle		= nullptr;
 	ID3D11BlendState* m_additiveBlendStateHandle	= nullptr;

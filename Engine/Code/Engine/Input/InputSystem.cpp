@@ -146,16 +146,18 @@ void InputSystem::ShowSystemCursor( bool isShown )
 //---------------------------------------------------------------------------------------------------------
 void InputSystem::ClipSystemCursor( AABB2 const* windowDimensions )
 {
-	RECT* windowRect = nullptr;
 	if( windowDimensions != nullptr )
 	{
-		windowRect = new RECT();
-		windowRect->left	= (LONG)windowDimensions->mins.x;
-		windowRect->bottom	= (LONG)windowDimensions->mins.y;
-		windowRect->right	= (LONG)windowDimensions->maxes.x;
-		windowRect->top		= (LONG)windowDimensions->maxes.y;
+		RECT windowRect;
+		windowRect.left		= (LONG)windowDimensions->mins.x;
+		windowRect.bottom	= (LONG)windowDimensions->mins.y;
+		windowRect.right	= (LONG)windowDimensions->maxes.x;
+		windowRect.top		= (LONG)windowDimensions->maxes.y;
+
+		if( ::ClipCursor( &windowRect ) )
+			return;
 	}
-	::ClipCursor( windowRect );
+	::ClipCursor( NULL );
 }
 
 
@@ -181,6 +183,7 @@ void InputSystem::UpdateRelativeMode()
 	::GetCursorPos( &point );
 	Vec2 cursorPositionThisFrame = Vec2( static_cast<float>( point.x ), static_cast<float>( point.y ) );
 	m_cursorRelativeMovement = cursorPositionThisFrame - m_cursorPositionLastFrame;
+	m_cursorRelativeMovement *= -1.f;
 	RecenterCursor();
 }
 

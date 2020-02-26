@@ -1,12 +1,14 @@
 #pragma once
+#include "Game/GameCommon.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Renderer/Camera.hpp"
-#include "Game/GameCommon.hpp"
+#include "Engine/Math/Transform.hpp"
 #include <vector>
 
 class Entity;
 class XboxController;
 class Shader;
+class GPUMesh;
 
 class Game
 {
@@ -33,9 +35,15 @@ public:
 	void ChangeClearColor( float deltaSeconds );
 	void UpdateCameras( float deltaSeconds );
 
+	static void GainFocus();
+	static void LoseFocus();
+
 	bool IsQuitting() const { return m_isQuitting; }
 
 private:
+	GPUMesh* m_meshCube = nullptr;
+	Transform* m_cubeTransform = nullptr;
+
 	float m_distanceFromCamera = -1.f;
 
 	Texture* m_image			= nullptr;

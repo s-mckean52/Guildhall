@@ -5,6 +5,7 @@
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Math/MatrixUtils.hpp"
 #include "Engine/Math/Vec4.hpp"
+#include "Engine/Math/MathUtils.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -179,7 +180,9 @@ void Camera::SetDepthStencilTarget( Texture* texture )
 //---------------------------------------------------------------------------------------------------------
 void Camera::SetPitchYawRollRotationDegrees( float pitch, float yaw, float roll )
 {
-	m_transform.SetRotationFromPitchRollYawDegrees( pitch, yaw, roll );
+	Clamp( pitch, -95.f, 85.f );
+
+	m_transform.SetRotationFromPitchYawRollDegrees( pitch, yaw, roll );
 }
 
 
@@ -188,7 +191,7 @@ void Camera::AddPitchYawRollRotationDegrees( float pitch, float yaw, float roll 
 {
 	Vec3 pitchYawRoll = m_transform.GetRotationPitchYawRollDegrees();
 	pitchYawRoll += Vec3( pitch, yaw, roll );
-	m_transform.SetRotationFromPitchRollYawDegrees( pitchYawRoll.x, pitchYawRoll.y , pitchYawRoll.z );
+	SetPitchYawRollRotationDegrees( pitchYawRoll.x, pitchYawRoll.y , pitchYawRoll.z );
 }
 
 

@@ -28,6 +28,9 @@
 #include "Engine/Core/Time.hpp"
 #include "Engine/Renderer/Sampler.hpp"
 #include "Engine/Renderer/BuiltInShader.hpp"
+#include "Engine/Math/Transform.hpp"
+#include "Engine/Renderer/IndexBuffer.hpp"
+#include "Engine/Renderer/GPUMesh.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -80,6 +83,7 @@ void RenderContext::StartUp( Window* theWindow )
 	m_immediateVBO = new VertexBuffer( this, MEMORY_HINT_DYNAMIC );
 
 	m_frameUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
+	m_modelUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
 
 	m_samplerDefault = new Sampler( this, SAMPLER_POINT );
 	m_textueDefaultColor = CreateTextureFromColor( Rgba8::WHITE );
@@ -112,6 +116,9 @@ void RenderContext::ShutDown()
 
 	delete m_frameUBO;
 	m_frameUBO = nullptr;
+
+	delete m_modelUBO;
+	m_modelUBO = nullptr;
 
 	delete m_immediateVBO;
 	m_immediateVBO = nullptr;
@@ -219,9 +226,11 @@ void RenderContext::BeginCamera( Camera& camera )
 	m_lastBoundVBOHandle = nullptr;
 
 	camera.UpdateCameraUBO();
+	SetModelMatrix( Mat44::IDENTITY );
 
 	BindUniformBuffer( UBO_FRAME_SLOT, m_frameUBO );
 	BindUniformBuffer( UBO_CAMERA_SLOT, camera.GetUBO() );
+	BindUniformBuffer( UBO_MODEL_MATRIX_SLOT, m_modelUBO );
 }
 
 
@@ -240,6 +249,16 @@ void RenderContext::Draw( int numVertices, int vertexOffset )
 	m_context->IASetInputLayout( inputLayout );
 
 	m_context->Draw( numVertices, vertexOffset );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::DrawIndexed( int numIndicies, int indexOffset, int vertexOffset )
+{
+	ID3D11InputLayout* inputLayout = m_currentShader->GetOrCreateInputLayout( Vertex_PCU::LAYOUT );
+	m_context->IASetInputLayout( inputLayout );
+
+	m_context->DrawIndexed( numIndicies, indexOffset, vertexOffset );
 }
 
 
@@ -263,6 +282,36 @@ void RenderContext::DrawVertexArray( int numVerticies, const Vertex_PCU* vertici
 void RenderContext::DrawVertexArray( const std::vector<Vertex_PCU>& vertexArray )
 {
 	DrawVertexArray( static_cast<int>( vertexArray.size() ), &vertexArray[ 0 ] );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::DrawMesh( GPUMesh* mesh )
+{
+	BindVertexInput( mesh->GetVertexBuffer() );
+	//UpdateLayoutIfNeeded();
+
+	bool hasIndicies = mesh->GetIndexCount() > 0;
+
+	if( hasIndicies )
+	{
+		BindIndexBuffer( mesh->GetIndexBuffer() );
+		DrawIndexed( mesh->GetIndexCount() );
+	}
+	else
+	{
+		Draw( mesh->GetVertexCount() );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::SetModelMatrix( Mat44 const& modelMatrix )
+{
+	model_matrix_t modelData;
+	modelData.model = modelMatrix;
+
+	m_modelUBO->Update( &modelData, sizeof( modelData ), sizeof( modelData ) );
 }
 
 
@@ -565,6 +614,17 @@ void RenderContext::BindVertexInput( VertexBuffer* vbo )
 		m_context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 		m_lastBoundVBOHandle = vboHandle;
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::BindIndexBuffer( IndexBuffer* ibo )
+{
+	ID3D11Buffer* iboHandle = ibo->m_handle;
+	UINT offset = 0;
+
+	m_context->IASetIndexBuffer( iboHandle, DXGI_FORMAT_R32_UINT, offset );
+		//m_context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 }
 
 

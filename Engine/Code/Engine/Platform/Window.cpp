@@ -68,13 +68,16 @@ static LRESULT CALLBACK WindowsMessageHandlingProcedure( HWND windowHandle, UINT
 											static_cast<float>( windowRect.top ) );
 
 			InputSystem* theInput = window->GetInputSystem();
+			EventSystem* theEventSystem = window->GetEventSystem();
 			if( wParam == WA_ACTIVE )
 			{
-				theInput->ClipSystemCursor( &windowDimensions );
+				if( theInput ) theInput->ClipSystemCursor( &windowDimensions );
+				if( theEventSystem) theEventSystem->FireEvent( "GainFocus" );
 			}
 			else if( wParam == WA_INACTIVE )
 			{
-				theInput->ClipSystemCursor( nullptr );
+				if( theInput) theInput->ClipSystemCursor( nullptr );
+				if( theEventSystem) theEventSystem->FireEvent( "LoseFocus" );
 			}
 			break;
 		}
@@ -224,6 +227,13 @@ void Window::Close()
 void Window::SetInputSystem( InputSystem* input )
 {
 	m_theInput = input;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Window::SetEventSystem( EventSystem* eventSystem )
+{
+	m_theEventSystem = eventSystem;
 }
 
 

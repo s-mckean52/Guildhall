@@ -19,6 +19,8 @@
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Math/Vec4.hpp"
 #include "Engine/Math/Transform.hpp"
+#include "Engine/Core/EventSystem.hpp"
+#include "Engine/Renderer/GPUMesh.hpp"
 #include <string>
 
 
@@ -43,13 +45,85 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
+	Vertex_PCU cubeVerticies[] ={
+		//Front
+		Vertex_PCU( Vec3( 0.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( 2.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( 2.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+		Vertex_PCU( Vec3( 0.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+
+		//Right
+		Vertex_PCU( Vec3( 2.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( 2.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( 2.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+		Vertex_PCU( Vec3( 2.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+
+		//Back
+		Vertex_PCU( Vec3( 0.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( 2.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( 2.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+		Vertex_PCU( Vec3( 0.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+
+		//Left
+		Vertex_PCU( Vec3( 0.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( 0.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( 0.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+		Vertex_PCU( Vec3( 0.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+
+		//Top
+		Vertex_PCU( Vec3( 0.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( 2.f, 2.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( 2.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+		Vertex_PCU( Vec3( 0.f, 2.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+
+		//Bottom
+		Vertex_PCU( Vec3( 0.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( 2.f, 0.f, 0.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( 2.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+		Vertex_PCU( Vec3( 0.f, 0.f, -2.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+	};
+
+	unsigned int cubeIndicies[] ={
+		//front
+		0, 1, 2,
+		0, 2, 3,
+
+		//Right
+		4, 5, 6,
+		4, 6, 7,
+
+		//Back
+		8, 9, 10,
+		8, 10, 11,
+
+		//Right
+		12, 13, 14,
+		12, 14, 15,
+
+		//Top
+		16, 17, 18,
+		16, 18, 19,
+
+		//Bottom
+		20, 21, 22,
+		20, 22, 23,
+	};
+
+	g_theEventSystem->SubscribeEventCallbackFunction( "GainFocus", GainFocus );
+	g_theEventSystem->SubscribeEventCallbackFunction( "LoseFocus", LoseFocus );
 	g_theInput->SetCursorMode( MOUSE_MODE_RELATIVE );
+
 	m_worldCamera = new Camera( g_theRenderer );
 	m_devConsoleCamera = new Camera( g_theRenderer );
-
 	m_worldCamera->SetProjectionPerspective( 60.f, -0.1f, -100.f );
-	//m_worldCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 	m_devConsoleCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
+
+	m_meshCube = new GPUMesh( g_theRenderer );
+	m_meshCube->UpdateVerticies( 24, cubeVerticies );
+	m_meshCube->UpdateIndicies( 36, cubeIndicies );
+
+	m_cubeTransform = new Transform();
+	m_cubeTransform->SetPosition( Vec3( 1.f, 0.5f, -12.f ) );
 
 	m_image				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/PlayerTankBase.png" );
 	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
@@ -68,6 +142,12 @@ void Game::ShutDown()
 
 	delete m_devConsoleCamera;
 	m_devConsoleCamera = nullptr;
+
+	delete m_meshCube;
+	m_meshCube = nullptr;
+
+	delete m_cubeTransform;
+	m_cubeTransform = nullptr;
 }
 
 
@@ -95,6 +175,12 @@ void Game::RenderWorld() const
 	g_theRenderer->BindTexture( m_image );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( aabb2 );
+
+	Mat44 model = m_cubeTransform->ToMatrix();
+	g_theRenderer->BindTexture( m_image );
+	g_theRenderer->BindShader( (Shader*)nullptr );
+	g_theRenderer->SetModelMatrix( model );
+	g_theRenderer->DrawMesh( m_meshCube );
 }
 
 
@@ -138,6 +224,12 @@ void Game::UpdateFromInput( float deltaSeconds )
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
 	{
 		m_isQuitting = true;
+	}
+
+	if( g_theInput->WasKeyJustPressed( 'O' ) )
+	{
+		m_worldCamera->SetPosition( Vec3( 0.0f ) );
+		m_worldCamera->SetPitchYawRollRotationDegrees( 0.f, 0.f, 0.0f );
 	}
 }
 
@@ -201,4 +293,18 @@ void Game::ChangeClearColor( float deltaSeconds )
 void Game::UpdateCameras( float deltaSeconds )
 {
 	UNUSED( deltaSeconds );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+STATIC void Game::GainFocus()
+{
+	g_theInput->SetCursorMode( MOUSE_MODE_RELATIVE );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+STATIC void Game::LoseFocus()
+{
+	g_theInput->SetCursorMode( MOUSE_MODE_ABSOLUTE );
 }

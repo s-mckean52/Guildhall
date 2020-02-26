@@ -35,6 +35,11 @@ cbuffer camera_constants : register(b1)
 	float4x4 VIEW;		//WORLD_TO_CAMERA
 }
 
+cbuffer model_constants : register(b2)
+{
+	float4x4 MODEL;
+}
+
 Texture2D <float4> tDiffuse	: register(t0);
 SamplerState sSampler		: register(s0);
 
@@ -73,6 +78,7 @@ v2f_t VertexFunction( vs_input_t input )
    float4 worldPos = float4( input.position, 1 );
    //worldPos.x += cos(SYSTEM_TIME_SECONDS);
    //worldPos.y += sin(SYSTEM_TIME_SECONDS);
+   wolrdPos = mul( MODEL, worldPos );
    float4 cameraPos = mul( VIEW, worldPos );
    float4 clipPos = mul( PROJECTION, cameraPos );
 

@@ -3,6 +3,7 @@
 #include <string.h>
 
 class InputSystem;
+class EventSystem;
 
 class Window
 {
@@ -15,10 +16,12 @@ public:
 	void BeginFrame();
 
 	void SetInputSystem( InputSystem* input );
+	void SetEventSystem( EventSystem* eventSystem );
 	void SetIsQuitting( bool isQuitting );
 
 	bool			IsQuitting()		const { return m_isQuitting; }
 	InputSystem*	GetInputSystem()	const { return m_theInput; }
+	EventSystem*	GetEventSystem()	const { return m_theEventSystem; }
 	unsigned int	GetClientWidth()	const { return m_width; }
 	unsigned int	GetClientHeight()	const { return m_height; }
 	Vec2			GetClientCenter()	const;
@@ -28,5 +31,7 @@ public:
 	unsigned int m_height	= 0;
 	unsigned int m_width	= 0;
 	bool m_isQuitting		= false;
-	InputSystem* m_theInput = nullptr;
+
+	InputSystem* m_theInput			= nullptr;
+	EventSystem* m_theEventSystem	= nullptr;
 };
