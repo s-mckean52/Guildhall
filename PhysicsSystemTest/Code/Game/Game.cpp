@@ -42,6 +42,9 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
+	m_worldCamera = new Camera( g_theRenderer );
+	m_uiCamera = new Camera( g_theRenderer );
+
 	g_theConsole->PrintString( Rgba8::RED, "Game Start Up" );
 	g_RNG = new RandomNumberGenerator();
 
@@ -51,13 +54,11 @@ void Game::StartUp()
 
 	LoadAssets();
 
-	m_worldCamera.SetOutputSize( Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
-	m_worldCamera.SetPosition( m_focalPoint );
-	m_worldCamera.SetProjectionOrthographic( m_cameraHeight );
+	m_worldCamera->SetPosition( m_focalPoint );
+	m_worldCamera->SetProjectionOrthographic( m_cameraHeight );
 	
-	m_uiCamera.SetOutputSize( Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
-	m_uiCamera.SetPosition( m_focalPoint );
-	m_uiCamera.SetProjectionOrthographic( m_cameraHeight );
+	m_uiCamera->SetPosition( m_focalPoint );
+	m_uiCamera->SetProjectionOrthographic( m_cameraHeight );
 }
 
 
@@ -69,6 +70,12 @@ void Game::ShutDown()
 
 	delete m_physics2D;
 	m_physics2D = nullptr;
+
+	delete m_worldCamera;
+	m_worldCamera = nullptr;
+
+	delete m_uiCamera;
+	m_uiCamera = nullptr;
 }
 
 
@@ -91,16 +98,17 @@ void Game::EndFrame()
 void Game::Render() const
 {
 	//Render worldCamera
-	g_theRenderer->BeginCamera( m_worldCamera );
+	g_theRenderer->BeginCamera( *m_worldCamera );
 	DrawNewPolygonPoints();
 	DrawGameObjects();
-	g_theRenderer->EndCamera( m_worldCamera );
+	DrawCircleAtPoint( m_mousePos, 30.f, Rgba8::GREEN, 10.f );
+	g_theRenderer->EndCamera( *m_worldCamera );
 
 
 	//UI Camera
-	g_theRenderer->BeginCamera( m_uiCamera );
+	g_theRenderer->BeginCamera( *m_uiCamera );
 	RenderUI();
-	g_theRenderer->EndCamera( m_uiCamera );
+	g_theRenderer->EndCamera( *m_uiCamera );
 }
 
 
@@ -111,11 +119,12 @@ void Game::RenderUI() const
 	std::string gravityAsString = Stringf( "%f", m_physics2D->GetGravityAmount() );
 	g_testFont->AddVertsForText2D( gravityVerts, Vec2( 10.f, CAMERA_SIZE_Y - 10.f ), 10.f, gravityAsString );
 	g_theRenderer->BindTexture( g_testFont->GetTexture() );
+	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( gravityVerts );
 
 	if( g_theConsole->IsOpen() )
 	{
-		g_theConsole->Render( *g_theRenderer, m_uiCamera, 30.f, g_testFont );
+		g_theConsole->Render( *g_theRenderer, *m_uiCamera, 30.f, g_testFont );
 	}
 }
 
@@ -136,7 +145,7 @@ void Game::Update( float deltaSeconds )
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateGameStatesFromInput( float deltaSeconds )
 {
-	UpdateMousePos( m_worldCamera );
+	UpdateMousePos( *m_worldCamera );
 
 	if( g_theInput->IsKeyPressed( 'W' ) )
 	{
@@ -268,8 +277,8 @@ void Game::UpdateCameras( float deltaSeconds )
 	UNUSED( deltaSeconds );
 
 	//Update m_worldCamera
-	m_worldCamera.SetPosition( m_focalPoint );
-	m_worldCamera.SetProjectionOrthographic( m_cameraHeight );
+	m_worldCamera->SetPosition( m_focalPoint );
+	m_worldCamera->SetProjectionOrthographic( m_cameraHeight );
 }
 
 
@@ -300,8 +309,10 @@ void Game::LoadAudio()
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateMousePos( const Camera& camera )
 {
+	Vec3 orthoMins = camera.GetOrthoBottomLeft();
+	Vec3 orthoMax = camera.GetOrthoTopRight();
+	AABB2 orthoBounds( orthoMins.x, orthoMins.y, orthoMax.x, orthoMax.y );
 	Vec2 mouseNormalizedPos = g_theInput->GetMouseNormalizedClientPosition();
-	AABB2 orthoBounds( camera.GetOrthoBottomLeft(), camera.GetOrthoTopRight() );
 	m_mousePos = orthoBounds.GetPointAtUV( mouseNormalizedPos );
 
 	for( int goIndex = 0; goIndex < m_gameObjects.size(); ++goIndex )
@@ -324,12 +335,9 @@ void Game::UpdateMousePos( const Camera& camera )
 //---------------------------------------------------------------------------------------------------------
 GameObject* Game::CreateDisc()
 {
-	Vec2 mousePos = g_theInput->GetMouseNormalizedClientPosition();
-	mousePos = m_worldCamera.ClientToWorldPosition( mousePos );
-
 	GameObject* gameObject = new GameObject();
 	gameObject->m_rigidbody = m_physics2D->CreateRigidbody2D();
-	gameObject->m_rigidbody->SetPosition( mousePos );
+	gameObject->m_rigidbody->SetPosition( m_mousePos );
 	gameObject->m_rigidbody->SetMass( 1.f );
 	gameObject->m_rigidbody->SetSimulationMode( SIMULATION_MODE_DYNAMIC );
 
@@ -367,10 +375,7 @@ GameObject* Game::CreatePolygon( std::vector<Vec2> polygonPoints )
 //---------------------------------------------------------------------------------------------------------
 void Game::AddPointToNewPolygon()
 {
-	Vec2 mousePos = g_theInput->GetMouseNormalizedClientPosition();
-	mousePos = m_worldCamera.ClientToWorldPosition( mousePos );
-
-	m_newPolygonToDraw.push_back( mousePos );
+	m_newPolygonToDraw.push_back( m_mousePos );
 }
 
 
@@ -409,7 +414,7 @@ void Game::UpdateGameObjects( float deltaSeconds )
 		if( currentGameObject )
 		{
 			currentGameObject->Update( deltaSeconds );
-			CheckGameObjectOverlap( currentGameObject );
+			//CheckGameObjectOverlap( currentGameObject );
 		}
 	}
 }

@@ -168,6 +168,7 @@ void Actor::RenderBase() const
 	TransformVertexArray( static_cast<int>(tankBaseVerts.size()), &tankBaseVerts[0], 1.f, 0.f, m_position );
 
 	g_theRenderer->BindTexture( &g_actorSpriteSheet->GetTexture() );
+	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( tankBaseVerts );
 }
 

@@ -47,10 +47,18 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
-	g_theConsole->PrintString( Rgba8::RED, "Game Start Up" );
+	g_theInput->SetCursorMode( MOUSE_MODE_ABSOLUTE );
+
+	m_worldCamera = new Camera( g_theRenderer );
+	m_uiCamera = new Camera( g_theRenderer );
+	m_worldCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
+	m_worldCamera->SetPosition( Vec3( HALF_SCREEN_X, HALF_SCREEN_Y, 0.f ) );
+	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT, Rgba8::BLACK, 0.0f, 0 );
+	m_uiCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 	g_RNG = new RandomNumberGenerator();
 
 	g_testFont = g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
+	g_theConsole->PrintString( Rgba8::RED, "Game Start Up" );
 
 	LoadAssets();
 	
@@ -63,8 +71,6 @@ void Game::StartUp()
 	TestFireEvent();
 	LoadDefinitions();
 	
-	m_worldCamera.SetOrthoView( Vec2( 0, 0 ), Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
-	m_uiCamera.SetOrthoView( Vec2( 0, 0 ), Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
 }
 
 
@@ -73,6 +79,12 @@ void Game::ShutDown()
 {
 	delete g_RNG;
 	g_RNG = nullptr;
+
+	delete m_uiCamera;
+	m_uiCamera = nullptr;
+
+	delete m_worldCamera;
+	m_worldCamera = nullptr;
 }
 
 
@@ -87,39 +99,36 @@ void Game::AddScreenShakeIntensity( float screenShakeFractionToAdd )
 void Game::Render() const
 {
 	//Render worldCamera
-	g_theRenderer->BeginCamera( m_worldCamera );
+	g_theRenderer->BeginCamera( *m_worldCamera );
 	m_map->Render();
 	RenderMouseCursor();
-	g_theRenderer->EndCamera( m_worldCamera );
+	g_theRenderer->EndCamera( *m_worldCamera );
 
 
 	//UI Camera
-	g_theRenderer->BeginCamera( m_uiCamera );
+	g_theRenderer->BeginCamera( *m_uiCamera );
 	RenderUI();
-	g_theRenderer->EndCamera( m_uiCamera );
+	g_theRenderer->EndCamera( *m_uiCamera );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderUI() const
 {
-	if( g_theConsole->IsOpen() )
-	{
-		g_theConsole->Render( *g_theRenderer, m_uiCamera, 0.2f, g_testFont );
-	}
+	g_theConsole->Render( *g_theRenderer, *m_uiCamera, 0.2f, g_testFont );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Game::Update( float deltaSeconds )
 {
-	UpdateMousePos( m_worldCamera );
+	if( !g_theConsole->IsOpen() )
+	{
+		UpdateMousePos( *m_worldCamera );
+		UpdateGameStatesFromInput();
+	}
 	m_map->Update( deltaSeconds );
-
 	//UpdateTextPosition( deltaSeconds );
-
-	UpdateGameStatesFromInput();
-
 	UpdateCameras( deltaSeconds );
 }
 
@@ -130,14 +139,14 @@ void Game::UpdateGameStatesFromInput()
 	const XboxController& firstPlayerController = g_theInput->GetXboxController( 0 );
 	UNUSED( firstPlayerController );
 
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_TILDE ) )
-	{
-		g_theConsole->SetIsOpen( !g_theConsole->IsOpen() );
-	}
-
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F1 ) )
 	{
 		g_isDebugDraw = !g_isDebugDraw;
+	}
+
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
+	{
+		m_isQuitting = true;
 	}
 }
 
@@ -152,18 +161,19 @@ void Game::UpdateCameras( float deltaSeconds )
 	{
 		if( currentMapDimensions.x < currentMapDimensions.y )
 		{
-			m_worldCamera.SetOrthoView( Vec2( 0, 0 ), Vec2( static_cast<float>(currentMapDimensions.y) * CLIENT_ASPECT, static_cast<float>(currentMapDimensions.y) ) );
+			m_worldCamera->SetOrthoView( Vec2( 0, 0 ), Vec2( static_cast<float>(currentMapDimensions.y) * CLIENT_ASPECT, static_cast<float>(currentMapDimensions.y) ) );
 		}
 		else
 		{
-			m_worldCamera.SetOrthoView( Vec2( 0, 0 ), Vec2( static_cast<float>(currentMapDimensions.x), static_cast<float>(currentMapDimensions.x) / CLIENT_ASPECT ) );
+			m_worldCamera->SetOrthoView( Vec2( 0, 0 ), Vec2( static_cast<float>(currentMapDimensions.x), static_cast<float>(currentMapDimensions.x) / CLIENT_ASPECT ) );
 		}
 	}
 	else
 	{
 		Vec2 mapDimensions = Vec2( static_cast<float>(currentMapDimensions.x), static_cast<float>(currentMapDimensions.y) );
 
-		m_worldCamera.SetOrthoView( Vec2( 0, 0 ), Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y ) );
+		m_worldCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
+		m_worldCamera->SetPosition( Vec3( HALF_SCREEN_X, HALF_SCREEN_Y, 0.f ) );
 
 		Vec2 player1Positon = m_map->GetPlayerPosition();
 		float worldCameraPositionX = player1Positon.x - HALF_SCREEN_X;
@@ -172,11 +182,11 @@ void Game::UpdateCameras( float deltaSeconds )
 		Clamp( worldCameraPositionX, 0.f, mapDimensions.x - CAMERA_SIZE_X );
 		Clamp( worldCameraPositionY, 0.f, mapDimensions.y - CAMERA_SIZE_Y );
 
-		m_worldCamera.Translate2D( Vec2( worldCameraPositionX, worldCameraPositionY ) );
+		m_worldCamera->Translate2D( Vec2( worldCameraPositionX, worldCameraPositionY ) );
 	}
 	
 	//Update m_uiCamera
-	m_uiCamera.SetOrthoView( Vec2( 0, 0 ), Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y) );
+	//m_uiCamera->SetOrthoView( Vec2( 0, 0 ), Vec2( CAMERA_SIZE_X, CAMERA_SIZE_Y) );
 }
 
 
@@ -333,8 +343,11 @@ void Game::LoadDefinitions()
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateMousePos( const Camera& camera )
 {
+	Vec3 orthoMins = camera.GetOrthoBottomLeft();
+	Vec3 orthMaxes = camera.GetOrthoTopRight();
+
 	Vec2 mouseNormalizedPos = g_theInput->GetMouseNormalizedClientPosition();
-	AABB2 orthoBounds( camera.GetOrthoBottomLeft(), camera.GetOrthoTopRight() );
+	AABB2 orthoBounds( orthoMins.x, orthoMins.y, orthMaxes.x, orthMaxes.y );
 	m_mousePos = orthoBounds.GetPointAtUV( mouseNormalizedPos );
 }
 

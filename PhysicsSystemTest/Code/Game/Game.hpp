@@ -60,8 +60,9 @@ private:
 
 	Vec2 m_position;
 
-	Camera m_worldCamera;
-	Camera m_uiCamera;
+	Camera* m_worldCamera = nullptr;
+	Camera* m_uiCamera = nullptr;
+
 	Vec3 m_focalPoint = Vec3( HALF_SCREEN_X, HALF_SCREEN_Y, 0.f );
 	float m_cameraHeight = CAMERA_SIZE_Y;
 	float m_cameraMinHeight = CAMERA_SIZE_Y * 0.5f;

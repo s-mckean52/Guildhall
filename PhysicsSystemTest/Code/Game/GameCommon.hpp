@@ -15,6 +15,7 @@ class RandomNumberGenerator;
 class InputSystem;
 class AudioSystem;
 class BitmapFont;
+class Window;
 
 extern App*						g_theApp;
 extern EventSystem*				g_theEventSystem;
@@ -24,6 +25,7 @@ extern RandomNumberGenerator*	g_RNG;
 extern InputSystem*				g_theInput;
 extern AudioSystem*				g_theAudio;
 extern BitmapFont*				g_testFont;
+extern Window*					g_theWindow;
 
 
 //---------------------------------------------------------------------------------------------------------

@@ -20,6 +20,7 @@ public:
 	bool			DoesOverlap( const IntRange& otherRange ) const;
 	std::string		GetAsString() const;
 	int				GetRandomInRange( RandomNumberGenerator& rng ) const;
+	int				GetRange() const;
 
 	//Mutators
 	void			Set( int newMinimum, int newMaximum );

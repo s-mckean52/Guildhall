@@ -14,8 +14,12 @@ public:
 	void RestartGame();
 
 	bool HandleQuitRequested();
+	void OpenDevConsole();
 
 	const bool IsQuitting() const { return m_isQuitting; }
+
+	static void QuitRequested();
+	static void HelpCommand();
 
 private:
 	void BeginFrame();

@@ -18,6 +18,7 @@ float		ConvertDegreesToRadians	( float degrees );
 float		ConvertRadiansToDegrees	( float radians );
 float		CosDegrees				( float degrees );
 float		SinDegrees				( float degrees );
+float		TanDegrees				( float degrees );
 float		Atan2Degrees			( float y, float x );
 
 float		GetDistance2D			( const Vec2& positionA, const Vec2& positionB );
@@ -37,6 +38,7 @@ float		GetClampZeroToOne		( float valueToClamp );
 void		Clamp					( int& valueToClamp, int lowerLimit, int upperLimit );
 void		Clamp					( float& valueToClamp, float lowerLimit, float upperLimit );
 void		ClampZeroToOne			( float& valueToClamp );
+bool		ApproximatelyEqual		( float valueToCheck, float valueToCheckAgainst );
 
 const Vec2	TransformPosition2D		( const Vec2& position, float uniformScale, float rotationDegrees, Vec2 translation);
 const Vec2	TransformPosition2D		( const Vec2& position, const Vec2& newBasisI, const Vec2& newBasisJ, const Vec2& translation);
@@ -45,9 +47,12 @@ const Vec3	TransformPosition3DXY	( const Vec3& position, float uniformScale, flo
 const Vec3	TransformPosition3DXY	( const Vec3& position, const Vec2& basisI, const Vec2& basisJ, const Vec2& translation );
 
 void		TransformVertexArray	( int numVerticies, Vertex_PCU* vertexArray, float scale, float rotation, const Vec2& translation );
-void		TransformVertexArray	( std::vector<Vertex_PCU>& vertexArray, float scale, float rotation, const Vec2 translation );
+void		TransformVertexArray	( std::vector<Vertex_PCU>& vertexArray, float scale, float rotation, const Vec2& translation );
 
-int			PositiveMod						( int numberToMod, int numberToModBy );
+void		TranslateVertexArray	( int numVerticies, Vertex_PCU* vertexArray, const Vec3& translation );
+void		TranslateVertexArray	( std::vector<Vertex_PCU>& vertexArray, const Vec3& translation );
+
+int			PositiveMod( int numberToMod, int numberToModBy );
 int			RoundDownToInt					( float valueToRound );
 float		GetShortestAngularDisplacement	( float startAngle, float endAngle );
 float		GetTurnedToward					( float startAngle, float endAngle, float amountToTurnDegrees );

@@ -125,6 +125,7 @@ void Rigidbody2D::DebugRender( RenderContext* context ) const
 	AppendVertsForLineBetweenPoints( vertexArray, start2, end2, xColor, 3.f );
 
 	context->BindTexture( nullptr );
+	context->BindShader( (Shader*)nullptr );
 	context->DrawVertexArray( vertexArray );
 }
 

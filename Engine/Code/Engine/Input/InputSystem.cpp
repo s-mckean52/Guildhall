@@ -3,8 +3,9 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Platform/Window.hpp"
 
-extern HWND g_hWnd;
+//extern HWND g_hWnd;
 
 
 //Define Key Codes
@@ -17,6 +18,11 @@ const unsigned char KEY_CODE_UP_ARROW		= VK_UP;
 const unsigned char KEY_CODE_LEFT_ARROW		= VK_LEFT;
 const unsigned char KEY_CODE_DOWN_ARROW		= VK_DOWN;
 const unsigned char KEY_CODE_RIGHT_ARROW	= VK_RIGHT;
+const unsigned char KEY_CODE_SHIFT			= VK_SHIFT;
+const unsigned char KEY_CODE_CTRL			= VK_CONTROL;
+const unsigned char KEY_CODE_COPY			= 0x03;
+const unsigned char KEY_CODE_PASTE			= 0x16;
+const unsigned char KEY_CODE_CUT			= 0x18;
 const unsigned char KEY_CODE_F1				= VK_F1;
 const unsigned char KEY_CODE_F2				= VK_F2;
 const unsigned char KEY_CODE_F3				= VK_F3;
@@ -32,11 +38,14 @@ const unsigned char KEY_CODE_F12			= VK_F12;
 const unsigned char KEY_CODE_TILDE			= VK_OEM_3;
 const unsigned char KEY_CODE_PLUS			= VK_OEM_PLUS;
 const unsigned char KEY_CODE_MINUS			= VK_OEM_MINUS;
+const unsigned char KEY_CODE_HOME			= VK_HOME;
+const unsigned char KEY_CODE_END			= VK_END;
 
 //Define Mouse Codes
 const unsigned char MOUSE_CODE_LEFT			= MK_LBUTTON;
 const unsigned char MOUSE_CODE_RIGHT		= MK_RBUTTON;
 const unsigned char MOUSE_CODE_MIDDLE		= MK_MBUTTON;
+
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -52,9 +61,9 @@ InputSystem::~InputSystem()
 
 
 //---------------------------------------------------------------------------------------------------------
-void InputSystem::StartUp()
+void InputSystem::StartUp( Window* theWindow )
 {
-
+	m_theWindow = theWindow;
 }
 
 
@@ -82,6 +91,7 @@ void InputSystem::EndFrame()
 	}
 
 	m_scrollAmount = 0.f;
+	m_characters = std::queue<char>();
 }
 
 
@@ -95,19 +105,17 @@ void InputSystem::ShutDown()
 //---------------------------------------------------------------------------------------------------------
 void InputSystem::UpdateMouse()
 {
-	POINT screenMousePos;
-	GetCursorPos( &screenMousePos );
-	ScreenToClient( g_hWnd, &screenMousePos );
-	Vec2 mouseClientPos( static_cast<float>(screenMousePos.x), static_cast<float>(screenMousePos.y) );
-
-	RECT clientRect;
-	GetClientRect( g_hWnd, &clientRect );
-	AABB2 clientBounds( static_cast<float>(clientRect.left),
-						static_cast<float>(clientRect.bottom),
-						static_cast<float>(clientRect.right),
-						static_cast<float>(clientRect.top) ); //Windows ( 0, 0 ) is top left
-
-	m_mouseNormalizedPos = clientBounds.GetUVForPoint( mouseClientPos );
+	switch( m_mouseMode )
+	{
+	case MOUSE_MODE_ABSOLUTE:
+		UpdateAbsoluteMode();
+		break;
+	case MOUSE_MODE_RELATIVE:
+		UpdateRelativeMode();
+		break;
+	default:
+		break;
+	}
 }
 
 
@@ -115,7 +123,7 @@ void InputSystem::UpdateMouse()
 IntVec2 InputSystem::GetMouseRawDesktopPosition() const
 {
 	POINT rawMouseDesktopPos;
-	GetCursorPos( &rawMouseDesktopPos );
+	::GetCursorPos( &rawMouseDesktopPos );
 	return IntVec2( rawMouseDesktopPos.x, rawMouseDesktopPos.y );
 }
 
@@ -124,6 +132,118 @@ IntVec2 InputSystem::GetMouseRawDesktopPosition() const
 Vec2 InputSystem::GetMouseNormalizedClientPosition() const
 {
 	return m_mouseNormalizedPos;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec2 InputSystem::GetCursorRelativeMovement() const
+{
+	return m_cursorRelativeMovement;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::ShowSystemCursor( bool isShown )
+{
+	if( isShown )
+	{
+		while( ::ShowCursor( isShown ) < 0 ) {}
+		return;
+	}
+	else
+	{
+		while( ::ShowCursor( isShown ) > 0 ) {}
+		return;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::ClipSystemCursor( AABB2 const* windowDimensions )
+{
+	if( windowDimensions != nullptr )
+	{
+		RECT windowRect;
+		windowRect.left		= (LONG)windowDimensions->mins.x;
+		windowRect.bottom	= (LONG)windowDimensions->mins.y;
+		windowRect.right	= (LONG)windowDimensions->maxes.x;
+		windowRect.top		= (LONG)windowDimensions->maxes.y;
+
+		if( ::ClipCursor( &windowRect ) )
+			return;
+	}
+	::ClipCursor( NULL );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::RecenterCursor()
+{
+	Vec2 windowCenter = m_theWindow->GetClientCenter();
+	SetCursorPos( static_cast<int>( windowCenter.x ), static_cast<int>( windowCenter.y ) );
+
+	//Eliminate Drift
+	POINT point;
+	GetCursorPos( &point );
+	windowCenter = Vec2( static_cast<float>( point.x ), static_cast<float>( point.y ) );
+
+	m_cursorPositionLastFrame = windowCenter;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::UpdateRelativeMode()
+{
+	POINT point;
+	::GetCursorPos( &point );
+	Vec2 cursorPositionThisFrame = Vec2( static_cast<float>( point.x ), static_cast<float>( point.y ) );
+	m_cursorRelativeMovement = cursorPositionThisFrame - m_cursorPositionLastFrame;
+	m_cursorRelativeMovement *= -1.f;
+	RecenterCursor();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::UpdateAbsoluteMode()
+{
+	POINT screenMousePos;
+	::GetCursorPos( &screenMousePos );
+	::ScreenToClient( (HWND)m_theWindow->m_hwnd, &screenMousePos );
+	Vec2 mouseClientPos( static_cast<float>(screenMousePos.x), static_cast<float>(screenMousePos.y) );
+
+	RECT clientRect;
+	::GetClientRect( (HWND)m_theWindow->m_hwnd, &clientRect );
+	AABB2 clientBounds( static_cast<float>(clientRect.left),
+		static_cast<float>(clientRect.bottom),
+		static_cast<float>(clientRect.right),
+		static_cast<float>(clientRect.top) ); //Windows ( 0, 0 ) is top left
+
+	m_mouseNormalizedPos = clientBounds.GetUVForPoint( mouseClientPos );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::SetCursorMode( MousePositionMode mode )
+{
+	m_mouseMode = mode;
+	switch( mode )
+	{
+	case MOUSE_MODE_ABSOLUTE:
+	{
+		m_isCursorLocked = false;
+		ShowSystemCursor( true );
+		break;
+	}
+	case MOUSE_MODE_RELATIVE:
+	{
+		m_isCursorLocked = true;
+		ShowSystemCursor( false );
+		RecenterCursor();
+		break;
+	}
+	default:
+		break;
+	}
 }
 
 
@@ -244,4 +364,56 @@ void InputSystem::AddMouseWheelScrollAmount( float scrollAmount )
 float InputSystem::GetScrollAmount() const
 {
 	return m_scrollAmount;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::PushToCharacterQueue( char c )
+{
+	m_characters.push( c );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool InputSystem::PopFromCharacterQueue( char* out_c )
+{
+	if( m_characters.size() > 0 )
+	{
+		*out_c = m_characters.front();
+		m_characters.pop();
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::AddStringToClipboard( std::string stringToAdd )
+{
+	if( !OpenClipboard( nullptr ) ) return;
+	if( !EmptyClipboard() ) return;
+
+	HGLOBAL hGlob = GlobalAlloc( GMEM_FIXED, 64 );
+	strcpy_s( (char*)hGlob, 64, stringToAdd.c_str() );
+	SetClipboardData( CF_TEXT, hGlob );
+
+	CloseClipboard();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string InputSystem::GetStringFromClipboard()
+{
+	std::string stringFromClipboard = ""; 
+
+	if( !OpenClipboard( nullptr ) ) 
+		return stringFromClipboard;
+
+	stringFromClipboard = (char*)GetClipboardData( CF_TEXT );
+	CloseClipboard();
+
+	return stringFromClipboard;
 }

@@ -81,6 +81,13 @@ int IntRange::GetRandomInRange( RandomNumberGenerator& rng ) const
 
 
 //---------------------------------------------------------------------------------------------------------
+int IntRange::GetRange() const
+{
+	return maximum - minimum;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void IntRange::Set( int newMinimum, int newMaximum )
 {
 	minimum = newMinimum;

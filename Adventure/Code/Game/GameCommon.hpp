@@ -6,6 +6,7 @@
 #define UNUSED(x) (void)(x);
 
 struct Vec2;
+struct AABB2;
 class App;
 class Game;
 class RenderContext;
@@ -15,7 +16,7 @@ class AudioSystem;
 class BitmapFont;
 class SpriteSheet;
 class EventSystem;
-struct AABB2;
+class Window;
 
 extern EventSystem* g_theEventSystem;
 extern App* g_theApp;
@@ -25,6 +26,7 @@ extern RandomNumberGenerator* g_RNG;
 extern InputSystem* g_theInput;
 extern AudioSystem* g_theAudio;
 extern BitmapFont* g_testFont;
+extern Window* g_theWindow;
 
 extern SpriteSheet* g_tileSpriteSheet;
 extern SpriteSheet* g_actorSpriteSheet;

@@ -40,6 +40,13 @@ float SinDegrees( float degrees )
 
 
 //---------------------------------------------------------------------------------------------------------
+float TanDegrees( float degrees )
+{
+	return tanf( ConvertDegreesToRadians( degrees ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 float Atan2Degrees( float y, float x )
 {
 	return ConvertRadiansToDegrees( atan2f( y, x ) );
@@ -200,6 +207,19 @@ void ClampZeroToOne( float& valueToClamp )
 
 
 //---------------------------------------------------------------------------------------------------------
+bool ApproximatelyEqual( float valueToCheck, float valueToCheckAgainst )
+{
+	float percisionValue = 0.0001f;
+	float diff = valueToCheckAgainst - valueToCheck;
+	if( diff > percisionValue || diff < -percisionValue )
+	{
+		return false;
+	}
+	return true;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 float GetClampZeroToOne( float valueToClamp )
 {
 	return GetClamp( valueToClamp, 0.f, 1.f );
@@ -290,9 +310,26 @@ void TransformVertexArray( int numVerticies, Vertex_PCU* vertexArray, float scal
 
 
 //---------------------------------------------------------------------------------------------------------
-void TransformVertexArray( std::vector<Vertex_PCU>& vertexArray, float scale, float rotation, const Vec2 translation )
+void TranslateVertexArray( int numVerticies, Vertex_PCU* vertexArray, const Vec3& translation )
+{
+	for( int vertIndex = 0; vertIndex < numVerticies; ++vertIndex )
+	{
+		vertexArray[ vertIndex ].m_position += translation;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void TransformVertexArray( std::vector<Vertex_PCU>& vertexArray, float scale, float rotation, const Vec2& translation )
 {
 	TransformVertexArray( static_cast<int>( vertexArray.size() ), &vertexArray[ 0 ], scale, rotation, translation );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void TranslateVertexArray( std::vector<Vertex_PCU>& vertexArray, const Vec3& translation )
+{
+	TranslateVertexArray( static_cast<int>( vertexArray.size() ), &vertexArray[ 0 ], translation );
 }
 
 

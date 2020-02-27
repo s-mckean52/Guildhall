@@ -1,103 +1,268 @@
-#include "Engine/Renderer/Camera.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Renderer/Camera.hpp"
+#include "Engine/Renderer/Texture.hpp"
+#include "Engine/Renderer/RenderBuffer.hpp"
+#include "Engine/Renderer/RenderContext.hpp"
+#include "Engine/Math/MatrixUtils.hpp"
+#include "Engine/Math/Vec4.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/Vec3.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
+Camera::~Camera()
+{
+	delete m_uniformBuffer;
+	m_uniformBuffer = nullptr;
+
+	delete m_colorTarget;
+	m_colorTarget = nullptr;
+
+	delete m_depthStencilTarget;
+	m_depthStencilTarget = nullptr;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Camera::Camera( RenderContext* renderer )
+{
+	m_renderer = renderer;
+	m_uniformBuffer = new RenderBuffer( renderer, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::SetPosition( const Vec3& position )
+{
+	m_transform.SetPosition( position );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::Translate( const Vec3& translation )
+{
+	m_transform.Translate( translation );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Rgba8 Camera::GetClearColor() const
+{
+	return m_clearColor;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec2 Camera::GetColorTargetSize() const
+{
+	if( m_colorTarget != nullptr )
+	{
+		return m_colorTarget->GetSize();
+	}
+	else
+	{
+		return m_renderer->GetBackBuffer()->GetSize();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 Vec2 Camera::GetCameraDimensions() const
 {
-	return m_topRight - m_bottomLeft;
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Camera::SetOutputSize( Vec2 size )
-{
-	m_outputSize = size;
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Camera::SetPosition( Vec3 position )
-{
-	m_position = position;
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Camera::SetProjectionOrthographic( float height, float nearZ, float farZ )
-{
-	UNUSED( nearZ );
-	UNUSED( farZ );
-
-	float aspectRatio = GetAspectRatio();
-	float halfHeight = height * 0.5f;
-	float halfWidth = halfHeight * aspectRatio;
-	Vec2 halfDimensions( halfWidth, halfHeight );
-
-	m_bottomLeft = m_position - halfDimensions;
-	m_topRight = m_position + halfDimensions;
+	Vec3 cameraDimensions = GetOrthoTopRight() - GetOrthoBottomLeft();
+	return Vec2( cameraDimensions.x, cameraDimensions.y );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Camera::SetOrthoView( const Vec2& bottomLeft, const Vec2& topRight )
 {
-	m_bottomLeft = bottomLeft;
-	m_topRight = topRight;
+	float height = topRight.y - bottomLeft.y;
+
+	SetProjectionOrthographic( height, 0.f, -1.f );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-Vec2 Camera::GetOrthoBottomLeft() const
+Vec3 Camera::GetOrthoBottomLeft() const
 {
-	return m_bottomLeft;
+	Vec4 ndc( -1, -1, 0, 1 );
+	return NDCToWorldCoords( ndc );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-Vec2 Camera::GetOrthoTopRight() const
+Vec3 Camera::GetOrthoTopRight() const
 {
-	return m_topRight;
+	Vec4 ndc( 1, 1, 0, 1 );
+	return NDCToWorldCoords( ndc );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec3 Camera::GetPosition() const
+{
+	return m_transform.GetPosition();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Mat44 Camera::GetProjectionMatrix() const
+{
+	return m_projection;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Mat44 Camera::GetViewMatrix() const
+{
+	return m_view;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::UpdateViewMatrix()
+{
+	Mat44 cameraModel = m_transform.ToMatrix();
+	MatrixInvertOrthoNormal( cameraModel );
+	m_view = cameraModel;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec3 Camera::NDCToWorldCoords( Vec4 ndcCoords ) const
+{
+	Mat44 viewProjection = m_projection.GetTransformMatrixBy( m_view );
+	Mat44 clipToWorld = viewProjection;
+	MatrixInvert( clipToWorld );
+
+	Vec4 world = clipToWorld.TransformHomogeneousPoint3D( ndcCoords );
+	world /= world.w;
+	return Vec3( world.x, world.y, world.z );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool Camera::ShouldClearColor() const
+{
+	return m_clearMode & CLEAR_COLOR_BIT;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Texture* Camera::GetColorTarget() const
+{
+	return m_colorTarget;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+RenderBuffer* Camera::GetUBO() const
+{
+	return m_uniformBuffer;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::SetClearMode( CameraClearFlags clearFlags, Rgba8 color, float depth, unsigned int stencil )
+{
+	m_clearMode		= clearFlags;
+	m_clearColor	= color;
+
+	UNUSED( depth );
+	UNUSED( stencil );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 float Camera::GetAspectRatio() const
 {
-	return ( m_outputSize.x / m_outputSize.y );
+	Vec2 outSize = GetColorTargetSize();
+	return outSize.x / outSize.y;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::SetColorTarget( Texture* texture )
+{
+	m_colorTarget = texture;
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Camera::Translate2D( const Vec2& translation2D )
 {
-	m_bottomLeft += translation2D;
-	m_topRight += translation2D;
+	Translate( Vec3( translation2D, 0.f ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::SetDepthStencilTarget( Texture* texture )
+{
+	m_depthStencilTarget = texture;
 }
 
 //---------------------------------------------------------------------------------------------------------
-Vec2 Camera::ClientToWorldPosition( Vec2 clientPosition )
+void Camera::SetPitchYawRollRotationDegrees( float pitch, float yaw, float roll )
 {
-	Vec2 worldPos;
-	Vec2 outputDimensions = GetCameraDimensions();
+	Clamp( pitch, -95.f, 85.f );
 
-// 	float normalizedClientX = RangeMapFloat( 0.f, outputDimensions.x, 0.f, 1.f, clientPosition.x );
-// 	float normalizedClientY = RangeMapFloat( 0.f, outputDimensions.y, 0.f, 1.f, clientPosition.y );
+	m_transform.SetRotationFromPitchYawRollDegrees( pitch, yaw, roll );
+}
 
-	worldPos.x = RangeMapFloat( 0.f, 1.f, m_bottomLeft.x, m_topRight.x, clientPosition.x );
-	worldPos.y = RangeMapFloat( 0.f, 1.f, m_bottomLeft.y, m_topRight.y, clientPosition.y );
 
-	// TODO - take into account render target
-	//        clientPos being the pixel location on the texture
+//---------------------------------------------------------------------------------------------------------
+void Camera::AddPitchYawRollRotationDegrees( float pitch, float yaw, float roll )
+{
+	Vec3 pitchYawRoll = m_transform.GetRotationPitchYawRollDegrees();
+	pitchYawRoll += Vec3( pitch, yaw, roll );
+	SetPitchYawRollRotationDegrees( pitchYawRoll.x, pitchYawRoll.y , pitchYawRoll.z );
+}
 
-	// TODO - use projection matrix to compute this
+//---------------------------------------------------------------------------------------------------------
+Vec3 Camera::ClientToWorldPosition( Vec2 const& clientPosition, float ndcZ )
+{
+	Vec3 ndc;
 
-	// TODO - Support ndc-depth paramater for 3D-coordinates, needed for ray casts.
-
-	// TODO - take into account viewport
-
+	ndc.x = RangeMapFloat( 0.f, 1.f, -1.f, 1.f, clientPosition.x );
+	ndc.y = RangeMapFloat( 0.f, 1.f, -1.f, 1.f, clientPosition.y );
+	ndc.z = ndcZ;
+	
+	Vec3 worldPos = NDCToWorldCoords( Vec4( ndc, 1.f ) );
 	return worldPos;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::SetProjectionOrthographic( float height, float nearZ, float farZ )
+{
+	float aspect = GetAspectRatio();
+	float halfHeight = height * 0.5f;
+	float halfWidth = halfHeight * aspect;
+
+	Vec3 min = Vec3( -halfWidth, -halfHeight, nearZ );
+	Vec3 max = Vec3( halfWidth, halfHeight, farZ );
+
+	m_projection = Mat44::CreateOrthographicProjection( min, max );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::SetProjectionPerspective( float fieldOfViewDegrees, float nearZ, float farZ )
+{
+	m_projection = Mat44::CreatePerspectiveProjection( fieldOfViewDegrees, GetAspectRatio(), nearZ, farZ );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::UpdateCameraUBO()
+{
+	camera_data_t cameraData;
+	cameraData.projection = m_projection;
+	
+	UpdateViewMatrix();
+	cameraData.view = m_view;
+
+	m_uniformBuffer->Update( &cameraData, sizeof( cameraData ), sizeof( cameraData ) );
 }
 

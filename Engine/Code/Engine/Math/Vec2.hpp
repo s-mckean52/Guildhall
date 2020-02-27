@@ -1,7 +1,5 @@
 #pragma once
 
-struct Vec3;
-
 //-----------------------------------------------------------------------------------------------
 struct Vec2
 {
@@ -67,7 +65,6 @@ public:
 	void		operator*=( const float uniformScale );			// vec2 *= float
 	void		operator/=( const float uniformDivisor );		// vec2 /= float
 	void		operator=( const Vec2& copyFrom );				// vec2 = vec2
-	void		operator=( const Vec3& copyFrom );				// vec2 = vec3
 
 	// Standalone "friend" functions that are conceptually, but not actually, part of Vec2::
 	friend const Vec2 operator*( float uniformScale, const Vec2& vecToScale );	// float * vec2

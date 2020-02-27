@@ -11,6 +11,7 @@
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EventSystem.hpp"
+#include "Engine/Platform/Window.hpp"
 
 
 EventSystem*	g_theEventSystem = nullptr;
@@ -32,24 +33,29 @@ void App::StartUp()
 	g_theGame = new Game();
 
 	g_theEventSystem->StartUp();
-	g_theRenderer->StartUp();
-	g_theInput->StartUp();
-	g_theConsole->StartUp();
+	g_theRenderer->StartUp( g_theWindow );
+	g_theInput->StartUp( g_theWindow );
+	g_theConsole->StartUp( g_theInput, g_theEventSystem );
 	g_theGame->StartUp();
 
+	g_theWindow->SetInputSystem( g_theInput );
+	g_theWindow->SetEventSystem( g_theEventSystem );
+
+	g_theEventSystem->SubscribeEventCallbackFunction( "quit", QuitRequested );
+	g_theEventSystem->SubscribeEventCallbackFunction( "help", HelpCommand );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void App::ShutDown()
 {
+	g_theGame->ShutDown();
+	delete g_theGame;
+	g_theGame = nullptr;
+
 	g_theEventSystem->ShutDown();
 	delete g_theEventSystem;
 	g_theEventSystem = nullptr;
-
-	g_theRenderer->ShutDown();
-	delete g_theRenderer;
-	g_theRenderer = nullptr;
 
 	g_theInput->ShutDown();
 	delete g_theInput;
@@ -61,9 +67,9 @@ void App::ShutDown()
 	delete g_theConsole;
 	g_theConsole = nullptr;
 
-	g_theGame->ShutDown();
-	delete g_theGame;
-	g_theGame = nullptr;
+	g_theRenderer->ShutDown();
+	delete g_theRenderer;
+	g_theRenderer = nullptr;
 }
 
 
@@ -76,6 +82,24 @@ void App::RestartGame()
 
 	g_theGame = new Game();
 	g_theGame->StartUp();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+STATIC void App::QuitRequested()
+{
+	g_theApp->HandleQuitRequested();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+STATIC void App::HelpCommand()
+{
+	Strings registeredCommands = g_theEventSystem->GetEventNames();
+	for( int commandIndex = 0; commandIndex < registeredCommands.size(); ++commandIndex )
+	{
+		g_theConsole->PrintString( Rgba8::YELLOW, registeredCommands[commandIndex] );
+	}
 }
 
 
@@ -109,8 +133,25 @@ bool App::HandleQuitRequested()
 
 
 //---------------------------------------------------------------------------------------------------------
+void App::OpenDevConsole()
+{
+	g_theConsole->ToggleIsOpen();
+	if( g_theConsole->IsOpen() )
+	{
+		g_theEventSystem->FireEvent( "LoseFocus" );
+	}
+	else
+	{
+		g_theEventSystem->FireEvent( "GainFocus" );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void App::BeginFrame()
 {
+	g_theWindow->BeginFrame();
+	g_theRenderer->BeginFrame();
 	g_theInput->BeginFrame();
 	g_theAudio->BeginFrame();
 }
@@ -119,12 +160,11 @@ void App::BeginFrame()
 //---------------------------------------------------------------------------------------------------------
 void App::Update( float deltaSeconds )
 {
-	if( g_theGame->IsQuitting() )
-	{
-		HandleQuitRequested();
-	}
+	g_theRenderer->UpdateFrameTime( deltaSeconds );
+	g_theGame->Update( deltaSeconds );
+	g_theConsole->Update( deltaSeconds );
 
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
+	if( g_theGame->IsQuitting() || g_theWindow->IsQuitting() )
 	{
 		HandleQuitRequested();
 	}
@@ -139,15 +179,16 @@ void App::Update( float deltaSeconds )
 		g_isDebugCamera = !g_isDebugCamera;
 	}
 
-	g_theGame->Update( deltaSeconds );
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_TILDE ) )
+	{
+		OpenDevConsole();
+	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void App::Render() const
 {
-	g_theRenderer->ClearScreen( Rgba8::BLACK );
-
 	g_theGame->Render();
 }
 
@@ -155,6 +196,7 @@ void App::Render() const
 //---------------------------------------------------------------------------------------------------------
 void App::EndFrame()
 {
+	g_theRenderer->EndFrame();
 	g_theInput->EndFrame();
 	g_theAudio->EndFrame();
 }

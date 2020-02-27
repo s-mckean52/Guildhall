@@ -8,6 +8,7 @@
 #include "Engine/Core/NamedStrings.hpp"
 
 class DevConsole;
+class EventSystem;
 
 enum KeyboardKeys
 {
@@ -34,6 +35,7 @@ enum MouseButtons
 };
 
 extern DevConsole* g_theConsole;
+extern EventSystem* g_theEventSystem;
 extern NamedStrings g_gameConfigBlackboard;
 
 //Key Codes
@@ -46,6 +48,11 @@ extern const unsigned char KEY_CODE_UP_ARROW;
 extern const unsigned char KEY_CODE_LEFT_ARROW;
 extern const unsigned char KEY_CODE_DOWN_ARROW;
 extern const unsigned char KEY_CODE_RIGHT_ARROW;
+extern const unsigned char KEY_CODE_SHIFT;
+extern const unsigned char KEY_CODE_CTRL;
+extern const unsigned char KEY_CODE_COPY;
+extern const unsigned char KEY_CODE_PASTE;
+extern const unsigned char KEY_CODE_CUT;
 extern const unsigned char KEY_CODE_F1;
 extern const unsigned char KEY_CODE_F2;
 extern const unsigned char KEY_CODE_F3;
@@ -61,10 +68,13 @@ extern const unsigned char KEY_CODE_F12;
 extern const unsigned char KEY_CODE_TILDE;
 extern const unsigned char KEY_CODE_PLUS;
 extern const unsigned char KEY_CODE_MINUS;
+extern const unsigned char KEY_CODE_HOME;
+extern const unsigned char KEY_CODE_END;
 
 extern const unsigned char MOUSE_CODE_LEFT;
 extern const unsigned char MOUSE_CODE_RIGHT;
 extern const unsigned char MOUSE_CODE_MIDDLE;
+
 
 
 //---------------------------------------------------------------------------------------------------------

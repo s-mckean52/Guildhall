@@ -1,6 +1,6 @@
 #pragma once
-#include <string>
 #include "Engine/Core/EventSystem.hpp"
+#include <string>
 
 struct EventSubscription
 {
@@ -9,6 +9,8 @@ struct EventSubscription
 public:
 	explicit EventSubscription() = default;
 	explicit EventSubscription( std::string eventName, EventCallbackFunctionPtrType callbackFunction );
+
+	std::string GetEventName() const { return m_eventName; }
 
 private:
 	std::string m_eventName = "";

@@ -310,15 +310,7 @@ const Vec2 Vec2::operator-( const Vec2& vecToSubtract ) const
 const Vec2 Vec2::operator-() const
 {
 	return Vec2( -x, -y );
-}
-
-																										   
-//---------------------------------------------------------------------------------------------------------
-void Vec2::operator=( const Vec3& copyFrom )
-{
-	x = copyFrom.x;
-	y = copyFrom.y;
-}
+}																										 
 
 
 //-----------------------------------------------------------------------------------------------

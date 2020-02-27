@@ -38,11 +38,12 @@ public:
 	explicit Mat44( const Vec4& iBasisHomogeneous, const Vec4& jBasisHomogeneous, const Vec4& kBasisHomogeneous, const Vec4& translationHomogeneous );
 
 	//Transform positions and vectors using this Matrix
-	const Vec2 TransformVector2D( const Vec2& vector ) const;
-	const Vec3 TransformVector3D( const Vec3& vector ) const;
-	const Vec2 TransformPosition2D( const Vec2& position ) const;
-	const Vec3 TransformPosition3D( const Vec3& position ) const;
-	const Vec4 TransformHomogeneousPoint3D( const Vec4& point ) const;
+	const Vec2	TransformVector2D( const Vec2& vector ) const;
+	const Vec3	TransformVector3D( const Vec3& vector ) const;
+	const Vec2	TransformPosition2D( const Vec2& position ) const;
+	const Vec3	TransformPosition3D( const Vec3& position ) const;
+	const Vec4	TransformHomogeneousPoint3D( const Vec4& point ) const;
+	const Mat44	GetTransformMatrixBy( const Mat44& transformationMatrix ) const;
 
 	//Accessors
 	const float*	GetAsFloatArray() const			{ return &Ix; }
@@ -92,6 +93,7 @@ public:
 	static const Mat44 CreateXRotationDegrees( float degreesAboutX );
 	static const Mat44 CreateYRotationDegrees( float degreesAboutY );
 	static const Mat44 CreateZRotationDegrees( float degreesAboutZ );
+	//static const Mat44 CreateXYZRotationDegrees( const Vec3& rotationXYZ );
 					   
 	static const Mat44 CreateTranslationXY( const Vec2& translationXY );
 	static const Mat44 CreateUniformScaleXY( float uniformScaleXY );
@@ -100,6 +102,14 @@ public:
 	static const Mat44 CreateTranslationXYZ( const Vec3& translationXYZ );
 	static const Mat44 CreateUniformScaleXYZ( float uniformScaleXYZ );
 	static const Mat44 CreateNonUniformScaleXYZ( const Vec3& scalesXYZ );
+
+
+	//Projection
+	static const Mat44 CreateOrthographicProjection( const Vec3& min, const Vec3& max );
+	static const Mat44 CreatePerspectiveProjection( float fieldOfView, float aspectRatio, float nearZ, float farZ );
+
+// public:
+// 	void operator=( const Mat44& copyFrom );
 
 private:
 	const Mat44 operator*( const Mat44& rhs ) const = delete;

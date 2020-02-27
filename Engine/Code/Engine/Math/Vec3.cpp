@@ -23,6 +23,23 @@ Vec3::Vec3( float initialX, float initialY, float initialZ )
 
 
 //---------------------------------------------------------------------------------------------------------
+Vec3::Vec3( const Vec2& copyFrom, float z )
+	: x( copyFrom.x )
+	, y( copyFrom.y )
+	, z( z )
+{
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec3::Vec3( float initialXYZ )
+	: x( initialXYZ )
+	, y( initialXYZ )
+	, z( initialXYZ )
+{
+}
+
+//---------------------------------------------------------------------------------------------------------
 float Vec3::GetLength() const
 {
 	return sqrtf( ( x * x ) + ( y * y ) + ( z * z ) );

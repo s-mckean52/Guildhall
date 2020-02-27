@@ -57,8 +57,8 @@ private:
 
 	Vec2 m_mousePos;
 
-	Camera m_worldCamera;
-	Camera m_uiCamera;
+	Camera* m_worldCamera = nullptr;
+	Camera* m_uiCamera = nullptr;
 
 	Vec2	m_textPosition = Vec2();
 	float	m_screenShakeIntensity = 0.f;

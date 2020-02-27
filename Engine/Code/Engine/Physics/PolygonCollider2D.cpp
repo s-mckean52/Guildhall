@@ -123,6 +123,7 @@ void PolygonCollider2D::DebugRender( RenderContext* context, Rgba8 const& border
 	//AppendVertsForAABB2OutlineAtPoint( debugVerts, m_worldBounds, Rgba8::CYAN, 3.f );
 
 	context->BindTexture( nullptr );
+	context->BindShader( (Shader*)nullptr );
 	context->DrawVertexArray( debugVerts );
 }
 

@@ -162,6 +162,7 @@ void Map::RenderTiles() const
 		m_tiles[ tileIndex ].AppendVertsForRender( tileVerts );
 	}
 	g_theRenderer->BindTexture( &g_tileSpriteSheet->GetTexture() );
+	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( tileVerts );
 }
 

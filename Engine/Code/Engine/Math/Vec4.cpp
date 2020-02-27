@@ -1,5 +1,5 @@
 #include "Engine/Math/Vec4.hpp"
-
+#include "Engine/Math/Vec3.hpp"
 
 //---------------------------------------------------------------------------------------------------------
 Vec4::Vec4( float initialX, float initialY, float initialZ, float initialW )
@@ -20,6 +20,15 @@ Vec4::Vec4( const Vec4& toCopy )
 {
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+Vec4::Vec4( const Vec3& toCopy, float initialW )
+	: x( toCopy.x )
+	, y( toCopy.y )
+	, z( toCopy.z )
+	, w( initialW )
+{
+}
 
 //---------------------------------------------------------------------------------------------------------
 bool Vec4::operator==( const Vec4& toCompare ) const
