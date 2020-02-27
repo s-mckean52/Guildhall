@@ -7,6 +7,7 @@ struct	Manifold2;
 //---------------------------------------------------------------------------------------------------------
 struct Manifold2
 {
+	Vec2 contactPosition;
 	Vec2 collisionNormal;
 	float penetrationDistance = 0.f;
 };

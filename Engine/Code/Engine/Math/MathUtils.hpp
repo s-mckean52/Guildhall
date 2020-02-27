@@ -92,6 +92,7 @@ const Vec2	GetNearestPointOnLineSegment2D( const Vec2& refPos, const Vec2& start
 const Vec2	GetNearestPointOnCapsule2D( const Vec2& refPos, const Vec2& capsuleMidStart, const Vec2& capsuleMidEnd, float capsuleRadius );
 const Vec2	GetNearestPointOnOBB2D( const Vec2& refPos, const OBB2& box );
 const Vec2	GetNearestPointOnPolygon2D( const Vec2& refPos, const Polygon2D& polygon );
+const Vec2	GetNearestPointOnEdgePolygon2D( const Vec2& refPos, const Polygon2D& polygon );
 
 bool		IsPointInsideDisk2D( const Vec2& point, const Vec2& discCenter, float discRadius);
 bool		IsPointInsideAABB2D( const Vec2& point, const AABB2& box );

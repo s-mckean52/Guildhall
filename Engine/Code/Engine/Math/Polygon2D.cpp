@@ -76,10 +76,42 @@ float Polygon2D::GetDistance( Vec2 const& point ) const
 
 
 //---------------------------------------------------------------------------------------------------------
+int Polygon2D::GetClosestEdgeIndex( Vec2 const& point ) const
+{
+	Vec2 edgeStart;
+	Vec2 edgeEnd;
+	int closestEdgeIndex = 0;
+	float shortestDistanceSquared = 10000.f;
+
+	for( int edgeIndex = 0; edgeIndex < GetEdgeCount(); ++edgeIndex )
+	{
+		GetEdge( edgeIndex, edgeStart, edgeEnd );
+		Vec2 tempClosestPoint = GetNearestPointOnLineSegment2D( point, edgeStart, edgeEnd );
+		Vec2 displacement = point - tempClosestPoint;
+		float distanceSquaredToPoint = displacement.GetLengthSquared();
+		if( shortestDistanceSquared > distanceSquaredToPoint )
+		{
+			shortestDistanceSquared = distanceSquaredToPoint;
+			closestEdgeIndex = 0;
+		}
+	}
+
+	return closestEdgeIndex;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 Vec2 Polygon2D::GetClosestPoint( Vec2 const& point ) const
 {
 	if( IsPointInside( point ) ) return point;
 
+	return GetClosestPointOnEdge( point );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec2 Polygon2D::GetClosestPointOnEdge( Vec2 const& point ) const
+{
 	Vec2 edgeStart;
 	Vec2 edgeEnd;
 	Vec2 closestPoint;
@@ -92,7 +124,7 @@ Vec2 Polygon2D::GetClosestPoint( Vec2 const& point ) const
 		{
 			closestPoint = GetNearestPointOnLineSegment2D( point, edgeStart, edgeEnd );
 			Vec2 displacement = point - closestPoint;
-			shortestDistanceSquared = displacement.GetLengthSquared(); 
+			shortestDistanceSquared = displacement.GetLengthSquared();
 		}
 		else
 		{

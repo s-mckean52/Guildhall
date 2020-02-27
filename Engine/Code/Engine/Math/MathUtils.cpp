@@ -875,6 +875,13 @@ const Vec2 GetNearestPointOnPolygon2D( const Vec2& refPos, const Polygon2D& poly
 
 
 //---------------------------------------------------------------------------------------------------------
+const Vec2 GetNearestPointOnEdgePolygon2D( const Vec2& refPos, const Polygon2D& polygon )
+{
+	return polygon.GetClosestPointOnEdge( refPos );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 bool IsPointInsideDisk2D( const Vec2& point, const Vec2& discCenter, float discRadius )
 {
 	Vec2 displacementToPoint = point - discCenter;

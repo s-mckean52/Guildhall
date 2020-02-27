@@ -8,7 +8,7 @@
     - [x] Use a *mid-phase* check to early out of a collision by comparing the bounds first.
     - [x] If passes the bounds check, lookup and call the appropriate callback
 - [ ] Add `Collider2D::GetManifold` that also uses a collision matrix or half matrix
-    - [ ] Again do an early out using the bounds.
+    - [x] Again do an early out using the bounds.
     - [ ] Implement a disc versus disc manifold
     - [ ] Implement a disc versus polygon manifold
     - **Note: We are not doing polygon -vs- polygon yet**

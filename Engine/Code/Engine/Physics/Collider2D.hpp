@@ -16,8 +16,11 @@ class	Rigidbody2D;
 class	Collider2D;
 struct	Vec2;
 struct	Rgba8;
+struct	Manifold2;
 
-typedef bool(*collision_check_cb)(Collider2D const*, Collider2D const*);
+
+typedef bool( *collision_check_cb )( Collider2D const*, Collider2D const* );
+typedef bool( *manifold_check_cb )( Collider2D const*, Collider2D const*, Manifold2* );
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -39,6 +42,7 @@ public:
 	AABB2			GetWorldBounds() const		{ return m_worldBounds; }
 
 	bool			Intersects( Collider2D const* other ) const;
+	bool			GetManifold( Collider2D const* other, Manifold2* manifold );
 	bool			WorldBoundsIntersect( Collider2D const* other ) const;
 
 protected:
