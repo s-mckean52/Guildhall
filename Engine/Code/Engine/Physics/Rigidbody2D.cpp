@@ -88,7 +88,7 @@ void Rigidbody2D::SetMass( float mass )
 void Rigidbody2D::ApplyImpulseAt( const Vec2& worldPos, const Vec2& impulse )
 {
 	UNUSED( worldPos );
-	m_velocity = impulse * ( 1 / m_mass );
+	m_velocity += impulse * ( 1 / m_mass );
 }
 
 

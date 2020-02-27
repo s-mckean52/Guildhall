@@ -13,7 +13,7 @@ GameObject::GameObject()
 {
 	m_defaultBorderColor = Rgba8::BLUE;
 	m_startFillColor = Rgba8::WHITE;
-	m_startFillColor.a = 50;
+	m_startFillColor.a = 127;
 
 	m_currentBorderColor = m_defaultBorderColor;
 	m_currentFillColor = m_startFillColor;
@@ -114,8 +114,9 @@ void GameObject::AddBounciness( float bounce )
 {
 	PhysicsMaterial* physicsMat = m_rigidbody->m_collider->m_physicsMaterial;
 	float newBounce = physicsMat->m_bounciness + bounce;
+	ClampZeroToOne( newBounce );
 
-	physicsMat->m_bounciness = GetClamp( newBounce, 50.f, 255.f );
+	physicsMat->m_bounciness = GetClampZeroToOne( newBounce );
 
-	m_currentFillColor.a = static_cast<unsigned char>( physicsMat->GetBounciness() );
+	m_currentFillColor.a = static_cast<unsigned char>( 255.f * physicsMat->GetBounciness() );
 }

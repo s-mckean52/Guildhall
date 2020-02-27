@@ -240,7 +240,7 @@ void Game::UpdateGameStatesFromInput( float deltaSeconds )
 	{
 		if( m_draggedObject != nullptr )
 		{
-			m_draggedObject->AddBounciness( -25.f * deltaSeconds );
+			m_draggedObject->AddBounciness( -0.1f * deltaSeconds );
 		}
 		else
 		{
@@ -252,7 +252,7 @@ void Game::UpdateGameStatesFromInput( float deltaSeconds )
 	{
 		if( m_draggedObject != nullptr )
 		{
-			m_draggedObject->AddBounciness( 25.f * deltaSeconds );
+			m_draggedObject->AddBounciness( 0.1f * deltaSeconds );
 		}
 		else
 		{

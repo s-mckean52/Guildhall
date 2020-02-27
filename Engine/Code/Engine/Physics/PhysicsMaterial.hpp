@@ -10,5 +10,5 @@ public:
 	float GetBounciness() const { return m_bounciness; }
 
 public:
-	float m_bounciness = 1.f;
+	float m_bounciness = 0.5f;
 };

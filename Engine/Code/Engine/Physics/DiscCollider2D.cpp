@@ -36,7 +36,14 @@ void DiscCollider2D::UpdateWorldShape()
 //---------------------------------------------------------------------------------------------------------
 void DiscCollider2D::Move( Vec2 const& movement )
 {
-	m_worldPosition += movement;
+	if( m_rigidbody != nullptr )
+	{
+		m_rigidbody->m_worldPosition += movement;
+	}
+	else
+	{
+		m_localPosition += movement;
+	}
 	UpdateWorldShape();
 }
 
