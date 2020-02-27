@@ -21,9 +21,11 @@ public:
 	void AdvanceSimulation( float deltaSeconds );
 	void ApplyEffectors( float deltaSeconds );
 	void MoveRigidbodies( float deltaSeconds );
-	void DetectCollisions( float deltaSeconds );
-	void ResolveCollisions( float deltaSeconds );
+	void DetectCollisions();
+	void ResolveCollisions();
+	void ResolveCollision( Collision2D const& collision );
 	void EulerStep( float deltaSeconds, Rigidbody2D* rb );
+	void ApplyImpulseOnCollision( Collision2D const& collision );
 
 	void SetSceneGravity();
 
@@ -43,7 +45,7 @@ public:
 public:
 	Vec2 m_gravityAcceleration = Vec2( 0.0f, -9.81f );
 
-	std::vector< Collision2D* > m_collisions2D;
+	std::vector< Collision2D* > m_frameCollisions;
 	std::vector< Rigidbody2D* > m_rigidbodies2D;
 	std::vector< Rigidbody2D* > m_rigidbodies2DToBeDestroyed;
 	std::vector< Collider2D* > m_colliders2D;

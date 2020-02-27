@@ -17,6 +17,7 @@ public:
 	void Draw() const;
 
 	void SetPosition( Vec2 position );
+	void AddBounciness( float bounce );
 
 public:
 	bool m_isHovered		= false;

@@ -238,12 +238,26 @@ void Game::UpdateGameStatesFromInput( float deltaSeconds )
 
 	if( g_theInput->IsKeyPressed( KEY_CODE_MINUS ) )
 	{
-		m_physics2D->AddGravityInDownDirection( 1.0f * deltaSeconds);
+		if( m_draggedObject != nullptr )
+		{
+			m_draggedObject->AddBounciness( -25.f * deltaSeconds );
+		}
+		else
+		{
+			m_physics2D->AddGravityInDownDirection( 1.0f * deltaSeconds);
+		}
 	}
 
 	if( g_theInput->IsKeyPressed( KEY_CODE_PLUS ) )
 	{
-		m_physics2D->AddGravityInDownDirection( -1.0f * deltaSeconds );
+		if( m_draggedObject != nullptr )
+		{
+			m_draggedObject->AddBounciness( 25.f * deltaSeconds );
+		}
+		else
+		{
+			m_physics2D->AddGravityInDownDirection( -1.0f * deltaSeconds );
+		}
 	}
 }
 

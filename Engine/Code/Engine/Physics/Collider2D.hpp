@@ -14,6 +14,7 @@ class	RenderContext;
 class	Physics2D;
 class	Rigidbody2D;
 class	Collider2D;
+class	PhysicsMaterial;
 struct	Vec2;
 struct	Rgba8;
 struct	Manifold2;
@@ -29,8 +30,9 @@ class Collider2D
 	friend class Physics2D;
 
 public:
-	virtual void Destroy()										= 0;
-	virtual void UpdateWorldShape()								= 0;
+	virtual void	Destroy()										= 0;
+	virtual void	UpdateWorldShape()								= 0;
+	virtual void	Move( Vec2 const& movement )					= 0;
 
 	virtual Vec2	GetClosestPoint(Vec2 const& position ) const	= 0;
 	virtual bool	Contains( Vec2 const& position ) const			= 0;
@@ -40,17 +42,22 @@ public:
 
 	Collider2DType	GetType() const				{ return m_type; }
 	AABB2			GetWorldBounds() const		{ return m_worldBounds; }
+	float			GetMass() const;
+	Vec2			GetVelocity() const;
 
 	bool			Intersects( Collider2D const* other ) const;
 	bool			GetManifold( Collider2D const* other, Manifold2* manifold );
 	bool			WorldBoundsIntersect( Collider2D const* other ) const;
+	float			GetBounceWith( Collider2D const* other ) const;
+	float			GetPhysicsMaterialBounciness() const;
 
 protected:
 	virtual ~Collider2D();
 
 public:
 	Collider2DType m_type;
-	Physics2D* m_physicsSystem	= nullptr;
-	Rigidbody2D* m_rigidbody	= nullptr;
+	Physics2D* m_physicsSystem			= nullptr;
+	Rigidbody2D* m_rigidbody			= nullptr;
+	PhysicsMaterial* m_physicsMaterial	= nullptr;
 	AABB2 m_worldBounds;
 };

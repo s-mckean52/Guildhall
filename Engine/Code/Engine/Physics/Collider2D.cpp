@@ -4,6 +4,8 @@
 #include "Engine/Physics/Collision2D.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Physics/PhysicsMaterial.hpp"
+#include "Engine/Physics/Rigidbody2D.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -125,6 +127,7 @@ static bool PolygonVPolygonManifoldGeneration( Collider2D const* col0, Collider2
 {
 	UNUSED( col0 );
 	UNUSED( col1 );
+	UNUSED( manifold );
 // 	PolygonCollider2D const* polygon0 = (PolygonCollider2D*)col0;
 // 	PolygonCollider2D const* polygon1 = (PolygonCollider2D*)col1;
 
@@ -138,6 +141,36 @@ static manifold_check_cb s_manifoldCheck[NUM_COLLIDER_TYPE * NUM_COLLIDER_TYPE] 
 	/*	   disc	*/	DiscVDiscManifoldGeneration,		nullptr,
 	/*	polygon	*/	DiscVPolygonManifoldGeneration,		PolygonVPolygonManifoldGeneration,
 };
+
+
+//---------------------------------------------------------------------------------------------------------
+void Collider2D::Move( Vec2 const& movement )
+{
+	m_rigidbody->m_worldPosition += movement;
+	UpdateWorldShape();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float Collider2D::GetMass() const
+{
+	if( m_rigidbody != nullptr )
+	{
+		return m_rigidbody->m_mass;
+	}
+	return 1.f;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec2 Collider2D::GetVelocity() const
+{
+	if( m_rigidbody != nullptr )
+	{
+		return m_rigidbody->GetVelocity();
+	}
+	return Vec2();
+}
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -190,6 +223,23 @@ bool Collider2D::GetManifold( Collider2D const* other, Manifold2* manifold )
 bool Collider2D::WorldBoundsIntersect( Collider2D const* other ) const
 {
 	return DoAABB2sOverlap( GetWorldBounds(), other->GetWorldBounds() );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float Collider2D::GetBounceWith( Collider2D const* other ) const
+{
+	float myBounce = GetPhysicsMaterialBounciness();
+	float otherBounce = other->GetPhysicsMaterialBounciness();
+
+	return myBounce * otherBounce;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float Collider2D::GetPhysicsMaterialBounciness() const
+{
+	return m_physicsMaterial->GetBounciness();
 }
 
 

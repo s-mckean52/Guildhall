@@ -27,6 +27,7 @@ public:
 	void SetVelocity( Vec2 const& newVelocity );
 	void SetMass( float mass );
 
+	void ApplyImpulseAt( Vec2 const& worldPos, Vec2 const& impulse );
 	void AddForceFromAcceleration( const Vec2& acceleration );
 
 	void DebugRender( RenderContext* context ) const;

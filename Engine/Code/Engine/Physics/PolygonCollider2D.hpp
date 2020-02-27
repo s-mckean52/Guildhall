@@ -13,6 +13,7 @@ public:
 
 	void Destroy()											override;
 	void UpdateWorldShape()									override;
+	void Move( Vec2 const& movement )						override;
 
 	Vec2	GetClosestPoint( Vec2 const& position ) const		override;
 	bool	Contains( Vec2 const& position ) const				override;

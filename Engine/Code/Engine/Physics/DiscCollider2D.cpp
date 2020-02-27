@@ -34,6 +34,14 @@ void DiscCollider2D::UpdateWorldShape()
 
 
 //---------------------------------------------------------------------------------------------------------
+void DiscCollider2D::Move( Vec2 const& movement )
+{
+	m_worldPosition += movement;
+	UpdateWorldShape();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 Vec2 DiscCollider2D::GetClosestPoint( Vec2 const& position ) const
 {
 	return GetNearestPointOnDisc2D( position, m_worldPosition, m_radius );
@@ -45,27 +53,6 @@ bool DiscCollider2D::Contains( Vec2 const& position ) const
 {
 	return IsPointInsideDisk2D( position, m_worldPosition, m_radius );
 }
-
-
-//---------------------------------------------------------------------------------------------------------
-// bool DiscCollider2D::Intersects( Collider2D const* collider ) const
-// {
-// 	switch( collider->GetType() )
-// 	{
-// 	case COLLIDER_TYPE_DISC2D:
-// 	{
-// 		DiscCollider2D* colliderAsDisc2D = (DiscCollider2D*)collider;
-// 		return DoDiscsOverlap( colliderAsDisc2D->m_worldPosition, colliderAsDisc2D->m_radius, m_worldPosition, m_radius );
-// 	}
-// 	case COLLIDER_TYPE_POLYGON2D:
-// 	{
-// 		PolygonCollider2D* colliderAsPolygon2D = (PolygonCollider2D*)collider;
-// 		return DoPolygonAndDiscOverlap( colliderAsPolygon2D->m_worldPolygon, m_worldPosition, m_radius );
-// 	}
-// 	default:
-// 		return false;
-// 	}
-// }
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -91,7 +78,7 @@ void DiscCollider2D::DebugRender( RenderContext* context, Rgba8 const& borderCol
 	AppendVertsForFilledCircle( debugVerts, m_radius, fillColor );
 	AppendVertsForCircleAtPoint( debugVerts, m_radius, borderColor, 5.f );
 	TransformVertexArray( debugVerts, 1.f, 0.f, m_worldPosition );
-	AppendVertsForAABB2OutlineAtPoint( debugVerts, m_worldBounds, Rgba8::CYAN, 3.f );
+	//AppendVertsForAABB2OutlineAtPoint( debugVerts, m_worldBounds, Rgba8::CYAN, 3.f );
 
 	context->BindTexture( nullptr );
 	context->DrawVertexArray( debugVerts );

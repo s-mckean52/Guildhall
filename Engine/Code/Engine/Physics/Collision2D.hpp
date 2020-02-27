@@ -22,5 +22,10 @@ public:
 	Manifold2* collisionData	= nullptr;
 
 public:
-	Collision2D( Collider2D* thisC, Collider2D* otherC );
+	Collision2D( Collider2D* thisC, Collider2D* otherC, Manifold2* manifold );
+	~Collision2D();
+
+	Vec2 GetNormal() const			{ return collisionData->collisionNormal; }
+	Vec2 GetContact() const			{ return collisionData->contactPosition; }
+	float GetPenetration() const	{ return collisionData->penetrationDistance; }
 };

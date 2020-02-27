@@ -74,7 +74,6 @@ void Rigidbody2D::SetSimulationMode( SimulationMode simulationMode )
 void Rigidbody2D::SetVelocity( Vec2 const& newVelocity )
 {
 	m_velocity = newVelocity;
-	//m_velocity = ( m_worldPosition - m_positionLastFrame ) / deltaSeconds;
 }
 
 
@@ -82,6 +81,14 @@ void Rigidbody2D::SetVelocity( Vec2 const& newVelocity )
 void Rigidbody2D::SetMass( float mass )
 {
 	m_mass = mass;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::ApplyImpulseAt( const Vec2& worldPos, const Vec2& impulse )
+{
+	UNUSED( worldPos );
+	m_velocity = impulse * ( 1 / m_mass );
 }
 
 

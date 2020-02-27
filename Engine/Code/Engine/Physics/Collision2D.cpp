@@ -4,10 +4,18 @@
 
 
 //---------------------------------------------------------------------------------------------------------
-Collision2D::Collision2D( Collider2D* thisC, Collider2D* otherC )
+Collision2D::Collision2D( Collider2D* thisC, Collider2D* otherC, Manifold2* manifold )
 {
 	thisCollider = thisC;
 	otherCollider = otherC;
 
-	collisionData = new Manifold2();
+	collisionData = manifold;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Collision2D::~Collision2D()
+{
+	delete collisionData;
+	collisionData = nullptr;
 }

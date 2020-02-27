@@ -3,7 +3,9 @@
 #include "Engine/Physics/Rigidbody2D.hpp"
 #include "Engine/Physics/Collider2D.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
+#include "Engine/Physics/PhysicsMaterial.hpp"
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/MathUtils.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -11,7 +13,7 @@ GameObject::GameObject()
 {
 	m_defaultBorderColor = Rgba8::BLUE;
 	m_startFillColor = Rgba8::WHITE;
-	m_startFillColor.a = 127;
+	m_startFillColor.a = 50;
 
 	m_currentBorderColor = m_defaultBorderColor;
 	m_currentFillColor = m_startFillColor;
@@ -60,14 +62,14 @@ void GameObject::UpdateColors()
 		m_currentBorderColor = m_defaultBorderColor;
 	}
 
-	if( m_isOverlapping )
-	{
-		m_currentFillColor = Rgba8( 255, 0, 0, 127 );
-	}
-	else
-	{
-		m_currentFillColor = m_startFillColor;
-	}
+// 	if( m_isOverlapping )
+// 	{
+// 		m_currentFillColor = Rgba8( 255, 0, 0, 127 );
+// 	}
+// 	else
+// 	{
+// 		m_currentFillColor = m_startFillColor;
+// 	}
 }
 
 
@@ -107,3 +109,13 @@ void GameObject::SetPosition( Vec2 position )
 	m_rigidbody->SetPosition( position );
 }
 
+
+void GameObject::AddBounciness( float bounce )
+{
+	PhysicsMaterial* physicsMat = m_rigidbody->m_collider->m_physicsMaterial;
+	float newBounce = physicsMat->m_bounciness + bounce;
+
+	physicsMat->m_bounciness = GetClamp( newBounce, 50.f, 255.f );
+
+	m_currentFillColor.a = static_cast<unsigned char>( physicsMat->GetBounciness() );
+}
