@@ -97,11 +97,15 @@ void Physics2D::DetectCollisions()
 		{
 			Manifold2* newManifold = new Manifold2();
 			Rigidbody2D* otherRigidbody = m_rigidbodies2D[ otherRigidbodyIndex ];
-			
+
+			if( thisRigidbody == nullptr || otherRigidbody == nullptr ) continue;
 			if( !thisRigidbody->IsEnabled() || !otherRigidbody->IsEnabled() ) continue;
 
 			Collider2D* thisCollider = thisRigidbody->m_collider;
 			Collider2D* otherCollider = otherRigidbody->m_collider;
+
+			if( thisCollider == nullptr || otherCollider == nullptr ) continue;
+
 			if( thisCollider->GetManifold( otherCollider, newManifold ) )
 			{
 				if( thisRigidbody->m_simulationMode == SIMULATION_MODE_STATIC && 
@@ -133,7 +137,7 @@ void Physics2D::ResolveCollisions()
 		ResolveCollision( *currentCollision );
 	}
 
-	m_frameCollisions.clear();
+	std::vector<Collision2D*> m_frameCollisions;
 }
 
 
@@ -288,8 +292,8 @@ void Physics2D::DestroyRigidbody2D( Rigidbody2D* rigidbody )
 	Collider2D* collider = rigidbody->m_collider;
 	if( collider != nullptr )
 	{
-		rigidbody->m_collider = nullptr;
 		collider->Destroy();
+		rigidbody->m_collider = nullptr;
 	}
 	m_rigidbodies2DToBeDestroyed.push_back( rigidbody );
 }

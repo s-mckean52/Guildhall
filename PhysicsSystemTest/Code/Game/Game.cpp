@@ -409,7 +409,7 @@ void Game::UpdateGameObjects( float deltaSeconds )
 		if( currentGameObject )
 		{
 			currentGameObject->Update( deltaSeconds );
-			CheckGameObjectOverlap( currentGameObject );
+			//CheckGameObjectOverlap( currentGameObject );
 		}
 	}
 }
