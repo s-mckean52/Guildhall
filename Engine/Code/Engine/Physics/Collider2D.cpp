@@ -174,6 +174,13 @@ Vec2 Collider2D::GetVelocity() const
 
 
 //---------------------------------------------------------------------------------------------------------
+void Collider2D::MarkForDestroy( bool isMarkedForDestroy )
+{
+	m_isMarkedForDestroy = isMarkedForDestroy;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 bool Collider2D::Intersects( Collider2D const* other ) const
 {
 	Collider2DType myType = GetType();
