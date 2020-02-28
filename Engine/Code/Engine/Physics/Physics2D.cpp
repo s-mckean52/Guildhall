@@ -137,7 +137,7 @@ void Physics2D::ResolveCollisions()
 		ResolveCollision( *currentCollision );
 	}
 
-	std::vector<Collision2D*> m_frameCollisions;
+	m_frameCollisions.clear();
 }
 
 
