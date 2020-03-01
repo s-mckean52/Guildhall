@@ -17,8 +17,6 @@ public:
 	static void QuitRequested();
 	bool HandleQuitRequested();
 
-	void OpenDevConsole();
-
 	const bool IsQuitting() const { return m_isQuitting; }
 
 private:

@@ -132,21 +132,6 @@ bool App::HandleQuitRequested()
 
 
 //---------------------------------------------------------------------------------------------------------
-void App::OpenDevConsole()
-{
-	g_theConsole->ToggleIsOpen();
-	if( g_theConsole->IsOpen() )
-	{
-		g_theEventSystem->FireEvent( "LoseFocus" );
-	}
-	else
-	{
-		g_theEventSystem->FireEvent( "GainFocus" );
-	}
-}
-
-
-//---------------------------------------------------------------------------------------------------------
 void App::BeginFrame()
 {
 	g_theRenderer->BeginFrame();
@@ -175,7 +160,7 @@ void App::Update( float deltaSeconds )
 
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_TILDE ) )
 	{
-		OpenDevConsole();
+		g_theConsole->ToggleIsOpen();
 	}
 }
 

@@ -13,12 +13,12 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Platform/Window.hpp"
 
-EventSystem* g_theEventSystem	= nullptr;
-RenderContext* g_theRenderer		= nullptr;
-InputSystem* g_theInput			= nullptr;
-AudioSystem* g_theAudio			= nullptr;
-DevConsole* g_theConsole		= nullptr;
-Game* g_theGame			= nullptr;
+EventSystem*	g_theEventSystem	= nullptr;
+RenderContext*	g_theRenderer		= nullptr;
+InputSystem*	g_theInput			= nullptr;
+AudioSystem*	g_theAudio			= nullptr;
+DevConsole*		g_theConsole		= nullptr;
+Game*			g_theGame			= nullptr;
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -152,6 +152,7 @@ void App::BeginFrame()
 	g_theRenderer->BeginFrame();
 	g_theInput->BeginFrame();
 	g_theAudio->BeginFrame();
+	g_theGame->BeginFrame();
 }
 
 
@@ -190,6 +191,7 @@ void App::Render() const
 //---------------------------------------------------------------------------------------------------------
 void App::EndFrame()
 {
+	g_theGame->EndFrame();
 	g_theRenderer->EndFrame();
 	g_theInput->EndFrame();
 	g_theAudio->EndFrame();

@@ -49,6 +49,34 @@ static LRESULT CALLBACK WindowsMessageHandlingProcedure( HWND windowHandle, UINT
 			break;
 		}
 
+		case WM_LBUTTONDOWN:
+		case WM_LBUTTONUP:
+		case WM_RBUTTONDOWN:
+		case WM_RBUTTONUP:
+		case WM_MBUTTONDOWN:
+		case WM_MBUTTONUP:
+		{
+			bool leftButtonDown		= wParam & MOUSE_CODE_LEFT;
+			bool rightButtonDown	= wParam & MOUSE_CODE_RIGHT;
+			bool middleButtonDown	= wParam & MOUSE_CODE_MIDDLE;
+
+			InputSystem* theInput = window->GetInputSystem();
+			theInput->UpdateMouseButtonState( leftButtonDown, rightButtonDown, middleButtonDown );
+
+			break;
+		}
+
+		case WM_MOUSEWHEEL:
+		{
+			float scrollFixedPoint = static_cast<float>(GET_WHEEL_DELTA_WPARAM( wParam ));
+			float scrollAmount = scrollFixedPoint / static_cast<float>(WHEEL_DELTA);
+
+			InputSystem* theInput = window->GetInputSystem();
+			theInput->AddMouseWheelScrollAmount( scrollAmount );
+
+			break;
+		}
+
 		case WM_CHAR:
 		{
 			wchar_t inputCharacter = (wchar_t)wParam;

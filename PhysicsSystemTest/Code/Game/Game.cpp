@@ -56,6 +56,7 @@ void Game::StartUp()
 
 	m_worldCamera->SetPosition( m_focalPoint );
 	m_worldCamera->SetProjectionOrthographic( m_cameraHeight );
+	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT, Rgba8::BLACK );
 	
 	m_uiCamera->SetPosition( m_focalPoint );
 	m_uiCamera->SetProjectionOrthographic( m_cameraHeight );
@@ -101,7 +102,6 @@ void Game::Render() const
 	g_theRenderer->BeginCamera( *m_worldCamera );
 	DrawNewPolygonPoints();
 	DrawGameObjects();
-	DrawCircleAtPoint( m_mousePos, 30.f, Rgba8::GREEN, 10.f );
 	g_theRenderer->EndCamera( *m_worldCamera );
 
 
@@ -117,15 +117,15 @@ void Game::RenderUI() const
 {
 	std::vector<Vertex_PCU> gravityVerts;
 	std::string gravityAsString = Stringf( "%f", m_physics2D->GetGravityAmount() );
-	g_testFont->AddVertsForText2D( gravityVerts, Vec2( 10.f, CAMERA_SIZE_Y - 10.f ), 10.f, gravityAsString );
+
+	Vec3 positionToDraw = m_uiCamera->ClientToWorldPosition( Vec2( 0.01f, 0.98f ) );
+
+	g_testFont->AddVertsForText2D( gravityVerts, Vec2( positionToDraw.x, positionToDraw.y ) , 10.f, gravityAsString );
 	g_theRenderer->BindTexture( g_testFont->GetTexture() );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( gravityVerts );
 
-	if( g_theConsole->IsOpen() )
-	{
-		g_theConsole->Render( *g_theRenderer, *m_uiCamera, 30.f, g_testFont );
-	}
+	g_theConsole->Render( *g_theRenderer, *m_uiCamera, 30.f, g_testFont );
 }
 
 
@@ -135,7 +135,6 @@ void Game::Update( float deltaSeconds )
 	UpdateGameStatesFromInput( deltaSeconds );
 	
 	m_physics2D->Update( deltaSeconds );
-	
 	UpdateGameObjects( deltaSeconds );
 
 	UpdateCameras( deltaSeconds );
@@ -166,7 +165,7 @@ void Game::UpdateGameStatesFromInput( float deltaSeconds )
 
 	if( g_theInput->IsKeyPressed( 'O' ) )
 	{
-		m_focalPoint = Vec2( HALF_SCREEN_X, HALF_SCREEN_Y );
+		m_focalPoint = Vec3();
 		m_cameraHeight = CAMERA_SIZE_Y;
 	}
 
@@ -233,11 +232,6 @@ void Game::UpdateGameStatesFromInput( float deltaSeconds )
 	{
 		m_cameraHeight += 100.f * -scrollAmount;
 		Clamp( m_cameraHeight, m_cameraMinHeight, m_cameraMaxHeight );
-	}
-
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_TILDE ) )
-	{
-		g_theConsole->SetIsOpen( !g_theConsole->IsOpen() );
 	}
 
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
@@ -309,11 +303,9 @@ void Game::LoadAudio()
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateMousePos( const Camera& camera )
 {
-	Vec3 orthoMins = camera.GetOrthoBottomLeft();
-	Vec3 orthoMax = camera.GetOrthoTopRight();
-	AABB2 orthoBounds( orthoMins.x, orthoMins.y, orthoMax.x, orthoMax.y );
-	Vec2 mouseNormalizedPos = g_theInput->GetMouseNormalizedClientPosition();
-	m_mousePos = orthoBounds.GetPointAtUV( mouseNormalizedPos );
+ 	Vec2 mouseNormalizedPos = g_theInput->GetMouseNormalizedClientPosition();
+	Vec3 newMousePos = camera.ClientToWorldPosition( mouseNormalizedPos );
+	m_mousePos = Vec2( newMousePos.x, newMousePos.y );
 
 	for( int goIndex = 0; goIndex < m_gameObjects.size(); ++goIndex )
 	{

@@ -43,11 +43,11 @@ public:
 
 	float	GetAspectRatio() const;
 
-	Vec3	ClientToWorldPosition( Vec2 const& clientPosition, float ndcZ = 0.f );
+	Vec3	ClientToWorldPosition( Vec2 const& clientPosition, float ndcZ = 0.f ) const;
 
 	bool	ShouldClearColor() const;
 	Mat44	GetViewMatrix() const;
-	Vec3	NDCToWorldCoords( Vec4 ndcCoords ) const;
+	Vec3	NDCToWorldCoords( const Vec4& ndcCoords ) const;
 
 	void SetClearMode( CameraClearFlags clearFlags, Rgba8 color, float depth = 0.0f, unsigned int stencil = 0 );
 	void SetColorTarget( Texture* texture );

@@ -130,13 +130,14 @@ void Camera::UpdateViewMatrix()
 
 
 //---------------------------------------------------------------------------------------------------------
-Vec3 Camera::NDCToWorldCoords( Vec4 ndcCoords ) const
+Vec3 Camera::NDCToWorldCoords( const Vec4& ndcCoords ) const
 {
-	Mat44 viewProjection = m_projection.GetTransformMatrixBy( m_view );
-	Mat44 clipToWorld = viewProjection;
-	MatrixInvert( clipToWorld );
+	Mat44 inverseProjectionMatrix = m_projection;
+	MatrixInvert( inverseProjectionMatrix );
+	Mat44 cameraToWorld = m_transform.ToMatrix();
+	cameraToWorld.TransformBy( inverseProjectionMatrix );
 
-	Vec4 world = clipToWorld.TransformHomogeneousPoint3D( ndcCoords );
+	Vec4 world = cameraToWorld.TransformHomogeneousPoint3D( ndcCoords );
 	world /= world.w;
 	return Vec3( world.x, world.y, world.z );
 }
@@ -220,7 +221,7 @@ void Camera::AddPitchYawRollRotationDegrees( float pitch, float yaw, float roll 
 }
 
 //---------------------------------------------------------------------------------------------------------
-Vec3 Camera::ClientToWorldPosition( Vec2 const& clientPosition, float ndcZ )
+Vec3 Camera::ClientToWorldPosition( Vec2 const& clientPosition, float ndcZ ) const
 {
 	Vec3 ndc;
 

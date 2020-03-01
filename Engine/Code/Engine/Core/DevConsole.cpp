@@ -458,6 +458,14 @@ void DevConsole::SubmitCommand()
 void DevConsole::SetIsOpen( bool isOpen )
 {
 	m_isOpen = isOpen;
+	if( m_isOpen )
+	{
+		m_theEventSystem->FireEvent( "LoseFocus" );
+	}
+	else
+	{
+		m_theEventSystem->FireEvent( "GainFocus" );
+	}
 	ResetInput();
 }
 
