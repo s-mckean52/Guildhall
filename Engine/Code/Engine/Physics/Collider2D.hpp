@@ -40,10 +40,15 @@ public:
 
 	virtual void DebugRender( RenderContext* context, Rgba8 const& borderColor, Rgba8 const& fillColor ) = 0;
 
+
+	//---------------------------------------------------------------------------------------------------------
 	Collider2DType	GetType() const				{ return m_type; }
 	AABB2			GetWorldBounds() const		{ return m_worldBounds; }
+	bool			isMarkedForDestroy() const	{ return m_isMarkedForDestroy; }
 	float			GetMass() const;
 	Vec2			GetVelocity() const;
+
+	void			MarkForDestroy( bool isMarkedForDestroy );
 
 	bool			Intersects( Collider2D const* other ) const;
 	bool			GetManifold( Collider2D const* other, Manifold2* manifold );
@@ -55,6 +60,7 @@ protected:
 	virtual ~Collider2D();
 
 public:
+	bool m_isMarkedForDestroy			= false;
 	Collider2DType m_type;
 	Physics2D* m_physicsSystem			= nullptr;
 	Rigidbody2D* m_rigidbody			= nullptr;

@@ -47,7 +47,5 @@ public:
 
 	std::vector< Collision2D* > m_frameCollisions;
 	std::vector< Rigidbody2D* > m_rigidbodies2D;
-	std::vector< Rigidbody2D* > m_rigidbodies2DToBeDestroyed;
 	std::vector< Collider2D* > m_colliders2D;
-	std::vector< Collider2D* > m_colliders2DToBeDestroyed;
 };

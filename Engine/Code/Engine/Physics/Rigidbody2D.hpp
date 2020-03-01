@@ -26,6 +26,7 @@ public:
 	void SetSimulationMode( SimulationMode simulationMode );
 	void SetVelocity( Vec2 const& newVelocity );
 	void SetMass( float mass );
+	void MarkForDestroy( bool isMarkedForDestroy );
 
 	void ApplyImpulseAt( Vec2 const& worldPos, Vec2 const& impulse );
 	void AddForceFromAcceleration( const Vec2& acceleration );
@@ -33,12 +34,14 @@ public:
 	void DebugRender( RenderContext* context ) const;
 
 	bool DoesTakeForces() const;
-	bool IsEnabled() const { return m_enabled; }
+	bool IsEnabled() const				{ return m_enabled; }
+	bool IsMarkedForDestroy() const		{ return m_isMarkedForDestroy; }
 	bool IsSimulated() const;
 
 public:
-	bool			m_enabled			= true;
-	SimulationMode	m_simulationMode	= SIMULATION_MODE_DYNAMIC;
+	bool			m_isMarkedForDestroy	= false;
+	bool			m_enabled				= true;
+	SimulationMode	m_simulationMode		= SIMULATION_MODE_DYNAMIC;
 	Vec2			m_worldPosition;
 	Vec2			m_velocity;
 	Vec2			m_positionLastFrame;

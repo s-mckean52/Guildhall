@@ -1,6 +1,7 @@
-- [] Stop coloring objects red that are intersecting (it becomes a strobe light in this assignment otherwise)
+Project: FPS
+- [x] Stop coloring objects red that are intersecting (it becomes a strobe light in this assignment otherwise)
 - [x] Make sure your game creates polygons as `STATIC` by default, and discs create as `DYNAMIC` by default
-- [ ] Add support for `disc Collider2D::GetWorldBounds` for existing colliders
+- [x] Add support for `disc Collider2D::GetWorldBounds` for existing colliders
 	- [x] **Easier Option**: Implement this using `AABB2` bounding boxes
     - [ ] **Challenge Option**: Implement this using a bounding `Disc`
     - [x] Update this bounds whenever you update the world shape of the object.
@@ -27,7 +28,7 @@
     - [x] `DetectCollisions` to compute all collisions between all colliders.
     - [x] `ResolveCollisions` to resolve all detected collisions
     - [x] `ResolveCollision` to resolve a single collision
-- [-] `ResolveCollision` should...
+- [x] `ResolveCollision` should...
     - [x] `CorrectObjects`, pushing them out of their respective objects
         - [x] Push should depend on the ratio of the masses
         - [x] Static and Kinematic objects assume infinite mass vs dynamic objects

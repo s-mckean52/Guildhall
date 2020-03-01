@@ -41,16 +41,24 @@ void Physics2D::EndFrame()
 {
 	ClearFrameData();
 
-	for( int rbToBeDestroyedIndex = 0; rbToBeDestroyedIndex < m_rigidbodies2DToBeDestroyed.size(); ++rbToBeDestroyedIndex )
+	for( int rbToBeDestroyedIndex = 0; rbToBeDestroyedIndex < m_rigidbodies2D.size(); ++rbToBeDestroyedIndex )
 	{
-		delete m_rigidbodies2DToBeDestroyed[ rbToBeDestroyedIndex ];
-		m_rigidbodies2DToBeDestroyed[ rbToBeDestroyedIndex ] = nullptr;
+		Rigidbody2D* rb = m_rigidbodies2D[ rbToBeDestroyedIndex ];
+		if( rb && rb->IsMarkedForDestroy() )
+		{
+			delete m_rigidbodies2D[ rbToBeDestroyedIndex ];
+			m_rigidbodies2D[ rbToBeDestroyedIndex ] = nullptr;
+		}
 	}
 
-	for( int colliderToBeDestroyedIndex = 0; colliderToBeDestroyedIndex < m_colliders2DToBeDestroyed.size(); ++colliderToBeDestroyedIndex )
+	for( int colliderToBeDestroyedIndex = 0; colliderToBeDestroyedIndex < m_colliders2D.size(); ++colliderToBeDestroyedIndex )
 	{
-		delete m_colliders2DToBeDestroyed[ colliderToBeDestroyedIndex ];
-		m_colliders2DToBeDestroyed[ colliderToBeDestroyedIndex ] = nullptr;
+		Collider2D* collider = m_colliders2D[ colliderToBeDestroyedIndex ];
+		if( collider && collider->isMarkedForDestroy() )
+		{
+			delete m_colliders2D[ colliderToBeDestroyedIndex ];
+			m_colliders2D[ colliderToBeDestroyedIndex ] = nullptr;
+		}
 	}
 }
 
@@ -97,11 +105,15 @@ void Physics2D::DetectCollisions()
 		{
 			Manifold2* newManifold = new Manifold2();
 			Rigidbody2D* otherRigidbody = m_rigidbodies2D[ otherRigidbodyIndex ];
-			
+
+			if( thisRigidbody == nullptr || otherRigidbody == nullptr ) continue;
 			if( !thisRigidbody->IsEnabled() || !otherRigidbody->IsEnabled() ) continue;
 
 			Collider2D* thisCollider = thisRigidbody->m_collider;
 			Collider2D* otherCollider = otherRigidbody->m_collider;
+
+			if( thisCollider == nullptr || otherCollider == nullptr ) continue;
+
 			if( thisCollider->GetManifold( otherCollider, newManifold ) )
 			{
 				if( thisRigidbody->m_simulationMode == SIMULATION_MODE_STATIC && 
@@ -272,7 +284,7 @@ Rigidbody2D* Physics2D::CreateRigidbody2D()
 		Rigidbody2D* currentRb = m_rigidbodies2D[ rbIndex ];
 		if( currentRb == nullptr )
 		{
-			currentRb = newRigidbody2D;
+			m_rigidbodies2D[ rbIndex ] = newRigidbody2D;
 			return newRigidbody2D;
 		}
 	}
@@ -288,10 +300,10 @@ void Physics2D::DestroyRigidbody2D( Rigidbody2D* rigidbody )
 	Collider2D* collider = rigidbody->m_collider;
 	if( collider != nullptr )
 	{
-		rigidbody->m_collider = nullptr;
 		collider->Destroy();
+		rigidbody->m_collider = nullptr;
 	}
-	m_rigidbodies2DToBeDestroyed.push_back( rigidbody );
+	rigidbody->MarkForDestroy( true );
 }
 
 
@@ -319,7 +331,7 @@ PolygonCollider2D* Physics2D::CreatePolygonCollider2D( std::vector<Vec2> polygon
 //---------------------------------------------------------------------------------------------------------
 void Physics2D::DestroyCollider2D( Collider2D* collider )
 {
-	m_colliders2DToBeDestroyed.push_back( collider );
+	collider->MarkForDestroy( true );
 }
 
 
@@ -328,10 +340,10 @@ Collider2D* Physics2D::AddColliderToVector( Collider2D* newCollider )
 {
 	for( int colliderIndex = 0; colliderIndex < m_colliders2D.size(); ++colliderIndex )
 	{
-		Collider2D* currentCollider = m_colliders2D[colliderIndex];
+		Collider2D* currentCollider = m_colliders2D[ colliderIndex ];
 		if( currentCollider == nullptr )
 		{
-			currentCollider = newCollider;
+			m_colliders2D[ colliderIndex ] = newCollider;
 			return newCollider;
 		}
 	}

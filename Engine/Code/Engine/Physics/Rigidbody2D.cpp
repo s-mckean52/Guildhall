@@ -85,6 +85,13 @@ void Rigidbody2D::SetMass( float mass )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::MarkForDestroy( bool isMarkedForDestroy )
+{
+	m_isMarkedForDestroy = isMarkedForDestroy;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Rigidbody2D::ApplyImpulseAt( const Vec2& worldPos, const Vec2& impulse )
 {
 	UNUSED( worldPos );
