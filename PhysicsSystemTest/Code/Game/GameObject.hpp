@@ -2,6 +2,7 @@
 #include "Engine/Core/Rgba8.hpp"
 
 class Rigidbody2D;
+class Collider2D;
 struct Vec2;
 
 class GameObject
@@ -18,6 +19,8 @@ public:
 
 	void SetPosition( Vec2 position );
 	void AddBounciness( float bounce );
+
+	Collider2D* GetCollider() const;
 
 public:
 	bool m_isHovered		= false;

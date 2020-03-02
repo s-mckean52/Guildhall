@@ -44,6 +44,9 @@ public:
 	Vec2 AveragePositions( std::vector<Vec2> points );
 	void DrawGameObjects() const;
 	void UpdateGameObjects( float deltaSeconds );
+	void HandleGameObjectsOutOfBounds( GameObject* gameObject );
+	void MoveGameObjectToOppositeSideOfScreen( GameObject* gameObject );
+	void BounceGameObjectOffBottomOfScreen( GameObject* gameObject );
 	void CheckGameObjectOverlap( GameObject* gameObject );
 	void SetDraggedObject();
 	void DestroyGameObjects();

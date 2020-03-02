@@ -22,6 +22,7 @@
 #include "Engine/Physics/Collider2D.hpp"
 #include "Engine/Physics/DiscCollider2D.hpp"
 #include "Engine/Physics/PolygonCollider2D.hpp"
+#include "Engine/Math/AABB2.hpp"
 #include <string>
 
 
@@ -125,7 +126,7 @@ void Game::RenderUI() const
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( gravityVerts );
 
-	g_theConsole->Render( *g_theRenderer, *m_uiCamera, 30.f, g_testFont );
+	g_theConsole->Render( *g_theRenderer, *m_uiCamera, 10.f, g_testFont );
 }
 
 
@@ -406,8 +407,72 @@ void Game::UpdateGameObjects( float deltaSeconds )
 		if( currentGameObject )
 		{
 			currentGameObject->Update( deltaSeconds );
-			//CheckGameObjectOverlap( currentGameObject );
+			HandleGameObjectsOutOfBounds( currentGameObject );
 		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::HandleGameObjectsOutOfBounds( GameObject* gameObject )
+{
+	MoveGameObjectToOppositeSideOfScreen( gameObject );
+	BounceGameObjectOffBottomOfScreen( gameObject );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::MoveGameObjectToOppositeSideOfScreen( GameObject* gameObject )
+{
+	Collider2D* gameObjectCollider = gameObject->GetCollider();
+	if( gameObjectCollider == nullptr ) return;
+
+	Vec3 cameraBoundsMin = m_worldCamera->GetOrthoBottomLeft();
+	Vec3 cameraBoundsMax = m_worldCamera->GetOrthoTopRight();
+
+	AABB2 cameraBounds( cameraBoundsMin.x, cameraBoundsMin.y, cameraBoundsMax.x, cameraBoundsMax.y );
+	AABB2 gameObjectWolrdBounds = gameObjectCollider->GetWorldBounds();
+	Vec2 gameObjectDimensionsOfBounds = gameObjectWolrdBounds.GetDimensions();
+
+	if( !DoAABB2sOverlap( gameObjectWolrdBounds, cameraBounds ) )
+	{
+		float cameraHalfHeight = m_cameraHeight * 0.5f;
+		float cameraHalfWidth = cameraHalfHeight * m_worldCamera->GetAspectRatio();
+
+		Vec2 gameObjectWorldPosition = gameObject->m_rigidbody->m_worldPosition;
+		Vec2 diplacmentToCenter = gameObjectWorldPosition - cameraBounds.GetCenter();
+		float lengthToRight = GetProjectedLength2D( diplacmentToCenter, Vec2::RIGHT );
+
+		float orientationPosition = cameraHalfWidth + ( gameObjectDimensionsOfBounds.x * 0.5f ) - 0.001f;
+		if( lengthToRight > cameraHalfWidth )
+		{
+			gameObject->SetPosition( Vec2( -orientationPosition, gameObjectWorldPosition.y ) );
+		}
+		else if( lengthToRight < -cameraHalfWidth )
+		{
+			gameObject->SetPosition( Vec2( orientationPosition, gameObjectWorldPosition.y ) );
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::BounceGameObjectOffBottomOfScreen( GameObject* gameObject )
+{
+	Vec3 cameraMins = m_worldCamera->GetOrthoBottomLeft();
+	Vec3 cameraMaxes = m_worldCamera->GetOrthoTopRight();
+
+	Vec2 cameraBottomLeft = Vec2( cameraMins.x, cameraMins.y );
+	Vec2 cameraBottomRight = Vec2( cameraMaxes.x, cameraMins.y );
+
+	AABB2 gameObjectWorldBounds = gameObject->GetCollider()->GetWorldBounds();
+	OBB2 boundsAsOBB = OBB2( gameObjectWorldBounds );
+	if( DoOBBAndLineSegmentOverlap2D( boundsAsOBB, cameraBottomLeft, cameraBottomRight ) )
+	{
+		Rigidbody2D* gameObjectRigidbody = gameObject->m_rigidbody;
+		Vec2 reflectedVelocity = gameObjectRigidbody->GetVelocity();
+		reflectedVelocity.y = -reflectedVelocity.y;
+		gameObjectRigidbody->SetVelocity( reflectedVelocity );
 	}
 }
 

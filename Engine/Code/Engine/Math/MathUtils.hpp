@@ -86,7 +86,7 @@ void		PushDiscOutOfPoint2D( Vec2& discCenterPosition, float discRadius, const Ve
 void		PushDiscOutOfDisc2D( Vec2& pushedDiscCenterPosition, float pushedDiscRadius, const Vec2& staticDiscCenterPosition, float staticDiscRadius );
 
 FloatRange	GetRangeOnProjectedAxis( int numPoints, const Vec2* points, const Vec2& realativePos, const Vec2& axisNormal );
-float		GetProjectedLength2D( const Vec2& a, const Vec2& b );
+float		GetProjectedLength2D( const Vec2& vectorToProject, const Vec2& vectorToProjectOn );
 const Vec2	GetProjectedOnto2D( const Vec2& vectorToProject, const Vec2& vectorToProjectOn );
 float		GetAngleDegreesBetweenVectors2D( const Vec2& a, const Vec2& b );
 

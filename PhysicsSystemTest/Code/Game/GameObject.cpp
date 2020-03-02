@@ -61,15 +61,6 @@ void GameObject::UpdateColors()
 	{
 		m_currentBorderColor = m_defaultBorderColor;
 	}
-
-// 	if( m_isOverlapping )
-// 	{
-// 		m_currentFillColor = Rgba8( 255, 0, 0, 127 );
-// 	}
-// 	else
-// 	{
-// 		m_currentFillColor = m_startFillColor;
-// 	}
 }
 
 
@@ -119,4 +110,11 @@ void GameObject::AddBounciness( float bounce )
 	physicsMat->m_bounciness = GetClampZeroToOne( newBounce );
 
 	m_currentFillColor.a = static_cast<unsigned char>( 255.f * physicsMat->GetBounciness() );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Collider2D* GameObject::GetCollider() const
+{
+	return m_rigidbody->m_collider;
 }
