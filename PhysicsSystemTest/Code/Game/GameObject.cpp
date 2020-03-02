@@ -101,15 +101,35 @@ void GameObject::SetPosition( Vec2 position )
 }
 
 
+//---------------------------------------------------------------------------------------------------------
 void GameObject::AddBounciness( float bounce )
 {
 	PhysicsMaterial* physicsMat = m_rigidbody->m_collider->m_physicsMaterial;
-	float newBounce = physicsMat->m_bounciness + bounce;
-	ClampZeroToOne( newBounce );
-
-	physicsMat->m_bounciness = GetClampZeroToOne( newBounce );
+	physicsMat->AddBounciness( bounce );
 
 	m_currentFillColor.a = static_cast<unsigned char>( 255.f * physicsMat->GetBounciness() );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void GameObject::AddMass( float massToAdd )
+{
+	m_rigidbody->m_mass += massToAdd;
+	if( m_rigidbody->m_mass <= 0.0f )
+	{
+		m_rigidbody->m_mass = 0.001f;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void GameObject::AddDrag( float dragToAdd )
+{
+	m_rigidbody->m_drag += dragToAdd;
+	if( m_rigidbody->m_drag < 0.0f )
+	{
+		m_rigidbody->m_drag = 0.0f;
+	}
 }
 
 

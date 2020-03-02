@@ -146,29 +146,8 @@ void Game::Update( float deltaSeconds )
 void Game::UpdateGameStatesFromInput( float deltaSeconds )
 {
 	UpdateMousePos( *m_worldCamera );
-
-	if( g_theInput->IsKeyPressed( 'W' ) )
-	{
-		m_focalPoint.y += m_cameraMoveAmountPerFrame;
-	}
-	if( g_theInput->IsKeyPressed( 'A' ) )
-	{
-		m_focalPoint.x -= m_cameraMoveAmountPerFrame;
-	}
-	if( g_theInput->IsKeyPressed( 'S' ) )
-	{
-		m_focalPoint.y -= m_cameraMoveAmountPerFrame;
-	}
-	if( g_theInput->IsKeyPressed( 'D' ) )
-	{
-		m_focalPoint.x += m_cameraMoveAmountPerFrame;
-	}
-
-	if( g_theInput->IsKeyPressed( 'O' ) )
-	{
-		m_focalPoint = Vec3();
-		m_cameraHeight = CAMERA_SIZE_Y;
-	}
+	MoveWorldCameraPosition( deltaSeconds );
+	ResetCameraPosition( deltaSeconds );
 
 	if( m_isCreatingPolygon )
 	{
@@ -176,30 +155,20 @@ void Game::UpdateGameStatesFromInput( float deltaSeconds )
 		return;
 	}
 
-	if( g_theInput->WasKeyJustPressed( '1' ) && !m_draggedObject )
+	if( m_draggedObject == nullptr )
 	{
-		GameObject* newGameObject = CreateDisc();
-		AddGameObject( newGameObject );
+		CreateNewGameObject( deltaSeconds );
+		ModifyPhysicsGravity( deltaSeconds );
 	}
-	else if( g_theInput->WasKeyJustPressed( '1' ) )
+	else
 	{
-		m_draggedObject->m_rigidbody->SetSimulationMode( SIMULATION_MODE_STATIC );
-	}
-
-	if( g_theInput->WasKeyJustPressed( '2' ) && !m_draggedObject )
-	{
-		AddPointToNewPolygon();
-		m_isCreatingPolygon = true;
-	}
-	else if( g_theInput->WasKeyJustPressed( '2' ) )
-	{
-		m_draggedObject->m_rigidbody->SetSimulationMode( SIMULATION_MODE_KINEMATIC );
+		ChangeDraggedObjectSimulationMode( deltaSeconds );
+		ModifyDraggedObjectBounciness( deltaSeconds );
+		ModifyMassOfDraggedObject( deltaSeconds );
+		ModifyDragOfDraggedObject( deltaSeconds );
+		DeleteDraggedObject( deltaSeconds );
 	}
 
-	if( g_theInput->WasKeyJustPressed( '3' ) && m_draggedObject )
-	{
-		m_draggedObject->m_rigidbody->SetSimulationMode( SIMULATION_MODE_DYNAMIC );
-	}
 
 	if( g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_LEFT ) )
 	{
@@ -208,24 +177,7 @@ void Game::UpdateGameStatesFromInput( float deltaSeconds )
 
 	if( g_theInput->WasMouseButtonJustReleased( MOUSE_BUTTON_LEFT ) )
 	{
-		if( m_draggedObject )
-		{
-			Rigidbody2D* draggedRb = m_draggedObject->m_rigidbody;
-			Vec2 velocity = ( draggedRb->m_worldPosition - draggedRb->m_positionLastFrame ) / deltaSeconds;
-			m_draggedObject->m_rigidbody->SetVelocity( velocity );
-
-			m_draggedObject->m_isHeld = false;
-			m_draggedObject = nullptr;
-		}
-	}
-
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_DELETE ) || g_theInput->WasKeyJustPressed( KEY_CODE_BACKSPACE ) )
-	{
-		if( m_draggedObject )
-		{
-			m_draggedObject->m_isDestroyed = true;
-			m_draggedObject = nullptr;
-		}
+		DropDraggedObject( deltaSeconds );
 	}
 
 	float scrollAmount = g_theInput->GetScrollAmount();
@@ -238,30 +190,6 @@ void Game::UpdateGameStatesFromInput( float deltaSeconds )
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
 	{
 		m_isQuitting = true;
-	}
-
-	if( g_theInput->IsKeyPressed( KEY_CODE_MINUS ) )
-	{
-		if( m_draggedObject != nullptr )
-		{
-			m_draggedObject->AddBounciness( -0.1f * deltaSeconds );
-		}
-		else
-		{
-			m_physics2D->AddGravityInDownDirection( 1.0f * deltaSeconds);
-		}
-	}
-
-	if( g_theInput->IsKeyPressed( KEY_CODE_PLUS ) )
-	{
-		if( m_draggedObject != nullptr )
-		{
-			m_draggedObject->AddBounciness( 0.1f * deltaSeconds );
-		}
-		else
-		{
-			m_physics2D->AddGravityInDownDirection( -1.0f * deltaSeconds );
-		}
 	}
 }
 
@@ -321,6 +249,181 @@ void Game::UpdateMousePos( const Camera& camera )
 	if( m_draggedObject )
 	{
 		m_draggedObject->SetPosition( m_mousePos + m_draggedObjectOffset );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::MoveWorldCameraPosition( float deltaSeconds )
+{
+	UNUSED( deltaSeconds );
+
+	if( g_theInput->IsKeyPressed( 'W' ) )
+	{
+		m_focalPoint.y += m_cameraMoveAmountPerFrame;
+	}
+	if( g_theInput->IsKeyPressed( 'A' ) )
+	{
+		m_focalPoint.x -= m_cameraMoveAmountPerFrame;
+	}
+	if( g_theInput->IsKeyPressed( 'S' ) )
+	{
+		m_focalPoint.y -= m_cameraMoveAmountPerFrame;
+	}
+	if( g_theInput->IsKeyPressed( 'D' ) )
+	{
+		m_focalPoint.x += m_cameraMoveAmountPerFrame;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ResetCameraPosition( float deltaSeconds )
+{
+	UNUSED( deltaSeconds );
+
+	if( g_theInput->IsKeyPressed( 'O' ) )
+	{
+		m_focalPoint = Vec3();
+		m_cameraHeight = CAMERA_SIZE_Y;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::CreateNewGameObject( float deltaSeconds )
+{
+	UNUSED( deltaSeconds );
+
+	if( g_theInput->WasKeyJustPressed( '1' ) && !m_draggedObject )
+	{
+		GameObject* newGameObject = CreateDisc();
+		AddGameObject( newGameObject );
+	}
+
+	if( g_theInput->WasKeyJustPressed( '2' ) && !m_draggedObject )
+	{
+		AddPointToNewPolygon();
+		m_isCreatingPolygon = true;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ChangeDraggedObjectSimulationMode( float deltaSeconds )
+{
+	UNUSED( deltaSeconds );
+
+	if( m_draggedObject == nullptr ) return;
+
+	if( g_theInput->WasKeyJustPressed( '1' ) )
+	{
+		m_draggedObject->m_rigidbody->SetSimulationMode( SIMULATION_MODE_STATIC );
+	}
+
+	if( g_theInput->WasKeyJustPressed( '2' ) )
+	{
+		m_draggedObject->m_rigidbody->SetSimulationMode( SIMULATION_MODE_KINEMATIC );
+	}
+
+	if( g_theInput->WasKeyJustPressed( '3' ) )
+	{
+		m_draggedObject->m_rigidbody->SetSimulationMode( SIMULATION_MODE_DYNAMIC );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::DropDraggedObject( float deltaSeconds )
+{
+	if( m_draggedObject == nullptr ) return;
+
+	Rigidbody2D* draggedRb = m_draggedObject->m_rigidbody;
+	Vec2 velocity = (draggedRb->m_worldPosition - draggedRb->m_positionLastFrame) / deltaSeconds;
+	m_draggedObject->m_rigidbody->SetVelocity( velocity );
+
+	m_draggedObject->m_isHeld = false;
+	m_draggedObject = nullptr;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ModifyPhysicsGravity( float deltaSeconds )
+{
+	if( g_theInput->IsKeyPressed( KEY_CODE_MINUS ) )
+	{
+		m_physics2D->AddGravityInDownDirection( 1.0f * deltaSeconds );
+	}
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_PLUS ) )
+	{
+		m_physics2D->AddGravityInDownDirection( -1.0f * deltaSeconds );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ModifyDraggedObjectBounciness( float deltaSeconds )
+{
+	if( m_draggedObject == nullptr ) return;
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_MINUS ) )
+	{
+		m_draggedObject->AddBounciness( -0.1f * deltaSeconds );
+	}
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_PLUS ) )
+	{
+		m_draggedObject->AddBounciness( 0.1f * deltaSeconds );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::DeleteDraggedObject( float deltaSeconds )
+{
+	UNUSED( deltaSeconds );
+
+	if( m_draggedObject == nullptr ) return;
+
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_DELETE ) || g_theInput->WasKeyJustPressed( KEY_CODE_BACKSPACE ) )
+	{
+		m_draggedObject->m_isDestroyed = true;
+		m_draggedObject = nullptr;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ModifyMassOfDraggedObject( float deltaSeconds )
+{
+	if( m_draggedObject == nullptr ) return;
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_LEFT_BRACKET ) )
+	{
+		m_draggedObject->AddMass( -10.f * deltaSeconds );
+	}
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_RIGHT_BRACKET ) )
+	{
+		m_draggedObject->AddMass( 10.f * deltaSeconds );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ModifyDragOfDraggedObject( float deltaSeconds )
+{
+	if( m_draggedObject == nullptr ) return;
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_SEMICOLON ) )
+	{
+		m_draggedObject->AddDrag( 5.0f * deltaSeconds );
+	}
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_BACK_SLASH ) )
+	{
+		m_draggedObject->AddDrag( 5.0f * deltaSeconds );
 	}
 }
 

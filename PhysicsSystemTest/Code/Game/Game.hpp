@@ -28,14 +28,27 @@ public:
 	void Update( float deltaSeconds );
 	void UpdateCameras( float deltaSeconds );
 
-	void UpdateGameStatesFromInput( float deltaSeconds );
 
 	void LoadAssets();
 	void LoadTextures();
 	void LoadAudio();
 
+	//---------------------------------------------------------------------------------------------------------
+	// Input
+	void UpdateGameStatesFromInput( float deltaSeconds );
 	void UpdateMousePos( const Camera& camera );
-
+	void MoveWorldCameraPosition( float deltaSeconds );
+	void ResetCameraPosition( float deltaSeconds );
+	void CreateNewGameObject( float deltaSeconds );
+	void ChangeDraggedObjectSimulationMode( float deltaSeconds );
+	void DropDraggedObject( float deltaSeconds );
+	void ModifyPhysicsGravity( float deltaSeconds );
+	void ModifyDraggedObjectBounciness( float deltaSeconds );
+	void DeleteDraggedObject( float deltaSeconds );
+	void ModifyMassOfDraggedObject( float deltaSeconds );
+	void ModifyDragOfDraggedObject( float deltaSeconds );
+	//---------------------------------------------------------------------------------------------------------
+	
 	bool IsQuitting() const { return m_isQuitting; }
 
 	GameObject* CreateDisc();

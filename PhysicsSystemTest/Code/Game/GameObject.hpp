@@ -18,7 +18,9 @@ public:
 	void Draw() const;
 
 	void SetPosition( Vec2 position );
-	void AddBounciness( float bounce );
+	void AddBounciness( float bounceToAdd );
+	void AddMass( float massToAdd );
+	void AddDrag( float dragToAdd );
 
 	Collider2D* GetCollider() const;
 

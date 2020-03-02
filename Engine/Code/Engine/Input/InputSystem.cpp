@@ -35,11 +35,17 @@ const unsigned char KEY_CODE_F9				= VK_F9;
 const unsigned char KEY_CODE_F10			= VK_F10;
 const unsigned char KEY_CODE_F11			= VK_F11;
 const unsigned char KEY_CODE_F12			= VK_F12;
-const unsigned char KEY_CODE_TILDE			= VK_OEM_3;
 const unsigned char KEY_CODE_PLUS			= VK_OEM_PLUS;
 const unsigned char KEY_CODE_MINUS			= VK_OEM_MINUS;
 const unsigned char KEY_CODE_HOME			= VK_HOME;
 const unsigned char KEY_CODE_END			= VK_END;
+const unsigned char KEY_CODE_TILDE			= VK_OEM_3;
+const unsigned char KEY_CODE_LEFT_BRACKET	= VK_OEM_4;
+const unsigned char KEY_CODE_RIGHT_BRACKET	= VK_OEM_6;
+const unsigned char KEY_CODE_COMMA			= VK_OEM_COMMA;
+const unsigned char KEY_CODE_PERIOD			= VK_OEM_PERIOD;
+const unsigned char KEY_CODE_SEMICOLON		= VK_OEM_1;
+const unsigned char KEY_CODE_BACK_SLASH		= VK_OEM_2;
 
 //Define Mouse Codes
 const unsigned char MOUSE_CODE_LEFT			= MK_LBUTTON;

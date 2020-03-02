@@ -65,11 +65,17 @@ extern const unsigned char KEY_CODE_F9;
 extern const unsigned char KEY_CODE_F10;
 extern const unsigned char KEY_CODE_F11;
 extern const unsigned char KEY_CODE_F12;
-extern const unsigned char KEY_CODE_TILDE;
 extern const unsigned char KEY_CODE_PLUS;
 extern const unsigned char KEY_CODE_MINUS;
 extern const unsigned char KEY_CODE_HOME;
 extern const unsigned char KEY_CODE_END;
+extern const unsigned char KEY_CODE_TILDE;
+extern const unsigned char KEY_CODE_LEFT_BRACKET;
+extern const unsigned char KEY_CODE_RIGHT_BRACKET;
+extern const unsigned char KEY_CODE_COMMA;
+extern const unsigned char KEY_CODE_PERIOD;
+extern const unsigned char KEY_CODE_SEMICOLON;
+extern const unsigned char KEY_CODE_BACK_SLASH;
 
 extern const unsigned char MOUSE_CODE_LEFT;
 extern const unsigned char MOUSE_CODE_RIGHT;

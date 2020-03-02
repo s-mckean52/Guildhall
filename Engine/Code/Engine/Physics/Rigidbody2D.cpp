@@ -85,6 +85,13 @@ void Rigidbody2D::SetMass( float mass )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::SetDrag( float drag )
+{
+	m_drag = drag;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Rigidbody2D::MarkForDestroy( bool isMarkedForDestroy )
 {
 	m_isMarkedForDestroy = isMarkedForDestroy;
@@ -103,6 +110,13 @@ void Rigidbody2D::ApplyImpulseAt( const Vec2& worldPos, const Vec2& impulse )
 void Rigidbody2D::AddForceFromAcceleration( const Vec2& acceleration )
 {
 	m_frameForces += m_mass * acceleration;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::AddDrag( float dragToAdd )
+{
+	m_drag += dragToAdd;
 }
 
 
