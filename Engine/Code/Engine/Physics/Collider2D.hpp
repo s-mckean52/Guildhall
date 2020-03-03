@@ -54,7 +54,9 @@ public:
 	bool			GetManifold( Collider2D const* other, Manifold2* manifold );
 	bool			WorldBoundsIntersect( Collider2D const* other ) const;
 	float			GetBounceWith( Collider2D const* other ) const;
+	float			GetFrictionWith( Collider2D const* other ) const;
 	float			GetPhysicsMaterialBounciness() const;
+	float			GetPhysicsMaterialFriction() const;
 
 protected:
 	virtual ~Collider2D();

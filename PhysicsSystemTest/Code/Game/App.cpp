@@ -12,6 +12,8 @@
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Platform/Window.hpp"
+#include "Engine/Core/Clock.hpp"
+
 
 EventSystem*	g_theEventSystem	= nullptr;
 RenderContext*	g_theRenderer		= nullptr;
@@ -24,6 +26,8 @@ Game*			g_theGame			= nullptr;
 //---------------------------------------------------------------------------------------------------------
 void App::StartUp()
 {
+	Clock::SystemStartUp();
+
 	g_theEventSystem = new EventSystem();
 	g_theRenderer = new RenderContext();
 	g_theInput = new InputSystem();
@@ -70,6 +74,8 @@ void App::ShutDown()
 	g_theRenderer->ShutDown();
 	delete g_theRenderer;
 	g_theRenderer = nullptr;
+
+	Clock::SystemShutdown();
 }
 
 
@@ -102,21 +108,22 @@ STATIC void App::HelpCommand()
 	}
 }
 
+
 //---------------------------------------------------------------------------------------------------------
 void App::RunFrame()
 {
-	static double timeLastFrameStarted = GetCurrentTimeSeconds();
-	double timeThisFrameStarted = GetCurrentTimeSeconds();
-	double deltaSeconds = timeThisFrameStarted - timeLastFrameStarted;
-	timeLastFrameStarted = timeThisFrameStarted;
-
-	if( deltaSeconds > MAX_FRAME_TIME )
-	{
-		deltaSeconds = MAX_FRAME_TIME;
-	}
+// 	static double timeLastFrameStarted = GetCurrentTimeSeconds();
+// 	double timeThisFrameStarted = GetCurrentTimeSeconds();
+// 	double deltaSeconds = timeThisFrameStarted - timeLastFrameStarted;
+// 	timeLastFrameStarted = timeThisFrameStarted;
+// 
+// 	if( deltaSeconds > MAX_FRAME_TIME )
+// 	{
+// 		deltaSeconds = MAX_FRAME_TIME;
+// 	}
 
 	BeginFrame(); //All engine systems 
-	Update( static_cast<float>(deltaSeconds) ); //only for the game
+	Update(); //only for the game
 	Render();	//only game
 	EndFrame();	//all engine system
 }
@@ -149,6 +156,8 @@ void App::OpenDevConsole()
 //---------------------------------------------------------------------------------------------------------
 void App::BeginFrame()
 {
+	Clock::BeginFrame();
+
 	g_theRenderer->BeginFrame();
 	g_theInput->BeginFrame();
 	g_theAudio->BeginFrame();
@@ -157,12 +166,10 @@ void App::BeginFrame()
 
 
 //---------------------------------------------------------------------------------------------------------
-void App::Update( float deltaSeconds )
+void App::Update()
 {
-	g_theRenderer->UpdateFrameTime( deltaSeconds );
-
-	g_theGame->Update( deltaSeconds );
-	g_theConsole->Update( deltaSeconds );
+	g_theGame->Update();
+	g_theConsole->Update();
 
 	if( g_theGame->IsQuitting() || g_theWindow->IsQuitting() )
 	{

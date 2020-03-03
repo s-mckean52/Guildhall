@@ -172,6 +172,21 @@ float GetClamp( float valueToClamp, float lowerLimit, float upperLimit )
 
 
 //---------------------------------------------------------------------------------------------------------
+double GetClamp( double valueToClamp, double lowerLimit, double upperLimit )
+{
+	if( valueToClamp < lowerLimit )
+	{
+		return lowerLimit;
+	}
+	else if( valueToClamp > upperLimit )
+	{
+		return upperLimit;
+	}
+	return valueToClamp;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Clamp( int& valueToClamp, int lowerLimit, int upperLimit )
 {
 	if( valueToClamp < lowerLimit )
@@ -187,6 +202,20 @@ void Clamp( int& valueToClamp, int lowerLimit, int upperLimit )
 
 //---------------------------------------------------------------------------------------------------------
 void Clamp( float& valueToClamp, float lowerLimit, float upperLimit )
+{
+	if( valueToClamp < lowerLimit )
+	{
+		valueToClamp = lowerLimit;
+	}
+	else if( valueToClamp > upperLimit )
+	{
+		valueToClamp = upperLimit;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Clamp( double& valueToClamp, double lowerLimit, double upperLimit )
 {
 	if( valueToClamp < lowerLimit )
 	{
@@ -216,6 +245,13 @@ bool ApproximatelyEqual( float valueToCheck, float valueToCheckAgainst )
 		return false;
 	}
 	return true;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float Signf( float value )
+{
+	return ( value >= 0.f ) ? 1.0f : -1.0f;
 }
 
 

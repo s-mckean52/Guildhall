@@ -23,6 +23,7 @@
 #include "Engine/Physics/DiscCollider2D.hpp"
 #include "Engine/Physics/PolygonCollider2D.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Core/Clock.hpp"
 #include <string>
 
 
@@ -43,13 +44,15 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
+	m_gameClock = new Clock();
+	g_theRenderer->SetGameClock( m_gameClock );
+	m_physics2D = new Physics2D( m_gameClock );
+
 	m_worldCamera = new Camera( g_theRenderer );
 	m_uiCamera = new Camera( g_theRenderer );
 
 	g_theConsole->PrintString( Rgba8::RED, "Game Start Up" );
 	g_RNG = new RandomNumberGenerator();
-
-	m_physics2D = new Physics2D();
 
 	g_testFont = g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 
@@ -78,6 +81,9 @@ void Game::ShutDown()
 
 	delete m_uiCamera;
 	m_uiCamera = nullptr;
+
+	delete m_gameClock;
+	m_gameClock = nullptr;
 }
 
 
@@ -109,6 +115,7 @@ void Game::Render() const
 	//UI Camera
 	g_theRenderer->BeginCamera( *m_uiCamera );
 	RenderUI();
+	g_theConsole->Render( *g_theRenderer, *m_uiCamera, 10.f, g_testFont );
 	g_theRenderer->EndCamera( *m_uiCamera );
 }
 
@@ -116,8 +123,9 @@ void Game::Render() const
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderUI() const
 {
+	// Draw Gravity Text
 	std::vector<Vertex_PCU> gravityVerts;
-	std::string gravityAsString = Stringf( "%f", m_physics2D->GetGravityAmount() );
+	std::string gravityAsString = Stringf( "Gravity: %f", m_physics2D->GetGravityAmount() );
 
 	Vec3 positionToDraw = m_uiCamera->ClientToWorldPosition( Vec2( 0.01f, 0.98f ) );
 
@@ -126,18 +134,32 @@ void Game::RenderUI() const
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( gravityVerts );
 
-	g_theConsole->Render( *g_theRenderer, *m_uiCamera, 10.f, g_testFont );
+
+	// Draw Physics State
+	std::vector<Vertex_PCU> physicsClockStateVerts;
+	std::string physicsStateAsString = Stringf( "Physics - IsPause: %s  TimeScale: %f", m_physics2D->m_clock->IsPaused() ? "true" : "false", m_physics2D->m_clock->GetScale() );
+	
+	Vec3 positionToDrawPhysicsState = m_uiCamera->ClientToWorldPosition( Vec2( 0.01f, 0.95f ) );
+
+	g_testFont->AddVertsForText2D( physicsClockStateVerts, Vec2( positionToDrawPhysicsState.x, positionToDrawPhysicsState.y ), 10.f, physicsStateAsString );
+	g_theRenderer->BindTexture( g_testFont->GetTexture() );
+	g_theRenderer->BindShader( (Shader*)nullptr );
+	g_theRenderer->DrawVertexArray( physicsClockStateVerts );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::Update( float deltaSeconds )
+void Game::Update()
 {
-	UpdateGameStatesFromInput( deltaSeconds );
+	float deltaSeconds = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
+	if( !g_theConsole->IsOpen() )
+	{
+		UpdateGameStatesFromInput( deltaSeconds );
+	}
 	
-	m_physics2D->Update( deltaSeconds );
-	UpdateGameObjects( deltaSeconds );
+	m_physics2D->Update();
 
+	UpdateGameObjects( deltaSeconds );
 	UpdateCameras( deltaSeconds );
 }
 
@@ -166,9 +188,11 @@ void Game::UpdateGameStatesFromInput( float deltaSeconds )
 		ModifyDraggedObjectBounciness( deltaSeconds );
 		ModifyMassOfDraggedObject( deltaSeconds );
 		ModifyDragOfDraggedObject( deltaSeconds );
+		ModifyFrictionOfDraggedObject( deltaSeconds );
 		DeleteDraggedObject( deltaSeconds );
 	}
 
+	UpdatePhysicsInput();
 
 	if( g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_LEFT ) )
 	{
@@ -424,6 +448,49 @@ void Game::ModifyDragOfDraggedObject( float deltaSeconds )
 	if( g_theInput->IsKeyPressed( KEY_CODE_BACK_SLASH ) )
 	{
 		m_draggedObject->AddDrag( 5.0f * deltaSeconds );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ModifyFrictionOfDraggedObject( float deltaSeconds )
+{
+	if( m_draggedObject == nullptr ) return;
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_COMMA ) )
+	{
+		m_draggedObject->AddFriction( -0.5f * deltaSeconds );
+	}
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_PERIOD ) )
+	{
+		m_draggedObject->AddFriction( 0.5f * deltaSeconds );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdatePhysicsInput()
+{
+	if( g_theInput->WasKeyJustPressed( 'P' ) )
+	{
+		m_physics2D->ToggleClockPause();
+	}
+
+	if( g_theInput->WasKeyJustPressed( '8' ) )
+	{
+		m_physics2D->SetClockScale( 0.5 );
+	}
+
+	if( g_theInput->WasKeyJustPressed( '9' ) )
+	{
+		m_physics2D->SetClockScale( 2.0 );
+	}
+
+	if( g_theInput->WasKeyJustPressed( '0' ) )
+	{
+		m_physics2D->SetClockScale( 1.0 );
+		m_physics2D->m_clock->Resume();
 	}
 }
 

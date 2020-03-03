@@ -30,6 +30,7 @@ public:
 	void MarkForDestroy( bool isMarkedForDestroy );
 
 	void ApplyImpulseAt( Vec2 const& worldPos, Vec2 const& impulse );
+	void ApplyFrictionAt( Vec2 const& worldPos, float frictionCoefficient, Vec2 const& collisionNormal, float normalImpulse, Vec2 const& collisionTangent, float tangentImpulse );
 	void AddForceFromAcceleration( const Vec2& acceleration );
 	void AddDrag( float dragToAdd );
 

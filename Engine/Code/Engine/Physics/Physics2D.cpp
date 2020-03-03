@@ -7,11 +7,14 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Physics/Collision2D.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/Clock.hpp"
+
 
 //---------------------------------------------------------------------------------------------------------
-Physics2D::Physics2D()
+Physics2D::Physics2D( Clock* gameClock )
 {
-
+	SetClock( gameClock );
+	m_stepTimer.SetSeconds( gameClock, m_fixedDeltaTime );
 }
 
 
@@ -30,9 +33,14 @@ void Physics2D::BeginFrame()
 
 
 //---------------------------------------------------------------------------------------------------------
-void Physics2D::Update( float deltaSeconds )
+void Physics2D::Update()
 {
-	AdvanceSimulation( deltaSeconds );
+	int numberOfSteps = m_stepTimer.CheckAndDecrementAll();
+
+	for( int stepCount = 0; stepCount < numberOfSteps; ++stepCount )
+	{
+		AdvanceSimulation( static_cast<float>( m_fixedDeltaTime ) );
+	}
 }
 
 
@@ -200,6 +208,7 @@ void Physics2D::EulerStep( float deltaSeconds, Rigidbody2D* rb )
 void Physics2D::ApplyImpulseOnCollision( Collision2D const& collision )
 {
 	Vec2 collisionNormal = collision.GetNormal();
+	Vec2 collisionTangent = collisionNormal.GetRotatedMinus90Degrees();
 
 	Collider2D* me = collision.thisCollider;
 	Collider2D* them = collision.otherCollider;
@@ -210,30 +219,48 @@ void Physics2D::ApplyImpulseOnCollision( Collision2D const& collision )
 	Vec2 myVelocity = me->GetVelocity();
 	Vec2 theirVelocity = them->GetVelocity();
 
-	float coefficientOfRestitution = me->GetBounceWith( them );
+	float coefficientOfRestitution	= me->GetBounceWith( them );
+	float frictionalCoefficient		= me->GetFrictionWith( them );
 
 	float impulseConstant = 1 + coefficientOfRestitution;
 	if( them->m_rigidbody->m_simulationMode != SIMULATION_MODE_DYNAMIC  )
 	{
 		impulseConstant *= myMass;
 		Vec2 impulse = impulseConstant * ( theirVelocity - myVelocity );
-		impulse = GetProjectedOnto2D( impulse, collisionNormal );
-		me->m_rigidbody->ApplyImpulseAt( Vec2(), impulse );
+		float normalImpulse = DotProduct2D( impulse, collisionNormal );
+		me->m_rigidbody->ApplyImpulseAt( Vec2(), normalImpulse * collisionNormal );
+
+		if( me->m_rigidbody->m_simulationMode == SIMULATION_MODE_DYNAMIC )
+		{
+			float tangentImpulse = DotProduct2D( impulse, collisionTangent );
+			me->m_rigidbody->ApplyFrictionAt( Vec2(), frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, tangentImpulse );
+		}
 	}
 	else if( me->m_rigidbody->m_simulationMode != SIMULATION_MODE_DYNAMIC )
 	{
 		impulseConstant *= theirMass;
 		Vec2 impulse = impulseConstant * ( theirVelocity - myVelocity );
-		impulse = GetProjectedOnto2D( impulse, collisionNormal );
-		them->m_rigidbody->ApplyImpulseAt( Vec2(), -impulse );
+		float normalImpulse = DotProduct2D( impulse, collisionNormal );
+		them->m_rigidbody->ApplyImpulseAt( Vec2(), collisionNormal * -normalImpulse );
+
+		if( them->m_rigidbody->m_simulationMode == SIMULATION_MODE_DYNAMIC )
+		{
+			float tangentImpulse = DotProduct2D( impulse, collisionTangent );
+			them->m_rigidbody->ApplyFrictionAt( Vec2(), frictionalCoefficient, collisionNormal, -normalImpulse, collisionTangent, -tangentImpulse );
+		}
 	}
 	else
 	{
 		impulseConstant *= ( ( myMass * theirMass ) / ( myMass + theirMass ) );
 		Vec2 impulse = impulseConstant * ( theirVelocity - myVelocity );
-		impulse = GetProjectedOnto2D( impulse, collisionNormal );
-		me->m_rigidbody->ApplyImpulseAt( Vec2(), impulse );
-		them->m_rigidbody->ApplyImpulseAt( Vec2(), -impulse );
+		float normalImpulse = DotProduct2D( impulse, collisionNormal );
+		float tangentImpulse = DotProduct2D( impulse, collisionTangent );
+
+		me->m_rigidbody->ApplyImpulseAt( Vec2(), collisionNormal * normalImpulse );
+		them->m_rigidbody->ApplyImpulseAt( Vec2(), collisionNormal * -normalImpulse );
+
+		me->m_rigidbody->ApplyFrictionAt( Vec2(), frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, tangentImpulse );
+		them->m_rigidbody->ApplyFrictionAt( Vec2(), frictionalCoefficient, collisionNormal, -normalImpulse, collisionTangent, -tangentImpulse );
 	}
 }
 
@@ -249,6 +276,46 @@ void Physics2D::SetSceneGravity()
 			rb->AddForceFromAcceleration( m_gravityAcceleration );
 		}
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::SetClock( Clock* clock )
+{
+	m_clock = clock;
+	if( clock == nullptr )
+	{
+		m_clock = Clock::GetMaster();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::ToggleClockPause()
+{
+	if( m_clock->IsPaused() )
+	{
+		m_clock->Resume();
+	}
+	else
+	{
+		m_clock->Pause();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::SetClockScale( double clockScale )
+{
+	m_clock->SetScale( clockScale );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::SetFixedDeltaTime( double newFixedDeltaTime )
+{
+	m_fixedDeltaTime = newFixedDeltaTime;
+	m_stepTimer.SetSeconds( newFixedDeltaTime );
 }
 
 
@@ -349,4 +416,11 @@ Collider2D* Physics2D::AddColliderToVector( Collider2D* newCollider )
 	}
 	m_colliders2D.push_back( newCollider );
 	return newCollider;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+STATIC void Physics2D::SetPhysicsUpdate( double newFrameTime )
+{
+	//SetFixedDeltaTime( newFrameTime );
 }

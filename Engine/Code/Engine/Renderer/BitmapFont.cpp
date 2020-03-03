@@ -28,8 +28,8 @@ const Texture* BitmapFont::GetTexture() const
 //---------------------------------------------------------------------------------------------------------
 void BitmapFont::AddVertsForText2D( std::vector<Vertex_PCU>& vertexArray, const Vec2& textMins, float cellHeight, const std::string& text, const Rgba8& tint, float cellAspect )
 {
-	Vec2 glyphMins;
-	Vec2 glyphMaxes( 0.f, cellHeight );
+	Vec2 glyphMins = textMins;
+	Vec2 glyphMaxes( textMins.x, textMins.y + cellHeight );
 
 	Vec2 uvsAtMins;
 	Vec2 uvsAtMaxes;
@@ -45,7 +45,7 @@ void BitmapFont::AddVertsForText2D( std::vector<Vertex_PCU>& vertexArray, const 
 		glyphMins = Vec2( glyphMaxes.x, glyphMins.y );
 	}
 
-	TransformVertexArray( vertexArray, 1.f, 0.f, textMins );
+	//TransformVertexArray( vertexArray, 1.f, 0.f, textMins );
 }
 
 

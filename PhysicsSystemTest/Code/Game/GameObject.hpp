@@ -1,5 +1,6 @@
 #pragma once
 #include "Engine/Core/Rgba8.hpp"
+#include <string>
 
 class Rigidbody2D;
 class Collider2D;
@@ -16,11 +17,16 @@ public:
 	void UpdateColorBasedOnPhysics();
 
 	void Draw() const;
+	void DrawTooltip() const;
+
+	std::string GetSimulationModeAsString() const;
+	std::string GetVelocityAsString() const;
 
 	void SetPosition( Vec2 position );
 	void AddBounciness( float bounceToAdd );
 	void AddMass( float massToAdd );
 	void AddDrag( float dragToAdd );
+	void AddFriction( float frictionToAdd );
 
 	Collider2D* GetCollider() const;
 

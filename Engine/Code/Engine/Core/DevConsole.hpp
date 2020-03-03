@@ -10,6 +10,7 @@ class	RenderContext;
 class	BitmapFont;
 class	InputSystem;
 class	EventSystem;
+class	Clock;
 
 enum Direction
 {
@@ -27,7 +28,7 @@ public:
 	void EndFrame();
 	void StartFrame();
 
-	void Update( float deltaSeconds );
+	void Update();
 	void UpdateCursorBlinkTime( float deltaSeconds );
 
 	void PrintString( const Rgba8& textColor, const std::string& devConsolePrintString );
@@ -68,7 +69,9 @@ public:
 	bool IsOpen() const { return m_isOpen; };
 
 private:
-	int m_cursorPosition;
+	Clock* m_clock = nullptr;
+
+	int m_cursorPosition = 0;
 	int m_selectionOffset = 0;
 
 	int m_previousCommandIndex = 0;

@@ -31,6 +31,7 @@
 #include "Engine/Math/Transform.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
 #include "Engine/Renderer/GPUMesh.hpp"
+#include "Engine/Core/Clock.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -88,6 +89,7 @@ void RenderContext::StartUp( Window* theWindow )
 	m_samplerDefault = new Sampler( this, SAMPLER_POINT );
 	m_textueDefaultColor = CreateTextureFromColor( Rgba8::WHITE );
 
+	SetGameClock( nullptr );
 	CreateBlendStates();
 }
 
@@ -95,6 +97,7 @@ void RenderContext::StartUp( Window* theWindow )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::BeginFrame()
 {
+	UpdateFrameTime();
 }
 
 
@@ -135,13 +138,24 @@ void RenderContext::ShutDown()
 
 
 //---------------------------------------------------------------------------------------------------------
-void RenderContext::UpdateFrameTime( float deltaSeconds )
+void RenderContext::UpdateFrameTime()
 {
 	frame_data_t frameData;
-	frameData.system_time = static_cast<float>( GetCurrentTimeSeconds() );
-	frameData.system_delta_time = deltaSeconds;
+	frameData.system_time = static_cast<float>( m_gameClock->GetTotalElapsedSeconds() );
+	frameData.system_delta_time = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
 
 	m_frameUBO->Update( &frameData, sizeof( frameData ), sizeof( frameData ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::SetGameClock( Clock* gameClock )
+{
+	m_gameClock = gameClock;
+	if( m_gameClock == nullptr )
+	{
+		m_gameClock = Clock::GetMaster();
+	}
 }
 
 

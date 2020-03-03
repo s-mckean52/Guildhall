@@ -34,11 +34,14 @@ float		Lerp					( float rangeBegin, float rangeEnd, float fractionOfRangeEnd );
 float		RangeMapFloat			( float fromBegin, float fromEnd, float toBegin, float toEnd, float fromValue );
 int			GetClamp				( int valueToClamp, int lowerLimit, int upperLimit );
 float		GetClamp				( float valueToClamp, float lowerLimit, float upperLimit );
+double		GetClamp				( double valueToClamp, double lowerLimit, double upperLimit );
 float		GetClampZeroToOne		( float valueToClamp );
 void		Clamp					( int& valueToClamp, int lowerLimit, int upperLimit );
 void		Clamp					( float& valueToClamp, float lowerLimit, float upperLimit );
+void		Clamp					( double& valueToClamp, double lowerLimit, double upperLimit );
 void		ClampZeroToOne			( float& valueToClamp );
 bool		ApproximatelyEqual		( float valueToCheck, float valueToCheckAgainst );
+float		Signf					( float value );	
 
 const Vec2	TransformPosition2D		( const Vec2& position, float uniformScale, float rotationDegrees, Vec2 translation);
 const Vec2	TransformPosition2D		( const Vec2& position, const Vec2& newBasisI, const Vec2& newBasisJ, const Vec2& translation);

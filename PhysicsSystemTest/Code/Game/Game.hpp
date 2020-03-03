@@ -10,6 +10,7 @@ class Entity;
 class XboxController;
 class Physics2D;
 class GameObject;
+class Clock;
 
 class Game
 {
@@ -25,7 +26,7 @@ public:
 	void Render() const;
 	void RenderUI() const;
 
-	void Update( float deltaSeconds );
+	void Update();
 	void UpdateCameras( float deltaSeconds );
 
 
@@ -47,6 +48,8 @@ public:
 	void DeleteDraggedObject( float deltaSeconds );
 	void ModifyMassOfDraggedObject( float deltaSeconds );
 	void ModifyDragOfDraggedObject( float deltaSeconds );
+	void ModifyFrictionOfDraggedObject( float deltaSeconds );
+	void UpdatePhysicsInput();
 	//---------------------------------------------------------------------------------------------------------
 	
 	bool IsQuitting() const { return m_isQuitting; }
@@ -70,15 +73,14 @@ public:
 	void AddGameObject( GameObject* gameObject );
 
 private:
-	Vec2 m_mousePos = Vec2();
+	Clock* m_gameClock = nullptr;
 
 	Rgba8 m_polygonLineColor = Rgba8::BLUE;
-
-	Vec2 m_position;
 
 	Camera* m_worldCamera = nullptr;
 	Camera* m_uiCamera = nullptr;
 
+	Vec2 m_mousePos = Vec2();
 	Vec3 m_focalPoint = Vec3();
 	float m_cameraHeight = CAMERA_SIZE_Y;
 	float m_cameraMinHeight = CAMERA_SIZE_Y * 0.5f;

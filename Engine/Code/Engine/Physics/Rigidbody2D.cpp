@@ -4,6 +4,7 @@
 #include "Engine/Physics/Physics2D.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Renderer/MeshUtils.hpp"
+#include "Engine/Math/MathUtils.hpp"
 
 //---------------------------------------------------------------------------------------------------------
 void Rigidbody2D::Destroy()
@@ -103,6 +104,22 @@ void Rigidbody2D::ApplyImpulseAt( const Vec2& worldPos, const Vec2& impulse )
 {
 	UNUSED( worldPos );
 	m_velocity += impulse * ( 1 / m_mass );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::ApplyFrictionAt( Vec2 const& worldPos, float frictionCoefficient, Vec2 const& collisionNormal, float normalImpulse, Vec2 const& collisionTangent, float tangentImpulse )
+{
+	UNUSED( collisionNormal );
+	if( abs( tangentImpulse ) > frictionCoefficient * normalImpulse )
+	{
+		tangentImpulse = Signf( tangentImpulse ) * normalImpulse * frictionCoefficient;
+	}
+	else
+	{
+		tangentImpulse *= frictionCoefficient;
+	}
+	ApplyImpulseAt( worldPos, collisionTangent * tangentImpulse );
 }
 
 

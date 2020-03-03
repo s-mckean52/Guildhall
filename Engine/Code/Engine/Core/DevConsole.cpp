@@ -8,6 +8,7 @@
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Renderer/MeshUtils.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Core/Clock.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -19,6 +20,7 @@ DevConsole::DevConsole()
 //---------------------------------------------------------------------------------------------------------
 void DevConsole::StartUp( InputSystem* theInput, EventSystem* theEventSystem )
 {
+	m_clock = new Clock();
 	m_theInput = theInput;
 	m_theEventSystem = theEventSystem;
 }
@@ -27,6 +29,8 @@ void DevConsole::StartUp( InputSystem* theInput, EventSystem* theEventSystem )
 //---------------------------------------------------------------------------------------------------------
 void DevConsole::ShutDown()
 {
+	delete m_clock;
+	m_clock = nullptr;
 }
 
 
@@ -43,9 +47,9 @@ void DevConsole::StartFrame()
 
 
 //---------------------------------------------------------------------------------------------------------
-void DevConsole::Update( float deltaSeconds )
+void DevConsole::Update()
 {
-	UNUSED( deltaSeconds );
+	float deltaSeconds = static_cast<float>( m_clock->GetLastDeltaSeconds() );
 	if( IsOpen() )
 	{
 		ProcessInput();

@@ -18,6 +18,7 @@ class VertexBuffer;
 class IndexBuffer;
 class Transform;
 class GPUMesh;
+class Clock;
 struct ID3D11Device;
 struct ID3D11Buffer;
 struct ID3D11DeviceContext;
@@ -65,8 +66,9 @@ public:
 	void EndFrame();
 	void ShutDown();
 
-	void UpdateFrameTime( float deltaSeconds );
+	void UpdateFrameTime();
 	
+	void SetGameClock( Clock* clock );
 	void SetBlendMode( BlendMode blendMode );
 	void ClearScreen( const Rgba8& clearColor );
 	void BeginCamera( Camera& camera );
@@ -110,6 +112,8 @@ private:
 	void DestroyDebugModule();
 
 private:
+	Clock* m_gameClock = nullptr;
+
 	bool m_isDrawing = false;
 	ID3D11Buffer* m_lastBoundVBOHandle = nullptr;
 

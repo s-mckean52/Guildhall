@@ -244,9 +244,26 @@ float Collider2D::GetBounceWith( Collider2D const* other ) const
 
 
 //---------------------------------------------------------------------------------------------------------
+float Collider2D::GetFrictionWith( Collider2D const* other ) const
+{
+	float myFriction = GetPhysicsMaterialFriction();
+	float otherFriction = other->GetPhysicsMaterialFriction();
+
+	return myFriction * otherFriction;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 float Collider2D::GetPhysicsMaterialBounciness() const
 {
 	return m_physicsMaterial->GetBounciness();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float Collider2D::GetPhysicsMaterialFriction() const
+{
+	return m_physicsMaterial->GetFriction();
 }
 
 
