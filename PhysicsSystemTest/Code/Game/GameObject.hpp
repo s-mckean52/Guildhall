@@ -21,6 +21,7 @@ public:
 
 	std::string GetSimulationModeAsString() const;
 	std::string GetVelocityAsString() const;
+	std::string GetVerletVelocityAsString() const;
 
 	void SetPosition( Vec2 position );
 	void AddBounciness( float bounceToAdd );

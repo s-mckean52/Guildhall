@@ -21,7 +21,7 @@ public:
 
 private:
 	void BeginFrame();
-	void Update( float deltaSeconds );
+	void Update();
 	void Render() const;
 	void EndFrame();
 };

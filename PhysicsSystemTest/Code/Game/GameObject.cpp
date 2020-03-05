@@ -105,7 +105,7 @@ void GameObject::DrawTooltip() const
 
 	std::string simulationModeAsString = GetSimulationModeAsString();
 	std::string velocityAsString = GetVelocityAsString();
-	std::string verletVelocityAsString = GetVelocityAsString();
+	std::string verletVelocityAsString = GetVerletVelocityAsString();
 
 	std::string simulationModeString	= Stringf( "Simulation Mode: %s", simulationModeAsString.c_str() );
 	std::string massString				= Stringf( "Mass: %f", m_rigidbody->m_mass );
@@ -167,6 +167,14 @@ std::string GameObject::GetVelocityAsString() const
 {
 	Vec2 velocity = m_rigidbody->GetVelocity();
 	return Stringf( "x: %f y: %f", velocity.x, velocity.y );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string GameObject::GetVerletVelocityAsString() const
+{
+	Vec2 verletVelocity = m_rigidbody->GetVerletVelocity();
+	return Stringf( "x: %f y: %f", verletVelocity.x, verletVelocity.y );
 }
 
 

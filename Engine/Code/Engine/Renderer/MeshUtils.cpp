@@ -1,8 +1,10 @@
 #include "Engine/Renderer/MeshUtils.hpp"
+#include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/OBB2.hpp"
 #include "Engine/Math/Polygon2D.hpp"
+#include "Engine/Renderer/GPUMesh.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -219,5 +221,164 @@ void AppendVertsForPolygon2DFilled( std::vector<Vertex_PCU>& vertexArray, Polygo
 		vertexArray.push_back( Vertex_PCU( startVert, color ) );
 		vertexArray.push_back( Vertex_PCU( secondTriVert, color ) );
 		vertexArray.push_back( Vertex_PCU( thirdTriVert, color ) );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void AddVerticiesAndIndiciesForCubeMesh( GPUMesh* cubeMesh, float sideLength )
+{
+	float halfSideLength = sideLength * 0.5f;
+
+	Vertex_PCU cubeVerticies[] ={
+		//Front
+		Vertex_PCU( Vec3( -halfSideLength, -halfSideLength, halfSideLength ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( halfSideLength, -halfSideLength, halfSideLength ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( -halfSideLength, halfSideLength, halfSideLength ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( halfSideLength, halfSideLength, halfSideLength ),		Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+
+		//Right
+		Vertex_PCU( Vec3( halfSideLength, -halfSideLength, halfSideLength ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( halfSideLength, -halfSideLength, -halfSideLength ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( halfSideLength, halfSideLength, halfSideLength ),		Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( halfSideLength, halfSideLength, -halfSideLength ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+
+		//Back
+		Vertex_PCU( Vec3( halfSideLength, -halfSideLength, -halfSideLength ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( -halfSideLength, -halfSideLength, -halfSideLength ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( halfSideLength, halfSideLength, -halfSideLength ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+		Vertex_PCU( Vec3( -halfSideLength, halfSideLength, -halfSideLength ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+
+		//Left
+		Vertex_PCU( Vec3( -halfSideLength, -halfSideLength, -halfSideLength ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( -halfSideLength, -halfSideLength, halfSideLength ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( -halfSideLength, halfSideLength, -halfSideLength ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( -halfSideLength, halfSideLength, halfSideLength ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+
+		//Top
+		Vertex_PCU( Vec3( -halfSideLength, halfSideLength, halfSideLength ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+		Vertex_PCU( Vec3( halfSideLength, halfSideLength, halfSideLength ),		Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( -halfSideLength, halfSideLength, -halfSideLength ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( halfSideLength, halfSideLength, -halfSideLength ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+
+		//Bottom
+		Vertex_PCU( Vec3( halfSideLength, -halfSideLength, -halfSideLength ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
+		Vertex_PCU( Vec3( -halfSideLength, -halfSideLength, -halfSideLength ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
+		Vertex_PCU( Vec3( halfSideLength, -halfSideLength, halfSideLength ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
+		Vertex_PCU( Vec3( -halfSideLength, -halfSideLength, halfSideLength ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
+	};
+
+	unsigned int cubeIndicies[] ={
+		//front
+		0, 1, 3,
+		0, 3, 2,
+
+		//Right
+		4, 5, 7,
+		4, 7, 6,
+
+		//Back
+		8, 9, 11,
+		8, 11, 10,
+
+		//Right
+		12, 13, 15,
+		12, 15, 14,
+
+		//Top
+		16, 17, 19,
+		16, 19, 18,
+
+		//Bottom
+		20, 21, 23,
+		20, 23, 22,
+	};
+
+	cubeMesh->UpdateVerticies( 24, cubeVerticies );
+	cubeMesh->UpdateIndicies( 36, cubeIndicies );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void AddUVSphereToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, Vec3 const& center, float radius, unsigned int horizontalCuts, unsigned int verticalCuts, Rgba8 const& color )
+{
+	float deltaThetaDegrees = 360.f / verticalCuts;
+	float deltaPsiDegrees = 180.f / horizontalCuts;
+
+	float currentThetaDegrees = 0.f;
+	float currentPsiDegrees = -90.f;
+
+	for( unsigned int verticalStep = 0; verticalStep < horizontalCuts + 1; ++verticalStep )
+	{
+		currentThetaDegrees = 0.f;
+		float cosPsi = CosDegrees( currentPsiDegrees );
+		float sinPsi = SinDegrees( currentPsiDegrees );
+
+		for( unsigned int horizontalStep = 0; horizontalStep < verticalCuts + 1; ++horizontalStep )
+		{
+			float cosTheta = CosDegrees( currentThetaDegrees );
+			float sinTheta = SinDegrees( currentThetaDegrees );
+
+			Vec3 vertPosition = center;
+			vertPosition.x += cosPsi * cosTheta * radius;
+			vertPosition.y += sinPsi * radius;
+			vertPosition.z += cosPsi * sinTheta * radius;
+
+			float u = RangeMapFloat( 360.f, 0.f, 0.f, 1.f, currentThetaDegrees );
+			float v = RangeMapFloat( -90.f, 90.f, 0.f, 1.f, currentPsiDegrees );
+			Vec2 vertUV = Vec2( u, v );
+
+			verts.push_back( Vertex_PCU( vertPosition, color, vertUV ) );
+			currentThetaDegrees += deltaThetaDegrees;
+		}
+
+		currentPsiDegrees += deltaPsiDegrees;
+	}
+
+
+	for( unsigned int verticalIndex = 0; verticalIndex < horizontalCuts; ++verticalIndex )
+	{
+		for( unsigned int horizontalIndex = 0; horizontalIndex < verticalCuts; ++horizontalIndex )
+		{
+			unsigned int currentVertIndex = horizontalIndex + ( ( verticalCuts + 1 ) * verticalIndex );
+
+			unsigned int bottomLeft = currentVertIndex;
+			unsigned int bottomRight = currentVertIndex + 1;
+			unsigned int topLeft = currentVertIndex + verticalCuts + 1;
+			unsigned int topRight = currentVertIndex + verticalCuts + 2;
+
+			indices.push_back( bottomLeft );
+			indices.push_back( bottomRight );
+			indices.push_back( topRight );
+
+			indices.push_back( bottomLeft );
+			indices.push_back( topRight );
+			indices.push_back( topLeft );
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void AddPlaneToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, Vec3 const& startPos, unsigned int horizintalCuts, unsigned int verticalCuts, Rgba8 const& color )
+{
+
+	for( unsigned int verticalIndex = 0; verticalIndex < verticalCuts; ++verticalIndex )
+	{
+		for( unsigned int horizontalIndex = 0; horizontalIndex < horizintalCuts; ++horizontalIndex )
+		{
+			unsigned int bottomLeft = horizontalIndex;
+			unsigned int bottomRight = horizontalIndex + 1;
+			unsigned int topLeft = horizontalIndex + ( horizintalCuts * verticalIndex ) + 1;
+			unsigned int topRight = horizontalIndex + horizintalCuts + 2;
+
+			indices.push_back( bottomLeft );
+			indices.push_back( bottomRight );
+			indices.push_back( topRight );
+
+			indices.push_back( bottomLeft );
+			indices.push_back( topRight );
+			indices.push_back( topLeft );
+		}
 	}
 }

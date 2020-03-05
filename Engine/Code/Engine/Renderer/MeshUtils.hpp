@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/Vec3.hpp"
 #include <vector>
 
 struct	AABB2;
@@ -8,6 +9,7 @@ struct	Vec2;
 struct	Rgba8;
 struct	OBB2;
 class	Polygon2D;
+class	GPUMesh;
 
 
 void AppendVertsForAABB2D( std::vector<Vertex_PCU>& vertexArray, const AABB2& box, const Rgba8& color, const Vec2& uvAtMins = Vec2(), const Vec2& uvAtMaxes = Vec2() );
@@ -19,3 +21,9 @@ void AppendVertsForFilledCircle( std::vector<Vertex_PCU>& circleVerts, float rad
 void AppendVertsForAABB2OutlineAtPoint( std::vector<Vertex_PCU>& vertextArray, const AABB2& box, const Rgba8& color, float thickness );
 void AppendVertsForPolygon2DOutline( std::vector<Vertex_PCU>& vertexArray, Polygon2D const& polygon, const Rgba8& color, float thickness );
 void AppendVertsForPolygon2DFilled( std::vector<Vertex_PCU>& vertexArray, Polygon2D const& polygon, const Rgba8& color );
+
+
+//---------------------------------------------------------------------------------------------------------
+void AddVerticiesAndIndiciesForCubeMesh( GPUMesh* cubeMesh, float sideLength );
+void AddUVSphereToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, Vec3 const& center, float radius, unsigned int horizontalCuts, unsigned int verticalCuts, Rgba8 const& color );
+void AddPlaneToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, Vec3 const& startPos, unsigned int horizintalCuts, unsigned int verticalCuts, Rgba8 const& color );

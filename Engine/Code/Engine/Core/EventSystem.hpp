@@ -2,12 +2,12 @@
 #include <string>
 #include <vector>
 
+struct EventArgs;
+struct EventSubscription;
+
 typedef unsigned int EntityID;
 typedef std::vector< std::string > Strings;
 typedef void( *EventCallbackFunctionPtrType )();
-//typedef bool( *EventCallbackFunctionPtrType )();
-
-struct EventSubscription;
 
 class EventSystem
 {

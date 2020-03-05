@@ -363,8 +363,11 @@ void Game::DropDraggedObject( float deltaSeconds )
 	if( m_draggedObject == nullptr ) return;
 
 	Rigidbody2D* draggedRb = m_draggedObject->m_rigidbody;
-	Vec2 velocity = (draggedRb->m_worldPosition - draggedRb->m_positionLastFrame) / deltaSeconds;
-	m_draggedObject->m_rigidbody->SetVelocity( velocity );
+	if( deltaSeconds > 0.f )
+	{
+		Vec2 velocity = (draggedRb->m_worldPosition - draggedRb->m_positionLastFrame) / deltaSeconds;
+		m_draggedObject->m_rigidbody->SetVelocity( velocity );
+	}
 
 	m_draggedObject->m_isHeld = false;
 	m_draggedObject = nullptr;
@@ -447,7 +450,7 @@ void Game::ModifyDragOfDraggedObject( float deltaSeconds )
 
 	if( g_theInput->IsKeyPressed( KEY_CODE_BACK_SLASH ) )
 	{
-		m_draggedObject->AddDrag( 5.0f * deltaSeconds );
+		m_draggedObject->AddDrag( -5.0f * deltaSeconds );
 	}
 }
 

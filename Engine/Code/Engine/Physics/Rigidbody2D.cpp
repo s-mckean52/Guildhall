@@ -43,6 +43,20 @@ Vec2 Rigidbody2D::GetVelocity() const
 
 
 //---------------------------------------------------------------------------------------------------------
+Vec2 Rigidbody2D::GetImpactVelocityAtPoint( Vec2 const& point ) const
+{
+	UNUSED( point );
+	return GetVerletVelocity();
+}
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::UpdateVerletVelocity( float frameTime )
+{
+	Vec2 frameDispalcement = m_worldPosition - m_frameStartPosition;
+	m_verletVelocity = frameDispalcement / frameTime;
+}
+
+//---------------------------------------------------------------------------------------------------------
 void Rigidbody2D::SetPosition( Vec2 position )
 {
 	m_worldPosition = position;
@@ -120,6 +134,21 @@ void Rigidbody2D::ApplyFrictionAt( Vec2 const& worldPos, float frictionCoefficie
 		tangentImpulse *= frictionCoefficient;
 	}
 	ApplyImpulseAt( worldPos, collisionTangent * tangentImpulse );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::ApplyDragForce()
+{
+	Vec2 dragForce = -m_verletVelocity * m_drag;
+	AddForce( dragForce );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::AddForce( Vec2 const& forceToAdd )
+{
+	m_frameForces += forceToAdd;
 }
 
 

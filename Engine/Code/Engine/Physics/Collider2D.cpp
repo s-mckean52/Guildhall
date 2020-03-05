@@ -137,7 +137,7 @@ static bool PolygonVPolygonManifoldGeneration( Collider2D const* col0, Collider2
 
 //---------------------------------------------------------------------------------------------------------
 static manifold_check_cb s_manifoldCheck[NUM_COLLIDER_TYPE * NUM_COLLIDER_TYPE] ={
-	/*				disc,							polygon		*/
+	/*				disc,								polygon		*/
 	/*	   disc	*/	DiscVDiscManifoldGeneration,		nullptr,
 	/*	polygon	*/	DiscVPolygonManifoldGeneration,		PolygonVPolygonManifoldGeneration,
 };

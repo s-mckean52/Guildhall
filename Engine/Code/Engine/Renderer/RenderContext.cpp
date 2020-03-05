@@ -123,6 +123,9 @@ void RenderContext::ShutDown()
 	delete m_modelUBO;
 	m_modelUBO = nullptr;
 
+	delete m_depthStencilBuffer;
+	m_depthStencilBuffer = nullptr;
+
 	delete m_immediateVBO;
 	m_immediateVBO = nullptr;
 
@@ -679,6 +682,34 @@ bool RenderContext::CreateBitmapFontFromFile( const char* fontFilePath )
 	Texture* fontTexture = CreateOrGetTextureFromFile( fontImagePath.c_str() );
 	BitmapFont* newFont = new BitmapFont( fontFilePath, fontTexture );
 	m_loadedFonts.push_back( newFont );
+	return true;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool RenderContext::CreateDepthStencilBuffer()
+{
+	Texture* backBuffer = m_swapchain->GetBackBuffer();
+	IntVec2 backBufferDimensions = backBuffer->GetImageTexelSize();
+
+	D3D11_TEXTURE2D_DESC depthDesc;
+
+	depthDesc.Width = static_cast<unsigned int>( backBufferDimensions.x );
+	depthDesc.Height = static_cast<unsigned int>( backBufferDimensions.y );
+	depthDesc.MipLevels = 1;
+	depthDesc.ArraySize = 1;
+	depthDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	depthDesc.SampleDesc.Count = 1;
+	depthDesc.SampleDesc.Quality = 0;
+	depthDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthDesc.CPUAccessFlags = 0;
+	depthDesc.MiscFlags = 0;
+
+	ID3D11Texture2D* textureHandle = nullptr;
+	m_device->CreateTexture2D( &depthDesc, nullptr, &textureHandle );
+
+	m_depthStencilBuffer = new Texture( this, textureHandle );
 	return true;
 }
 

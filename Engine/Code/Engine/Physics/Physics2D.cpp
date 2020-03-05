@@ -74,8 +74,10 @@ void Physics2D::EndFrame()
 //---------------------------------------------------------------------------------------------------------
 void Physics2D::AdvanceSimulation( float deltaSeconds )
 {
+	UpdateFrameStartPositions();
 	ApplyEffectors( deltaSeconds );
 	MoveRigidbodies( deltaSeconds );
+	UpdateVerletVelocities();
 	DetectCollisions();
 	ResolveCollisions();
 }
@@ -86,6 +88,7 @@ void Physics2D::ApplyEffectors( float deltaSeconds )
 {
 	UNUSED( deltaSeconds );
 	SetSceneGravity();
+	ApplyDragOnRigidbodies();
 }
 
 
@@ -98,6 +101,34 @@ void Physics2D::MoveRigidbodies( float deltaSeconds )
 		if( rb && rb->IsSimulated() )
 		{
 			EulerStep( deltaSeconds, rb );
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::UpdateFrameStartPositions()
+{
+	for( int rbIndex = 0; rbIndex < m_rigidbodies2D.size(); ++rbIndex )
+	{
+		Rigidbody2D* rb = m_rigidbodies2D[ rbIndex ];
+		if( rb != nullptr )
+		{
+			rb->m_frameStartPosition = rb->m_worldPosition;
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::UpdateVerletVelocities()
+{
+	for( int rbIndex = 0; rbIndex < m_rigidbodies2D.size(); ++rbIndex )
+	{
+		Rigidbody2D* rb = m_rigidbodies2D[ rbIndex ];
+		if( rb != nullptr )
+		{
+			rb->UpdateVerletVelocity( static_cast<float>( m_fixedDeltaTime ) );
 		}
 	}
 }
@@ -208,7 +239,7 @@ void Physics2D::EulerStep( float deltaSeconds, Rigidbody2D* rb )
 void Physics2D::ApplyImpulseOnCollision( Collision2D const& collision )
 {
 	Vec2 collisionNormal = collision.GetNormal();
-	Vec2 collisionTangent = collisionNormal.GetRotatedMinus90Degrees();
+	Vec2 collisionTangent = collisionNormal.GetRotated90Degrees();
 
 	Collider2D* me = collision.thisCollider;
 	Collider2D* them = collision.otherCollider;
@@ -216,51 +247,59 @@ void Physics2D::ApplyImpulseOnCollision( Collision2D const& collision )
 	float myMass = me->GetMass();
 	float theirMass = them->GetMass();
 
-	Vec2 myVelocity = me->GetVelocity();
-	Vec2 theirVelocity = them->GetVelocity();
+	Vec2 myVelocity = me->m_rigidbody->GetImpactVelocityAtPoint( Vec2() );
+	Vec2 theirVelocity = them->m_rigidbody->GetImpactVelocityAtPoint( Vec2() );
 
 	float coefficientOfRestitution	= me->GetBounceWith( them );
 	float frictionalCoefficient		= me->GetFrictionWith( them );
 
-	float impulseConstant = 1 + coefficientOfRestitution;
+	float normalImpulseConstant = 1 + coefficientOfRestitution;
+	float tangentImpulseConstant = frictionalCoefficient;
 	if( them->m_rigidbody->m_simulationMode != SIMULATION_MODE_DYNAMIC  )
 	{
-		impulseConstant *= myMass;
-		Vec2 impulse = impulseConstant * ( theirVelocity - myVelocity );
-		float normalImpulse = DotProduct2D( impulse, collisionNormal );
+		normalImpulseConstant *= myMass;
+		tangentImpulseConstant *= myMass;
+		Vec2 normalImpulseVector = normalImpulseConstant * ( theirVelocity - myVelocity );
+		Vec2 tangentImpulseVector = tangentImpulseConstant * ( theirVelocity - myVelocity );
+		float normalImpulse = DotProduct2D( normalImpulseVector, collisionNormal );
 		me->m_rigidbody->ApplyImpulseAt( Vec2(), normalImpulse * collisionNormal );
 
 		if( me->m_rigidbody->m_simulationMode == SIMULATION_MODE_DYNAMIC )
 		{
-			float tangentImpulse = DotProduct2D( impulse, collisionTangent );
+			float tangentImpulse = DotProduct2D( tangentImpulseVector, collisionTangent );
 			me->m_rigidbody->ApplyFrictionAt( Vec2(), frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, tangentImpulse );
 		}
 	}
 	else if( me->m_rigidbody->m_simulationMode != SIMULATION_MODE_DYNAMIC )
 	{
-		impulseConstant *= theirMass;
-		Vec2 impulse = impulseConstant * ( theirVelocity - myVelocity );
-		float normalImpulse = DotProduct2D( impulse, collisionNormal );
+		normalImpulseConstant *= theirMass;
+		tangentImpulseConstant *= theirMass;
+		Vec2 normalImpulseVector = normalImpulseConstant * ( theirVelocity - myVelocity );
+		Vec2 tangentImpulseVector = tangentImpulseConstant * ( theirVelocity - myVelocity );
+		float normalImpulse = DotProduct2D( normalImpulseVector, collisionNormal );
 		them->m_rigidbody->ApplyImpulseAt( Vec2(), collisionNormal * -normalImpulse );
 
 		if( them->m_rigidbody->m_simulationMode == SIMULATION_MODE_DYNAMIC )
 		{
-			float tangentImpulse = DotProduct2D( impulse, collisionTangent );
-			them->m_rigidbody->ApplyFrictionAt( Vec2(), frictionalCoefficient, collisionNormal, -normalImpulse, collisionTangent, -tangentImpulse );
+			float tangentImpulse = DotProduct2D( tangentImpulseVector, collisionTangent );
+			them->m_rigidbody->ApplyFrictionAt( Vec2(), frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, -tangentImpulse );
 		}
 	}
 	else
 	{
-		impulseConstant *= ( ( myMass * theirMass ) / ( myMass + theirMass ) );
-		Vec2 impulse = impulseConstant * ( theirVelocity - myVelocity );
-		float normalImpulse = DotProduct2D( impulse, collisionNormal );
-		float tangentImpulse = DotProduct2D( impulse, collisionTangent );
+		float massRatio = ( myMass * theirMass ) / ( myMass + theirMass );
+		normalImpulseConstant *= massRatio;
+		tangentImpulseConstant *= massRatio;
+		Vec2 normalImpulseVector = normalImpulseConstant * ( theirVelocity - myVelocity );
+		Vec2 tangentImpulseVector = tangentImpulseConstant * ( theirVelocity - myVelocity );
+		float normalImpulse = DotProduct2D( normalImpulseVector, collisionNormal );
+		float tangentImpulse = DotProduct2D( tangentImpulseVector, collisionTangent );
 
 		me->m_rigidbody->ApplyImpulseAt( Vec2(), collisionNormal * normalImpulse );
 		them->m_rigidbody->ApplyImpulseAt( Vec2(), collisionNormal * -normalImpulse );
 
 		me->m_rigidbody->ApplyFrictionAt( Vec2(), frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, tangentImpulse );
-		them->m_rigidbody->ApplyFrictionAt( Vec2(), frictionalCoefficient, collisionNormal, -normalImpulse, collisionTangent, -tangentImpulse );
+		them->m_rigidbody->ApplyFrictionAt( Vec2(), frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, -tangentImpulse );
 	}
 }
 
@@ -274,6 +313,20 @@ void Physics2D::SetSceneGravity()
 		if( rb && rb->DoesTakeForces() )
 		{
 			rb->AddForceFromAcceleration( m_gravityAcceleration );
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Physics2D::ApplyDragOnRigidbodies()
+{
+	for( int rbIndex = 0; rbIndex < m_rigidbodies2D.size(); ++rbIndex )
+	{
+		Rigidbody2D* rb = m_rigidbodies2D[ rbIndex ];
+		if( rb != nullptr )
+		{
+			rb->ApplyDragForce();
 		}
 	}
 }

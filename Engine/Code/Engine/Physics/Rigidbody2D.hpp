@@ -20,6 +20,8 @@ public:
 	void TakeCollider( Collider2D* collider );
 	Vec2 GetFrameAcceleration();
 	Vec2 GetVelocity() const;
+	Vec2 GetImpactVelocityAtPoint( Vec2 const& point ) const;
+	void UpdateVerletVelocity( float frameTime );
 
 	void SetPosition( Vec2 position );
 	void SetEnabled( bool enable );
@@ -31,6 +33,8 @@ public:
 
 	void ApplyImpulseAt( Vec2 const& worldPos, Vec2 const& impulse );
 	void ApplyFrictionAt( Vec2 const& worldPos, float frictionCoefficient, Vec2 const& collisionNormal, float normalImpulse, Vec2 const& collisionTangent, float tangentImpulse );
+	void ApplyDragForce();
+	void AddForce( Vec2 const& forceToAdd );
 	void AddForceFromAcceleration( const Vec2& acceleration );
 	void AddDrag( float dragToAdd );
 
@@ -41,6 +45,7 @@ public:
 	bool	IsEnabled() const				{ return m_enabled; }
 	bool	IsMarkedForDestroy() const		{ return m_isMarkedForDestroy; }
 	float 	GetDrag() const					{ return m_drag; }
+	Vec2	GetVerletVelocity() const		{ return m_verletVelocity; }
 
 public:
 	bool			m_isMarkedForDestroy	= false;
@@ -49,10 +54,12 @@ public:
 
 	Vec2			m_worldPosition;
 	Vec2			m_velocity;
+	Vec2			m_verletVelocity;
 	Vec2			m_frameForces;
 	float			m_mass					= 1.0f;
 	float			m_drag					= 0.0f;
 
+	Vec2			m_frameStartPosition;
 	Vec2			m_positionLastFrame;
 
 	Physics2D*		m_physicsSystem	= nullptr;

@@ -1,6 +1,7 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/EventSubscription.hpp"
+#include "Engine/Core/EventArgs.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------

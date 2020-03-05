@@ -26,7 +26,7 @@ public:
 	void UpdateVerticies( unsigned int vertexCount, VERTEX_TYPE const* verticies )
 	{
 		UpdateVerticies( vertexCount, verticies, sizeof( VERTEX_TYPE ), VERTEX_TYPE::LAYOUT );
-	}
+	}	
 
 public:
 	int m_indexCount = 0;

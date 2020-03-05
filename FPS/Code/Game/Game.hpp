@@ -9,6 +9,7 @@ class Entity;
 class XboxController;
 class Shader;
 class GPUMesh;
+class Clock;
 
 class Game
 {
@@ -20,7 +21,7 @@ public:
 	void StartUp();
 	void ShutDown();
 	void Render() const;
-	void Update( float deltaSeconds );
+	void Update();
 
 	//Input
 	void UpdateFromInput( float deltaSeconds );
@@ -28,10 +29,11 @@ public:
 
 	//Rendering
 	void RenderWorld() const;
+	void RenderRingOfSpheres() const;
 
 	//Other
 	void UpdateBasedOnMouseMovement();
-	void UpdateCubeRotation( float deltaSeconds );
+	void UpdateObjectRotations( float deltaSeconds );
 	void TranslateCamera( Camera& camera, const Vec3& directionToMove );
 	void ChangeClearColor( float deltaSeconds );
 	void UpdateCameras( float deltaSeconds );
@@ -42,8 +44,13 @@ public:
 	bool IsQuitting() const { return m_isQuitting; }
 
 private:
+	Clock* m_gameClock = nullptr;
+
 	GPUMesh* m_meshCube = nullptr;
+	GPUMesh* m_uvSphere = nullptr;
 	Transform* m_cubeTransform = nullptr;
+	Transform* m_sphereTransform = nullptr;
+	Transform* m_ringTransform = nullptr;
 
 	float m_distanceFromCamera = -1.f;
 

@@ -106,6 +106,7 @@ private:
 	void CreateBlendStates();
 	bool CreateTextureFromFile( const char* imageFilePath );
 	bool CreateBitmapFontFromFile( const char* fontFilePath );
+	bool CreateDepthStencilBuffer();
 
 	void ReportLiveObjects();
 	void CreateDebugModule();
@@ -136,6 +137,7 @@ public:
 	VertexBuffer*			m_immediateVBO			= nullptr;
 	RenderBuffer*			m_frameUBO				= nullptr;
 	RenderBuffer*			m_modelUBO				= nullptr;
+	Texture*				m_depthStencilBuffer	= nullptr;
 
 	ID3D11BlendState* m_alphaBlendStateHandle		= nullptr;
 	ID3D11BlendState* m_additiveBlendStateHandle	= nullptr;

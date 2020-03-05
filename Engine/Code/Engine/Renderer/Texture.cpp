@@ -108,4 +108,3 @@ TextureView* Texture::GetOrCreateShaderResourceView()
 
 	return m_shaderResourceView;
 }
-

@@ -22,6 +22,7 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Renderer/GPUMesh.hpp"
 #include "Engine/Math/MatrixUtils.hpp"
+#include "Engine/Core/Clock.hpp"
 #include <string>
 
 
@@ -46,69 +47,8 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
-	Vertex_PCU cubeVerticies[] ={
-		//Front
-		Vertex_PCU( Vec3( -1.f, -1.f, 1.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( Vec3( 1.f, -1.f, 1.f ),		Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( -1.f, 1.f, 1.f ),		Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( Vec3( 1.f, 1.f, 1.f ),		Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
-
-		//Right
-		Vertex_PCU( Vec3( 1.f, -1.f, 1.f ),		Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( Vec3( 1.f, -1.f, -1.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( 1.f, 1.f, 1.f ),		Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( Vec3( 1.f, 1.f, -1.f ),		Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
-
-		//Back
-		Vertex_PCU( Vec3( 1.f, -1.f, -1.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( -1.f, -1.f, -1.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( Vec3( 1.f, 1.f, -1.f ),		Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
-		Vertex_PCU( Vec3( -1.f, 1.f, -1.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
-
-		//Left
-		Vertex_PCU( Vec3( -1.f, -1.f, -1.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( Vec3( -1.f, -1.f, 1.f ),	Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( -1.f, 1.f, -1.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( Vec3( -1.f, 1.f, 1.f ),		Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
-
-		//Top
-		Vertex_PCU( Vec3( -1.f, 1.f, 1.f ),		Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( Vec3( 1.f, 1.f, 1.f ),		Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( -1.f, 1.f, -1.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( Vec3( 1.f, 1.f, -1.f ),		Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
-
-		//Bottom
-		Vertex_PCU( Vec3( 1.f, -1.f, -1.f ),	Rgba8::WHITE,	Vec2( 1.f, 1.f ) ),
-		Vertex_PCU( Vec3( -1.f, -1.f, -1.f ),	Rgba8::WHITE,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( Vec3( 1.f, -1.f, 1.f ),		Rgba8::WHITE,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( Vec3( -1.f, -1.f, 1.f ),	Rgba8::WHITE,	Vec2( 0.f, 0.f ) ),
-	};
-
-	unsigned int cubeIndicies[] ={
-		//front
-		0, 1, 3,
-		0, 3, 2,
-
-		//Right
-		4, 5, 7,
-		4, 7, 6,
-
-		//Back
-		8, 9, 11,
-		8, 11, 10,
-
-		//Right
-		12, 13, 15,
-		12, 15, 14,
-
-		//Top
-		16, 17, 19,
-		16, 19, 18,
-
-		//Bottom
-		20, 21, 23,
-		20, 23, 22,
-	};
+	m_gameClock = new Clock();
+	g_theRenderer->SetGameClock( m_gameClock );
 
 	g_theEventSystem->SubscribeEventCallbackFunction( "GainFocus", GainFocus );
 	g_theEventSystem->SubscribeEventCallbackFunction( "LoseFocus", LoseFocus );
@@ -120,13 +60,22 @@ void Game::StartUp()
 	m_devConsoleCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
 	m_meshCube = new GPUMesh( g_theRenderer );
-	m_meshCube->UpdateVerticies( 24, cubeVerticies );
-	m_meshCube->UpdateIndicies( 36, cubeIndicies );
+	AddVerticiesAndIndiciesForCubeMesh( m_meshCube, 2.f );
+
+	std::vector< Vertex_PCU > uvSphereVerticies;
+	std::vector< unsigned int > uvSphereIndicies;
+	m_uvSphere = new GPUMesh( g_theRenderer );
+
+	AddUVSphereToIndexedVertexArray( uvSphereVerticies, uvSphereIndicies, Vec3(), 2.f, 32, 64, Rgba8::WHITE );
+	m_uvSphere->UpdateVerticies( static_cast<unsigned int>( uvSphereVerticies.size() ), &uvSphereVerticies[ 0 ] );
+	m_uvSphere->UpdateIndicies( static_cast<unsigned int>( uvSphereIndicies.size() ), &uvSphereIndicies[ 0 ] );
 
 	m_cubeTransform = new Transform();
+	m_sphereTransform = new Transform();
+	m_ringTransform = new Transform();
 	m_cubeTransform->SetPosition( Vec3( 1.f, 0.5f, -12.f ) );
 
-	m_image				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/PlayerTankBase.png" );
+	m_image				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
 	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 }
@@ -149,6 +98,18 @@ void Game::ShutDown()
 
 	delete m_cubeTransform;
 	m_cubeTransform = nullptr;
+
+	delete m_sphereTransform;
+	m_sphereTransform = nullptr;
+
+	delete m_ringTransform;
+	m_ringTransform = nullptr;
+
+	delete m_uvSphere;
+	m_uvSphere = nullptr;
+
+	delete m_gameClock;
+	m_gameClock = nullptr;
 }
 
 
@@ -172,6 +133,8 @@ void Game::RenderWorld() const
 	std::vector<Vertex_PCU> aabb2;
 	AppendVertsForAABB2D( aabb2, AABB2( -1.0f, -1.0f, 1.0f, 1.0f ), Rgba8::WHITE, Vec2( 0.f, 0.f ), Vec2( 1.f, 1.f ) );
 
+	RenderRingOfSpheres();
+
 	Mat44 model = m_cubeTransform->ToMatrix();
 	g_theRenderer->SetModelMatrix( model );
 	g_theRenderer->BindTexture( nullptr );
@@ -188,6 +151,35 @@ void Game::RenderWorld() const
 
 
 //---------------------------------------------------------------------------------------------------------
+void Game::RenderRingOfSpheres() const
+{
+	Mat44 model = m_sphereTransform->ToMatrix();
+	g_theRenderer->SetModelMatrix( model );
+	g_theRenderer->BindTexture( m_image );
+	g_theRenderer->BindShader( (Shader*)nullptr );
+	g_theRenderer->DrawMesh( m_uvSphere );
+
+	float ringRadius = 50.f;
+	int numberOfSpheres = 64;
+	float degreeStep = 360.f / numberOfSpheres;
+
+	float currentAngleDegrees = 0.f;
+	for( int sphereNum = 0; sphereNum < numberOfSpheres; ++sphereNum )
+	{
+		model = m_ringTransform->ToMatrix();
+		model.TransformBy( Mat44::CreateZRotationDegrees( currentAngleDegrees ) );
+		model.Translate3D( Vec3( ringRadius, 0.f, 0.f ) );
+		model.TransformBy( m_sphereTransform->ToMatrix() );
+
+		g_theRenderer->SetModelMatrix( model );
+		g_theRenderer->DrawMesh( m_uvSphere );
+
+		currentAngleDegrees += degreeStep;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::UpdateBasedOnMouseMovement()
 {
 	Vec2 relativeMovement = g_theInput->GetCursorRelativeMovement();
@@ -196,9 +188,11 @@ void Game::UpdateBasedOnMouseMovement()
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::UpdateCubeRotation( float deltaSeconds )
+void Game::UpdateObjectRotations( float deltaSeconds )
 {
 	m_cubeTransform->AddRotationPitchYawRollDegrees( 0.f, 90.f * deltaSeconds, 0.f );
+	m_sphereTransform->AddRotationPitchYawRollDegrees( 0.f, 90.f * deltaSeconds, 0.f );
+	m_ringTransform->AddRotationPitchYawRollDegrees( 0.f, 0.f, 10.f * deltaSeconds );
 }
 
 
@@ -213,13 +207,15 @@ void Game::TranslateCamera( Camera& camera, const Vec3& directionToMove )
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::Update( float deltaSeconds )
+void Game::Update()
 {
+	float deltaSeconds = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
+
 	if( !g_theConsole->IsOpen() )
 	{
 		UpdateFromInput( deltaSeconds );
 	}
-	UpdateCubeRotation( deltaSeconds );
+	UpdateObjectRotations( deltaSeconds );
 
 	ChangeClearColor( deltaSeconds );
 }
@@ -299,6 +295,7 @@ void Game::ChangeClearColor( float deltaSeconds )
 
 	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT, m_clearColor, 0.0f, 0 );
 }
+
 
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateCameras( float deltaSeconds )

@@ -23,6 +23,8 @@ public:
 	void AdvanceSimulation( float deltaSeconds );
 	void ApplyEffectors( float deltaSeconds );
 	void MoveRigidbodies( float deltaSeconds );
+	void UpdateFrameStartPositions();
+	void UpdateVerletVelocities();
 	void DetectCollisions();
 	void ResolveCollisions();
 	void ResolveCollision( Collision2D const& collision );
@@ -33,6 +35,7 @@ public:
 	void AddGravityInDownDirection( float gravityToAdd );
 	
 	void SetSceneGravity();
+	void ApplyDragOnRigidbodies();
 	void SetClock( Clock* clock );
 	void SetFixedDeltaTime( double newFixedDeltaTime );
 	void ToggleClockPause();
