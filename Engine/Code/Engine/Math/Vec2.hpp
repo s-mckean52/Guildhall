@@ -72,6 +72,7 @@ public:
 
 	//---------------------------------------------------------------------------------------------------------
 	// Static Vec2
+	static const Vec2 ZERO;
 	static const Vec2 RIGHT;
 	static const Vec2 LEFT;
 	static const Vec2 UP;

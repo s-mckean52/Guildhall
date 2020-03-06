@@ -405,6 +405,7 @@ bool Vec2::operator!=( const Vec2& compare ) const
 
 
 //---------------------------------------------------------------------------------------------------------
+STATIC const Vec2 Vec2::ZERO	( 0.0f, 0.0f );
 STATIC const Vec2 Vec2::RIGHT	( 1.0f, 0.0f );
 STATIC const Vec2 Vec2::LEFT	( -1.0f, 0.0f );
 STATIC const Vec2 Vec2::UP		( 0.0f, 1.0f );

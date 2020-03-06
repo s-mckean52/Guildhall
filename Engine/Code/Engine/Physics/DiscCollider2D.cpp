@@ -81,9 +81,11 @@ void DiscCollider2D::SetWorldBounds()
 //---------------------------------------------------------------------------------------------------------
 void DiscCollider2D::DebugRender( RenderContext* context, Rgba8 const& borderColor, Rgba8 const& fillColor )
 {
+	float borderThickness = 5.f;
 	std::vector< Vertex_PCU > debugVerts;
 	AppendVertsForFilledCircle( debugVerts, m_radius, fillColor );
-	AppendVertsForCircleAtPoint( debugVerts, m_radius, borderColor, 5.f );
+	AppendVertsForLineBetweenPoints( debugVerts, Vec2::ZERO, Vec2::RIGHT * m_radius, Rgba8::BLUE, borderThickness * 0.5f );
+	AppendVertsForCircleAtPoint( debugVerts, m_radius, borderColor, borderThickness );
 	TransformVertexArray( debugVerts, 1.f, 0.f, m_worldPosition );
 	//AppendVertsForAABB2OutlineAtPoint( debugVerts, m_worldBounds, Rgba8::CYAN, 3.f );
 
