@@ -55,8 +55,10 @@ void Game::StartUp()
 	g_theInput->SetCursorMode( MOUSE_MODE_RELATIVE );
 
 	m_worldCamera = new Camera( g_theRenderer );
-	m_devConsoleCamera = new Camera( g_theRenderer );
 	m_worldCamera->SetProjectionPerspective( 60.f, -0.1f, -100.f );
+	m_worldCamera->SetDepthStencilTarget( g_theRenderer->m_defaultDepthStencil );
+
+	m_devConsoleCamera = new Camera( g_theRenderer );
 	m_devConsoleCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
 	m_meshCube = new GPUMesh( g_theRenderer );
@@ -65,10 +67,21 @@ void Game::StartUp()
 	std::vector< Vertex_PCU > uvSphereVerticies;
 	std::vector< unsigned int > uvSphereIndicies;
 	m_uvSphere = new GPUMesh( g_theRenderer );
-
 	AddUVSphereToIndexedVertexArray( uvSphereVerticies, uvSphereIndicies, Vec3(), 2.f, 32, 64, Rgba8::WHITE );
 	m_uvSphere->UpdateVerticies( static_cast<unsigned int>( uvSphereVerticies.size() ), &uvSphereVerticies[ 0 ] );
 	m_uvSphere->UpdateIndicies( static_cast<unsigned int>( uvSphereIndicies.size() ), &uvSphereIndicies[ 0 ] );
+
+	std::vector<Vertex_PCU> planeVerts;
+	std::vector<unsigned int> planeIndicies;
+	m_plane = new GPUMesh( g_theRenderer );
+// 	AddPlaneToIndexedVertexArray(	planeVerts, planeIndicies, Vec3(), Rgba8::GREEN,
+// 									Vec3::RIGHT, -1.f, 1.f,
+// 									Vec3::UP, -1.f, 1.f, 3 );
+	AddSurfaceToIndexedVertexArray( planeVerts, planeIndicies, Vec3(), Rgba8::GREEN,
+									-1.f, 1.f, 10,
+									-1.f, 1.f, 10, ParabolaEquation );
+	m_plane->UpdateVerticies( static_cast<unsigned int>( planeVerts.size() ), &planeVerts[ 0 ] );
+	m_plane->UpdateIndicies( static_cast<unsigned int>( planeIndicies.size() ), &planeIndicies[ 0 ] );
 
 	m_cubeTransform = new Transform();
 	m_sphereTransform = new Transform();
@@ -108,6 +121,9 @@ void Game::ShutDown()
 	delete m_uvSphere;
 	m_uvSphere = nullptr;
 
+	delete m_plane;
+	m_plane = nullptr;
+
 	delete m_gameClock;
 	m_gameClock = nullptr;
 }
@@ -118,6 +134,7 @@ void Game::Render() const
 {
 	//Render worldCamera
 	g_theRenderer->BeginCamera( *m_worldCamera );
+	g_theRenderer->SetDepthTest( COMPARE_FUNC_LEQUAL, true );
 	RenderWorld();
 	g_theRenderer->EndCamera( *m_worldCamera );
 
@@ -147,17 +164,24 @@ void Game::RenderWorld() const
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( aabb2 );
 
+	model = m_cubeTransform->ToMatrix();
+	model.SetTranslation2D( Vec2( 10.f, 0.f ) );
+	g_theRenderer->SetModelMatrix( model );
+	g_theRenderer->BindTexture( nullptr );
+	g_theRenderer->BindShader( (Shader*)nullptr );
+	g_theRenderer->DrawMesh( m_plane );
+
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderRingOfSpheres() const
 {
-	Mat44 model = m_sphereTransform->ToMatrix();
-	g_theRenderer->SetModelMatrix( model );
+/*	Mat44 model = m_sphereTransform->ToMatrix();*/
+/*	g_theRenderer->SetModelMatrix( model );*/
 	g_theRenderer->BindTexture( m_image );
 	g_theRenderer->BindShader( (Shader*)nullptr );
-	g_theRenderer->DrawMesh( m_uvSphere );
+/*	g_theRenderer->DrawMesh( m_uvSphere );*/
 
 	float ringRadius = 50.f;
 	int numberOfSpheres = 64;
@@ -166,12 +190,14 @@ void Game::RenderRingOfSpheres() const
 	float currentAngleDegrees = 0.f;
 	for( int sphereNum = 0; sphereNum < numberOfSpheres; ++sphereNum )
 	{
-		model = m_ringTransform->ToMatrix();
-		model.TransformBy( Mat44::CreateZRotationDegrees( currentAngleDegrees ) );
-		model.Translate3D( Vec3( ringRadius, 0.f, 0.f ) );
-		model.TransformBy( m_sphereTransform->ToMatrix() );
+		Mat44 ringMat = m_ringTransform->ToMatrix();
+		ringMat.RotateZDegrees( currentAngleDegrees );
 
-		g_theRenderer->SetModelMatrix( model );
+		Mat44 sphereMat = m_sphereTransform->ToMatrix();
+		Vec3 worldPosition = ringMat.TransformPosition3D( Vec3( ringRadius, 0.f, 0.f ) );
+		sphereMat.SetTranslation3D( worldPosition );
+
+		g_theRenderer->SetModelMatrix( sphereMat );
 		g_theRenderer->DrawMesh( m_uvSphere );
 
 		currentAngleDegrees += degreeStep;
@@ -293,7 +319,7 @@ void Game::ChangeClearColor( float deltaSeconds )
 		m_clearColor.r = 0;
 	}
 
-	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT, m_clearColor, 0.0f, 0 );
+	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, m_clearColor, 1.0f, 0 );
 }
 
 
@@ -305,14 +331,25 @@ void Game::UpdateCameras( float deltaSeconds )
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC void Game::GainFocus()
+STATIC Vec3 Game::ParabolaEquation( float x, float y )
 {
+	UNUSED( y );
+	x -= 0.5f;
+	x *= 2.f;
+	return Vec3( 0.f, 0.f, x * x );
+}
+
+//---------------------------------------------------------------------------------------------------------
+STATIC void Game::GainFocus( NamedStrings* args )
+{
+	UNUSED( args );
 	g_theInput->SetCursorMode( MOUSE_MODE_RELATIVE );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC void Game::LoseFocus()
+STATIC void Game::LoseFocus( NamedStrings* args )
 {
+	UNUSED( args );
 	g_theInput->SetCursorMode( MOUSE_MODE_ABSOLUTE );
 }

@@ -48,4 +48,9 @@ public:
 
 	//Standalone friend functions
 	friend const Vec3 operator*( float uniformScale, const Vec3& vecToScale );
+
+
+	//---------------------------------------------------------------------------------------------------------
+	static const Vec3 RIGHT;
+	static const Vec3 UP;
 };

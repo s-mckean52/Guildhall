@@ -25,12 +25,14 @@ public:
 
 	TextureView* CreateOrGetRenderTargetView();
 	TextureView* GetOrCreateShaderResourceView();
+	TextureView* GetOrCreateDepthStencilView();
 
 private:
 	RenderContext*		m_owner					= nullptr;
 	ID3D11Texture2D*	m_handle				= nullptr;
 	TextureView*		m_renderTargetView		= nullptr;
 	TextureView*		m_shaderResourceView	= nullptr;
+	TextureView*		m_depthStencilView		= nullptr;
 
 	std::string			m_imageFilePath = "";
 	int					m_textureID		= 0;

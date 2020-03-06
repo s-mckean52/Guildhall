@@ -92,15 +92,17 @@ void App::RestartGame()
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC void App::QuitRequested()
+STATIC void App::QuitRequested( NamedStrings* args )
 {
+	UNUSED( args );
 	g_theApp->HandleQuitRequested();
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC void App::HelpCommand()
+STATIC void App::HelpCommand( NamedStrings* args )
 {
+	UNUSED( args );
 	Strings registeredCommands = g_theEventSystem->GetEventNames();
 	for( int commandIndex = 0; commandIndex < registeredCommands.size(); ++commandIndex )
 	{

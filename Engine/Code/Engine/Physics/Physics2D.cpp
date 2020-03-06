@@ -247,8 +247,8 @@ void Physics2D::ApplyImpulseOnCollision( Collision2D const& collision )
 	float myMass = me->GetMass();
 	float theirMass = them->GetMass();
 
-	Vec2 myVelocity = me->m_rigidbody->GetImpactVelocityAtPoint( Vec2() );
-	Vec2 theirVelocity = them->m_rigidbody->GetImpactVelocityAtPoint( Vec2() );
+	Vec2 myVelocity = me->GetVelocity();
+	Vec2 theirVelocity = them->GetVelocity();
 
 	float coefficientOfRestitution	= me->GetBounceWith( them );
 	float frictionalCoefficient		= me->GetFrictionWith( them );
@@ -469,11 +469,4 @@ Collider2D* Physics2D::AddColliderToVector( Collider2D* newCollider )
 	}
 	m_colliders2D.push_back( newCollider );
 	return newCollider;
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-STATIC void Physics2D::SetPhysicsUpdate( double newFrameTime )
-{
-	//SetFixedDeltaTime( newFrameTime );
 }

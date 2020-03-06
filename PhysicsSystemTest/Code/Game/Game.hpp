@@ -11,6 +11,7 @@ class XboxController;
 class Physics2D;
 class GameObject;
 class Clock;
+class NamedStrings;
 
 class Game
 {
@@ -71,6 +72,11 @@ public:
 	void CreatePolygonFromInput();
 	void DrawNewPolygonPoints() const;
 	void AddGameObject( GameObject* gameObject );
+	
+	Physics2D* GetPhysicsSystem() { return m_physics2D; }
+
+	//---------------------------------------------------------------------------------------------------------
+	static void SetPhysicsUpdate( NamedStrings* args );
 
 private:
 	Clock* m_gameClock = nullptr;

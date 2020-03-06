@@ -1,3 +1,4 @@
+Project: FPS
 - [x] `Camera::SetProjectionPerspective( float fovDegrees, float nearZClip, float farZClip )` implemented
     - [x] Set projection to `60 degrees`, and `-0.1` to `-100.0` for the clip planes.
 - [x] Camera now has a `Transform`
@@ -14,10 +15,10 @@
         - [x] `MatrixIsOrthoNormal` check added
         - [x] `MatrixTranspose` added
 - [x] Draw a Quad at `(0, 0, -10)`, or 10 units in front of the origin (should be visible when you start)
-- [-] Allow player to move the camera by change the camera transform position
-   - [-] `W` & `S`: Forward & Back (movement is relative to where you're looking)
-   - [-] `A` & `D`: Left and Right (movement is relative to where you're looking)
-   - [-] `Space` & `C`: Up and Down Movement (movement is absolute (world up and world down)
+- [x] Allow player to move the camera by change the camera transform position
+   - [x] `W` & `S`: Forward & Back (movement is relative to where you're looking)
+   - [x] `A` & `D`: Left and Right (movement is relative to where you're looking)
+   - [x] `Space` & `C`: Up and Down Movement (movement is absolute (world up and world down)
    - [x] `Left-Shift`: Move faster while held.
    - *Note:  If you want different controls, just make a note in your readme*
 - [x] Allow player to turn the camera using the mouse.
@@ -40,7 +41,7 @@
     - [x] Create a new uniform buffer for storing a model matrix (slot 2)
     - [x] `SetModelMatrix` should update this uniform buffer
     - [x] `BeginCamera` should `SetModelMatrix` to the `IDENTITY`, and be sure to bind the buffer.
-- [ ] Be able to draw a cube mesh at `(1, 0.5, -12.0)`
+- [x] Be able to draw a cube mesh at `(1, 0.5, -12.0)`
     - [x] Create a `GPUMesh` class
         - [x] Implement `IndexBuffer`
         - [x] Be able to construct a mesh from a vertex and index array
@@ -49,29 +50,26 @@
         - [x] Add `RenderContext::DrawMesh`
             - This should bind the vertex buffer, index buffer, and then `DrawIndexed`
     - [x] Game creates a `cube mesh` around the origin with 2 unit sides. 
-    - [ ] Game has a `Transform` for the cube set at `(1, 0.5, -12.0f)`, 
-    - [ ] Cube transform sets `yaw` rotation to current time each frame
+    - [x] Game has a `Transform` for the cube set at `(1, 0.5, -12.0f)`, 
+    - [x] Cube transform sets `yaw` rotation to current time each frame
     - [x] Game should `SetModelMatrix` to the cube transform matrix
-- [ ] Support a depth buffer
-    - [ ] `Texture::CreateDepthStencilBuffer` added
-    - [ ] `Camera::SetDepthStencilBuffer` added
-    - [ ] `RenderContext` now automatcially creates a depth buffer during init matching the swap chain's size
-    - [ ] `RenderContext::GetDefaultBackbuffer` implemented to return this
-    - [ ] `RenderContext::BeginCamera`, now binds the camera's back buffer as well.
-        - [ ] **IMPORANT:  Do not bind the default one automatically if the camera doesn't have one set.  There are reasons a camera may not want a depth buffer!**
-    - [ ] Camera's clear options should now store off the `depth` and `stencil` clear values.
-    - [ ] If camera has a depth buffer and says it should clear depth, also clear the depth buffer.
+- [x] Support a depth buffer
+    - [x] `Texture::CreateDepthStencilBuffer` added
+    - [x] `Camera::SetDepthStencilBuffer` added
+    - [x] `RenderContext` now automatcially creates a depth buffer during init matching the swap chain's size
+    - [x] `RenderContext::BeginCamera`, now binds the camera's back buffer as well.
+        - [x] **IMPORANT:  Do not bind the default one automatically if the camera doesn't have one set.  There are reasons a camera may not want a depth buffer!**
+    - [x] Camera's clear options should now store off the `depth` and `stencil` clear values.
+    - [x] If camera has a depth buffer and says it should clear depth, also clear the depth buffer.
+        - Use `ID3D11DeviceConext::ClearDepthStencilView` to clear if camera says to.
+- [x] Generate a **UV Sphere** mesh during `Game::Startup`
+    - [x] `MeshUtils.hpp` has a function 
+          `AddUVSphereToIndexedVertexArray( std::vector<VertexPCU>& verts, std::vector<uint>& indices, vec3 center, float radius, uint horizintalCuts, uint verticalCuts, RGBA color )`
+    - [x] Draw this UV sphere multiple times as a large moving ring in your game.  Each one rotating along a local axis as well as rotating along a global axis.  See demo.
 
    
 ------
 
 ## Extras
-- [ ] *X04.10: 03%*: Mouse input, show, and clip options should use a stack to track state `InputSystem::PushMouseOptions`, see notes...
-- [ ] *X04.11: 02%*: **Requires X04.10** - Mouse options are disabled when window loses focus, and re-applied when gaining focus.
-- [ ] *X04.15: 04%*: CPU Mesh Subdivide (tesselation)
-- [ ] *X04.20: 02%*: Cube Sphere Generation
-- [ ] *X04.30: 04%*: IcoSphere Generation (No UV)
-- [ ] *X04.31: 02%*: **Requiers X04.30** - IcoSphere UVs (Can use spherical projection - there's no clean seam so  will require a wrapping sampler to wo -k)
-- [ ] *X04.40: 02%*: Plane Generation (with subdivision count)
-- [ ] *X04.41: 04%*: **Requires X04.40** - Surface Generation for equations of the form "vec3 f(u, v)";
-- [ ] *X04.42: 04%*: **Requires X04.40** - NURB Generation (can use previous)
+- [x] *X04.40: 02%*: Plane Generation (with subdivision count)
+- [x] *X04.41: 04%*: **Requires X04.40** - Surface Generation for equations of the form "vec3 f(u, v)";

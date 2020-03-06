@@ -444,8 +444,5 @@
     <ClInclude Include="Core\Timer.hpp">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\EventArgs.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

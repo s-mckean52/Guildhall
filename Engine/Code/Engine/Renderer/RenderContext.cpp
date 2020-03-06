@@ -78,6 +78,10 @@ void RenderContext::StartUp( Window* theWindow )
 	GUARANTEE_OR_DIE( SUCCEEDED( result ), "Failed to create rendering pipeline" );
 
 	m_swapchain = new SwapChain( this, swapchain );
+
+	Texture* backBufferTexture = m_swapchain->GetBackBuffer();
+	m_defaultDepthStencil = CreateDepthStencilBuffer( backBufferTexture->GetImageTexelSize() );
+
 	m_errorShader = CreateShaderFromSourceCode( BuiltInShader::BUILT_IN_ERROR );
 	m_defaultShader = CreateShaderFromSourceCode( BuiltInShader::BUILT_IN_DEFAULT );
 
@@ -122,9 +126,6 @@ void RenderContext::ShutDown()
 
 	delete m_modelUBO;
 	m_modelUBO = nullptr;
-
-	delete m_depthStencilBuffer;
-	m_depthStencilBuffer = nullptr;
 
 	delete m_immediateVBO;
 	m_immediateVBO = nullptr;
@@ -186,6 +187,34 @@ void RenderContext::SetBlendMode( BlendMode blendMode )
 
 
 //---------------------------------------------------------------------------------------------------------
+void RenderContext::SetDepthTest( CompareFunc compareFunc, bool writeDepthOnPass )
+{
+	if( !DoesDepthStateMatch( compareFunc, writeDepthOnPass ) ) 
+	{
+		DX_SAFE_RELEASE( m_currentDepthStencilState );
+
+		D3D11_DEPTH_STENCIL_DESC desc;
+		memset( &desc, 0, sizeof( desc ) );
+
+		desc.DepthEnable = true;
+		desc.DepthWriteMask =  writeDepthOnPass ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
+
+		switch( compareFunc )
+		{
+		case COMPARE_FUNC_NEVER:	desc.DepthFunc = D3D11_COMPARISON_NEVER; break;
+		case COMPARE_FUNC_ALWAYS:	desc.DepthFunc = D3D11_COMPARISON_ALWAYS; break;
+		case COMPARE_FUNC_LEQUAL:	desc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL; break;
+		case COMPARE_FUNC_GEQUAL:	desc.DepthFunc = D3D11_COMPARISON_GREATER_EQUAL; break;
+		default: break;
+		}
+
+		m_device->CreateDepthStencilState( &desc, &m_currentDepthStencilState );
+	}
+	m_context->OMSetDepthStencilState( m_currentDepthStencilState, 0U );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void RenderContext::ClearScreen( const Rgba8& clearColor )
 {
 	float clearFloats [4];
@@ -199,6 +228,15 @@ void RenderContext::ClearScreen( const Rgba8& clearColor )
 
 	ID3D11RenderTargetView* rtv = backbuffer_rtv->GetAsRTV();
 	m_context->ClearRenderTargetView( rtv, clearFloats );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::ClearDepth( Texture* depthStencilTexture, float depth )
+{
+	TextureView* view = depthStencilTexture->GetOrCreateDepthStencilView();
+	ID3D11DepthStencilView* dsv = view->GetAsDSV();
+	m_context->ClearDepthStencilView( dsv, D3D11_CLEAR_DEPTH, depth, 0 );
 }
 
 
@@ -217,7 +255,15 @@ void RenderContext::BeginCamera( Camera& camera )
 
 	TextureView* view = colorTarget->CreateOrGetRenderTargetView();
 	ID3D11RenderTargetView* rtv = view->GetAsRTV();
-	m_context->OMSetRenderTargets( 1, &rtv, nullptr );
+	
+	ID3D11DepthStencilView* dsv = nullptr;
+	Texture* depthStencilTarget = camera.GetDepthStencilTarget();
+	if( depthStencilTarget != nullptr )
+	{
+		TextureView* depthStencilView = depthStencilTarget->GetOrCreateDepthStencilView();
+		dsv = depthStencilView->GetAsDSV();
+	}
+	m_context->OMSetRenderTargets( 1, &rtv, dsv );
 
 	IntVec2 outputSize = colorTarget->GetImageTexelSize();
 
@@ -233,6 +279,11 @@ void RenderContext::BeginCamera( Camera& camera )
 	if( camera.ShouldClearColor() )
 	{
 		ClearScreen( camera.GetClearColor() );
+	}
+
+	if( camera.ShouldClearDepth() && depthStencilTarget != nullptr )
+	{
+		ClearDepth( depthStencilTarget, camera.GetClearDepth() );
 	}
 
 	m_isDrawing = true;
@@ -255,7 +306,37 @@ void RenderContext::BeginCamera( Camera& camera )
 void RenderContext::EndCamera( const Camera& camera )
 {
 	UNUSED( camera );
+	DX_SAFE_RELEASE( m_currentDepthStencilState );
 	m_isDrawing = false;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool RenderContext::DoesDepthStateMatch( CompareFunc compareFunc, bool writeDepthOnPass )
+{
+	if( m_currentDepthStencilState == nullptr ) return false;
+
+	D3D11_DEPTH_STENCIL_DESC currentDesc;	
+	m_currentDepthStencilState->GetDesc( &currentDesc );
+
+	D3D11_DEPTH_WRITE_MASK newWriteMask = writeDepthOnPass ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
+
+	D3D11_COMPARISON_FUNC newFunc;
+	switch( compareFunc )
+	{
+	case COMPARE_FUNC_NEVER: newFunc = D3D11_COMPARISON_NEVER; break;
+	case COMPARE_FUNC_ALWAYS: newFunc = D3D11_COMPARISON_ALWAYS; break;
+	case COMPARE_FUNC_LEQUAL: newFunc = D3D11_COMPARISON_LESS_EQUAL; break;
+	case COMPARE_FUNC_GEQUAL: newFunc = D3D11_COMPARISON_GREATER_EQUAL; break;
+	default: ERROR_AND_DIE( "Unsupported compare func" ); break;
+	}
+
+	if( currentDesc.DepthFunc == newFunc && currentDesc.DepthWriteMask == newWriteMask )
+	{
+		return true;
+	}
+
+	return false;
 }
 
 
@@ -648,7 +729,6 @@ void RenderContext::BindIndexBuffer( IndexBuffer* ibo )
 	UINT offset = 0;
 
 	m_context->IASetIndexBuffer( iboHandle, DXGI_FORMAT_R32_UINT, offset );
-	//m_context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 }
 
 
@@ -687,18 +767,15 @@ bool RenderContext::CreateBitmapFontFromFile( const char* fontFilePath )
 
 
 //---------------------------------------------------------------------------------------------------------
-bool RenderContext::CreateDepthStencilBuffer()
+Texture* RenderContext::CreateDepthStencilBuffer( IntVec2 const& imageTexelDimensions )
 {
-	Texture* backBuffer = m_swapchain->GetBackBuffer();
-	IntVec2 backBufferDimensions = backBuffer->GetImageTexelSize();
-
 	D3D11_TEXTURE2D_DESC depthDesc;
 
-	depthDesc.Width = static_cast<unsigned int>( backBufferDimensions.x );
-	depthDesc.Height = static_cast<unsigned int>( backBufferDimensions.y );
+	depthDesc.Width = static_cast<unsigned int>( imageTexelDimensions.x );
+	depthDesc.Height = static_cast<unsigned int>( imageTexelDimensions.y );
 	depthDesc.MipLevels = 1;
 	depthDesc.ArraySize = 1;
-	depthDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	depthDesc.Format = DXGI_FORMAT_D32_FLOAT;
 	depthDesc.SampleDesc.Count = 1;
 	depthDesc.SampleDesc.Quality = 0;
 	depthDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -708,9 +785,9 @@ bool RenderContext::CreateDepthStencilBuffer()
 
 	ID3D11Texture2D* textureHandle = nullptr;
 	m_device->CreateTexture2D( &depthDesc, nullptr, &textureHandle );
-
-	m_depthStencilBuffer = new Texture( this, textureHandle );
-	return true;
+	Texture* newTexture = new Texture( this, textureHandle );
+	m_loadedTextures.push_back( newTexture );
+	return newTexture;
 }
 
 

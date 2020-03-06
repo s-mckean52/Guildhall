@@ -236,9 +236,8 @@ void ClampZeroToOne( float& valueToClamp )
 
 
 //---------------------------------------------------------------------------------------------------------
-bool ApproximatelyEqual( float valueToCheck, float valueToCheckAgainst )
+bool ApproximatelyEqual( float valueToCheck, float valueToCheckAgainst, float percisionValue )
 {
-	float percisionValue = 0.0001f;
 	float diff = valueToCheckAgainst - valueToCheck;
 	if( diff > percisionValue || diff < -percisionValue )
 	{

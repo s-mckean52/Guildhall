@@ -14,6 +14,9 @@ Texture::~Texture()
 	delete m_shaderResourceView;
 	m_shaderResourceView = nullptr;
 
+	delete m_depthStencilView;
+	m_depthStencilView = nullptr;
+
 	DX_SAFE_RELEASE( m_handle );
 }
 
@@ -107,4 +110,26 @@ TextureView* Texture::GetOrCreateShaderResourceView()
 	}
 
 	return m_shaderResourceView;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+TextureView* Texture::GetOrCreateDepthStencilView()
+{
+	if( m_depthStencilView != nullptr )
+	{
+		return m_depthStencilView;
+	}
+
+	ID3D11Device* device = m_owner->m_device;
+	ID3D11DepthStencilView* dsv = nullptr;
+	device->CreateDepthStencilView( m_handle, nullptr, &dsv );
+
+	if( dsv != nullptr )
+	{
+		m_depthStencilView = new TextureView();
+		m_depthStencilView->m_dsv = dsv;
+	}
+
+	return m_depthStencilView;
 }

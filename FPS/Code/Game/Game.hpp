@@ -10,6 +10,7 @@ class XboxController;
 class Shader;
 class GPUMesh;
 class Clock;
+class NamedStrings;
 
 class Game
 {
@@ -38,8 +39,9 @@ public:
 	void ChangeClearColor( float deltaSeconds );
 	void UpdateCameras( float deltaSeconds );
 
-	static void GainFocus();
-	static void LoseFocus();
+	static Vec3 ParabolaEquation( float x, float y );
+	static void GainFocus( NamedStrings* args );
+	static void LoseFocus( NamedStrings* args );
 
 	bool IsQuitting() const { return m_isQuitting; }
 
@@ -48,6 +50,7 @@ private:
 
 	GPUMesh* m_meshCube = nullptr;
 	GPUMesh* m_uvSphere = nullptr;
+	GPUMesh* m_plane = nullptr;
 	Transform* m_cubeTransform = nullptr;
 	Transform* m_sphereTransform = nullptr;
 	Transform* m_ringTransform = nullptr;

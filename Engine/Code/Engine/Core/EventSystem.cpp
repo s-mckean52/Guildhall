@@ -1,7 +1,6 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/EventSubscription.hpp"
-#include "Engine/Core/EventArgs.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -76,7 +75,7 @@ void EventSystem::UnsubscribeEventCallbackFunction( std::string eventName, Event
 
 
 //---------------------------------------------------------------------------------------------------------
-void EventSystem::FireEvent( std::string eventToFire )
+void EventSystem::FireEvent( std::string eventToFire, std::string eventArguments )
 {
 	for( int eventSubIndex = 0; eventSubIndex < m_eventSubscriptions.size(); ++eventSubIndex )
 	{
@@ -87,7 +86,12 @@ void EventSystem::FireEvent( std::string eventToFire )
 
 		if( currentEventSub->m_eventName == eventToFire )
 		{
-			currentEventSub->m_callbackFunction();
+			NamedStrings* args = new NamedStrings;
+			if( eventArguments != "" )
+			{
+				args->PopulateFromString( eventArguments );
+			}
+			currentEventSub->m_callbackFunction( args );
 		}
 	}
 }

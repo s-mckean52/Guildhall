@@ -129,10 +129,6 @@ void Rigidbody2D::ApplyFrictionAt( Vec2 const& worldPos, float frictionCoefficie
 	{
 		tangentImpulse = Signf( tangentImpulse ) * normalImpulse * frictionCoefficient;
 	}
-	else
-	{
-		tangentImpulse *= frictionCoefficient;
-	}
 	ApplyImpulseAt( worldPos, collisionTangent * tangentImpulse );
 }
 

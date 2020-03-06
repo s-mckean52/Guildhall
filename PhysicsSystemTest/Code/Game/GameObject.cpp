@@ -88,18 +88,18 @@ void GameObject::UpdateColorBasedOnPhysics()
 
 
 //---------------------------------------------------------------------------------------------------------
-void GameObject::Draw() const
+void GameObject::Draw( Vec2 const& mousePos ) const
 {
 	if( m_isDestroyed ) return;
 
 	m_rigidbody->m_collider->DebugRender( g_theRenderer, m_currentBorderColor, m_currentFillColor );
 	m_rigidbody->DebugRender( g_theRenderer );
-	DrawTooltip();
+	DrawTooltip( mousePos );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void GameObject::DrawTooltip() const
+void GameObject::DrawTooltip( Vec2 const& mousePos ) const
 {
 	if( !m_isHovered ) return;
 
@@ -120,7 +120,7 @@ void GameObject::DrawTooltip() const
 	
 	Collider2D* collider = GetCollider();
 	AABB2 worldBounds = collider->GetWorldBounds();
-	tooltipBox.mins = worldBounds.maxes;
+	tooltipBox.mins = mousePos;
 	tooltipBox.maxes = tooltipBox.mins + Vec2( 0.f, 120.f ) + g_testFont->GetDimensionsForText2D( 10.f, verletString );
 	
 	AppendVertsForAABB2D( tooltipBoxVerts, tooltipBox, Rgba8::GRAY );

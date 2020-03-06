@@ -55,11 +55,6 @@ public:
 
 	Collider2D* AddColliderToVector( Collider2D* newCollider );
 
-
-	//---------------------------------------------------------------------------------------------------------
-	// Static Dev Commands
-	static void SetPhysicsUpdate( double newFrameTime );
-
 public:
 	Clock* m_clock = nullptr;
 	Timer m_stepTimer;

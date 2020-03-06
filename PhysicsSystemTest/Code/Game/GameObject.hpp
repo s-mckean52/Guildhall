@@ -16,8 +16,8 @@ public:
 	void UpdateColors();
 	void UpdateColorBasedOnPhysics();
 
-	void Draw() const;
-	void DrawTooltip() const;
+	void Draw( Vec2 const& mousePos ) const;
+	void DrawTooltip(Vec2 const& mousePos ) const;
 
 	std::string GetSimulationModeAsString() const;
 	std::string GetVelocityAsString() const;

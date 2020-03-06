@@ -15,11 +15,11 @@ Camera::~Camera()
 	delete m_uniformBuffer;
 	m_uniformBuffer = nullptr;
 
-	delete m_colorTarget;
-	m_colorTarget = nullptr;
-
-	delete m_depthStencilTarget;
-	m_depthStencilTarget = nullptr;
+// 	delete m_colorTarget;
+// 	m_colorTarget = nullptr;
+// 
+// 	delete m_depthStencilTarget;
+// 	m_depthStencilTarget = nullptr;
 }
 
 
@@ -151,6 +151,13 @@ bool Camera::ShouldClearColor() const
 
 
 //---------------------------------------------------------------------------------------------------------
+bool Camera::ShouldClearDepth() const
+{
+	return m_clearMode & CLEAR_DEPTH_BIT;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 Texture* Camera::GetColorTarget() const
 {
 	return m_colorTarget;
@@ -169,9 +176,8 @@ void Camera::SetClearMode( CameraClearFlags clearFlags, Rgba8 color, float depth
 {
 	m_clearMode		= clearFlags;
 	m_clearColor	= color;
-
-	UNUSED( depth );
-	UNUSED( stencil );
+	m_clearDepth	= depth;
+	m_clearStencil	= stencil;
 }
 
 

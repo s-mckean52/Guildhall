@@ -444,9 +444,19 @@ void DevConsole::SubmitCommand()
 	for( int commandIndex = 0; commandIndex < availableCommands.size(); ++commandIndex )
 	{
 		std::string command = availableCommands[ commandIndex ];
-		if( command == m_currentInput )
+		std::string inputCommand = m_currentInput;
+		std::string inputArgs = "";
+
+		size_t firstSpaceIndex = m_currentInput.find( ' ' );
+		if( firstSpaceIndex != m_currentInput.npos )
 		{
-			m_theEventSystem->FireEvent( m_currentInput );
+			inputCommand = m_currentInput.substr( 0, firstSpaceIndex );
+			inputArgs = m_currentInput.substr( firstSpaceIndex + 1, m_currentInput.size() );
+		}
+
+		if( command == inputCommand )
+		{
+			m_theEventSystem->FireEvent( inputCommand, inputArgs );
 			ResetInput();
 			return;
 		}

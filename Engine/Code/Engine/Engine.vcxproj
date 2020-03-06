@@ -249,7 +249,6 @@
     <ClInclude Include="Core\DevConsole.hpp" />
     <ClInclude Include="Core\EngineCommon.hpp" />
     <ClInclude Include="Core\ErrorWarningAssert.hpp" />
-    <ClInclude Include="Core\EventArgs.hpp" />
     <ClInclude Include="Core\EventSubscription.hpp" />
     <ClInclude Include="Core\EventSystem.hpp" />
     <ClInclude Include="Core\Image.hpp" />

@@ -19,6 +19,26 @@ void NamedStrings::PopulateFromXmlElementAttribute( const XmlElement& element )
 
 
 //---------------------------------------------------------------------------------------------------------
+void NamedStrings::PopulateFromString( std::string const& arguments )
+{
+	Strings splitString = SplitStringOnDelimiter( arguments, ' ' );
+	
+	for( int argIndex = 0; argIndex < splitString.size(); ++argIndex )
+	{
+		std::string keyValueString = splitString[ argIndex ];
+		Strings keyValuePair = SplitStringOnDelimiter( keyValueString, '=' );
+
+		GUARANTEE_OR_DIE( keyValuePair.size() == 2, "NamedStrings populate from string format not 'key=value'" );
+
+		std::string keyName = keyValuePair[ 0 ];
+		std::string keyValue = keyValuePair[ 1 ];
+
+		m_keyValuePairs.insert( { keyName, keyValue } );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void NamedStrings::SetValue( const std::string& keyName, const std::string& newValue )
 {
 	std::map<std::string, std::string>::iterator mapIterator = m_keyValuePairs.find( keyName );
@@ -149,6 +169,20 @@ IntVec2 NamedStrings::GetValue( const std::string& keyName, const IntVec2& defau
 	{
 		std::string valueText = mapIterator->second;
 		value.SetFromText( valueText.c_str() );
+	}
+	return value;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+double NamedStrings::GetValue( const std::string& keyName, double defaultValue ) const
+{
+	double value = defaultValue;
+	MapConstIterator mapIterator = m_keyValuePairs.find( keyName );
+	if( mapIterator != m_keyValuePairs.cend() )
+	{
+		std::string valueText = mapIterator->second;
+		value = atof( valueText.c_str() );
 	}
 	return value;
 }

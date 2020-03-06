@@ -24,6 +24,7 @@ struct ID3D11Buffer;
 struct ID3D11DeviceContext;
 struct ID3D11BlendState;
 struct IDXGIDebug;
+struct ID3D11DepthStencilState;
 
 enum class BlendMode
 {
@@ -37,6 +38,14 @@ enum BufferSlot
 	UBO_FRAME_SLOT			= 0,
 	UBO_CAMERA_SLOT			= 1,
 	UBO_MODEL_MATRIX_SLOT	= 2,
+};
+
+enum CompareFunc
+{
+	COMPARE_FUNC_NEVER,           // D3D11_COMPARISON_NEVER
+	COMPARE_FUNC_ALWAYS,          // D3D11_COMPARISON_ALWAYS
+	COMPARE_FUNC_LEQUAL,          // D3D11_COMPARISON_LESS_EQUAL
+	COMPARE_FUNC_GEQUAL,          // D3D11_COMPARISON_GREATER_EQUAL
 };
 
 struct frame_data_t
@@ -70,10 +79,13 @@ public:
 	
 	void SetGameClock( Clock* clock );
 	void SetBlendMode( BlendMode blendMode );
+	void SetDepthTest( CompareFunc compareFunc, bool writeDepthOnPass );
 	void ClearScreen( const Rgba8& clearColor );
+	void ClearDepth( Texture* depthStencilTexture, float depth );
 	void BeginCamera( Camera& camera );
 	void EndCamera( const Camera& camera );
 
+	bool DoesDepthStateMatch( CompareFunc compareFunc, bool writeDepthOnPass );
 	bool IsDrawing() const { return m_isDrawing; }
 	Texture* GetBackBuffer() const;
 	
@@ -98,6 +110,7 @@ public:
 	Shader*		GetOrCreateShader( char const* filename );
 	Shader*		CreateShaderFromSourceCode( char const* sourceCode);
 	Texture*	CreateTextureFromColor( Rgba8 const& color );
+	Texture*	CreateDepthStencilBuffer( IntVec2 const& imageDimensions );
 
 	void ReleaseLoadedAssets();
 	void ReleaseBlendStates();
@@ -106,7 +119,6 @@ private:
 	void CreateBlendStates();
 	bool CreateTextureFromFile( const char* imageFilePath );
 	bool CreateBitmapFontFromFile( const char* fontFilePath );
-	bool CreateDepthStencilBuffer();
 
 	void ReportLiveObjects();
 	void CreateDebugModule();
@@ -123,21 +135,22 @@ private:
 	std::vector<Shader*>		m_loadedShaders;
 
 public:
-	void*					m_debugModule			= nullptr;
-	IDXGIDebug*				m_debug					= nullptr;
+	void*						m_debugModule				= nullptr;
+	IDXGIDebug*					m_debug						= nullptr;
 
-	ID3D11Device*			m_device				= nullptr;
-	ID3D11DeviceContext*	m_context				= nullptr;
-	SwapChain*				m_swapchain				= nullptr;
-	Shader*					m_currentShader			= nullptr;
-	Shader*					m_defaultShader			= nullptr;
-	Shader*					m_errorShader			= nullptr;
-	Texture*				m_textueDefaultColor	= nullptr;
-	Sampler*				m_samplerDefault		= nullptr;
-	VertexBuffer*			m_immediateVBO			= nullptr;
-	RenderBuffer*			m_frameUBO				= nullptr;
-	RenderBuffer*			m_modelUBO				= nullptr;
-	Texture*				m_depthStencilBuffer	= nullptr;
+	ID3D11Device*				m_device					= nullptr;
+	ID3D11DeviceContext*		m_context					= nullptr;
+	ID3D11DepthStencilState*	m_currentDepthStencilState	= nullptr;
+	SwapChain*					m_swapchain					= nullptr;
+	Shader*						m_currentShader				= nullptr;
+	Shader*						m_defaultShader				= nullptr;
+	Shader*						m_errorShader				= nullptr;
+	Texture*					m_textueDefaultColor		= nullptr;
+	Sampler*					m_samplerDefault			= nullptr;
+	VertexBuffer*				m_immediateVBO				= nullptr;
+	RenderBuffer*				m_frameUBO					= nullptr;
+	RenderBuffer*				m_modelUBO					= nullptr;
+	Texture*					m_defaultDepthStencil		= nullptr;
 
 	ID3D11BlendState* m_alphaBlendStateHandle		= nullptr;
 	ID3D11BlendState* m_additiveBlendStateHandle	= nullptr;

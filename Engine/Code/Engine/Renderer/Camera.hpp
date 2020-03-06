@@ -35,7 +35,9 @@ public:
 	Mat44			GetProjectionMatrix() const;
 	Texture*		GetColorTarget() const;
 	RenderBuffer*	GetUBO() const;
-	Transform		GetTransform() const { return m_transform; }
+	Transform		GetTransform() const			{ return m_transform; }
+	Texture*		GetDepthStencilTarget() const	{ return m_depthStencilTarget; }
+	float			GetClearDepth() const			{ return m_clearDepth; }
 
 	void	SetPosition( const Vec3& position );
 	void	Translate( const Vec3& translation );
@@ -46,10 +48,11 @@ public:
 	Vec3	ClientToWorldPosition( Vec2 const& clientPosition, float ndcZ = 0.f ) const;
 
 	bool	ShouldClearColor() const;
+	bool	ShouldClearDepth() const;
 	Mat44	GetViewMatrix() const;
 	Vec3	NDCToWorldCoords( const Vec4& ndcCoords ) const;
 
-	void SetClearMode( CameraClearFlags clearFlags, Rgba8 color, float depth = 0.0f, unsigned int stencil = 0 );
+	void SetClearMode( CameraClearFlags clearFlags, Rgba8 color, float depth = 1.0f, unsigned int stencil = 0 );
 	void SetColorTarget( Texture* texture );
 	void Translate2D( const Vec2& translation2D );
 
@@ -79,5 +82,5 @@ private:
 	CameraClearFlags	m_clearMode		= 0;
 	Rgba8				m_clearColor	= Rgba8::WHITE;
 	float				m_clearDepth	= 1.0f;
-	float				m_clearStencil	= 0.0f;
+	unsigned int		m_clearStencil	= 0;
 };

@@ -1,4 +1,4 @@
-Project: FPS
+Project: PhysicsSystemTest
 - [x] Stop coloring objects red that are intersecting (it becomes a strobe light in this assignment otherwise)
 - [x] Make sure your game creates polygons as `STATIC` by default, and discs create as `DYNAMIC` by default
 - [x] Add support for `disc Collider2D::GetWorldBounds` for existing colliders

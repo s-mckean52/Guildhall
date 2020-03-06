@@ -1,5 +1,7 @@
 #pragma once
 
+class NamedStrings;
+
 class App
 {
 private:
@@ -13,8 +15,8 @@ public:
 	void RunFrame();
 	void RestartGame();
 
-	static void HelpCommand();
-	static void QuitRequested();
+	static void HelpCommand( NamedStrings* args );
+	static void QuitRequested( NamedStrings* args );
 	bool HandleQuitRequested();
 
 	void OpenDevConsole();

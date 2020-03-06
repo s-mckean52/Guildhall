@@ -1,6 +1,7 @@
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include <math.h>
 
 
@@ -256,3 +257,8 @@ const Vec3 operator*( float uniformScale, const Vec3& vecToMultiply )
 {
 	return Vec3( vecToMultiply.x * uniformScale, vecToMultiply.y * uniformScale, vecToMultiply.z * uniformScale );
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+STATIC const Vec3 Vec3::RIGHT	( 1.0f, 0.0f, 0.0f );
+STATIC const Vec3 Vec3::UP		( 0.0f, 1.0f, 0.0f );

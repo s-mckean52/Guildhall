@@ -64,6 +64,8 @@ void Game::StartUp()
 	
 	m_uiCamera->SetPosition( m_focalPoint );
 	m_uiCamera->SetProjectionOrthographic( m_cameraHeight );
+
+	g_theEventSystem->SubscribeEventCallbackFunction( "set_physics_update", SetPhysicsUpdate );
 }
 
 
@@ -565,7 +567,7 @@ void Game::DrawGameObjects() const
 	{
 		if( m_gameObjects[ goIndex ] )
 		{
-			m_gameObjects[ goIndex ]->Draw();
+			m_gameObjects[ goIndex ]->Draw( m_mousePos );
 		}
 	}
 }
@@ -821,4 +823,16 @@ void Game::AddGameObject( GameObject* gameObject )
 	{
 		m_gameObjects.push_back( gameObject );
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+STATIC void Game::SetPhysicsUpdate( NamedStrings* args )
+{
+	double defaultHz = 120;
+	double hz = args->GetValue( "hz", defaultHz );
+	Physics2D* physicsSystem = g_theGame->GetPhysicsSystem();
+	physicsSystem->SetFixedDeltaTime( 1 / hz );
+
+	g_theConsole->PrintString( Rgba8::WHITE, Stringf( "Physics Update set to %fhz", hz ) );
 }

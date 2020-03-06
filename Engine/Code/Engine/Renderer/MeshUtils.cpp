@@ -360,17 +360,113 @@ void AddUVSphereToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vecto
 
 
 //---------------------------------------------------------------------------------------------------------
-void AddPlaneToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, Vec3 const& startPos, unsigned int horizintalCuts, unsigned int verticalCuts, Rgba8 const& color )
+void AddPlaneToIndexedVertexArray(	std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices,
+									Vec3 const& origin, Rgba8 const& color,
+									Vec3 const& right, float xMin, float xMax,
+									Vec3 const& up, float yMin, float yMax,
+									unsigned int xSteps, unsigned int ySteps )
 {
-
-	for( unsigned int verticalIndex = 0; verticalIndex < verticalCuts; ++verticalIndex )
+	if( ySteps == 0 )
 	{
-		for( unsigned int horizontalIndex = 0; horizontalIndex < horizintalCuts; ++horizontalIndex )
+		ySteps = xSteps;
+	}
+
+	float xRange = xMax - xMin;
+	float yRange = yMax - yMin;
+
+	float xStepAmount = xRange / xSteps;
+	float yStepAmount = yRange / ySteps;
+
+	Vec3 xStepDisplacement = right * xStepAmount;
+	Vec3 yStepDisplacement = up * yStepAmount;
+
+	float currentHeight = yMin;
+	for( unsigned int yStep = 0; yStep < ySteps + 1; ++yStep )
+	{
+		float currentWidth = xMin;
+		for( unsigned int xStep = 0; xStep < xSteps + 1; ++xStep )
 		{
-			unsigned int bottomLeft = horizontalIndex;
-			unsigned int bottomRight = horizontalIndex + 1;
-			unsigned int topLeft = horizontalIndex + ( horizintalCuts * verticalIndex ) + 1;
-			unsigned int topRight = horizontalIndex + horizintalCuts + 2;
+			Vec3 currentPosition = origin;
+			currentPosition += currentWidth * xStepDisplacement;
+			currentPosition += currentHeight * yStepDisplacement;
+
+			float u = RangeMapFloat( xMin, xMax, 0.f, 1.f, currentWidth );
+			float v = RangeMapFloat( yMin, yMax, 0.f, 1.f, currentHeight );
+			Vec2 uv = Vec2( u, v  );
+
+			verts.push_back( Vertex_PCU( currentPosition, color, uv ) );
+			currentWidth += xStepAmount;
+		}
+		currentHeight += yStepAmount;
+	}
+
+
+	for( unsigned int yIndex = 0; yIndex < ySteps; ++yIndex )
+	{
+		for( unsigned int xIndex = 0; xIndex < xSteps; ++xIndex )
+		{
+			unsigned int currentVertIndex = xIndex + ( ( xSteps + 1 ) * yIndex);
+
+			unsigned int bottomLeft = currentVertIndex;
+			unsigned int bottomRight = currentVertIndex + 1;
+			unsigned int topLeft = currentVertIndex + xSteps + 1;
+			unsigned int topRight = currentVertIndex + xSteps + 2;
+
+			indices.push_back( bottomLeft );
+			indices.push_back( bottomRight );
+			indices.push_back( topRight );
+
+			indices.push_back( bottomLeft );
+			indices.push_back( topRight );
+			indices.push_back( topLeft );
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void AddSurfaceToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, Vec3 const& origin, Rgba8 const& color, float xMin, float xMax, unsigned int xSteps, float yMin, float yMax, unsigned int ySteps, graph_cb graphFunction )
+{
+	float xRange = xMax - xMin;
+	float yRange = yMax - yMin;
+
+	float xStepAmount = xRange / xSteps;
+	float yStepAmount = yRange / ySteps;
+
+
+	float currentY = yMin;
+	for( unsigned int yStep = 0; yStep < ySteps + 1; ++yStep )
+	{
+		float currentX = xMin;
+		for( unsigned int xStep = 0; xStep < xSteps + 1; ++xStep )
+		{
+			Vec3 currentPosition = origin;
+			currentPosition.x += currentX;
+			currentPosition.y += currentY;
+
+			float u = RangeMapFloat( xMin, xMax, 0.f, 1.f, currentX );
+			float v = RangeMapFloat( yMin, yMax, 0.f, 1.f, currentY );
+			Vec2 uv = Vec2( u, v );
+
+			currentPosition += graphFunction( u, v );
+
+			verts.push_back( Vertex_PCU( currentPosition, color, uv ) );
+			currentX += xStepAmount;
+		}
+		currentY += yStepAmount;
+	}
+
+
+	for( unsigned int yIndex = 0; yIndex < ySteps; ++yIndex )
+	{
+		for( unsigned int xIndex = 0; xIndex < xSteps; ++xIndex )
+		{
+			unsigned int currentVertIndex = xIndex + ( (xSteps + 1 ) * yIndex );
+
+			unsigned int bottomLeft = currentVertIndex;
+			unsigned int bottomRight = currentVertIndex + 1;
+			unsigned int topLeft = currentVertIndex + xSteps + 1;
+			unsigned int topRight = currentVertIndex + xSteps + 2;
 
 			indices.push_back( bottomLeft );
 			indices.push_back( bottomRight );

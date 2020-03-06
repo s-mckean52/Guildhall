@@ -1,6 +1,7 @@
 #include "Engine/Renderer/GPUMesh.hpp"
 #include "Engine/Renderer/RenderBuffer.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -25,6 +26,7 @@ GPUMesh::~GPUMesh()
 //---------------------------------------------------------------------------------------------------------
 void GPUMesh::UpdateVerticies( unsigned int vertexCount, void const* vertexData, unsigned int vertexStride, buffer_attribute_t const* layout )
 {
+	UNUSED( layout );
 	m_vertexCount = vertexCount;
 	unsigned int byteSize = vertexCount * vertexStride;
 	m_vertexBuffer->Update( vertexData, byteSize, vertexStride );

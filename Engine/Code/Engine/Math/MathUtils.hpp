@@ -40,7 +40,7 @@ void		Clamp					( int& valueToClamp, int lowerLimit, int upperLimit );
 void		Clamp					( float& valueToClamp, float lowerLimit, float upperLimit );
 void		Clamp					( double& valueToClamp, double lowerLimit, double upperLimit );
 void		ClampZeroToOne			( float& valueToClamp );
-bool		ApproximatelyEqual		( float valueToCheck, float valueToCheckAgainst );
+bool		ApproximatelyEqual		( float valueToCheck, float valueToCheckAgainst, float percisionValue = 0.0001f );
 float		Signf					( float value );	
 
 const Vec2	TransformPosition2D		( const Vec2& position, float uniformScale, float rotationDegrees, Vec2 translation);
