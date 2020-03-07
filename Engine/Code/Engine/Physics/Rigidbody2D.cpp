@@ -49,12 +49,21 @@ Vec2 Rigidbody2D::GetImpactVelocityAtPoint( Vec2 const& point ) const
 	return GetVerletVelocity();
 }
 
+
 //---------------------------------------------------------------------------------------------------------
 void Rigidbody2D::UpdateVerletVelocity( float frameTime )
 {
 	Vec2 frameDispalcement = m_worldPosition - m_frameStartPosition;
 	m_verletVelocity = frameDispalcement / frameTime;
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+float Rigidbody2D::GetRotationDegrees() const
+{
+	return ConvertRadiansToDegrees( m_rotationRadians );
+}
+
 
 //---------------------------------------------------------------------------------------------------------
 void Rigidbody2D::SetPosition( Vec2 position )
@@ -107,6 +116,34 @@ void Rigidbody2D::SetDrag( float drag )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::SetRotationRadians( float rotationRadians )
+{
+	m_rotationRadians = rotationRadians;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::SetRotationDegrees( float rotationDegrees )
+{
+	m_rotationRadians = ConvertDegreesToRadians( rotationDegrees );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::SetAngularVelocity( float angularVelocity )
+{
+	m_angularVelocity = angularVelocity;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::SetMoment( float moment )
+{
+	m_moment = moment;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Rigidbody2D::MarkForDestroy( bool isMarkedForDestroy )
 {
 	m_isMarkedForDestroy = isMarkedForDestroy;
@@ -145,6 +182,13 @@ void Rigidbody2D::ApplyDragForce()
 void Rigidbody2D::AddForce( Vec2 const& forceToAdd )
 {
 	m_frameForces += forceToAdd;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::AddFrameTorque( float torqueToAdd )
+{
+	m_frameTorque = torqueToAdd;
 }
 
 

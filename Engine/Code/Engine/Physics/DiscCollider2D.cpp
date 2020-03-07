@@ -79,6 +79,13 @@ void DiscCollider2D::SetWorldBounds()
 
 
 //---------------------------------------------------------------------------------------------------------
+float DiscCollider2D::CalculateMoment( float mass )
+{
+	return 0.0f;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void DiscCollider2D::DebugRender( RenderContext* context, Rgba8 const& borderColor, Rgba8 const& fillColor )
 {
 	float borderThickness = 5.f;

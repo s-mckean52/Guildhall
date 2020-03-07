@@ -17,11 +17,17 @@ class Rigidbody2D
 
 public:
 	void Destroy();
-	void TakeCollider( Collider2D* collider );
-	Vec2 GetFrameAcceleration();
-	Vec2 GetVelocity() const;
-	Vec2 GetImpactVelocityAtPoint( Vec2 const& point ) const;
-	void UpdateVerletVelocity( float frameTime );
+
+	void	TakeCollider( Collider2D* collider );
+	Vec2	GetFrameAcceleration();
+	Vec2	GetVelocity() const;
+	Vec2	GetImpactVelocityAtPoint( Vec2 const& point ) const;
+	void	UpdateVerletVelocity( float frameTime );
+	float	GetRotationDegrees() const;
+	float	GetRotationRadians() const								{ return m_rotationRadians; }
+	float	GetAngularVelocity() const								{ return m_angularVelocity; }
+	float	GetFrameTorque() const									{ return m_frameTorque; }
+	float	GetMoment() const										{ return m_moment; }
 
 	void SetPosition( Vec2 position );
 	void SetEnabled( bool enable );
@@ -29,12 +35,19 @@ public:
 	void SetVelocity( Vec2 const& newVelocity );
 	void SetMass( float mass );
 	void SetDrag( float drag );
+	void SetRotationRadians( float rotationRadians );
+	void SetRotationDegrees( float rotationDegrees );
+	void SetAngularVelocity( float angularVelocity );
+	void SetMoment( float moment );
 	void MarkForDestroy( bool isMarkedForDestroy );
 
 	void ApplyImpulseAt( Vec2 const& worldPos, Vec2 const& impulse );
 	void ApplyFrictionAt( Vec2 const& worldPos, float frictionCoefficient, Vec2 const& collisionNormal, float normalImpulse, Vec2 const& collisionTangent, float tangentImpulse );
 	void ApplyDragForce();
+	void CalculateMoment();
+
 	void AddForce( Vec2 const& forceToAdd );
+	void AddFrameTorque( float torqueToAdd );
 	void AddForceFromAcceleration( const Vec2& acceleration );
 	void AddDrag( float dragToAdd );
 
@@ -58,6 +71,11 @@ public:
 	Vec2			m_frameForces;
 	float			m_mass					= 1.0f;
 	float			m_drag					= 0.0f;
+
+	float			m_rotationRadians		= 0.f;
+	float			m_angularVelocity		= 0.f;
+	float			m_frameTorque			= 0.f;
+	float			m_moment				= 0.f;
 
 	Vec2			m_frameStartPosition;
 	Vec2			m_positionLastFrame;

@@ -13,6 +13,8 @@ public:
 	bool	Contains( Vec2 const& position ) const				override;
 	void 	SetWorldBounds()									override;
 
+	float	CalculateMoment( float mass )						override;
+
 	void DebugRender( RenderContext* context, Rgba8 const& borderColor, Rgba8 const& fillColor ) override;
 
 private:
