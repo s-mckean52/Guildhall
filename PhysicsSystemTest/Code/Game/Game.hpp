@@ -51,6 +51,8 @@ public:
 	void ModifyDragOfDraggedObject( float deltaSeconds );
 	void ModifyFrictionOfDraggedObject( float deltaSeconds );
 	void UpdatePhysicsInput();
+	void ModifyDraggedObjectRotation( float deltaSeconds );
+	void ModifyDraggedObjectRotationalVelocity( float deltaSeconds );
 	//---------------------------------------------------------------------------------------------------------
 	
 	bool IsQuitting() const { return m_isQuitting; }

@@ -81,6 +81,7 @@ void DiscCollider2D::SetWorldBounds()
 //---------------------------------------------------------------------------------------------------------
 float DiscCollider2D::CalculateMoment( float mass )
 {
+
 	return 0.0f;
 }
 
@@ -89,11 +90,12 @@ float DiscCollider2D::CalculateMoment( float mass )
 void DiscCollider2D::DebugRender( RenderContext* context, Rgba8 const& borderColor, Rgba8 const& fillColor )
 {
 	float borderThickness = 5.f;
+	float roationDegrees = m_rigidbody->GetRotationDegrees();
 	std::vector< Vertex_PCU > debugVerts;
 	AppendVertsForFilledCircle( debugVerts, m_radius, fillColor );
 	AppendVertsForLineBetweenPoints( debugVerts, Vec2::ZERO, Vec2::RIGHT * m_radius, Rgba8::BLUE, borderThickness * 0.5f );
 	AppendVertsForCircleAtPoint( debugVerts, m_radius, borderColor, borderThickness );
-	TransformVertexArray( debugVerts, 1.f, 0.f, m_worldPosition );
+	TransformVertexArray( debugVerts, 1.f, roationDegrees, m_worldPosition );
 	//AppendVertsForAABB2OutlineAtPoint( debugVerts, m_worldBounds, Rgba8::CYAN, 3.f );
 
 	context->BindTexture( nullptr );

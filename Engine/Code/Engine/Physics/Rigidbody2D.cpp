@@ -130,9 +130,30 @@ void Rigidbody2D::SetRotationDegrees( float rotationDegrees )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::AddRotationRadians( float rotationRadiansToAdd )
+{
+	m_rotationRadians += rotationRadiansToAdd;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::AddRotationDegrees( float rotationDegreesToAdd )
+{
+	m_rotationRadians += ConvertDegreesToRadians( rotationDegreesToAdd );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Rigidbody2D::SetAngularVelocity( float angularVelocity )
 {
 	m_angularVelocity = angularVelocity;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::AddAngularVelocity(float angularVelocityToAdd)
+{
+	m_angularVelocity += angularVelocityToAdd;
 }
 
 

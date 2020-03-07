@@ -191,6 +191,8 @@ void Game::UpdateGameStatesFromInput( float deltaSeconds )
 		ModifyMassOfDraggedObject( deltaSeconds );
 		ModifyDragOfDraggedObject( deltaSeconds );
 		ModifyFrictionOfDraggedObject( deltaSeconds );
+		ModifyDraggedObjectRotation( deltaSeconds );
+		ModifyDraggedObjectRotationalVelocity( deltaSeconds );
 		DeleteDraggedObject( deltaSeconds );
 	}
 
@@ -496,6 +498,45 @@ void Game::UpdatePhysicsInput()
 	{
 		m_physics2D->SetClockScale( 1.0 );
 		m_physics2D->m_clock->Resume();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ModifyDraggedObjectRotation( float deltaSeconds )
+{
+	if( m_draggedObject == nullptr ) return;
+
+	if( g_theInput->IsKeyPressed( 'R' ) )
+	{
+		m_draggedObject->m_rigidbody->AddRotationDegrees( 45.f * deltaSeconds );
+	}
+
+	if ( g_theInput->IsKeyPressed( 'F' ) )
+	{
+		m_draggedObject->m_rigidbody->AddRotationDegrees( -45.f * deltaSeconds );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ModifyDraggedObjectRotationalVelocity( float deltaSeconds )
+{
+	if ( m_draggedObject == nullptr ) return;
+
+	if( g_theInput->WasKeyJustPressed( 'V' ) )
+	{
+		m_draggedObject->m_rigidbody->SetAngularVelocity( 0.0f );
+	}
+
+	if( g_theInput->IsKeyPressed( 'T' ) )
+	{
+		m_draggedObject->m_rigidbody->AddAngularVelocity( 5.f * deltaSeconds );
+	}
+
+	if( g_theInput->IsKeyPressed( 'G' ) )
+	{
+		m_draggedObject->m_rigidbody->AddAngularVelocity( -5.f * deltaSeconds );
 	}
 }
 

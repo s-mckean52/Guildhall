@@ -114,6 +114,13 @@ void PolygonCollider2D::SetWorldBounds()
 
 
 //---------------------------------------------------------------------------------------------------------
+float PolygonCollider2D::CalculateMoment(float mass)
+{
+	return 0.f;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void PolygonCollider2D::DebugRender( RenderContext* context, Rgba8 const& borderColor, Rgba8 const& fillColor )
 {
 	std::vector< Vertex_PCU > debugVerts;

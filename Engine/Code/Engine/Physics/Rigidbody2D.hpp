@@ -37,7 +37,10 @@ public:
 	void SetDrag( float drag );
 	void SetRotationRadians( float rotationRadians );
 	void SetRotationDegrees( float rotationDegrees );
+	void AddRotationRadians( float rotationRadiansToAdd );
+	void AddRotationDegrees( float rotationDegreesToAdd );
 	void SetAngularVelocity( float angularVelocity );
+	void AddAngularVelocity( float angularVelocityToAdd );
 	void SetMoment( float moment );
 	void MarkForDestroy( bool isMarkedForDestroy );
 
