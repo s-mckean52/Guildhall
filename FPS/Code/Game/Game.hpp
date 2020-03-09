@@ -57,7 +57,8 @@ private:
 
 	float m_distanceFromCamera = -1.f;
 
-	Texture* m_image			= nullptr;
+	Texture* m_testImage		= nullptr;
+	Texture* m_pokeball			= nullptr;
 	Shader* m_invertColorShader	= nullptr;
 
 	Rgba8	m_clearColor = Rgba8::RED;

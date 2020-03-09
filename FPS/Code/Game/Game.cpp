@@ -88,7 +88,8 @@ void Game::StartUp()
 	m_ringTransform = new Transform();
 	m_cubeTransform->SetPosition( Vec3( 1.f, 0.5f, -12.f ) );
 
-	m_image				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
+	m_testImage			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
+	m_pokeball			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/pokeball.png" );
 	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 }
@@ -160,7 +161,7 @@ void Game::RenderWorld() const
 
 	TranslateVertexArray( aabb2 , Vec3( 0.f, 0.f, -10.f ) );
 	g_theRenderer->SetModelMatrix( Mat44::IDENTITY );
-	g_theRenderer->BindTexture( m_image );
+	g_theRenderer->BindTexture( m_testImage );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( aabb2 );
 
@@ -179,7 +180,7 @@ void Game::RenderRingOfSpheres() const
 {
 /*	Mat44 model = m_sphereTransform->ToMatrix();*/
 /*	g_theRenderer->SetModelMatrix( model );*/
-	g_theRenderer->BindTexture( m_image );
+	g_theRenderer->BindTexture( m_pokeball );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 /*	g_theRenderer->DrawMesh( m_uvSphere );*/
 
