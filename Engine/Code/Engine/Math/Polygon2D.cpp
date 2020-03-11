@@ -193,6 +193,19 @@ Polygon2D Polygon2D::GetTranslated( const Vec2& translation ) const
 
 
 //---------------------------------------------------------------------------------------------------------
+Polygon2D Polygon2D::GetRotatedRadians(float rotationRadians)
+{
+	std::vector<Vec2> rotatedPoints;
+	for( int pointIndex = 0; pointIndex < GetVertexCount(); ++pointIndex )
+	{
+		Vec2 rotatedPoint = m_points[ pointIndex ].GetRotatedRadians( rotationRadians );
+		rotatedPoints.push_back( rotatedPoint );
+	}
+	return MakeFromLineLoop( &rotatedPoints[ 0 ], static_cast<unsigned int>( rotatedPoints.size() ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 STATIC Polygon2D Polygon2D::MakeFromLineLoop( Vec2 const* points, unsigned int pointCount )
 {
 	Polygon2D newPolygon;

@@ -225,13 +225,26 @@ void Physics2D::ResolveCollision( Collision2D const& collision )
 //---------------------------------------------------------------------------------------------------------
 void Physics2D::EulerStep( float deltaSeconds, Rigidbody2D* rb )
 {
+	//Position Update
 	Vec2 acceleration = rb->GetFrameAcceleration();
 
 	Vec2 deltaVelocity = acceleration * deltaSeconds;
 	rb->m_velocity += deltaVelocity;
 
 	Vec2 deltaPosition = rb->m_velocity * deltaSeconds;
-	rb->SetPosition( rb->m_worldPosition + deltaPosition );
+	Vec2 newWorldPosition = rb->m_worldPosition + deltaPosition;
+	rb->SetPosition( newWorldPosition );
+
+
+	//Rotation Update
+	float angularAcceleration = rb->GetFrameAngularAcceleration();
+
+	float deltaAngularVelocity = angularAcceleration * deltaSeconds;
+	rb->m_angularVelocity += deltaAngularVelocity;
+
+	float deltaRotation = rb->GetAngularVelocity() * deltaSeconds;
+	float newRotationRadians = rb->GetRotationRadians() + deltaRotation;
+	rb->SetRotationRadians( newRotationRadians );
 }
 
 
@@ -240,6 +253,7 @@ void Physics2D::ApplyImpulseOnCollision( Collision2D const& collision )
 {
 	Vec2 collisionNormal = collision.GetNormal();
 	Vec2 collisionTangent = collisionNormal.GetRotated90Degrees();
+	Vec2 contactPoint = collision.GetContact();
 
 	Collider2D* me = collision.thisCollider;
 	Collider2D* them = collision.otherCollider;
@@ -247,8 +261,24 @@ void Physics2D::ApplyImpulseOnCollision( Collision2D const& collision )
 	float myMass = me->GetMass();
 	float theirMass = them->GetMass();
 
-	Vec2 myVelocity = me->GetVelocity();
-	Vec2 theirVelocity = them->GetVelocity();
+	Vec2 myVelocity = me->m_rigidbody->GetImpactVelocityAtPoint( contactPoint );
+	Vec2 theirVelocity = them->m_rigidbody->GetImpactVelocityAtPoint( contactPoint );
+	Vec2 differenceInVelocity = theirVelocity - myVelocity;
+	float velocityDiffDotCollisionNormal = DotProduct2D( differenceInVelocity, collisionNormal );
+	float velocityDiffDotCollisionTangent = DotProduct2D( differenceInVelocity, collisionTangent );
+
+	float myMoment = me->m_rigidbody->GetMoment();
+	float theirMoment = them->m_rigidbody->GetMoment();
+	Vec2 myDisplacementToContact = contactPoint - me->m_rigidbody->m_worldPosition;
+	Vec2 theirDisplacementToContact = contactPoint - them->m_rigidbody->m_worldPosition;
+	Vec2 myDisplacementToContactTangent = myDisplacementToContact.GetRotated90Degrees();
+	Vec2 theirDisplacementToContactTangent = theirDisplacementToContact.GetRotated90Degrees();
+	
+	float myTangentDotNormal = DotProduct2D( myDisplacementToContactTangent, collisionNormal );
+	float theirTangentDotNormal = DotProduct2D( theirDisplacementToContactTangent, collisionNormal );
+	
+	float myRotationalForce = ( ( myTangentDotNormal * myTangentDotNormal ) / myMoment );
+	float theirRotationalForce = ( ( theirTangentDotNormal * theirTangentDotNormal ) / theirMoment );
 
 	float coefficientOfRestitution	= me->GetBounceWith( them );
 	float frictionalCoefficient		= me->GetFrictionWith( them );
@@ -257,49 +287,46 @@ void Physics2D::ApplyImpulseOnCollision( Collision2D const& collision )
 	float tangentImpulseConstant = frictionalCoefficient;
 	if( them->m_rigidbody->m_simulationMode != SIMULATION_MODE_DYNAMIC  )
 	{
-		normalImpulseConstant *= myMass;
-		tangentImpulseConstant *= myMass;
-		Vec2 normalImpulseVector = normalImpulseConstant * ( theirVelocity - myVelocity );
-		Vec2 tangentImpulseVector = tangentImpulseConstant * ( theirVelocity - myVelocity );
-		float normalImpulse = DotProduct2D( normalImpulseVector, collisionNormal );
-		me->m_rigidbody->ApplyImpulseAt( Vec2(), normalImpulse * collisionNormal );
+		normalImpulseConstant /= ( 1 / myMass ) + myRotationalForce;
+		tangentImpulseConstant /= ( 1 / myMass ) + myRotationalForce;
+
+		float normalImpulse = normalImpulseConstant * velocityDiffDotCollisionNormal;
+		me->m_rigidbody->ApplyImpulseAt( contactPoint, normalImpulse * collisionNormal );
 
 		if( me->m_rigidbody->m_simulationMode == SIMULATION_MODE_DYNAMIC )
 		{
-			float tangentImpulse = DotProduct2D( tangentImpulseVector, collisionTangent );
-			me->m_rigidbody->ApplyFrictionAt( Vec2(), frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, tangentImpulse );
+			float tangentImpulse = tangentImpulseConstant * velocityDiffDotCollisionTangent;
+			me->m_rigidbody->ApplyFrictionAt( contactPoint, frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, tangentImpulse );
 		}
 	}
 	else if( me->m_rigidbody->m_simulationMode != SIMULATION_MODE_DYNAMIC )
 	{
-		normalImpulseConstant *= theirMass;
-		tangentImpulseConstant *= theirMass;
-		Vec2 normalImpulseVector = normalImpulseConstant * ( theirVelocity - myVelocity );
-		Vec2 tangentImpulseVector = tangentImpulseConstant * ( theirVelocity - myVelocity );
-		float normalImpulse = DotProduct2D( normalImpulseVector, collisionNormal );
-		them->m_rigidbody->ApplyImpulseAt( Vec2(), collisionNormal * -normalImpulse );
+		normalImpulseConstant /= ( 1 / theirMass ) + theirRotationalForce;
+		tangentImpulseConstant /= ( 1 / theirMass ) + theirRotationalForce;
+
+		float normalImpulse = normalImpulseConstant * velocityDiffDotCollisionNormal;
+		them->m_rigidbody->ApplyImpulseAt( contactPoint, collisionNormal * -normalImpulse );
 
 		if( them->m_rigidbody->m_simulationMode == SIMULATION_MODE_DYNAMIC )
 		{
-			float tangentImpulse = DotProduct2D( tangentImpulseVector, collisionTangent );
-			them->m_rigidbody->ApplyFrictionAt( Vec2(), frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, -tangentImpulse );
+			float tangentImpulse = tangentImpulseConstant * velocityDiffDotCollisionTangent;
+			them->m_rigidbody->ApplyFrictionAt( contactPoint, frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, -tangentImpulse );
 		}
 	}
 	else
 	{
-		float massRatio = ( myMass * theirMass ) / ( myMass + theirMass );
-		normalImpulseConstant *= massRatio;
-		tangentImpulseConstant *= massRatio;
-		Vec2 normalImpulseVector = normalImpulseConstant * ( theirVelocity - myVelocity );
-		Vec2 tangentImpulseVector = tangentImpulseConstant * ( theirVelocity - myVelocity );
-		float normalImpulse = DotProduct2D( normalImpulseVector, collisionNormal );
-		float tangentImpulse = DotProduct2D( tangentImpulseVector, collisionTangent );
+		float massRatio = ( 1 / myMass ) + ( 1 / theirMass ) + myRotationalForce + theirRotationalForce;
+		normalImpulseConstant /= massRatio;
+		tangentImpulseConstant /= massRatio;
 
-		me->m_rigidbody->ApplyImpulseAt( Vec2(), collisionNormal * normalImpulse );
-		them->m_rigidbody->ApplyImpulseAt( Vec2(), collisionNormal * -normalImpulse );
+		float normalImpulse = normalImpulseConstant * velocityDiffDotCollisionNormal;
+		float tangentImpulse = tangentImpulseConstant * velocityDiffDotCollisionTangent;
 
-		me->m_rigidbody->ApplyFrictionAt( Vec2(), frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, tangentImpulse );
-		them->m_rigidbody->ApplyFrictionAt( Vec2(), frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, -tangentImpulse );
+		me->m_rigidbody->ApplyImpulseAt( contactPoint, collisionNormal * normalImpulse );
+		them->m_rigidbody->ApplyImpulseAt( contactPoint, collisionNormal * -normalImpulse );
+
+		me->m_rigidbody->ApplyFrictionAt( contactPoint, frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, tangentImpulse );
+		them->m_rigidbody->ApplyFrictionAt( contactPoint, frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, -tangentImpulse );
 	}
 }
 
@@ -382,6 +409,7 @@ void Physics2D::ClearFrameData()
 		{
 			rb->m_frameForces = Vec2();
 			rb->m_positionLastFrame = rb->m_worldPosition;
+			rb->m_frameTorque = 0.f;
 		}
 	}
 }

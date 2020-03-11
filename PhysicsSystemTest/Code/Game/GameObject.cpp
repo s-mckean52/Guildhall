@@ -114,6 +114,9 @@ void GameObject::DrawTooltip( Vec2 const& mousePos ) const
 	std::string frictionString			= Stringf( "Friction: %f", GetCollider()->GetPhysicsMaterialFriction() );
 	std::string dragString				= Stringf( "Drag: %f", m_rigidbody->GetDrag() );
 	std::string verletString			= Stringf( "Verlet Velocity: %s", verletVelocityAsString.c_str() );
+	std::string momentString			= Stringf( "Moment of Inertia: %f", m_rigidbody->GetMoment() );
+	std::string rotationDegreesString	= Stringf( "Rotation Degrees: %f", m_rigidbody->GetRotationDegrees() );
+	std::string angularVelocityString	= Stringf( "Angular Velocity: %f", m_rigidbody->GetAngularVelocity() );
 
 	AABB2 tooltipBox;
 	std::vector<Vertex_PCU> tooltipBoxVerts;
@@ -121,7 +124,7 @@ void GameObject::DrawTooltip( Vec2 const& mousePos ) const
 	Collider2D* collider = GetCollider();
 	AABB2 worldBounds = collider->GetWorldBounds();
 	tooltipBox.mins = mousePos;
-	tooltipBox.maxes = tooltipBox.mins + Vec2( 0.f, 120.f ) + g_testFont->GetDimensionsForText2D( 10.f, verletString );
+	tooltipBox.maxes = tooltipBox.mins + Vec2( 0.f, 200.f ) + g_testFont->GetDimensionsForText2D( 10.f, verletString );
 	
 	AppendVertsForAABB2D( tooltipBoxVerts, tooltipBox, Rgba8::GRAY );
 	g_theRenderer->BindTexture( nullptr );
@@ -132,12 +135,15 @@ void GameObject::DrawTooltip( Vec2 const& mousePos ) const
 	std::vector<Vertex_PCU> tooltipVerts;
 
 	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, simulationModeString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, massString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.15f ) );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, velocityString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.30f ) );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, bouncineessString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.45f ) );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, frictionString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.60f ) );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, dragString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.75f ) );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, verletString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.90f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, massString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.1f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, velocityString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.2f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, bouncineessString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.3f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, frictionString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.4f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, dragString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.5f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, verletString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.6f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, momentString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.7f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, rotationDegreesString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.8f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, angularVelocityString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.9f ) );
 
 	g_theRenderer->BindTexture( g_testFont->GetTexture() );
 	g_theRenderer->BindShader( (Shader*)nullptr );
@@ -198,11 +204,12 @@ void GameObject::AddBounciness( float bounce )
 //---------------------------------------------------------------------------------------------------------
 void GameObject::AddMass( float massToAdd )
 {
-	m_rigidbody->m_mass += massToAdd;
-	if( m_rigidbody->m_mass <= 0.0f )
+	float newRBMass = m_rigidbody->m_mass + massToAdd;
+	if( newRBMass <= 0.0f )
 	{
-		m_rigidbody->m_mass = 0.001f;
+		newRBMass = 0.001f;
 	}
+	m_rigidbody->SetMass( newRBMass );
 }
 
 
@@ -222,6 +229,13 @@ void GameObject::AddFriction( float frictionToAdd )
 {
 	PhysicsMaterial* physicsMat = m_rigidbody->m_collider->m_physicsMaterial;
 	physicsMat->AddFriction( frictionToAdd );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void GameObject::AddRotationDegrees(float rotationDegrees)
+{
+	m_rigidbody->AddRotationDegrees( rotationDegrees );
 }
 
 

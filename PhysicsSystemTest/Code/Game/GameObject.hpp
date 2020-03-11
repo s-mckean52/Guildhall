@@ -28,6 +28,7 @@ public:
 	void AddMass( float massToAdd );
 	void AddDrag( float dragToAdd );
 	void AddFriction( float frictionToAdd );
+	void AddRotationDegrees( float rotationDegrees );
 
 	Collider2D* GetCollider() const;
 

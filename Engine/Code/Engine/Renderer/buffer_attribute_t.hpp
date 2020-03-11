@@ -20,4 +20,6 @@ public:
 public:
 	buffer_attribute_t();
 	buffer_attribute_t( char const* n, BufferFormatType t, unsigned int o );
+
+	bool IsDefault() const;
 };

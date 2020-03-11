@@ -52,6 +52,13 @@ void AppendVertsForLineBetweenPoints( std::vector<Vertex_PCU>& lineVerts, const 
 
 
 //---------------------------------------------------------------------------------------------------------
+void AppendVertsForCircle(std::vector<Vertex_PCU>& circleVerts, float radius, const Rgba8 color, float thickness)
+{
+	AppendVertsForCircleAtPoint( circleVerts, Vec2::ZERO, radius, color, thickness );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void AppendVertsForOBB2D( std::vector<Vertex_PCU>& vertexArray, const OBB2& box, const Rgba8& tint, const Vec2& uvAtMins /*= Vec2()*/, const Vec2& uvAtMaxes /*= Vec2() */ )
 {
 	Vec2 obb2CornerPoints[ 4 ] = {};
@@ -114,7 +121,7 @@ void AppendVertsForCapsule2D( std::vector<Vertex_PCU>& vertexArray, const Vec2& 
 
 
 //---------------------------------------------------------------------------------------------------------
-void AppendVertsForCircleAtPoint( std::vector<Vertex_PCU>& circleVerts, float radius, const Rgba8 color, float thickness )
+void AppendVertsForCircleAtPoint( std::vector<Vertex_PCU>& circleVerts, const Vec2& position, float radius, const Rgba8 color, float thickness )
 {
 	constexpr int circleSegments = 64;
 	constexpr float angleToRotateDegrees = 360.f / static_cast<float>( circleSegments );
@@ -135,13 +142,13 @@ void AppendVertsForCircleAtPoint( std::vector<Vertex_PCU>& circleVerts, float ra
 		nextInnerVertex			= nextRadialPoint.GetNormalized() * (radius - halfThickness);
 		nextOuterVertex			= nextRadialPoint.GetNormalized() * (radius + halfThickness);
 
-		circleVerts.push_back( Vertex_PCU( currentInnerVertex, color ) );
-		circleVerts.push_back( Vertex_PCU( currentOuterVertex, color ) );
-		circleVerts.push_back( Vertex_PCU( nextInnerVertex, color ) );
+		circleVerts.push_back( Vertex_PCU( currentInnerVertex + position, color ) );
+		circleVerts.push_back( Vertex_PCU( currentOuterVertex + position, color ) );
+		circleVerts.push_back( Vertex_PCU( nextInnerVertex + position, color ) );
 
-		circleVerts.push_back( Vertex_PCU( currentOuterVertex, color ) );
-		circleVerts.push_back( Vertex_PCU( nextOuterVertex, color ) );
-		circleVerts.push_back( Vertex_PCU( nextInnerVertex, color ) );
+		circleVerts.push_back( Vertex_PCU( currentOuterVertex + position, color ) );
+		circleVerts.push_back( Vertex_PCU( nextOuterVertex + position, color ) );
+		circleVerts.push_back( Vertex_PCU( nextInnerVertex + position, color ) );
 
 		currentRadialPoint = nextRadialPoint;
 		nextRadialPoint.RotateDegrees( angleToRotateDegrees );

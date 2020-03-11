@@ -64,10 +64,12 @@ protected:
 	virtual ~Collider2D();
 
 public:
-	bool m_isMarkedForDestroy			= false;
-	Collider2DType m_type;
-	Physics2D* m_physicsSystem			= nullptr;
-	Rigidbody2D* m_rigidbody			= nullptr;
-	PhysicsMaterial* m_physicsMaterial	= nullptr;
-	AABB2 m_worldBounds;
+	bool				m_isMarkedForDestroy	= false;
+	Collider2DType		m_type;
+	Physics2D*			m_physicsSystem			= nullptr;
+	Rigidbody2D*		m_rigidbody				= nullptr;
+	PhysicsMaterial*	m_physicsMaterial		= nullptr;
+	AABB2				m_worldBounds;
+// 	float				m_worldBoundsRadius		= 0.f;
+// 	Vec2				m_worldBoundsCenter;
 };

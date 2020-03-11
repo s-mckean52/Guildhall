@@ -24,6 +24,7 @@ void Rigidbody2D::TakeCollider( Collider2D* collider )
 	m_collider = collider;
 	m_collider->m_rigidbody = this;
 	m_collider->UpdateWorldShape();
+	CalculateMoment( 1.f );
 }
 
 
@@ -32,6 +33,14 @@ Vec2 Rigidbody2D::GetFrameAcceleration()
 {
 	Vec2 acceleration = m_frameForces / m_mass;
 	return acceleration;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float Rigidbody2D::GetFrameAngularAcceleration()
+{
+	float angularAaceleration = m_frameTorque / m_moment;
+	return angularAaceleration;
 }
 
 
@@ -45,8 +54,10 @@ Vec2 Rigidbody2D::GetVelocity() const
 //---------------------------------------------------------------------------------------------------------
 Vec2 Rigidbody2D::GetImpactVelocityAtPoint( Vec2 const& point ) const
 {
-	UNUSED( point );
-	return GetVerletVelocity();
+	Vec2 displacementToPoint = point - m_worldPosition;
+	Vec2 tangentialRotationVelocity = displacementToPoint.GetRotated90Degrees();
+
+	return GetVerletVelocity() + ( tangentialRotationVelocity * m_angularVelocity );
 }
 
 
@@ -104,7 +115,9 @@ void Rigidbody2D::SetVelocity( Vec2 const& newVelocity )
 //---------------------------------------------------------------------------------------------------------
 void Rigidbody2D::SetMass( float mass )
 {
+	float oldMass = m_mass;
 	m_mass = mass;
+	CalculateMoment( oldMass );
 }
 
 
@@ -118,28 +131,44 @@ void Rigidbody2D::SetDrag( float drag )
 //---------------------------------------------------------------------------------------------------------
 void Rigidbody2D::SetRotationRadians( float rotationRadians )
 {
+	const float twoPi = 2.f * 3.14159265f;
+
 	m_rotationRadians = rotationRadians;
+	if( m_rotationRadians >= twoPi )
+	{
+		m_rotationRadians -= twoPi;
+	}
+	else if( m_rotationRadians < 0.f )
+	{
+		m_rotationRadians = twoPi - m_rotationRadians;
+	}
+
+	if( m_collider != nullptr )
+	{
+		m_collider->UpdateWorldShape();
+	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Rigidbody2D::SetRotationDegrees( float rotationDegrees )
 {
-	m_rotationRadians = ConvertDegreesToRadians( rotationDegrees );
+	SetRotationRadians( ConvertDegreesToRadians( rotationDegrees ) );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Rigidbody2D::AddRotationRadians( float rotationRadiansToAdd )
 {
-	m_rotationRadians += rotationRadiansToAdd;
+	float newRotationRadians = m_rotationRadians + rotationRadiansToAdd;
+	SetRotationRadians( newRotationRadians );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Rigidbody2D::AddRotationDegrees( float rotationDegreesToAdd )
 {
-	m_rotationRadians += ConvertDegreesToRadians( rotationDegreesToAdd );
+	AddRotationRadians( ConvertDegreesToRadians( rotationDegreesToAdd ) );
 }
 
 
@@ -172,22 +201,26 @@ void Rigidbody2D::MarkForDestroy( bool isMarkedForDestroy )
 
 
 //---------------------------------------------------------------------------------------------------------
-void Rigidbody2D::ApplyImpulseAt( const Vec2& worldPos, const Vec2& impulse )
+void Rigidbody2D::ApplyImpulseAt( const Vec2& worldContactPosition, const Vec2& impulse )
 {
-	UNUSED( worldPos );
-	m_velocity += impulse * ( 1 / m_mass );
+	float inverseMass = 1.f / m_mass;
+	m_velocity += impulse * inverseMass;
+	
+	Vec2 displacementToContact = worldContactPosition - m_worldPosition;
+	float torqueImpulse = ( -impulse.x * displacementToContact.y ) + ( impulse.y * displacementToContact.x );
+	m_angularVelocity += torqueImpulse / m_moment;
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Rigidbody2D::ApplyFrictionAt( Vec2 const& worldPos, float frictionCoefficient, Vec2 const& collisionNormal, float normalImpulse, Vec2 const& collisionTangent, float tangentImpulse )
+void Rigidbody2D::ApplyFrictionAt( Vec2 const& worldContactPosition, float frictionCoefficient, Vec2 const& collisionNormal, float normalImpulse, Vec2 const& collisionTangent, float tangentImpulse )
 {
 	UNUSED( collisionNormal );
 	if( abs( tangentImpulse ) > frictionCoefficient * normalImpulse )
 	{
 		tangentImpulse = Signf( tangentImpulse ) * normalImpulse * frictionCoefficient;
 	}
-	ApplyImpulseAt( worldPos, collisionTangent * tangentImpulse );
+	ApplyImpulseAt( worldContactPosition, collisionTangent * tangentImpulse );
 }
 
 
@@ -196,6 +229,20 @@ void Rigidbody2D::ApplyDragForce()
 {
 	Vec2 dragForce = -m_verletVelocity * m_drag;
 	AddForce( dragForce );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rigidbody2D::CalculateMoment( float oldMass )
+{
+	if( m_moment == 0.f )
+	{
+		m_moment = m_collider->CalculateMoment( m_mass );
+	}
+	else
+	{
+		m_moment *= m_mass / oldMass;
+	}
 }
 
 

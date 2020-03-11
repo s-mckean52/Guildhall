@@ -230,6 +230,7 @@ bool Collider2D::GetManifold( Collider2D const* other, Manifold2* manifold )
 bool Collider2D::WorldBoundsIntersect( Collider2D const* other ) const
 {
 	return DoAABB2sOverlap( GetWorldBounds(), other->GetWorldBounds() );
+	//return DoDiscsOverlap( m_worldBoundsCenter, m_worldBoundsRadius, other->m_worldBoundsCenter, other->m_worldBoundsRadius );
 }
 
 

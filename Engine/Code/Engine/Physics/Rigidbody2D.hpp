@@ -20,6 +20,7 @@ public:
 
 	void	TakeCollider( Collider2D* collider );
 	Vec2	GetFrameAcceleration();
+	float	GetFrameAngularAcceleration();
 	Vec2	GetVelocity() const;
 	Vec2	GetImpactVelocityAtPoint( Vec2 const& point ) const;
 	void	UpdateVerletVelocity( float frameTime );
@@ -44,10 +45,10 @@ public:
 	void SetMoment( float moment );
 	void MarkForDestroy( bool isMarkedForDestroy );
 
-	void ApplyImpulseAt( Vec2 const& worldPos, Vec2 const& impulse );
+	void ApplyImpulseAt( Vec2 const& point, Vec2 const& impulse );
 	void ApplyFrictionAt( Vec2 const& worldPos, float frictionCoefficient, Vec2 const& collisionNormal, float normalImpulse, Vec2 const& collisionTangent, float tangentImpulse );
 	void ApplyDragForce();
-	void CalculateMoment();
+	void CalculateMoment( float oldMass );
 
 	void AddForce( Vec2 const& forceToAdd );
 	void AddFrameTorque( float torqueToAdd );
@@ -68,11 +69,11 @@ public:
 	bool			m_enabled				= true;
 	SimulationMode	m_simulationMode		= SIMULATION_MODE_DYNAMIC;
 
+	float			m_mass					= 1.0f;
 	Vec2			m_worldPosition;
 	Vec2			m_velocity;
 	Vec2			m_verletVelocity;
 	Vec2			m_frameForces;
-	float			m_mass					= 1.0f;
 	float			m_drag					= 0.0f;
 
 	float			m_rotationRadians		= 0.f;

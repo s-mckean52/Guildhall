@@ -17,3 +17,14 @@ buffer_attribute_t::buffer_attribute_t( char const* n, BufferFormatType t, unsig
 	type = t;
 	offset = o;
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+bool buffer_attribute_t::IsDefault() const
+{
+	if (name == "" && type == BUFFER_FORMAT_VEC3 && offset == 0)
+	{
+		return true;
+	}
+	return false;
+}

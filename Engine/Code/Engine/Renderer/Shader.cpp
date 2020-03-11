@@ -232,39 +232,47 @@ ID3D11InputLayout* Shader::GetOrCreateInputLayout( buffer_attribute_t const* att
 		return m_inputLayout;
 	}
 
-	D3D11_INPUT_ELEMENT_DESC vertexDescription[3];
-
-	for( int vertDescIndex = 0; vertDescIndex < 3; ++vertDescIndex )
+	int vertDescIndex = 0;
+	D3D11_INPUT_ELEMENT_DESC newVertexAttribute;
+	std::vector<D3D11_INPUT_ELEMENT_DESC> vertexDescription;
+	for( ;; )
 	{
-		vertexDescription[ vertDescIndex ].SemanticName				= attribute[ vertDescIndex ].name.c_str();
-		vertexDescription[ vertDescIndex ].SemanticIndex			= 0;
-		vertexDescription[ vertDescIndex ].InputSlot				= 0;
-		vertexDescription[ vertDescIndex ].AlignedByteOffset		= attribute[ vertDescIndex ].offset;
-		vertexDescription[ vertDescIndex ].InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
-		vertexDescription[ vertDescIndex ].InstanceDataStepRate		= 0;
+		const buffer_attribute_t* currentAttribute = &attribute[ vertDescIndex ];
+
+		if( currentAttribute->IsDefault() ) break;
+
+		newVertexAttribute.SemanticName				= currentAttribute->name.c_str();
+		newVertexAttribute.SemanticIndex			= 0;
+		newVertexAttribute.InputSlot				= 0;
+		newVertexAttribute.AlignedByteOffset		= currentAttribute->offset;
+		newVertexAttribute.InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
+		newVertexAttribute.InstanceDataStepRate		= 0;
 
 
-		switch( attribute[ vertDescIndex ].type )
+		switch( currentAttribute->type )
 		{
 		case BUFFER_FORMAT_VEC3:
-			vertexDescription[ vertDescIndex ].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+			newVertexAttribute.Format = DXGI_FORMAT_R32G32B32_FLOAT;
 			break;
 		case BUFFER_FORMAT_VEC2:
-			vertexDescription[ vertDescIndex ].Format = DXGI_FORMAT_R32G32_FLOAT;
+			newVertexAttribute.Format = DXGI_FORMAT_R32G32_FLOAT;
 			break;
 		case BUFFER_FORMAT_R8G8B8A8_UNORM:
-			vertexDescription[ vertDescIndex ].Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			newVertexAttribute.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			break;
 		default:
 			ERROR_AND_DIE( "Unknown vertex description format" );
 			break;
 		}
+
+		vertexDescription.push_back( newVertexAttribute );
+		++vertDescIndex;
 	}
 
 	//Create the input
 	ID3D11Device* device = m_owner->m_device;
 	device->CreateInputLayout(
-		vertexDescription, 3,
+		&vertexDescription[0], static_cast<unsigned int>( vertexDescription.size() ),
 		m_vertexStage.GetByteCode(), m_vertexStage.GetByteCodeLength(),
 		&m_inputLayout );
 

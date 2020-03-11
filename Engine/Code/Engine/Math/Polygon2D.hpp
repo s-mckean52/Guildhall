@@ -19,6 +19,7 @@ public:
 	int			GetEdgeCount() const;
 	void		GetEdge( int edgeNumber, Vec2& out_start, Vec2& out_end ) const;
 	Polygon2D	GetTranslated( const Vec2& translation ) const;
+	Polygon2D	GetRotatedRadians( float rotationRadians );
 
 
 public:

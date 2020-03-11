@@ -509,12 +509,12 @@ void Game::ModifyDraggedObjectRotation( float deltaSeconds )
 
 	if( g_theInput->IsKeyPressed( 'R' ) )
 	{
-		m_draggedObject->m_rigidbody->AddRotationDegrees( 45.f * deltaSeconds );
+		m_draggedObject->AddRotationDegrees( 45.f * deltaSeconds );
 	}
 
 	if ( g_theInput->IsKeyPressed( 'F' ) )
 	{
-		m_draggedObject->m_rigidbody->AddRotationDegrees( -45.f * deltaSeconds );
+		m_draggedObject->AddRotationDegrees( -45.f * deltaSeconds );
 	}
 }
 
@@ -547,12 +547,12 @@ GameObject* Game::CreateDisc()
 	GameObject* gameObject = new GameObject();
 	gameObject->m_rigidbody = m_physics2D->CreateRigidbody2D();
 	gameObject->m_rigidbody->SetPosition( m_mousePos );
-	gameObject->m_rigidbody->SetMass( 1.f );
 	gameObject->m_rigidbody->SetSimulationMode( SIMULATION_MODE_DYNAMIC );
 
 	float radius = g_RNG->RollRandomFloatInRange( 20.f, 50.f );
 	DiscCollider2D* collider = m_physics2D->CreateDiscCollider2D( Vec2( 0.f, 0.f ), radius );
 	gameObject->m_rigidbody->TakeCollider( collider );
+	gameObject->m_rigidbody->SetMass( 1.f );
 
 	return gameObject;
 }
@@ -567,7 +567,6 @@ GameObject* Game::CreatePolygon( std::vector<Vec2> polygonPoints )
 	
 	Vec2 position = AveragePositions( polygonPoints );
 	gameObject->SetPosition( position );
-	gameObject->m_rigidbody->SetMass( 1.f );
 
 	for( int pointIndex = 0; pointIndex < polygonPoints.size(); ++pointIndex )
 	{
@@ -576,6 +575,7 @@ GameObject* Game::CreatePolygon( std::vector<Vec2> polygonPoints )
 
 	PolygonCollider2D* collider = m_physics2D->CreatePolygonCollider2D( polygonPoints, Vec2( 0.f, 0.f ) );
 	gameObject->m_rigidbody->TakeCollider( collider );
+	gameObject->m_rigidbody->SetMass( 1.f );
 
 	return gameObject;
 }
