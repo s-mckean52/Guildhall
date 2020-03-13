@@ -214,7 +214,7 @@ float PolygonCollider2D::CalculateMoment( float mass )
 
 		float triangleArea = u.GetLength() * hLength * 0.5f;
 
-		float i = ( triangleArea / 18 ) * ( uDotU - vDotU  + ( ( vDotU * vDotU ) / uDotU ) + hDotH ) + ( triangleArea * centerDotCenter );
+		float i = ( ( triangleArea / 18 ) * ( uDotU - vDotU  + ( ( vDotU * vDotU ) / uDotU ) + hDotH ) ) + ( triangleArea * centerDotCenter );
 
 		polygonArea += triangleArea;
 		moment += i;
@@ -232,7 +232,7 @@ void PolygonCollider2D::DebugRender( RenderContext* context, Rgba8 const& border
 {
 	std::vector< Vertex_PCU > debugVerts;
 	AppendVertsForPolygon2DFilled( debugVerts, m_worldPolygon, fillColor );
-	AppendVertsForPolygon2DOutline( debugVerts, m_worldPolygon, borderColor, 5.f );
+	AppendVertsForPolygon2DOutline( debugVerts, m_worldPolygon, borderColor, 0.05f );
 	//AppendVertsForCircleAtPoint( debugVerts, m_worldBoundsCenter, m_worldBoundsRadius, Rgba8::CYAN, 3.f );
 	//AppendVertsForAABB2OutlineAtPoint( debugVerts, m_worldBounds, Rgba8::CYAN, 3.f );
 

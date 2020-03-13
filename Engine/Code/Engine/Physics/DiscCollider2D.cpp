@@ -91,7 +91,7 @@ float DiscCollider2D::CalculateMoment( float mass )
 //---------------------------------------------------------------------------------------------------------
 void DiscCollider2D::DebugRender( RenderContext* context, Rgba8 const& borderColor, Rgba8 const& fillColor )
 {
-	float borderThickness = 5.f;
+	float borderThickness = 0.05f;
 	float roationDegrees = m_rigidbody->GetRotationDegrees();
 	std::vector< Vertex_PCU > debugVerts;
 	AppendVertsForFilledCircle( debugVerts, m_radius, fillColor );

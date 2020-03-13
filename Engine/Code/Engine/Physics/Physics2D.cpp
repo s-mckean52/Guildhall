@@ -284,7 +284,7 @@ void Physics2D::ApplyImpulseOnCollision( Collision2D const& collision )
 	float frictionalCoefficient		= me->GetFrictionWith( them );
 
 	float normalImpulseConstant = 1 + coefficientOfRestitution;
-	float tangentImpulseConstant = frictionalCoefficient;
+	float tangentImpulseConstant = 1 + coefficientOfRestitution;
 	if( them->m_rigidbody->m_simulationMode != SIMULATION_MODE_DYNAMIC  )
 	{
 		normalImpulseConstant /= ( 1 / myMass ) + myRotationalForce;

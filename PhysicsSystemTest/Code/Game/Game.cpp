@@ -131,7 +131,7 @@ void Game::RenderUI() const
 
 	Vec3 positionToDraw = m_uiCamera->ClientToWorldPosition( Vec2( 0.01f, 0.98f ) );
 
-	g_testFont->AddVertsForText2D( gravityVerts, Vec2( positionToDraw.x, positionToDraw.y ) , 10.f, gravityAsString );
+	g_testFont->AddVertsForText2D( gravityVerts, Vec2( positionToDraw.x, positionToDraw.y ) , 0.1f, gravityAsString );
 	g_theRenderer->BindTexture( g_testFont->GetTexture() );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( gravityVerts );
@@ -143,7 +143,7 @@ void Game::RenderUI() const
 	
 	Vec3 positionToDrawPhysicsState = m_uiCamera->ClientToWorldPosition( Vec2( 0.01f, 0.95f ) );
 
-	g_testFont->AddVertsForText2D( physicsClockStateVerts, Vec2( positionToDrawPhysicsState.x, positionToDrawPhysicsState.y ), 10.f, physicsStateAsString );
+	g_testFont->AddVertsForText2D( physicsClockStateVerts, Vec2( positionToDrawPhysicsState.x, positionToDrawPhysicsState.y ), 0.1f, physicsStateAsString );
 	g_theRenderer->BindTexture( g_testFont->GetTexture() );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( physicsClockStateVerts );
@@ -549,7 +549,7 @@ GameObject* Game::CreateDisc()
 	gameObject->m_rigidbody->SetPosition( m_mousePos );
 	gameObject->m_rigidbody->SetSimulationMode( SIMULATION_MODE_DYNAMIC );
 
-	float radius = g_RNG->RollRandomFloatInRange( 20.f, 50.f );
+	float radius = g_RNG->RollRandomFloatInRange( 0.5f, 2.f );
 	DiscCollider2D* collider = m_physics2D->CreateDiscCollider2D( Vec2( 0.f, 0.f ), radius );
 	gameObject->m_rigidbody->TakeCollider( collider );
 	gameObject->m_rigidbody->SetMass( 1.f );
@@ -835,13 +835,13 @@ void Game::DrawNewPolygonPoints() const
 		{
 			start = m_newPolygonToDraw[ pointIndex ];
 			end = m_newPolygonToDraw[ pointIndex + 1 ];
-			DrawLineBetweenPoints( start, end, Rgba8::BLUE, 5.f );
+			DrawLineBetweenPoints( start, end, Rgba8::BLUE, 0.05f );
 		}
 		else
 		{
 			start = m_newPolygonToDraw[ m_newPolygonToDraw.size() - 1 ];
 			end = m_mousePos;
-			DrawLineBetweenPoints( start, end, m_polygonLineColor, 5.f );
+			DrawLineBetweenPoints( start, end, m_polygonLineColor, 0.05f );
 		}
 	}
 }

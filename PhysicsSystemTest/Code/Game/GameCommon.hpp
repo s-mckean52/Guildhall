@@ -31,8 +31,8 @@ extern Window*					g_theWindow;
 //---------------------------------------------------------------------------------------------------------
 // Global Game-specific Constants
 constexpr float MAX_FRAME_TIME			= .1f;
-constexpr float CAMERA_SIZE_X			= 1600.f;
-constexpr float CAMERA_SIZE_Y			= 900.f;
+constexpr float CAMERA_SIZE_X			= 16.f;
+constexpr float CAMERA_SIZE_Y			= 9.f;
 constexpr float CLIENT_ASPECT			= CAMERA_SIZE_X / CAMERA_SIZE_Y;
 constexpr float HALF_SCREEN_X			= CAMERA_SIZE_X * 0.5f;
 constexpr float HALF_SCREEN_Y			= CAMERA_SIZE_Y * 0.5f;

@@ -278,7 +278,7 @@ void Rigidbody2D::AddDrag( float dragToAdd )
 void Rigidbody2D::DebugRender( RenderContext* context ) const
 {
 	Rgba8 xColor;
-	float xSize = 5.f;
+	float xSize = 0.05f;
 	Vec2 xOne = Vec2( xSize, xSize );
 	Vec2 xTwo = Vec2( xSize, -xSize );
 
@@ -296,8 +296,8 @@ void Rigidbody2D::DebugRender( RenderContext* context ) const
 	{
 		xColor = Rgba8::RED;
 	}
-	AppendVertsForLineBetweenPoints( vertexArray, start1, end1, xColor, 3.f );
-	AppendVertsForLineBetweenPoints( vertexArray, start2, end2, xColor, 3.f );
+	AppendVertsForLineBetweenPoints( vertexArray, start1, end1, xColor, 0.03f );
+	AppendVertsForLineBetweenPoints( vertexArray, start2, end2, xColor, 0.03f );
 
 	context->BindTexture( nullptr );
 	context->BindShader( (Shader*)nullptr );

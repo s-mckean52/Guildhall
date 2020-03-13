@@ -124,7 +124,7 @@ void GameObject::DrawTooltip( Vec2 const& mousePos ) const
 	Collider2D* collider = GetCollider();
 	AABB2 worldBounds = collider->GetWorldBounds();
 	tooltipBox.mins = mousePos;
-	tooltipBox.maxes = tooltipBox.mins + Vec2( 0.f, 200.f ) + g_testFont->GetDimensionsForText2D( 10.f, verletString );
+	tooltipBox.maxes = tooltipBox.mins + Vec2( 0.f, 2.f ) + g_testFont->GetDimensionsForText2D( 0.1f, verletString );
 	
 	AppendVertsForAABB2D( tooltipBoxVerts, tooltipBox, Rgba8::GRAY );
 	g_theRenderer->BindTexture( nullptr );
@@ -134,16 +134,16 @@ void GameObject::DrawTooltip( Vec2 const& mousePos ) const
 
 	std::vector<Vertex_PCU> tooltipVerts;
 
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, simulationModeString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, massString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.1f ) );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, velocityString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.2f ) );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, bouncineessString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.3f ) );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, frictionString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.4f ) );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, dragString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.5f ) );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, verletString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.6f ) );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, momentString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.7f ) );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, rotationDegreesString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.8f ) );
-	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 10.f, angularVelocityString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.9f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 0.1f, simulationModeString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 0.1f, massString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.1f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 0.1f, velocityString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.2f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 0.1f, bouncineessString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.3f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 0.1f, frictionString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.4f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 0.1f, dragString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.5f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 0.1f, verletString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.6f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 0.1f, momentString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.7f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 0.1f, rotationDegreesString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.8f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 0.1f, angularVelocityString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.9f ) );
 
 	g_theRenderer->BindTexture( g_testFont->GetTexture() );
 	g_theRenderer->BindShader( (Shader*)nullptr );
