@@ -260,5 +260,6 @@ const Vec3 operator*( float uniformScale, const Vec3& vecToMultiply )
 
 
 //---------------------------------------------------------------------------------------------------------
+STATIC const Vec3 Vec3::ZERO	( 0.0f, 0.0f, 0.0f );
 STATIC const Vec3 Vec3::RIGHT	( 1.0f, 0.0f, 0.0f );
 STATIC const Vec3 Vec3::UP		( 0.0f, 1.0f, 0.0f );

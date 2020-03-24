@@ -91,6 +91,7 @@ public:
 	
 	void Draw( int numVertices, int vertexOffset = 0 );
 	void DrawIndexed( int numIndicies, int indexOffset = 0, int vertexOffset = 0 );
+	void DrawIndexedVertexArray( std::vector<Vertex_PCU> verticies, std::vector<unsigned int> indicies );
 	void DrawVertexArray( int numVerticies, const Vertex_PCU* verticies );
 	void DrawVertexArray( const std::vector<Vertex_PCU>& vertexArray );
 	void DrawMesh( GPUMesh* mesh );
@@ -148,6 +149,7 @@ public:
 	Texture*					m_textueDefaultColor		= nullptr;
 	Sampler*					m_samplerDefault			= nullptr;
 	VertexBuffer*				m_immediateVBO				= nullptr;
+	IndexBuffer*				m_immediateIBO				= nullptr;
 	RenderBuffer*				m_frameUBO					= nullptr;
 	RenderBuffer*				m_modelUBO					= nullptr;
 	Texture*					m_defaultDepthStencil		= nullptr;

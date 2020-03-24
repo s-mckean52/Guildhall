@@ -14,6 +14,7 @@ public:
 
 	double GetElapsedSeconds() const;
 	double GetSecondsRemaining() const;
+	float GetFractionComplete() const;
 
 	bool HasElapsed() const;
 	bool CheckAndDecrement();

@@ -16,7 +16,10 @@ public:
 
 	void SetFromText( const char* text );
 
-	void operator=(const Rgba8& copyFrom);
+	const Rgba8 operator-( const Rgba8& colorToSubtract );
+	const Rgba8 operator+( const Rgba8& colorToAdd );
+	void operator*=( float fraction );
+	void operator=( const Rgba8& copyFrom );
 	
 // Static Colors
 	static const Rgba8 BLACK;

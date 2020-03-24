@@ -26,9 +26,9 @@ void DrawCircleAtPoint( const Vec2& position, float radius, const Rgba8& color, 
 {
 	std::vector<Vertex_PCU> circleVerts;
 
-	AppendVertsForCircleAtPoint( circleVerts, radius, color, thickness );
+	AppendVertsForCircleAtPoint( circleVerts, position, radius, color, thickness );
 
-	TransformVertexArray( circleVerts, 1.f, 0.f, position );
+	//TransformVertexArray( circleVerts, 1.f, 0.f, position );
 
 	g_theRenderer->BindTexture( nullptr );
 	g_theRenderer->DrawVertexArray( circleVerts );

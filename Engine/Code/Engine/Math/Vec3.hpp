@@ -51,6 +51,7 @@ public:
 
 
 	//---------------------------------------------------------------------------------------------------------
+	static const Vec3 ZERO;
 	static const Vec3 RIGHT;
 	static const Vec3 UP;
 };

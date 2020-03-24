@@ -54,6 +54,14 @@ double Timer::GetSecondsRemaining() const
 
 
 //---------------------------------------------------------------------------------------------------------
+float Timer::GetFractionComplete() const
+{
+	double elapsedSeconds = GetElapsedSeconds();
+	return static_cast<float>( elapsedSeconds / m_durationSeconds );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 bool Timer::HasElapsed() const
 {
 	double currentTime = m_clock->GetTotalElapsedSeconds();

@@ -13,6 +13,8 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Core/Clock.hpp"
+#include "Engine/Core/DebugRender.hpp"
+
 
 EventSystem*	g_theEventSystem	= nullptr;
 RenderContext*	g_theRenderer		= nullptr;
@@ -26,6 +28,7 @@ Game*			g_theGame			= nullptr;
 void App::StartUp()
 {
 	Clock::SystemStartUp();
+	DebugRenderSystemStartup();
 
 	g_theEventSystem = new EventSystem();
 	g_theRenderer = new RenderContext();
@@ -39,6 +42,7 @@ void App::StartUp()
 	g_theInput->StartUp( g_theWindow );
 	g_theConsole->StartUp( g_theInput, g_theEventSystem );
 	g_theGame->StartUp();
+
 	
 	g_theWindow->SetInputSystem( g_theInput );
 	g_theWindow->SetEventSystem( g_theEventSystem );
@@ -51,6 +55,8 @@ void App::StartUp()
 //---------------------------------------------------------------------------------------------------------
 void App::ShutDown()
 {
+	DebugRenderSystemShutdown();
+
 	g_theGame->ShutDown();
 	delete g_theGame;
 	g_theGame = nullptr;
@@ -137,6 +143,8 @@ void App::BeginFrame()
 	g_theRenderer->BeginFrame();
 	g_theInput->BeginFrame();
 	g_theAudio->BeginFrame();
+
+	DebugRenderBeginFrame();
 }
 
 
@@ -167,6 +175,8 @@ void App::Update()
 void App::Render() const
 {
 	g_theGame->Render();
+
+	DebugRenderScreenTo( g_theRenderer->GetBackBuffer() );
 }
 
 
@@ -176,4 +186,6 @@ void App::EndFrame()
 	g_theRenderer->EndFrame();
 	g_theInput->EndFrame();
 	g_theAudio->EndFrame();
+
+	DebugRenderEndFrame();
 }

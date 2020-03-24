@@ -23,6 +23,7 @@
 #include "Engine/Renderer/GPUMesh.hpp"
 #include "Engine/Math/MatrixUtils.hpp"
 #include "Engine/Core/Clock.hpp"
+#include "Engine/Core/DebugRender.hpp"
 #include <string>
 
 
@@ -47,6 +48,8 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
+	EnableDebugRendering();
+
 	m_gameClock = new Clock();
 	g_theRenderer->SetGameClock( m_gameClock );
 
@@ -92,6 +95,9 @@ void Game::StartUp()
 	m_pokeball			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/pokeball.png" );
 	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
+
+	DebugAddWorldPoint( Vec3::ZERO, 1.f, Rgba8::GREEN, Rgba8::GREEN, 10.f );
+	DebugAddScreenPoint( Vec2( 8.f, 4.5f ), 100.f, Rgba8::BLUE, Rgba8::RED, 10.f );
 }
 
 
@@ -142,6 +148,8 @@ void Game::Render() const
 	g_theRenderer->BeginCamera( *m_devConsoleCamera );
 	g_theConsole->Render( *g_theRenderer, *m_devConsoleCamera, DEV_CONSOLE_LINE_HEIGHT, g_devConsoleFont );
 	g_theRenderer->EndCamera( *m_devConsoleCamera );
+
+	DebugRenderWorldToCamera( m_worldCamera );
 }
 
 

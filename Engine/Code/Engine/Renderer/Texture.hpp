@@ -20,6 +20,7 @@ public:
 	IntVec2				GetImageTexelSize() const { return m_imageTexelSize; }
 	int					GetNumComponents()	const { return m_numComponents; }
 	std::string const&	GetImageFilePath()	const { return m_imageFilePath; }
+	RenderContext*		GetOwner()			const { return m_owner; }
 	float				GetAspect()			const;
 	Vec2				GetSize()			const;
 

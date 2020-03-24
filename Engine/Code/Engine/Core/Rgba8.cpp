@@ -54,6 +54,30 @@ void Rgba8::operator=( const Rgba8& copyFrom )
 }
 
 
+//---------------------------------------------------------------------------------------------------------
+const Rgba8 Rgba8::operator-( const Rgba8& colorToSubtract )
+{
+	return Rgba8( r - colorToSubtract.r, g - colorToSubtract.g, b - colorToSubtract.b, a - colorToSubtract.a );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+const Rgba8 Rgba8::operator+( const Rgba8& colorToAdd )
+{
+	return Rgba8( r + colorToAdd.r, g + colorToAdd.g, b + colorToAdd.b, a + colorToAdd.a );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Rgba8::operator*=( float fraction )
+{
+	r = static_cast<unsigned char>( static_cast<float>( r ) * fraction );
+	g = static_cast<unsigned char>( static_cast<float>( g ) * fraction );
+	b = static_cast<unsigned char>( static_cast<float>( b ) * fraction );
+	a = static_cast<unsigned char>( static_cast<float>( a ) * fraction );
+}
+
+
 // Static Colors
 const Rgba8 Rgba8::BLACK( 0, 0, 0 );
 const Rgba8 Rgba8::WHITE( 255, 255, 255 );

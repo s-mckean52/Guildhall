@@ -130,6 +130,27 @@ void Camera::UpdateViewMatrix()
 
 
 //---------------------------------------------------------------------------------------------------------
+void Camera::SetTransform( Transform transform )
+{
+	m_transform = transform;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::SetViewMatrix( Mat44 viewMatrix )
+{
+	m_view = viewMatrix;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::SetProjectionMatrix( Mat44 projectionMatrix )
+{
+	m_projection = projectionMatrix;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 Vec3 Camera::NDCToWorldCoords( const Vec4& ndcCoords ) const
 {
 	Mat44 inverseProjectionMatrix = m_projection;

@@ -9,6 +9,7 @@ struct Vec3;
 
 enum CameraClearBitFlag : unsigned int
 {
+	CLEAR_NONE			= 0,
 	CLEAR_COLOR_BIT		= ( 1 << 0 ),
 	CLEAR_DEPTH_BIT		= ( 1 << 1 ),
 	CLEAR_STENCIL_BIT	= ( 1 << 2 ),
@@ -35,6 +36,7 @@ public:
 	Mat44			GetProjectionMatrix() const;
 	Texture*		GetColorTarget() const;
 	RenderBuffer*	GetUBO() const;
+	RenderContext*	GetRenderContext() const		{ return m_renderer; }
 	Transform		GetTransform() const			{ return m_transform; }
 	Texture*		GetDepthStencilTarget() const	{ return m_depthStencilTarget; }
 	float			GetClearDepth() const			{ return m_clearDepth; }
@@ -66,6 +68,9 @@ public:
 	void UpdateCameraUBO();
 	void UpdateViewMatrix();
 
+	void SetTransform( Transform transform );
+	void SetViewMatrix( Mat44 viewMatrix );
+	void SetProjectionMatrix( Mat44 projectionMatrix );
 
 private:
 	Mat44 m_projection;

@@ -86,6 +86,7 @@ void RenderContext::StartUp( Window* theWindow )
 	m_defaultShader = CreateShaderFromSourceCode( BuiltInShader::BUILT_IN_DEFAULT );
 
 	m_immediateVBO = new VertexBuffer( this, MEMORY_HINT_DYNAMIC );
+	m_immediateIBO = new IndexBuffer( this, MEMORY_HINT_DYNAMIC );
 
 	m_frameUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
 	m_modelUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
@@ -129,6 +130,9 @@ void RenderContext::ShutDown()
 
 	delete m_immediateVBO;
 	m_immediateVBO = nullptr;
+
+	delete m_immediateIBO;
+	m_immediateIBO = nullptr;
 
 	delete m_swapchain;
 	m_swapchain = nullptr;
@@ -364,6 +368,36 @@ void RenderContext::DrawIndexed( int numIndicies, int indexOffset, int vertexOff
 	m_context->IASetInputLayout( inputLayout );
 
 	m_context->DrawIndexed( numIndicies, indexOffset, vertexOffset );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::DrawIndexedVertexArray( std::vector<Vertex_PCU> verticies, std::vector<unsigned int> indicies )
+{
+	if( verticies.size() == 0 ) return;
+
+	unsigned int vertexCount = static_cast<unsigned int>( verticies.size() );
+	unsigned int vertexStride = sizeof( Vertex_PCU );
+	unsigned int byteSize = vertexCount * vertexStride;
+	m_immediateVBO->Update( &verticies[ 0 ], byteSize, vertexStride );
+
+	unsigned int indexCount = static_cast<unsigned int>( indicies.size() );
+	m_immediateIBO->Update( indexCount, &indicies[ 0 ] );
+
+	BindVertexInput( m_immediateVBO );
+	//UpdateLayoutIfNeeded();
+
+	bool hasIndicies = indexCount > 0;
+
+	if ( hasIndicies )
+	{
+		BindIndexBuffer( m_immediateIBO );
+		DrawIndexed( indexCount );
+	}
+	else
+	{
+		Draw( vertexCount );
+	}
 }
 
 
