@@ -77,6 +77,7 @@ public:
 	static const Vec2 LEFT;
 	static const Vec2 UP;
 	static const Vec2 DOWN;
+	static const Vec2 UNIT;
 };
 
 

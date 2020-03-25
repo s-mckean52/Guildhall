@@ -292,6 +292,7 @@ void RenderContext::BeginCamera( Camera& camera )
 
 	m_isDrawing = true;
 
+	CreateRasterState();
 	BindShader( (Shader*)nullptr );
 	BindTexture( (Texture*)nullptr );
 	BindSampler( (Sampler*)nullptr );
@@ -311,6 +312,7 @@ void RenderContext::EndCamera( const Camera& camera )
 {
 	UNUSED( camera );
 	DX_SAFE_RELEASE( m_currentDepthStencilState );
+	DX_SAFE_RELEASE( m_rasterState );
 	m_isDrawing = false;
 }
 
@@ -372,7 +374,7 @@ void RenderContext::DrawIndexed( int numIndicies, int indexOffset, int vertexOff
 
 
 //---------------------------------------------------------------------------------------------------------
-void RenderContext::DrawIndexedVertexArray( std::vector<Vertex_PCU> verticies, std::vector<unsigned int> indicies )
+void RenderContext::DrawIndexedVertexArray( std::vector<Vertex_PCU>& verticies, std::vector<unsigned int>& indicies )
 {
 	if( verticies.size() == 0 ) return;
 
@@ -382,7 +384,6 @@ void RenderContext::DrawIndexedVertexArray( std::vector<Vertex_PCU> verticies, s
 	m_immediateVBO->Update( &verticies[ 0 ], byteSize, vertexStride );
 
 	unsigned int indexCount = static_cast<unsigned int>( indicies.size() );
-	m_immediateIBO->Update( indexCount, &indicies[ 0 ] );
 
 	BindVertexInput( m_immediateVBO );
 	//UpdateLayoutIfNeeded();
@@ -391,6 +392,7 @@ void RenderContext::DrawIndexedVertexArray( std::vector<Vertex_PCU> verticies, s
 
 	if ( hasIndicies )
 	{
+		m_immediateIBO->Update( indexCount, &indicies[ 0 ] );
 		BindIndexBuffer( m_immediateIBO );
 		DrawIndexed( indexCount );
 	}
@@ -455,6 +457,61 @@ void RenderContext::SetModelMatrix( Mat44 const& modelMatrix )
 
 
 //---------------------------------------------------------------------------------------------------------
+void RenderContext::SetCullMode( CullMode cullMode )
+{
+	D3D11_RASTERIZER_DESC desc;
+	m_rasterState->GetDesc( &desc );
+
+	switch( cullMode )
+	{
+	case CULL_MODE_NONE:
+		desc.CullMode = D3D11_CULL_NONE;
+		break;
+	case CULL_MODE_BACK:
+		desc.CullMode = D3D11_CULL_BACK;
+		break;
+	case CULL_MODE_FRONT:
+		desc.CullMode = D3D11_CULL_BACK;
+		break;
+	}
+
+	m_device->CreateRasterizerState( &desc, &m_rasterState );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::SetFillMode( FillMode fillMode )
+{
+	D3D11_RASTERIZER_DESC desc;
+	m_rasterState->GetDesc( &desc );
+
+	switch( fillMode )
+	{
+	case FILL_MODE_SOLID:
+		desc.FillMode = D3D11_FILL_SOLID;
+		break;
+	case FILL_MODE_WIREFRAME:
+		desc.FillMode = D3D11_FILL_WIREFRAME;
+		break;
+	}
+
+	m_device->CreateRasterizerState( &desc, &m_rasterState );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::SetFrontFaceWindOrder( bool isCounterClockwise )
+{
+	D3D11_RASTERIZER_DESC desc;
+	m_rasterState->GetDesc( &desc );
+	
+	desc.FrontCounterClockwise = isCounterClockwise;
+
+	m_device->CreateRasterizerState( &desc, &m_rasterState );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void RenderContext::CreateBlendStates()
 {
 	D3D11_BLEND_DESC alphaDesc;
@@ -509,6 +566,26 @@ void RenderContext::CreateBlendStates()
 	disabledDesc.RenderTarget[0].RenderTargetWriteMask	= D3D11_COLOR_WRITE_ENABLE_ALL;
 
 	m_device->CreateBlendState( &disabledDesc, &m_disabledBlendStateHandle );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::CreateRasterState()
+{
+	D3D11_RASTERIZER_DESC desc;
+
+	desc.FillMode = D3D11_FILL_SOLID;	//Filled Triangle
+	desc.CullMode = D3D11_CULL_NONE;
+	desc.FrontCounterClockwise = TRUE;
+	desc.DepthBias = 0U;
+	desc.DepthBiasClamp = 0.0f;
+	desc.SlopeScaledDepthBias = TRUE;
+	desc.DepthClipEnable = TRUE;
+	desc.ScissorEnable = FALSE;
+	desc.MultisampleEnable = FALSE;
+	desc.AntialiasedLineEnable = FALSE;
+
+	m_device->CreateRasterizerState( &desc, &m_rasterState );
 }
 
 
@@ -619,6 +696,7 @@ Shader* RenderContext::GetOrCreateShader( char const* filename )
 }
 
 
+//---------------------------------------------------------------------------------------------------------
 Shader* RenderContext::CreateShaderFromSourceCode( char const* sourceCode )
 {
 	Shader* newShader = new Shader( this );
@@ -630,6 +708,7 @@ Shader* RenderContext::CreateShaderFromSourceCode( char const* sourceCode )
 	delete newShader;
 	return m_errorShader;
 }
+
 
 //---------------------------------------------------------------------------------------------------------
 Texture* RenderContext::CreateTextureFromColor( Rgba8 const& color )
@@ -723,7 +802,7 @@ void RenderContext::BindShader( Shader* shader )
 	}
 
 	m_context->VSSetShader( m_currentShader->m_vertexStage.m_vs, nullptr, 0 );
-	m_context->RSSetState( m_currentShader->m_rasterState );
+	m_context->RSSetState( m_rasterState );
 	m_context->PSSetShader( m_currentShader->m_fragmentStage.m_fs, nullptr, 0 );
 }
 
@@ -737,6 +816,8 @@ void RenderContext::BindShader( const char* filepath )
 	{
 		m_currentShader = m_defaultShader;
 	}
+
+	BindShader( m_currentShader );
 }
 
 

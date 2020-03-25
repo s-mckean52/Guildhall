@@ -152,7 +152,6 @@ size_t ShaderStage::GetByteCodeLength() const
 Shader::Shader( RenderContext* context )
 	: m_owner( context )
 {
-	CreateRasterState();
 }
 
 
@@ -160,7 +159,6 @@ Shader::Shader( RenderContext* context )
 Shader::~Shader()
 {
 	DX_SAFE_RELEASE( m_inputLayout );
-	DX_SAFE_RELEASE( m_rasterState );
 }
 
 
@@ -193,27 +191,6 @@ bool Shader::CreateFromSourceCode( const char* sourceCode )
 	m_fragmentStage.Compile( m_owner, "Created From Source", source, size, SHADER_TYPE_FRAGMENT );
 
 	return m_vertexStage.IsValid() && m_fragmentStage.IsValid();
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Shader::CreateRasterState()
-{
-	D3D11_RASTERIZER_DESC desc;
-
-	desc.FillMode = D3D11_FILL_SOLID;	//Filled Triangle
-	desc.CullMode = D3D11_CULL_NONE;
-	desc.FrontCounterClockwise = TRUE;
-	desc.DepthBias = 0U;
-	desc.DepthBiasClamp = 0.0f;
-	desc.SlopeScaledDepthBias = TRUE;
-	desc.DepthClipEnable = TRUE;
-	desc.ScissorEnable = FALSE;
-	desc.MultisampleEnable = FALSE;
-	desc.AntialiasedLineEnable = FALSE;
-
-	ID3D11Device* device = m_owner->m_device;
-	device->CreateRasterizerState( &desc, &m_rasterState );
 }
 
 

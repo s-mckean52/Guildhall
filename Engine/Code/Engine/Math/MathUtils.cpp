@@ -1,13 +1,14 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
-#include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/OBB2.hpp"
 #include "Engine/Math/FloatRange.hpp"
 #include "Engine/Math/Vec4.hpp"
 #include "Engine/Math/Polygon2D.hpp"
+#include "Engine/Core/Vertex_PCU.hpp"
+#include "Engine/Core/Rgba8.hpp"
 #include <math.h>
 
 
@@ -128,6 +129,24 @@ float GetDistanceXYSquared3D( const Vec3& positionA, const Vec3& positionB )
 float Lerp( float rangeBegin, float rangeEnd, float fractionOfRangeEnd )
 {
 	return rangeBegin + fractionOfRangeEnd * ( rangeEnd - rangeBegin );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Rgba8 Rgba8Lerp( const Rgba8& beginColor, const Rgba8& endColor, float fractionOfRange )
+{
+	Rgba8 newColor;
+	float r = Lerp( static_cast<float>( beginColor.r ), static_cast<float>( endColor.r ), fractionOfRange );
+	float g = Lerp( static_cast<float>( beginColor.g ), static_cast<float>( endColor.g ), fractionOfRange );
+	float b = Lerp( static_cast<float>( beginColor.b ), static_cast<float>( endColor.b ), fractionOfRange );
+	float a = Lerp( static_cast<float>( beginColor.a ), static_cast<float>( endColor.a ), fractionOfRange );
+
+	newColor.r = static_cast<unsigned char>( r );
+	newColor.g = static_cast<unsigned char>( g );
+	newColor.b = static_cast<unsigned char>( b );
+	newColor.a = static_cast<unsigned char>( a );
+
+	return newColor;
 }
 
 

@@ -96,8 +96,11 @@ void Game::StartUp()
 	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 
-	DebugAddWorldPoint( Vec3::ZERO, 1.f, Rgba8::GREEN, Rgba8::GREEN, 10.f );
-	DebugAddScreenPoint( Vec2( 8.f, 4.5f ), 100.f, Rgba8::BLUE, Rgba8::RED, 10.f );
+	DebugAddWorldPoint( Vec3::ZERO, 0.5f, Rgba8::GREEN, Rgba8::GREEN, 10.f );
+	DebugAddScreenPoint( Vec2( 8.f, 4.5f ), 10.f, Rgba8::BLUE, Rgba8::RED, 10.f );
+	DebugAddScreenArrow( Vec2( 20.f, 20.f ), Vec2( 20.f, 100.f ), Rgba8::WHITE, Rgba8::WHITE, 10.f );
+	DebugAddScreenTexturedQuad( AABB2( 300.f, 400.f, 700.f, 700.f ), m_testImage, AABB2( 0.0f, 0.0f, 1.f, 1.f ), Rgba8::RED, Rgba8::MAGENTA, 10.f );
+	DebugAddScreenTextf( Vec4( 500.f, 500.f, 0.f, 0.f ), ALIGN_CENTERED, 30.f, Rgba8::WHITE, 20.f, "Some test text with #%i", 1234 ); 
 }
 
 

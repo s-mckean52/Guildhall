@@ -12,7 +12,3 @@ const std::string Stringf( const int maxLength, const char* format, ... );
 
 //---------------------------------------------------------------------------------------------------------
 Strings SplitStringOnDelimiter( const std::string& originalString, char delimeterToSplitOn );
-
-
-
-

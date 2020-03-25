@@ -11,6 +11,7 @@ class Camera;
 class GPUMesh;
 class AABB3;
 class OBB3;
+class RenderContext;
 
 /************************************************************************/
 /*                                                                      */
@@ -35,7 +36,7 @@ enum eDebugRenderMode
 //  System
 //------------------------------------------------------------------------
 // setup
-void DebugRenderSystemStartup();    // may be used to allocate resources to the system
+void DebugRenderSystemStartup( RenderContext* context );    // may be used to allocate resources to the system
 void DebugRenderSystemShutdown();   // cleans up the system to prevent leaks.
 
 // control
@@ -58,10 +59,7 @@ void DebugAddWorldPoint( Vec3 pos, float size, Rgba8 color, float duration = 0.0
 void DebugAddWorldPoint( Vec3 pos, Rgba8 color, float duration = 0.0f, eDebugRenderMode mode = DEBUG_RENDER_USE_DEPTH );
 
 // lines
-void DebugAddWorldLine( Vec3 p0, Rgba8 p0_start_color, Rgba8 p0_end_color,
-	Vec3 p1, Rgba8 p1_start_color, Rgba8 p1_end_color,
-	float duration,
-	eDebugRenderMode mode );
+void DebugAddWorldLine( Vec3 p0, Vec3 p1, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode );
 void DebugAddWorldLine( Vec3 start, Vec3 end, Rgba8 color, float duration = 0.0f, eDebugRenderMode mode = DEBUG_RENDER_USE_DEPTH );
 
 // line strip [extra]
@@ -130,15 +128,11 @@ void DebugAddScreenPoint( Vec2 pos, float size, Rgba8 color, float duration = 0.
 void DebugAddScreenPoint( Vec2 pos, Rgba8 color ); // assumed size;
 
 // lines
-void DebugAddScreenLine( Vec2 p0, Rgba8 p0_start_color, Rgba8 p0_end_color,
-	Vec2 p1, Rgba8 p1_start_color, Rgba8 p1_end_color,
-	float duration );
+void DebugAddScreenLine( Vec2 p0, Vec2 p1, Rgba8 start_color, Rgba8 end_color, float duration );
 void DebugAddScreenLine( Vec2 p0, Vec2 p1, Rgba8 color, float duration = 0.0f );
 
 // arrows
-void DebugAddScreenArrow( Vec2 p0, Rgba8 p0_start_color, Rgba8 p0_end_color,
-	Vec2 p1, Rgba8 p1_start_color, Rgba8 p1_end_color,
-	float duration );
+void DebugAddScreenArrow( Vec2 p0, Vec2 p1, Rgba8 start_color, Rgba8 end_color,	float duration );
 void DebugAddScreenArrow( Vec2 p0, Vec2 p1, Rgba8 color, float duration = 0.0f );
 
 // quad

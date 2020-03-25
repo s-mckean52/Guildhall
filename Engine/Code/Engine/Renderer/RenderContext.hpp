@@ -25,6 +25,7 @@ struct ID3D11DeviceContext;
 struct ID3D11BlendState;
 struct IDXGIDebug;
 struct ID3D11DepthStencilState;
+struct ID3D11RasterizerState;
 
 enum class BlendMode
 {
@@ -46,6 +47,19 @@ enum CompareFunc
 	COMPARE_FUNC_ALWAYS,          // D3D11_COMPARISON_ALWAYS
 	COMPARE_FUNC_LEQUAL,          // D3D11_COMPARISON_LESS_EQUAL
 	COMPARE_FUNC_GEQUAL,          // D3D11_COMPARISON_GREATER_EQUAL
+};
+
+enum CullMode
+{
+	CULL_MODE_NONE,		//D3D11_CULL_NONE
+	CULL_MODE_BACK,		//D3D11_CULL_BACK
+	CULL_MODE_FRONT,	//D3D11_CULL_FRONT
+};
+
+enum FillMode
+{
+	FILL_MODE_SOLID,		//D3D11_FILL_SOLID
+	FILL_MODE_WIREFRAME,	//D3D11_FILL_WIREFRAME
 };
 
 struct frame_data_t
@@ -91,12 +105,15 @@ public:
 	
 	void Draw( int numVertices, int vertexOffset = 0 );
 	void DrawIndexed( int numIndicies, int indexOffset = 0, int vertexOffset = 0 );
-	void DrawIndexedVertexArray( std::vector<Vertex_PCU> verticies, std::vector<unsigned int> indicies );
+	void DrawIndexedVertexArray( std::vector<Vertex_PCU>& verticies, std::vector<unsigned int>& indicies );
 	void DrawVertexArray( int numVerticies, const Vertex_PCU* verticies );
 	void DrawVertexArray( const std::vector<Vertex_PCU>& vertexArray );
 	void DrawMesh( GPUMesh* mesh );
 
 	void		SetModelMatrix( Mat44 const& modelMatrix );
+	void		SetCullMode( CullMode cullMode );
+	void		SetFillMode( FillMode fillMode );
+	void		SetFrontFaceWindOrder( bool isCounterClockwise );
 	
 	void		BindShader( Shader* shader );
 	void		BindShader( const char* filepath );
@@ -104,8 +121,8 @@ public:
 	void		BindIndexBuffer( IndexBuffer* ibo );
 	void		BindUniformBuffer( unsigned int slot, RenderBuffer* ubo );
 	void		BindSampler( Sampler* sampler );
-
 	void		BindTexture( const Texture* constTexture );
+
 	Texture*	CreateOrGetTextureFromFile( const char* imageFilePath );
 	BitmapFont* CreateOrGetBitmapFontFromFile( const char* imageFilePath );
 	Shader*		GetOrCreateShader( char const* filename );
@@ -118,6 +135,7 @@ public:
 
 private:
 	void CreateBlendStates();
+	void CreateRasterState();
 	bool CreateTextureFromFile( const char* imageFilePath );
 	bool CreateBitmapFontFromFile( const char* fontFilePath );
 
@@ -142,6 +160,7 @@ public:
 	ID3D11Device*				m_device					= nullptr;
 	ID3D11DeviceContext*		m_context					= nullptr;
 	ID3D11DepthStencilState*	m_currentDepthStencilState	= nullptr;
+	ID3D11RasterizerState*		m_rasterState				= nullptr;
 	SwapChain*					m_swapchain					= nullptr;
 	Shader*						m_currentShader				= nullptr;
 	Shader*						m_defaultShader				= nullptr;

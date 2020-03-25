@@ -8,7 +8,8 @@ struct	IntVec2;
 struct	Vertex_PCU;
 struct	AABB2;
 struct	OBB2;
-struct	FloatRange; 
+struct	FloatRange;
+struct	Rgba8;
 class	Polygon2D;
 
 constexpr float radiansToDegreesRatio = 180.f / 3.14159265f;
@@ -31,6 +32,7 @@ float		GetDistanceSquared3D	( const Vec3& positionA, const Vec3& positionB );
 float		GetDistanceXYSquared3D	( const Vec3& positionA, const Vec3& positionB );
 
 float		Lerp					( float rangeBegin, float rangeEnd, float fractionOfRangeEnd );
+Rgba8		Rgba8Lerp				( const Rgba8& beginColor, const Rgba8& endColor, float fractionOfRange );
 float		RangeMapFloat			( float fromBegin, float fromEnd, float toBegin, float toEnd, float fromValue );
 int			GetClamp				( int valueToClamp, int lowerLimit, int upperLimit );
 float		GetClamp				( float valueToClamp, float lowerLimit, float upperLimit );

@@ -28,7 +28,6 @@ Game*			g_theGame			= nullptr;
 void App::StartUp()
 {
 	Clock::SystemStartUp();
-	DebugRenderSystemStartup();
 
 	g_theEventSystem = new EventSystem();
 	g_theRenderer = new RenderContext();
@@ -37,10 +36,12 @@ void App::StartUp()
 	g_theConsole = new DevConsole();
 	g_theGame = new Game();
 
-	g_theEventSystem->StartUp();
 	g_theRenderer->StartUp( g_theWindow );
+	g_theEventSystem->StartUp();
 	g_theInput->StartUp( g_theWindow );
 	g_theConsole->StartUp( g_theInput, g_theEventSystem );
+	DebugRenderSystemStartup( g_theRenderer );
+
 	g_theGame->StartUp();
 
 	

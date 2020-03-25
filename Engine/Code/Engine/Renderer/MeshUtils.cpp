@@ -28,7 +28,7 @@ void AppendVertsForAABB2D( std::vector<Vertex_PCU>& vertexArray, const AABB2& bo
 
 
 //---------------------------------------------------------------------------------------------------------
-void AppendVertsForLineBetweenPoints( std::vector<Vertex_PCU>& lineVerts, const Vec2& startPosition, const Vec2& endPosition, const Rgba8 color, float thickness )
+void AppendVertsForLineBetweenPoints( std::vector<Vertex_PCU>& lineVerts, const Vec2& startPosition, const Vec2& endPosition, const Rgba8& color, float thickness )
 {
 	Vec2 displacement = endPosition - startPosition;
 	float halfThickness = thickness * 0.5f;
@@ -48,6 +48,44 @@ void AppendVertsForLineBetweenPoints( std::vector<Vertex_PCU>& lineVerts, const 
 	lineVerts.push_back( Vertex_PCU( startRight, color ) );
 	lineVerts.push_back( Vertex_PCU( endLeft, color ) );
 	lineVerts.push_back( Vertex_PCU( startLeft, color ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void AppendVertsForArrowBetweenPoints( std::vector<Vertex_PCU>& arrowVerts, const Vec2& startPosition, const Vec2& endPosition, const Rgba8& color, float thickness )
+{
+	Vec2 displacement = endPosition - startPosition;
+	float halfThickness = thickness * 0.5f;
+	float lineSegmentThickness = halfThickness * 0.5f;
+
+	Vec2 forwardVector = displacement.GetNormalized();
+	Vec2 leftVector = forwardVector.GetRotated90Degrees();
+
+	Vec2 lineSegmentEndPosition = endPosition - ( forwardVector * thickness );
+
+	//Add lineSegment
+	Vec2 lineSegmentStartLeft = startPosition + ( ( -forwardVector + leftVector ) * lineSegmentThickness );
+	Vec2 lineSegmentStartRight = startPosition + ( ( -forwardVector - leftVector ) * lineSegmentThickness );
+	Vec2 lineSegmentEndLeft = lineSegmentEndPosition + ( leftVector * lineSegmentThickness );
+	Vec2 lineSegmentEndRight = lineSegmentEndPosition + ( -leftVector * lineSegmentThickness );
+
+	//Add Triangle
+	Vec2 triangleLeft = lineSegmentEndPosition + ( leftVector * halfThickness );
+	Vec2 triangleRight = lineSegmentEndPosition + ( -leftVector * halfThickness );
+	Vec2 triangleTip = lineSegmentEndPosition + ( forwardVector * thickness );
+
+
+	arrowVerts.push_back( Vertex_PCU( lineSegmentStartLeft, color ) );
+	arrowVerts.push_back( Vertex_PCU( lineSegmentStartRight, color ) );
+	arrowVerts.push_back( Vertex_PCU( lineSegmentEndRight, color ) );
+						 			 
+	arrowVerts.push_back( Vertex_PCU( lineSegmentStartLeft, color ) );
+	arrowVerts.push_back( Vertex_PCU( lineSegmentEndLeft, color ) );
+	arrowVerts.push_back( Vertex_PCU( lineSegmentEndRight, color ) );
+
+	arrowVerts.push_back( Vertex_PCU( triangleLeft, color ) );
+	arrowVerts.push_back( Vertex_PCU( triangleRight, color ) );
+	arrowVerts.push_back( Vertex_PCU( triangleTip, color ) );
 }
 
 
