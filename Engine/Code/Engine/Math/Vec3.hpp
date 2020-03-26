@@ -17,6 +17,9 @@ public:
 	Vec3( const Vec2& copyFrom, float z );
 	Vec3( float initialXYZ );
 
+	//Mutators
+	void		Normalize();
+
 	//Accessors
 	float		GetLength() const;
 	float		GetLengthXY() const;
@@ -54,4 +57,6 @@ public:
 	static const Vec3 ZERO;
 	static const Vec3 RIGHT;
 	static const Vec3 UP;
+	static const Vec3 FORWARD;
+	static const Vec3 UNIT;
 };

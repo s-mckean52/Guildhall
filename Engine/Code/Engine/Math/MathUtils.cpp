@@ -952,6 +952,17 @@ float DotProduct4D( const Vec4& a, const Vec4& b )
 
 
 //---------------------------------------------------------------------------------------------------------
+Vec3 CrossProduct3D( const Vec3& vecFrom, const Vec3& vecTo )
+{
+	Vec3 result;
+	result.x = ( vecFrom.y * vecTo.z ) - ( vecFrom.z * vecTo.y );
+	result.y = ( vecFrom.z * vecTo.x ) - ( vecFrom.x * vecTo.z );
+	result.z = ( vecFrom.x * vecTo.y ) - ( vecFrom.y * vecTo.x );
+	return result;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 const Vec2 GetNearestPointOnOBB2D( const Vec2& refPos, const OBB2& box )
 {
 	return box.GetNearestPoint( refPos );

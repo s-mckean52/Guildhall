@@ -1,5 +1,6 @@
 #include "Engine/Core/Timer.hpp"
 #include "Engine/Core/Clock.hpp"
+#include "Engine/Math/MathUtils.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -56,6 +57,10 @@ double Timer::GetSecondsRemaining() const
 //---------------------------------------------------------------------------------------------------------
 float Timer::GetFractionComplete() const
 {
+	if( m_durationSeconds == 0.0 )
+	{
+		return 1.f;
+	}
 	double elapsedSeconds = GetElapsedSeconds();
 	return static_cast<float>( elapsedSeconds / m_durationSeconds );
 }
@@ -65,7 +70,7 @@ float Timer::GetFractionComplete() const
 bool Timer::HasElapsed() const
 {
 	double currentTime = m_clock->GetTotalElapsedSeconds();
-	return ( currentTime > ( m_startSeconds + m_durationSeconds ) );
+	return ( currentTime >= ( m_startSeconds + m_durationSeconds ) );
 }
 
 

@@ -66,6 +66,8 @@ float		DotProduct2D					( const Vec2& a, const Vec2& b );
 float		DotProduct3D					( const Vec3& a, const Vec3& b );
 float		DotProduct4D					( const Vec4& a, const Vec4& b );
 
+Vec3		CrossProduct3D					( const Vec3& vecFrom, const Vec3& vecTo );
+
 int			GetTaxicabDistance2D			( const IntVec2& startPosition, const IntVec2& endPosition );
 
 

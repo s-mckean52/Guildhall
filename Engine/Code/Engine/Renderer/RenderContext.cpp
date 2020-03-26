@@ -471,10 +471,11 @@ void RenderContext::SetCullMode( CullMode cullMode )
 		desc.CullMode = D3D11_CULL_BACK;
 		break;
 	case CULL_MODE_FRONT:
-		desc.CullMode = D3D11_CULL_BACK;
+		desc.CullMode = D3D11_CULL_FRONT;
 		break;
 	}
 
+	DX_SAFE_RELEASE( m_rasterState );
 	m_device->CreateRasterizerState( &desc, &m_rasterState );
 }
 
@@ -495,6 +496,7 @@ void RenderContext::SetFillMode( FillMode fillMode )
 		break;
 	}
 
+	DX_SAFE_RELEASE( m_rasterState );
 	m_device->CreateRasterizerState( &desc, &m_rasterState );
 }
 
@@ -507,6 +509,7 @@ void RenderContext::SetFrontFaceWindOrder( bool isCounterClockwise )
 	
 	desc.FrontCounterClockwise = isCounterClockwise;
 
+	DX_SAFE_RELEASE( m_rasterState );
 	m_device->CreateRasterizerState( &desc, &m_rasterState );
 }
 

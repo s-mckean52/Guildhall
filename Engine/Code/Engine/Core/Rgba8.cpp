@@ -1,5 +1,6 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Math/Vec4.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -19,6 +20,16 @@ Rgba8::Rgba8( unsigned char red, unsigned char green, unsigned char blue, unsign
 	g = green;
 	b = blue;
 	a = alpha;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Rgba8::Rgba8( Vec4 const& fractions )
+{
+	r = static_cast<unsigned char>( 255.f * fractions.x );
+	g = static_cast<unsigned char>( 255.f * fractions.y );
+	b = static_cast<unsigned char>( 255.f * fractions.z );
+	a = static_cast<unsigned char>( 255.f * fractions.w );
 }
 
 

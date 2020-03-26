@@ -40,6 +40,20 @@ Vec3::Vec3( float initialXYZ )
 {
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void Vec3::Normalize()
+{
+	if( x != 0 || y != 0 || z != 0 )
+	{
+		float scale = 1.f / GetLength();
+		x *= scale;
+		y *= scale;
+		z *= scale;
+	}
+}
+
+
 //---------------------------------------------------------------------------------------------------------
 float Vec3::GetLength() const
 {
@@ -112,7 +126,7 @@ const Vec3 Vec3::GetClamped( float maxLength )
 	
 	if( currentLength > maxLength )
 	{
-		if( x != 0 && y != 0 && z != 0 )
+		if( x != 0 || y != 0 || z != 0 )
 		{
 			float scale = 1.f / currentLength;
 			return Vec3( x * scale, y * scale, z * scale );
@@ -125,7 +139,7 @@ const Vec3 Vec3::GetClamped( float maxLength )
 //---------------------------------------------------------------------------------------------------------
 const Vec3 Vec3::GetNormalize() const
 {
-	if( x != 0 && y != 0 && z != 0 )
+	if( x != 0 || y != 0 || z != 0 )
 	{
 		float scale = 1.f / GetLength();
 		return Vec3( x * scale, y * scale, z * scale );
@@ -263,3 +277,5 @@ const Vec3 operator*( float uniformScale, const Vec3& vecToMultiply )
 STATIC const Vec3 Vec3::ZERO	( 0.0f, 0.0f, 0.0f );
 STATIC const Vec3 Vec3::RIGHT	( 1.0f, 0.0f, 0.0f );
 STATIC const Vec3 Vec3::UP		( 0.0f, 1.0f, 0.0f );
+STATIC const Vec3 Vec3::FORWARD	( 0.0f, 0.0f, -1.0f );
+STATIC const Vec3 Vec3::UNIT	( 1.0f, 1.0f, 1.0f );

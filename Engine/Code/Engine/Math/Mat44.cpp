@@ -3,6 +3,7 @@
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Vec4.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
 
 const Mat44 Mat44::IDENTITY = Mat44();
@@ -680,6 +681,30 @@ const Mat44 Mat44::CreateNonUniformScaleXYZ( const Vec3& scalesXYZ )
 	newMat44.Kz = scalesXYZ.z;
 
 	return newMat44;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+STATIC const Mat44 Mat44::LookAt( const Vec3& positionToLookFrom, const Vec3& positionToLookAt, const Vec3& worldUp )
+{
+	Vec3 forwardNormal = positionToLookFrom - positionToLookAt;
+	forwardNormal.Normalize();
+
+	Vec3 rightNormal = CrossProduct3D( forwardNormal, worldUp );
+	if( ApproximatelyEqual( rightNormal.GetLength(), 0.f ) )
+	{
+		rightNormal = CrossProduct3D( forwardNormal, Vec3::UP );
+		if( ApproximatelyEqual( rightNormal.GetLength(), 0.f ) )
+		{
+			rightNormal = Vec3::RIGHT;
+		}
+	}
+	rightNormal.Normalize();
+
+	Vec3 upNormal = CrossProduct3D( rightNormal, forwardNormal );
+	//Normalized if forward and right are
+
+	return Mat44( rightNormal, upNormal, -forwardNormal, positionToLookFrom );
 }
 
 

@@ -27,19 +27,22 @@ public:
 	Camera( RenderContext* renderer );
 	~Camera();
 
-	Rgba8			GetClearColor() const;
-	Vec2			GetColorTargetSize() const;
-	Vec2			GetCameraDimensions() const;
-	Vec3			GetOrthoBottomLeft() const;
-	Vec3			GetOrthoTopRight() const;
-	Vec3			GetPosition() const;
-	Mat44			GetProjectionMatrix() const;
-	Texture*		GetColorTarget() const;
-	RenderBuffer*	GetUBO() const;
-	RenderContext*	GetRenderContext() const		{ return m_renderer; }
-	Transform		GetTransform() const			{ return m_transform; }
-	Texture*		GetDepthStencilTarget() const	{ return m_depthStencilTarget; }
-	float			GetClearDepth() const			{ return m_clearDepth; }
+	Rgba8				GetClearColor() const;
+	Vec2				GetColorTargetSize() const;
+	Vec2				GetCameraDimensions() const;
+	Vec3				GetOrthoBottomLeft() const;
+	Vec3				GetOrthoTopRight() const;
+	Vec3				GetPosition() const;
+	Mat44				GetProjectionMatrix() const;
+	Texture*			GetColorTarget() const;
+	RenderBuffer*		GetUBO() const;
+	RenderContext*		GetRenderContext() const		{ return m_renderer; }
+	Transform			GetTransform() const			{ return m_transform; }
+	Texture*			GetDepthStencilTarget() const	{ return m_depthStencilTarget; }
+	float				GetClearDepth() const			{ return m_clearDepth; }
+	CameraClearFlags	GetClearFlags() const			{ return m_clearMode; }
+	unsigned int		GetClearStencil() const			{ return m_clearStencil; }
+
 
 	void	SetPosition( const Vec3& position );
 	void	Translate( const Vec3& translation );

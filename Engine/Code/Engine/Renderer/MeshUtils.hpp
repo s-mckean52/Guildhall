@@ -5,6 +5,7 @@
 #include <vector>
 
 struct	AABB2;
+struct	AABB3;
 struct	Vec2;
 struct	Rgba8;
 struct	OBB2;
@@ -14,6 +15,7 @@ class	GPUMesh;
 typedef Vec3( *graph_cb )( float, float );
 
 void AppendVertsForAABB2D( std::vector<Vertex_PCU>& vertexArray, const AABB2& box, const Rgba8& color, const Vec2& uvAtMins = Vec2::ZERO, const Vec2& uvAtMaxes = Vec2::UNIT );
+void AppendVertsForQuad3D( std::vector<Vertex_PCU>& vertexArray, const Vec3& p0, const Vec3& p1, const Vec3& p2, const Vec3& p3, const Rgba8& color, const Vec2& uvAtMins = Vec2::ZERO, const Vec2& uvAtMaxes = Vec2::UNIT );
 void AppendVertsForOBB2D( std::vector<Vertex_PCU>& vertexArray, const OBB2& box, const Rgba8& tint, const Vec2& uvAtMins = Vec2::ZERO, const Vec2& uvAtMaxes = Vec2::UNIT );
 void AppendVertsForCapsule2D( std::vector<Vertex_PCU>& vertexArray, const Vec2& capsuleMidStart, const Vec2& capsuleMidEnd, float radius, const Rgba8& color );
 void AppendVertsForLineBetweenPoints( std::vector<Vertex_PCU>& lineVerts, const Vec2& startPosition, const Vec2& endPosition, const Rgba8& color, float thickness );
@@ -28,6 +30,7 @@ void AppendVertsForPolygon2DFilled( std::vector<Vertex_PCU>& vertexArray, Polygo
 
 //---------------------------------------------------------------------------------------------------------
 void AddVerticiesAndIndiciesForCubeMesh( GPUMesh* cubeMesh, float sideLength );
+void AddBoxToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, AABB3 const& box, Rgba8 const& color );
 void AddUVSphereToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, Vec3 const& center, float radius, unsigned int horizontalCuts, unsigned int verticalCuts, Rgba8 const& color );
 void AddPlaneToIndexedVertexArray(	std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices,
 									Vec3 const& origin, Rgba8 const& color,
@@ -40,3 +43,13 @@ void AddSurfaceToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector
 									 float xMin, float xMax, unsigned int xSteps,
 									 float yMin, float yMax, unsigned int ySteps,
 									 graph_cb graphFunction );
+
+void AddCylinderToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indicies,
+									  Vec3 const& startPosition, float startRadius,
+									  Vec3 const& endPosition, float endRadius,
+									  Rgba8 const& color, unsigned int cuts );
+
+void AddConeToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indicies,
+								  Vec3 const& startPosition, float startRadius,
+								  Vec3 const& endPosition,
+								  Rgba8 const& color, unsigned int cuts );

@@ -1,5 +1,7 @@
 #pragma once
 
+struct Vec4;
+
 struct Rgba8
 {
 public:
@@ -13,6 +15,7 @@ public:
 	Rgba8() {}
 	Rgba8( const Rgba8& copyFrom);
 	explicit Rgba8( unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255 );
+	explicit Rgba8( Vec4 const& fractions );
 
 	void SetFromText( const char* text );
 

@@ -1,7 +1,7 @@
 #pragma once
+#include "Engine/Math/Vec3.hpp"
 
 struct Vec2;
-struct Vec3;
 struct Vec4;
 
 struct Mat44
@@ -103,6 +103,7 @@ public:
 	static const Mat44 CreateUniformScaleXYZ( float uniformScaleXYZ );
 	static const Mat44 CreateNonUniformScaleXYZ( const Vec3& scalesXYZ );
 
+	static const Mat44 LookAt( const Vec3& positionToLookFrom, const Vec3& positionToLookAt, const Vec3& worldUp = Vec3::UP );
 
 	//Projection
 	static const Mat44 CreateOrthographicProjection( const Vec3& min, const Vec3& max );

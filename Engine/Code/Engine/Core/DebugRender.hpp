@@ -7,10 +7,10 @@ struct Vec4;
 struct Mat44;
 struct Texture;
 struct AABB2;
+struct AABB3;
+struct OBB3;
 class Camera;
 class GPUMesh;
-class AABB3;
-class OBB3;
 class RenderContext;
 
 /************************************************************************/
@@ -24,7 +24,7 @@ enum eDebugRenderMode
 {
 	DEBUG_RENDER_ALWAYS,          // what is rendered always shows up
 	DEBUG_RENDER_USE_DEPTH,       // respect the depth buffer
-	DEBUG_RENDER_XRAY,            // renders twice - once darker when it shoudl be hidden, and once more saturated when it should appear
+	DEBUG_RENDER_XRAY,            // renders twice - once darker when it should be hidden, and once more saturated when it should appear
 };
 
 /************************************************************************/
@@ -70,14 +70,11 @@ void DebugAddWorldLineStrip( unsigned int count, Vec3 const* positions,
 	eDebugRenderMode mode = DEBUG_RENDER_USE_DEPTH );
 
 // arrows
-void DebugAddWorldArrow( Vec3 p0, Rgba8 p0_start_color, Rgba8 p0_end_color,
-	Vec3 p1, Rgba8 p1_start_color, Rgba8 p1_end_color,
-	float duration,
-	eDebugRenderMode mode );
+void DebugAddWorldArrow( Vec3 p0, Vec3 p1, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode );
 void DebugAddWorldArrow( Vec3 start, Vec3 end, Rgba8 color, float duration, eDebugRenderMode mode = DEBUG_RENDER_USE_DEPTH );
 
 // Quads
-void DebugAddWorldQuad( Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p4, AABB2 uvs, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode = DEBUG_RENDER_USE_DEPTH );
+void DebugAddWorldQuad( Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3, AABB2 uvs, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode = DEBUG_RENDER_USE_DEPTH );
 
 // bounds
 void DebugAddWorldWireBounds( OBB3 bounds, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode = DEBUG_RENDER_USE_DEPTH );
@@ -94,13 +91,13 @@ void DebugAddWorldBasis( Mat44 basis, float duration = 0.0f, eDebugRenderMode mo
 // text
 // non-billboarded will be oriented in the world based on the passed in basis matrix 
 void DebugAddWorldText( Mat44 basis, Vec2 pivot, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode, char const* text );
-void DebugAddWorldTextf( Mat44 basis, Vec2 pivot, Rgba8 color, float duration, eDebugRenderMode mode, char const* text, ... );
-void DebugAddWorldTextf( Mat44 basis, Vec2 pivot, Rgba8 color, char const* text, ... ); // assume DEBUG_RENDER_USE_DEPTH
+void DebugAddWorldTextf( Mat44 basis, Vec2 pivot, Rgba8 color, float duration, eDebugRenderMode mode, char const* format, ... );
+void DebugAddWorldTextf( Mat44 basis, Vec2 pivot, Rgba8 color, char const* format, ... ); // assume DEBUG_RENDER_USE_DEPTH
 
 // this text will always orient itself to the current camera
 void DebugAddWorldBillboardText( Vec3 origin, Vec2 pivot, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode, char const* text );
-void DebugAddWorldBillboardTextf( Vec3 origin, Vec2 pivot, Rgba8 color, char const* format, ... );
 void DebugAddWorldBillboardTextf( Vec3 origin, Vec2 pivot, Rgba8 color, float duration, eDebugRenderMode mode, char const* format, ... );
+void DebugAddWorldBillboardTextf( Vec3 origin, Vec2 pivot, Rgba8 color, char const* format, ... );
 
 // grid [extra] 
 void DebugAddWorldGrid( Vec3 origin,

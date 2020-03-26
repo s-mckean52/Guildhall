@@ -96,11 +96,19 @@ void Game::StartUp()
 	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 
-	DebugAddWorldPoint( Vec3::ZERO, 0.5f, Rgba8::GREEN, Rgba8::GREEN, 10.f );
-	DebugAddScreenPoint( Vec2( 8.f, 4.5f ), 10.f, Rgba8::BLUE, Rgba8::RED, 10.f );
-	DebugAddScreenArrow( Vec2( 20.f, 20.f ), Vec2( 20.f, 100.f ), Rgba8::WHITE, Rgba8::WHITE, 10.f );
-	DebugAddScreenTexturedQuad( AABB2( 300.f, 400.f, 700.f, 700.f ), m_testImage, AABB2( 0.0f, 0.0f, 1.f, 1.f ), Rgba8::RED, Rgba8::MAGENTA, 10.f );
-	DebugAddScreenTextf( Vec4( 500.f, 500.f, 0.f, 0.f ), ALIGN_CENTERED, 30.f, Rgba8::WHITE, 20.f, "Some test text with #%i", 1234 ); 
+
+// 	DebugAddWorldPoint( Vec3( 0.f, 0.f, 0.f ), 0.5f, Rgba8::GREEN, Rgba8::GREEN, 100.f, DEBUG_RENDER_XRAY );
+// 	DebugAddWorldLine( Vec3::ZERO, Vec3::UP * 1.f, Rgba8::GREEN, Rgba8::BLUE, 100.f, DEBUG_RENDER_USE_DEPTH );
+// 	DebugAddWorldArrow( Vec3( 2.f ), Vec3( 2.f ) + Vec3::FORWARD * 2.f, Rgba8::GREEN, Rgba8::BLUE, 100.f, DEBUG_RENDER_USE_DEPTH );
+// 	DebugAddWorldWireSphere( Vec3( 5.f ), 1.f, Rgba8::MAGENTA, 30.f, DEBUG_RENDER_XRAY );
+	//DebugAddWorldBasis( Mat44::CreateZRotationDegrees( 45.f ), Rgba8::WHITE, Rgba8::BLACK, 100.f, DEBUG_RENDER_USE_DEPTH );
+	//DebugAddWorldQuad( Vec3( 0.0f ), Vec3( 1.f, 0.f, 0.f ), Vec3( 1.f ), Vec3( 0.f, 1.f, 1.f ), AABB2(), Rgba8::BLACK, Rgba8::WHITE, 10.f, DEBUG_RENDER_USE_DEPTH );
+	//DebugAddWorldBillboardText( Vec3::ZERO, ALIGN_CENTERED, Rgba8::WHITE, Rgba8::WHITE, 0.f, DEBUG_RENDER_USE_DEPTH, "HI THERE %i" );
+
+// 	DebugAddScreenPoint( Vec2( 8.f, 4.5f ), 10.f, Rgba8::BLUE, Rgba8::RED, 10.f );
+// 	DebugAddScreenArrow( Vec2( 20.f, 20.f ), Vec2( 20.f, 100.f ), Rgba8::WHITE, Rgba8::WHITE, 10.f );
+// 	DebugAddScreenTexturedQuad( AABB2( 300.f, 400.f, 700.f, 700.f ), m_testImage, AABB2( 0.0f, 0.0f, 1.f, 1.f ), Rgba8::RED, Rgba8::MAGENTA, 10.f );
+// 	DebugAddScreenTextf( Vec4( 500.f, 500.f, 0.f, 0.f ), ALIGN_CENTERED, 30.f, Rgba8::BLUE, 20.f, "Some test text with #%i", 1234 ); 
 }
 
 
@@ -144,6 +152,7 @@ void Game::Render() const
 {
 	//Render worldCamera
 	g_theRenderer->BeginCamera( *m_worldCamera );
+	g_theRenderer->SetCullMode( CULL_MODE_NONE );
 	g_theRenderer->SetDepthTest( COMPARE_FUNC_LEQUAL, true );
 	RenderWorld();
 	g_theRenderer->EndCamera( *m_worldCamera );
@@ -170,12 +179,6 @@ void Game::RenderWorld() const
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawMesh( m_meshCube );
 
-	TranslateVertexArray( aabb2 , Vec3( 0.f, 0.f, -10.f ) );
-	g_theRenderer->SetModelMatrix( Mat44::IDENTITY );
-	g_theRenderer->BindTexture( m_testImage );
-	g_theRenderer->BindShader( (Shader*)nullptr );
-	g_theRenderer->DrawVertexArray( aabb2 );
-
 	model = m_cubeTransform->ToMatrix();
 	model.SetTranslation2D( Vec2( 10.f, 0.f ) );
 	g_theRenderer->SetModelMatrix( model );
@@ -183,6 +186,11 @@ void Game::RenderWorld() const
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawMesh( m_plane );
 
+	TranslateVertexArray( aabb2 , Vec3( 0.f, 0.f, -10.f ) );
+	g_theRenderer->SetModelMatrix( Mat44::IDENTITY );
+	g_theRenderer->BindTexture( m_testImage );
+	g_theRenderer->BindShader( (Shader*)nullptr );
+	g_theRenderer->DrawVertexArray( aabb2 );
 }
 
 
@@ -191,7 +199,7 @@ void Game::RenderRingOfSpheres() const
 {
 /*	Mat44 model = m_sphereTransform->ToMatrix();*/
 /*	g_theRenderer->SetModelMatrix( model );*/
-	g_theRenderer->BindTexture( m_pokeball );
+	g_theRenderer->BindTexture( m_testImage );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 /*	g_theRenderer->DrawMesh( m_uvSphere );*/
 
@@ -247,6 +255,7 @@ void Game::TranslateCamera( Camera& camera, const Vec3& directionToMove )
 //---------------------------------------------------------------------------------------------------------
 void Game::Update()
 {
+	DebugAddWorldBillboardTextf( Vec3::ZERO, ALIGN_CENTERED, Rgba8::WHITE, "HI THERE %i", 1245 );
 	float deltaSeconds = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
 
 	if( !g_theConsole->IsOpen() )
