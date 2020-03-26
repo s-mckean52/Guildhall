@@ -1,11 +1,13 @@
 #pragma once
 
 class NamedStrings;
+class Camera;
 
 class App
 {
 private:
 	bool m_isQuitting = false;
+	Camera* m_devConsoleCamera = nullptr;
 
 public:
 	App() {};

@@ -2,6 +2,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/Vec3.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -183,6 +184,20 @@ double NamedStrings::GetValue( const std::string& keyName, double defaultValue )
 	{
 		std::string valueText = mapIterator->second;
 		value = atof( valueText.c_str() );
+	}
+	return value;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec3 NamedStrings::GetValue( const std::string& keyName, const Vec3& defaultValue ) const
+{
+	Vec3 value = defaultValue;
+	MapConstIterator mapIterator = m_keyValuePairs.find( keyName );
+	if( mapIterator != m_keyValuePairs.cend() )
+	{
+		std::string valueText = mapIterator->second;
+		value.SetFromText( valueText.c_str() );
 	}
 	return value;
 }

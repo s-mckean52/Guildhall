@@ -40,22 +40,28 @@ void App::StartUp()
 	g_theEventSystem->StartUp();
 	g_theInput->StartUp( g_theWindow );
 	g_theConsole->StartUp( g_theInput, g_theEventSystem );
+
 	DebugRenderSystemStartup( g_theRenderer );
 
 	g_theGame->StartUp();
-
 	
 	g_theWindow->SetInputSystem( g_theInput );
 	g_theWindow->SetEventSystem( g_theEventSystem );
 
 	g_theEventSystem->SubscribeEventCallbackFunction( "quit", QuitRequested );
 	g_theEventSystem->SubscribeEventCallbackFunction( "help", HelpCommand );
+
+	m_devConsoleCamera = new Camera( g_theRenderer );
+	m_devConsoleCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void App::ShutDown()
 {
+ 	delete m_devConsoleCamera;
+ 	m_devConsoleCamera = nullptr;
+
 	DebugRenderSystemShutdown();
 
 	g_theGame->ShutDown();
@@ -176,8 +182,8 @@ void App::Update()
 void App::Render() const
 {
 	g_theGame->Render();
-
 	DebugRenderScreenTo( g_theRenderer->GetBackBuffer() );
+	g_theConsole->Render( *g_theRenderer, *m_devConsoleCamera, DEV_CONSOLE_LINE_HEIGHT, g_devConsoleFont );
 }
 
 

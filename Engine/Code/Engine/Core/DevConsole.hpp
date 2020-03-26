@@ -33,7 +33,7 @@ public:
 
 	void PrintString( const Rgba8& textColor, const std::string& devConsolePrintString );
 
-	void Render( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const;
+	void Render( RenderContext& renderer, Camera& camera, float lineHeight, BitmapFont* font ) const;
 	void RenderBackground( RenderContext& renderer, const Camera& camera ) const;
 	void RenderOutput( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const;
 	void RenderCurrentInput( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const;

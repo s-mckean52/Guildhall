@@ -39,6 +39,8 @@ public:
 	void ChangeClearColor( float deltaSeconds );
 	void UpdateCameras( float deltaSeconds );
 
+
+	//Static
 	static Vec3 ParabolaEquation( float x, float y );
 	static void GainFocus( NamedStrings* args );
 	static void LoseFocus( NamedStrings* args );
@@ -65,6 +67,6 @@ private:
 	float	m_colorChangeDelay = 1.f;
 	
 	Camera*	m_worldCamera = nullptr;
-	Camera*	m_devConsoleCamera = nullptr;
+	//Camera*	m_devConsoleCamera = nullptr;
 	bool	m_isQuitting = false;
 };

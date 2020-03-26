@@ -149,6 +149,19 @@ const Vec3 Vec3::GetNormalize() const
 
 
 //---------------------------------------------------------------------------------------------------------
+void Vec3::SetFromText(const char* text)
+{
+	Strings splitText = SplitStringOnDelimiter( text, ',' );
+
+	GUARANTEE_OR_DIE( splitText.size() == 3, Stringf( "Invalid Format for Vec2, %i values in string", splitText.size() ) );
+
+	x = static_cast<float>( atof(splitText[ 0 ].c_str() ) );
+	y = static_cast<float>( atof(splitText[ 1 ].c_str() ) );
+	z = static_cast<float>( atof(splitText[ 2 ].c_str() ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 const Vec3 Vec3::operator+( const Vec3& vecToAdd ) const
 {
 	return Vec3( x + vecToAdd.x, y + vecToAdd.y, z + vecToAdd.z);

@@ -627,11 +627,11 @@ void AddCylinderToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vecto
 	float deltaThetaDegrees = 360.f / cuts;
 	float currentThetaDegrees = 0.f;
 
+	Vec3 lookAtIBasis = endFaceOrientaiton.GetIBasis3D();
+	Vec3 lookAtJBasis = endFaceOrientaiton.GetJBasis3D();
+
 	for( unsigned int step = 0; step < cuts + 1; ++step )
 	{
-		Vec3 lookAtIBasis = endFaceOrientaiton.GetIBasis3D();
-		Vec3 lookAtJBasis = endFaceOrientaiton.GetJBasis3D();
-
 		float cosTheta = CosDegrees( currentThetaDegrees );
 		float sinTheta = SinDegrees( currentThetaDegrees );
 

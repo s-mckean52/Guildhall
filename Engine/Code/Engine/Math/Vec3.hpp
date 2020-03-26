@@ -32,6 +32,10 @@ public:
 	const Vec3	GetClamped( float maxLength );
 	const Vec3	GetNormalize() const;
 
+	//Mutators
+	void		SetFromText(const char* text);
+
+
 	//Operators
 	bool		operator==( const Vec3& compare ) const;
 	bool		operator!=( const Vec3& compare ) const;

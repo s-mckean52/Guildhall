@@ -114,3 +114,4 @@ const Rgba8 Rgba8::MAGENTA( 255, 0, 255 );
 const Rgba8 Rgba8::CYAN( 0, 255, 255 );
 
 const Rgba8 Rgba8::GRAY( 50, 50, 50 );
+const Rgba8 Rgba8::ORANGE( 241, 90, 34 );

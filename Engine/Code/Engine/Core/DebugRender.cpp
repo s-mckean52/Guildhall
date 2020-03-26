@@ -1,11 +1,15 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/DebugRender.hpp"
 #include "Engine/Core/Timer.hpp"
+#include "Engine/Core/DevConsole.hpp"
+#include "Engine/Core/EventSystem.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Vec4.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/AABB3.hpp"
+#include "Engine/Math/OBB3.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/Texture.hpp"
@@ -26,13 +30,16 @@ public:
 	void SetIsRenderingEnabled( bool isRenderingEnabled );
 	void SetRenderContext( RenderContext* context );
 	void SetCamera( Camera* camera );
+	void SetScreenHeight( float height );
 
 	bool IsRenderingEnabled() const			{ return m_isRenderingEnabled; }
 	RenderContext* GetRenderContext() const	{ return m_context; }
 	Camera* GetCamera() const				{ return m_camera; }
+	float GetScreenHeight() const			{ return m_screenHeight; }
 
 private:
 	bool m_isRenderingEnabled = false;
+	float m_screenHeight = 1080.f;
 
 	RenderContext* m_context = nullptr;
 	Camera* m_camera = nullptr;
@@ -59,6 +66,12 @@ void DebugRenderSystem::SetCamera( Camera* camera )
 {
 	m_camera = camera;
 }
+
+void DebugRenderSystem::SetScreenHeight(float height)
+{
+	m_screenHeight = height;
+}
+
 //---------------------------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------------------------
 
@@ -137,7 +150,7 @@ void DebugRenderObject::Draw()
 	}
 	else
 	{
-		context->SetCullMode( CULL_MODE_NONE );
+		context->SetCullMode( CULL_MODE_BACK );
 		context->SetFillMode( FILL_MODE_SOLID );
 	}
 
@@ -214,12 +227,186 @@ void AppendDebugRenderObjectToVector( std::vector<DebugRenderObject*>& vectorToA
 	vectorToAppendTo.push_back( objectToAppend );
 }
 
+//---------------------------------------------------------------------------------------------------------
+static void debug_render( NamedStrings* args )
+{
+	bool defaultEnabled = true;
+	bool enabled = args->GetValue( "enabled", defaultEnabled );
+	
+	enabled ? EnableDebugRendering() : DisableDebugRendering();
+
+	if( g_theConsole != nullptr )
+	{
+		g_theConsole->PrintString( Rgba8::WHITE, Stringf( "Debug Rendering is %s", enabled ? "enabled" : "disabled" ) );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+static void debug_add_world_point( NamedStrings* args )
+{
+	Vec3 defaultPosition = Vec3::ZERO;
+	float defaultDurationSeconds = 0.0f;
+
+	Vec3 position = args->GetValue( "position", defaultPosition );
+	float durationSeconds = args->GetValue( "duration", defaultDurationSeconds );
+
+	DebugAddWorldPoint( position, Rgba8::WHITE, durationSeconds );
+
+	if( g_theConsole != nullptr )
+	{
+		g_theConsole->PrintString( Rgba8::WHITE, Stringf( "Draw world point at - x:%.2f, y:%.2f, z:%.2f - for %.2f seconds", position.x, position.y, position.z, durationSeconds ) );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+static void debug_add_world_wire_sphere( NamedStrings* args )
+{
+	Vec3 defaultPosition = Vec3::ZERO;
+	float defaultRadius = 0.f;
+	float defaultDuration = 0.f;
+
+	Vec3 position = args->GetValue( "position", defaultPosition );
+	float radius = args->GetValue( "radius", defaultRadius );
+	float duration = args->GetValue( "duration", defaultDuration );
+
+	DebugAddWorldWireSphere( position, radius, Rgba8::MAGENTA, duration );
+
+	if( g_theConsole != nullptr )
+	{
+		g_theConsole->PrintString( Rgba8::WHITE, Stringf( "Draw wire sphere at - x:%.2f, y:%.2f, z:%.2f - with radius %.2f - for %.2f seconds", position.x, position.y, position.z, radius, duration ) );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+static void debug_add_world_wire_bounds(NamedStrings* args)
+{
+	Vec3 defaultMinPosition = Vec3::ZERO;
+	Vec3 defaultMaxPosition = Vec3::UNIT;
+	float defaultDuration = 0.f;
+
+	Vec3 minPosition = args->GetValue( "min", defaultMinPosition );
+	Vec3 maxPosition = args->GetValue( "max", defaultMaxPosition );
+	float duration = args->GetValue( "duration", defaultDuration );
+
+	AABB3 bounds = AABB3( minPosition, maxPosition );
+	DebugAddWorldWireBounds( bounds, Rgba8::BLUE, duration );
+
+	if( g_theConsole != nullptr )
+	{
+		g_theConsole->PrintString( Rgba8::WHITE, 
+								 Stringf("Draw wire bounds at min - x:%.2f, y:%.2f, z:%.2f max - x:%.2f, y:%.2f, z:%.2f - for %.2f seconds",
+								 minPosition.x, minPosition.y, minPosition.z, maxPosition.x, maxPosition.y, maxPosition.z, duration ) );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+static void debug_add_world_billboard_text( NamedStrings* args )
+{
+	Vec3 defaultPosition = Vec3::ZERO;
+	Vec2 defaultPivot = Vec2::ZERO;
+	float defaultDuration = 10.f;
+	std::string defaultText = "default text";
+
+	Vec3 position = args->GetValue( "position", defaultPosition );
+	Vec2 pivot = args->GetValue( "pivot", defaultPivot );
+	float duration = args->GetValue( "duration", defaultDuration );
+	std::string text = args->GetValue( "text", defaultText );
+
+	DebugAddWorldBillboardTextf( position, pivot, Rgba8::GREEN, duration, DEBUG_RENDER_ALWAYS, text.c_str() );
+
+	if( g_theConsole != nullptr)
+	{
+		g_theConsole->PrintString(	Rgba8::WHITE,
+									Stringf( "Draw billboard text at - x:%.2f, y:%.2f, z:%.2f pivot - x:%.2f, y:%.2f - for %.2f seconds",
+									position.x, position.y, position.z, pivot.x, pivot.y, duration ) );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+static void debug_add_screen_point( NamedStrings* args )
+{
+	Vec2 defaultPosition = Vec2::UNIT * 12.5f;
+	float defaultDurationSeconds = 0.0f;
+
+	Vec2 position = args->GetValue( "position", defaultPosition );
+	float durationSeconds = args->GetValue( "duration", defaultDurationSeconds );
+
+	DebugAddScreenPoint( position, 25.f, Rgba8::GREEN, durationSeconds );
+
+	if( g_theConsole != nullptr )
+	{
+		g_theConsole->PrintString( Rgba8::WHITE, Stringf( "Draw screen point at - x:%.2f, y:%.2f - for %.2f seconds", position.x, position.y, durationSeconds ) );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+static void debug_add_screen_quad( NamedStrings* args )
+{
+	Vec2 defaultMin = Vec2::ZERO;
+	Vec2 defaultMax = Vec2::UNIT * 50.f;
+	float defaultDuration = 0.f;
+
+	Vec2 min = args->GetValue( "min", defaultMin );
+	Vec2 max = args->GetValue( "max", defaultMax );
+	float duration = args->GetValue( "duration", defaultDuration );
+
+	AABB2 bounds = AABB2( min, max );
+	DebugAddScreenQuad( bounds, Rgba8::YELLOW, duration );
+
+	if( g_theConsole != nullptr )
+	{
+		g_theConsole->PrintString( Rgba8::WHITE, Stringf( "Draw screen quad min - x:%.2f, y:%.2f max - x:%.2f, y%.2f - for %.2f seconds", min.x, min.y, max.x, max.y, duration ) );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+static void debug_add_screen_text( NamedStrings* args )
+{
+	Vec2 defaultPosition = Vec2::ZERO;
+	Vec2 defaultPivot = Vec2::ZERO;
+	float defaultDuration = 10.f;
+	std::string defaultText = "default text";
+
+	Vec2 position = args->GetValue( "position", defaultPosition );
+	Vec2 pivot = args->GetValue( "pivot", defaultPivot );
+	float duration = args->GetValue( "duration", defaultDuration );
+	std::string text = args->GetValue( "text", defaultText );
+
+	Vec4 ratioOffset = Vec4( 0.f, 0.f, position.x, position.y );
+
+	DebugAddScreenText( ratioOffset, pivot, 10.f, Rgba8::ORANGE, Rgba8::ORANGE, duration, text.c_str() );
+
+	if( g_theConsole != nullptr )
+	{
+		g_theConsole->PrintString( Rgba8::WHITE, Stringf( "Draw screen text at - x:%.2f, y:%.2f with pivot - x:%.2f, y%.2f - for %.2f seconds", position.x, position.y, pivot.x, pivot.y, duration ) );
+	}
+}
+
 
 //---------------------------------------------------------------------------------------------------------
 void DebugRenderSystemStartup( RenderContext* context )
 {
 	s_debugRenderSystem = new DebugRenderSystem();
 	s_debugRenderSystem->SetRenderContext( context );
+
+	if( g_theEventSystem != nullptr )
+	{
+		g_theEventSystem->SubscribeEventCallbackFunction( "debug_render", debug_render );
+		g_theEventSystem->SubscribeEventCallbackFunction( "debug_add_world_point", debug_add_world_point );
+		g_theEventSystem->SubscribeEventCallbackFunction( "debug_add_world_wire_sphere", debug_add_world_wire_sphere );
+		g_theEventSystem->SubscribeEventCallbackFunction( "debug_add_world_wire_bounds", debug_add_world_wire_bounds );
+		g_theEventSystem->SubscribeEventCallbackFunction( "debug_add_world_billboard_text", debug_add_world_billboard_text );
+		g_theEventSystem->SubscribeEventCallbackFunction( "debug_add_screen_point", debug_add_screen_point );
+		g_theEventSystem->SubscribeEventCallbackFunction( "debug_add_screen_quad", debug_add_screen_quad );
+		g_theEventSystem->SubscribeEventCallbackFunction( "debug_add_screen_text", debug_add_screen_text );
+	}
 }
 
 
@@ -339,6 +526,7 @@ void DebugRenderScreenTo( Texture* output )
 	camera->SetColorTarget( output );
 	Vec2 min = Vec2::ZERO;
 	Vec2 max = output->GetSize();
+	s_debugRenderSystem->SetScreenHeight( max.y );
 	camera->SetProjectionOrthographic( max.y );
 	camera->SetTransform( Transform() );
 	camera->SetPosition( Vec3( max, 0.f ) * 0.5f );
@@ -422,7 +610,7 @@ void DebugAddWorldPoint( Vec3 pos, float size, Rgba8 color, float duration, eDeb
 //---------------------------------------------------------------------------------------------------------
 void DebugAddWorldPoint( Vec3 pos, Rgba8 color, float duration, eDebugRenderMode mode )
 {
-	DebugAddWorldPoint( pos, 0.5f, color, color, duration, mode );
+	DebugAddWorldPoint( pos, 0.2f, color, color, duration, mode );
 }
 
 
@@ -497,6 +685,53 @@ void DebugAddWorldQuad( Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3, AABB2 uvs, Rgba8 sta
 
 
 //---------------------------------------------------------------------------------------------------------
+void DebugAddWorldWireBounds( OBB3 bounds, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode )
+{
+	DebugRenderObject* object = new DebugRenderObject();
+
+	object->m_transformMatrix = bounds.m_transformMatrix;
+	object->m_durationTimer.SetSeconds( duration );
+	object->m_startColor = start_color;
+	object->m_endColor = end_color;
+	object->m_renderMode = mode;
+	object->m_isWireMesh = true;
+
+	AABB3 localBounds = AABB3( -bounds.m_halfDimensions, bounds.m_halfDimensions );
+
+	AddBoxToIndexedVertexArray( object->m_objectVerticies, object->m_objectIndicies, localBounds, start_color );
+
+	AppendDebugRenderObjectToVector( s_debugRenderWorldObjects, object );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DebugAddWorldWireBounds( OBB3 bounds, Rgba8 color, float duration, eDebugRenderMode mode )
+{
+	DebugAddWorldWireBounds( bounds, color, color, duration, mode );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DebugAddWorldWireBounds( AABB3 bounds, Rgba8 color, float duration, eDebugRenderMode mode )
+{
+	DebugRenderObject* object = new DebugRenderObject();
+
+	object->m_transformMatrix.SetTranslation3D( bounds.mins );
+	object->m_durationTimer.SetSeconds( duration );
+	object->m_startColor = color;
+	object->m_endColor = color;
+	object->m_renderMode = mode;
+	object->m_isWireMesh = true;
+
+	AABB3 localBounds = AABB3( Vec3::ZERO, bounds.GetDimensions() );
+
+	AddBoxToIndexedVertexArray( object->m_objectVerticies, object->m_objectIndicies, localBounds, color );
+
+	AppendDebugRenderObjectToVector( s_debugRenderWorldObjects, object );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void DebugAddWorldWireSphere( Vec3 pos, float radius, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode )
 {
 	DebugRenderObject* object = new DebugRenderObject();
@@ -546,10 +781,11 @@ void DebugAddWorldBasis( Mat44 basis, Rgba8 start_tint, Rgba8 end_tint, float du
 	Rgba8 kBasisStartRGBA8 = Rgba8( kBasisStartColor );
 	Rgba8 kBasisEndRGBA8 = Rgba8( kBasisEndColor );
 
+	Vec3 translation = basis.GetTranslation3D();
 
-	DebugAddWorldArrow( Vec3::ZERO, basis.GetIBasis3D(), iBasisStartRGBA8, iBasisEndRGBA8, duration, mode );
-	DebugAddWorldArrow( Vec3::ZERO, basis.GetJBasis3D(), jBasisStartRGBA8, jBasisEndRGBA8, duration, mode );
-	DebugAddWorldArrow( Vec3::ZERO, basis.GetKBasis3D(), kBasisStartRGBA8, kBasisEndRGBA8, duration, mode );
+	DebugAddWorldArrow( translation, basis.GetIBasis3D() + translation, iBasisStartRGBA8, iBasisEndRGBA8, duration, mode );
+	DebugAddWorldArrow( translation, basis.GetJBasis3D() + translation, jBasisStartRGBA8, jBasisEndRGBA8, duration, mode );
+	DebugAddWorldArrow( translation, basis.GetKBasis3D() + translation, kBasisStartRGBA8, kBasisEndRGBA8, duration, mode );
 }
 
 
@@ -628,7 +864,7 @@ void DebugAddWorldBillboardText( Vec3 origin, Vec2 pivot, Rgba8 start_color, Rgb
 {
 	float textSize = 0.2f;
 
-	if (s_debugRenderFont == nullptr)
+	if( s_debugRenderFont == nullptr )
 	{
 		RenderContext* context = s_debugRenderSystem->GetRenderContext();
 		s_debugRenderFont = context->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont");
@@ -690,14 +926,21 @@ void DebugAddWorldBillboardTextf( Vec3 origin, Vec2 pivot, Rgba8 color, char con
 //---------------------------------------------------------------------------------------------------------
 void DebugRenderSetScreenHeight( float height )
 {
-
+	s_debugRenderSystem->SetScreenHeight( height );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 AABB2 DebugGetScreenBounds()
 {
-	return AABB2();
+	float aspectRatio = 16.f / 9.f;
+	if( s_debugRenderSystem->GetCamera() != nullptr )
+	{
+		aspectRatio = s_debugRenderSystem->GetCamera()->GetAspectRatio();
+	}
+
+	float screenHeight = s_debugRenderSystem->GetScreenHeight();
+	return AABB2( 0.f, 0.f, aspectRatio * screenHeight, screenHeight );
 }
 
 
@@ -846,7 +1089,7 @@ void DebugAddScreenTexturedQuad( AABB2 bounds, Texture* tex, Rgba8 tint, float d
 
 
 //---------------------------------------------------------------------------------------------------------
-void DebugAddScreenText( Vec4 pos, Vec2 pivot, float size, Rgba8 start_color, Rgba8 end_color, float duration, char const* text )
+void DebugAddScreenText( Vec4 ratioOffset, Vec2 pivot, float size, Rgba8 start_color, Rgba8 end_color, float duration, char const* text )
 {
 	if (s_debugRenderFont == nullptr)
 	{
@@ -854,8 +1097,9 @@ void DebugAddScreenText( Vec4 pos, Vec2 pivot, float size, Rgba8 start_color, Rg
 		s_debugRenderFont = context->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 	}
 
-	Vec2 textPos = Vec2( pos.x, pos.y );
-	Vec2 textPosOffset = Vec2( pos.z, pos.w );
+	AABB2 screenBounds = DebugGetScreenBounds();
+	Vec2 textPos = screenBounds.GetDimensions() * Vec2( ratioOffset.x, ratioOffset.y );
+	Vec2 textPosOffset = Vec2( ratioOffset.z, ratioOffset.w );
 	Vec2 textStartPos = textPos + textPosOffset;
 
 	Vec2 textDimensions = s_debugRenderFont->GetDimensionsForText2D( size, text );

@@ -13,6 +13,7 @@ class Camera;
 class GPUMesh;
 class RenderContext;
 
+
 /************************************************************************/
 /*                                                                      */
 /* TYPES                                                                */
@@ -142,11 +143,11 @@ void DebugAddScreenTexturedQuad( AABB2 bounds, Texture* tex, AABB2 uvs, Rgba8 ti
 void DebugAddScreenTexturedQuad( AABB2 bounds, Texture* tex, Rgba8 tint = Rgba8::WHITE, float duration = 0.0f ); // assume UVs are full texture
 
 // text
-void DebugAddScreenText( Vec4 pos, Vec2 pivot, float size, Rgba8 start_color, Rgba8 end_color, float duration, char const* text );
-void DebugAddScreenTextf( Vec4 pos, Vec2 pivot, float size, Rgba8 start_color, Rgba8 end_color, float duration, char const* format, ... );
-void DebugAddScreenTextf( Vec4 pos, Vec2 pivot, float size, Rgba8 color, float duration, char const* format, ... );
-void DebugAddScreenTextf( Vec4 pos, Vec2 pivot, float size, Rgba8 color, char const* format, ... );
-void DebugAddScreenTextf( Vec4 pos, Vec2 pivot, Rgba8 color, char const* format, ... );
+void DebugAddScreenText( Vec4 ratioOffset, Vec2 pivot, float size, Rgba8 start_color, Rgba8 end_color, float duration, char const* text );
+void DebugAddScreenTextf( Vec4 ratioOffset, Vec2 pivot, float size, Rgba8 start_color, Rgba8 end_color, float duration, char const* format, ... );
+void DebugAddScreenTextf( Vec4 ratioOffset, Vec2 pivot, float size, Rgba8 color, float duration, char const* format, ... );
+void DebugAddScreenTextf( Vec4 ratioOffset, Vec2 pivot, float size, Rgba8 color, char const* format, ... );
+void DebugAddScreenTextf( Vec4 ratioOffset, Vec2 pivot, Rgba8 color, char const* format, ... );
 
 // screen basis [extra]
 void DebugAddScreenBasis( Vec2 screen_origin_location, Mat44 basis_to_render, Rgba8 start_tint, Rgba8 end_tint, float duration );

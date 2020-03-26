@@ -78,15 +78,19 @@ void DevConsole::PrintString( const Rgba8& textColor, const std::string& devCons
 
 
 //---------------------------------------------------------------------------------------------------------
-void DevConsole::Render( RenderContext& renderer, const Camera& camera, float lineHeight, BitmapFont* font ) const
+void DevConsole::Render( RenderContext& renderer, Camera& camera, float lineHeight, BitmapFont* font ) const
 {
 	if( !IsOpen() ) return;
+
+	renderer.BeginCamera( camera );
 
 	RenderBackground( renderer, camera );
 	RenderOutput( renderer, camera, lineHeight, font );
 	RenderCursor( renderer, camera, lineHeight, font );
 	RenderCurrentInput( renderer, camera, lineHeight, font );
 	RenderSelection( renderer, camera, lineHeight, font );
+
+	renderer.EndCamera( camera );
 }
 
 

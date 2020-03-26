@@ -53,7 +53,7 @@ constexpr float SCREEN_SHAKE_ABBERATION				= 1.f / 2.f;
 constexpr float MAX_SCREEN_SHAKE_DISPLACEMENT		= 1.0f;
 constexpr float PLAYER_DEATH_SCREEN_SHAKE_INTENSITY = 1.f;
 
-constexpr float DEV_CONSOLE_LINE_HEIGHT				= 0.2f;
+constexpr float DEV_CONSOLE_LINE_HEIGHT				= 0.15f;
 
 
 
