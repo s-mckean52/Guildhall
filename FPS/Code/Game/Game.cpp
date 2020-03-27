@@ -178,7 +178,7 @@ void Game::RenderRingOfSpheres() const
 {
 /*	Mat44 model = m_sphereTransform->ToMatrix();*/
 /*	g_theRenderer->SetModelMatrix( model );*/
-	g_theRenderer->BindTexture( m_testImage );
+	g_theRenderer->BindTexture( m_pokeball );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 /*	g_theRenderer->DrawMesh( m_uvSphere );*/
 

@@ -227,6 +227,40 @@ void AppendDebugRenderObjectToVector( std::vector<DebugRenderObject*>& vectorToA
 	vectorToAppendTo.push_back( objectToAppend );
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+eDebugRenderMode GetDebugRenderModeFromString( std::string renderModeAsString )
+{
+	if( renderModeAsString == "depth" )
+	{
+		return DEBUG_RENDER_USE_DEPTH;
+	}
+	else if( renderModeAsString == "xray" )
+	{
+		return DEBUG_RENDER_XRAY;
+	}
+	else if( renderModeAsString == "always" )
+	{
+		return DEBUG_RENDER_ALWAYS;
+	}
+	else
+	{
+		g_theConsole->PrintString( Rgba8::MAGENTA, Stringf( "Defaulted Render Mode to ALWAYS" ) );
+		return DEBUG_RENDER_ALWAYS;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+eDebugRenderMode GetRenderModeFromArgs( NamedStrings* args )
+{
+	std::string defaultModeAsString = "depth";
+	std::string modeAsString = args->GetValue( "mode", defaultModeAsString );
+
+	return GetDebugRenderModeFromString( modeAsString );
+}
+
+
 //---------------------------------------------------------------------------------------------------------
 static void debug_render( NamedStrings* args )
 {
@@ -251,7 +285,8 @@ static void debug_add_world_point( NamedStrings* args )
 	Vec3 position = args->GetValue( "position", defaultPosition );
 	float durationSeconds = args->GetValue( "duration", defaultDurationSeconds );
 
-	DebugAddWorldPoint( position, Rgba8::WHITE, durationSeconds );
+	eDebugRenderMode mode = GetRenderModeFromArgs( args );
+	DebugAddWorldPoint( position, Rgba8::WHITE, durationSeconds, mode );
 
 	if( g_theConsole != nullptr )
 	{
@@ -264,14 +299,15 @@ static void debug_add_world_point( NamedStrings* args )
 static void debug_add_world_wire_sphere( NamedStrings* args )
 {
 	Vec3 defaultPosition = Vec3::ZERO;
-	float defaultRadius = 0.f;
+	float defaultRadius = 1.f;
 	float defaultDuration = 0.f;
 
 	Vec3 position = args->GetValue( "position", defaultPosition );
 	float radius = args->GetValue( "radius", defaultRadius );
 	float duration = args->GetValue( "duration", defaultDuration );
 
-	DebugAddWorldWireSphere( position, radius, Rgba8::MAGENTA, duration );
+	eDebugRenderMode mode = GetRenderModeFromArgs( args );
+	DebugAddWorldWireSphere( position, radius, Rgba8::MAGENTA, duration, mode );
 
 	if( g_theConsole != nullptr )
 	{
@@ -292,7 +328,8 @@ static void debug_add_world_wire_bounds(NamedStrings* args)
 	float duration = args->GetValue( "duration", defaultDuration );
 
 	AABB3 bounds = AABB3( minPosition, maxPosition );
-	DebugAddWorldWireBounds( bounds, Rgba8::BLUE, duration );
+	eDebugRenderMode mode = GetRenderModeFromArgs( args );
+	DebugAddWorldWireBounds( bounds, Rgba8::BLUE, duration, mode );
 
 	if( g_theConsole != nullptr )
 	{
@@ -316,7 +353,8 @@ static void debug_add_world_billboard_text( NamedStrings* args )
 	float duration = args->GetValue( "duration", defaultDuration );
 	std::string text = args->GetValue( "text", defaultText );
 
-	DebugAddWorldBillboardTextf( position, pivot, Rgba8::GREEN, duration, DEBUG_RENDER_ALWAYS, text.c_str() );
+	eDebugRenderMode mode = GetRenderModeFromArgs( args );
+	DebugAddWorldBillboardTextf( position, pivot, Rgba8::GREEN, duration, mode, text.c_str() );
 
 	if( g_theConsole != nullptr)
 	{

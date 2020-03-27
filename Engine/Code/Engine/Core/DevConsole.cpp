@@ -444,19 +444,20 @@ void DevConsole::SubmitCommand()
 {
 	m_previousCommands.push_back( m_currentInput );
 
+	std::string inputCommand = m_currentInput;
+	std::string inputArgs = "";
+
+	size_t firstSpaceIndex = m_currentInput.find( ' ' );
+	if( firstSpaceIndex != m_currentInput.npos )
+	{
+		inputCommand = m_currentInput.substr( 0, firstSpaceIndex );
+		inputArgs = m_currentInput.substr( firstSpaceIndex + 1, m_currentInput.size() );
+	}
+
 	Strings availableCommands = m_theEventSystem->GetEventNames();
 	for( int commandIndex = 0; commandIndex < availableCommands.size(); ++commandIndex )
 	{
 		std::string command = availableCommands[ commandIndex ];
-		std::string inputCommand = m_currentInput;
-		std::string inputArgs = "";
-
-		size_t firstSpaceIndex = m_currentInput.find( ' ' );
-		if( firstSpaceIndex != m_currentInput.npos )
-		{
-			inputCommand = m_currentInput.substr( 0, firstSpaceIndex );
-			inputArgs = m_currentInput.substr( firstSpaceIndex + 1, m_currentInput.size() );
-		}
 
 		if( command == inputCommand )
 		{
@@ -466,8 +467,8 @@ void DevConsole::SubmitCommand()
 		}
 	}
 	
-	std::string commandString = m_currentInput + " is not a supported command";
-	PrintString( Rgba8::RED, commandString );
+	std::string invalidCommandString = inputCommand + " is not a supported command";
+	PrintString( Rgba8::RED, invalidCommandString );
 	ResetInput();
 }
 
