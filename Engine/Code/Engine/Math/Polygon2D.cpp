@@ -151,6 +151,28 @@ Vec2 Polygon2D::GetVertexAtIndex( int index ) const
 
 
 //---------------------------------------------------------------------------------------------------------
+Vec2 Polygon2D::GetSupportPointInDirection( Vec2 const& direction ) const
+{
+	Vec2 normalizedDirection = direction.GetNormalized();
+	Vec2 supportPoint = GetVertexAtIndex( 0 );
+	float longestProjectLengthOnDirection = DotProduct2D( supportPoint, normalizedDirection );
+
+	for( int vertextIndex = 1; vertextIndex < GetVertexCount(); ++vertextIndex )
+	{
+		Vec2 currentVertex = GetVertexAtIndex( vertextIndex );
+		float projectedLength = DotProduct2D( currentVertex, normalizedDirection );
+		if( projectedLength > longestProjectLengthOnDirection )
+		{
+			supportPoint = currentVertex;
+			longestProjectLengthOnDirection = projectedLength;
+		}
+	}
+
+	return supportPoint;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 int Polygon2D::GetVertexCount() const
 {
 	return static_cast<int>( m_points.size() );

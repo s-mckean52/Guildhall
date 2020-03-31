@@ -64,6 +64,15 @@ void GameObject::UpdateColors()
 	{
 		m_currentBorderColor = m_defaultBorderColor;
 	}
+
+	if( m_isOverlapping )
+	{
+		m_currentFillColor = Rgba8::RED;
+	}
+	else if( !m_isOverlapping )
+	{
+		m_currentFillColor = Rgba8::WHITE;
+	}
 }
 
 
@@ -126,7 +135,9 @@ void GameObject::DrawTooltip( Vec2 const& mousePos ) const
 	tooltipBox.mins = mousePos;
 	tooltipBox.maxes = tooltipBox.mins + Vec2( 0.f, 2.f ) + g_testFont->GetDimensionsForText2D( 0.1f, verletString );
 	
-	AppendVertsForAABB2D( tooltipBoxVerts, tooltipBox, Rgba8::GRAY );
+	Rgba8 backgroundColor = Rgba8::GRAY;
+	backgroundColor.a = 100;
+	AppendVertsForAABB2D( tooltipBoxVerts, tooltipBox, backgroundColor );
 	g_theRenderer->BindTexture( nullptr );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( tooltipBoxVerts );

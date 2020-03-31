@@ -14,6 +14,7 @@ public:
 	Vec2	GetClosestPoint( Vec2 const& point ) const;
 	Vec2	GetClosestPointOnEdge( Vec2 const& point ) const;
 	Vec2	GetVertexAtIndex( int index ) const;
+	Vec2	GetSupportPointInDirection( Vec2 const& direction ) const;
 
 	int			GetVertexCount() const;
 	int			GetEdgeCount() const;

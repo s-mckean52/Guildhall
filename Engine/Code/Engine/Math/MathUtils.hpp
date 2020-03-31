@@ -67,6 +67,8 @@ float		DotProduct3D					( const Vec3& a, const Vec3& b );
 float		DotProduct4D					( const Vec4& a, const Vec4& b );
 
 Vec3		CrossProduct3D					( const Vec3& vecFrom, const Vec3& vecTo );
+Vec2		TripleCrossProduct2D			( const Vec2& vecFrom, const Vec2& vecTo, const Vec2& vecBackTo );
+Vec3		TripleCrossProduct3D			( const Vec3& vecFrom, const Vec3& vecTo, const Vec3& vecBackTo );
 
 int			GetTaxicabDistance2D			( const IntVec2& startPosition, const IntVec2& endPosition );
 
@@ -85,7 +87,7 @@ bool		DoOBBAndLineSegmentOverlap2D( const OBB2& obb, const Vec2& lineStart, cons
 bool		DoOBBAndCapsuleOverlap2D( const OBB2& obb, const Vec2& capsuleMidStart, const Vec2& capsuleMidEnd, float capsuleRadius );
 bool		DoOBBAndDiscOverlap2D( const OBB2& obb, const Vec2& discCenter, float discRadius );
 bool		DoPolygonAndDiscOverlap( const Polygon2D& polygon, const Vec2& discCenter, float discRadius );
-//bool		DoPolygonsOverlap( std::vector<Vec2> polygonVertsA, std::vector<Vec2> polygonVertsB );
+bool		DoPolygonsOverlap( Polygon2D polygonA, Polygon2D polygonB );
 
 void		PushDiscOutOfAABB2( Vec2& discCenterPosition, float discRadius, const AABB2& box );
 void		PushDiscsOutOfEachOther2D( Vec2& discACenterPosition, float discARadius, Vec2& discBCenterPosition, float discBRadius );

@@ -171,6 +171,7 @@ public:
 	IndexBuffer*				m_immediateIBO				= nullptr;
 	RenderBuffer*				m_frameUBO					= nullptr;
 	RenderBuffer*				m_modelUBO					= nullptr;
+	//RenderBuffer*				m_lightingUBO				= nullptr;
 	Texture*					m_defaultDepthStencil		= nullptr;
 
 	ID3D11BlendState* m_alphaBlendStateHandle		= nullptr;

@@ -161,6 +161,21 @@ void Game::Update()
 	
 	m_physics2D->Update();
 
+	for( int goIndex = 0; goIndex < m_gameObjects.size(); ++goIndex )
+	{
+		GameObject* currentGO = m_gameObjects[ goIndex ];
+		currentGO->m_isOverlapping = false;
+		for( int indexToCheck = 0; indexToCheck < m_gameObjects.size(); ++indexToCheck )
+		{
+			if( currentGO == m_gameObjects[ indexToCheck ] ) continue;
+			if( currentGO->GetCollider()->Intersects( m_gameObjects[ indexToCheck ]->GetCollider() ) )
+			{
+				currentGO->m_isOverlapping = true;
+				m_gameObjects[ indexToCheck ]->m_isOverlapping = true;
+			}
+		}
+	}
+
 	UpdateGameObjects( deltaSeconds );
 	UpdateCameras( deltaSeconds );
 }

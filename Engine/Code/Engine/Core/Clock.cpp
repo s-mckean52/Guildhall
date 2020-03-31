@@ -33,7 +33,16 @@ Clock::~Clock()
 		Clock* currentChildClock = m_childrenClocks[ childClockIndex ];
 		if( currentChildClock != nullptr )
 		{
-			m_childrenClocks[ childClockIndex ]->SetParent( m_parentClock );
+			if( m_parentClock != nullptr)
+			{
+				m_childrenClocks[ childClockIndex ]->SetParent( m_parentClock );
+			}
+			else
+			{
+				m_childrenClocks[ childClockIndex ]->m_parentClock = nullptr;
+				delete m_childrenClocks[ childClockIndex ];
+				m_childrenClocks[ childClockIndex ] = nullptr;
+			}
 		}
 	}
 

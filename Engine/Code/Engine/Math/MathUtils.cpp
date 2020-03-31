@@ -716,6 +716,53 @@ bool DoPolygonAndDiscOverlap( const Polygon2D& polygon, const Vec2& discCenter, 
 
 
 //---------------------------------------------------------------------------------------------------------
+bool DoPolygonsOverlap( Polygon2D polygonA, Polygon2D polygonB ) 
+{
+	Vec2 simplexVerts[ 3 ];
+	Vec2 direction = Vec2::LEFT;
+	simplexVerts[ 0 ] = polygonA.GetSupportPointInDirection( direction ) - polygonB.GetSupportPointInDirection( -direction );
+	simplexVerts[ 1 ] = polygonA.GetSupportPointInDirection( -direction ) - polygonB.GetSupportPointInDirection( direction );
+
+	Vec2 simplexEdge = simplexVerts[ 1 ] - simplexVerts[ 0 ];
+	Vec2 perpindicularDirection = TripleCrossProduct2D( simplexEdge , -simplexVerts[ 0 ], simplexEdge );
+
+	simplexVerts[ 2 ] = polygonA.GetSupportPointInDirection( perpindicularDirection ) - polygonB.GetSupportPointInDirection( -perpindicularDirection );
+
+	for( ;; )
+	{
+		Vec2 lastDirectionChecked = Vec2::ZERO;
+		Vec2 edge1 = simplexVerts[ 1 ] - simplexVerts[ 2 ];
+		Vec2 edge2 = simplexVerts[ 0 ] - simplexVerts[ 2 ];
+
+		Vec2 edge1Perp = TripleCrossProduct2D( edge2, edge1, edge1 );
+		Vec2 edge2Perp = TripleCrossProduct2D( edge1, edge2, edge2 );
+
+		if( DotProduct2D( edge1Perp, -simplexVerts[ 2 ] ) > 0 )
+		{
+			simplexVerts[ 0 ] = simplexVerts[ 1 ];
+			simplexVerts[ 1 ] = simplexVerts[ 2 ];
+			simplexVerts[ 2 ] = polygonA.GetSupportPointInDirection( edge1Perp ) - polygonB.GetSupportPointInDirection( -edge1Perp );
+			lastDirectionChecked = edge1Perp;
+		}
+		else if( DotProduct2D( edge2Perp, -simplexVerts[ 2 ] ) > 0 )
+		{
+			simplexVerts[ 1 ] = simplexVerts[ 2 ];
+			simplexVerts[ 2 ] = polygonA.GetSupportPointInDirection( edge2Perp ) - polygonB.GetSupportPointInDirection( -edge2Perp );
+			lastDirectionChecked = edge2Perp;
+		}
+		else {
+			return true;
+		}
+
+		if( DotProduct2D( lastDirectionChecked, simplexVerts[ 2 ] ) < 0 )
+		{
+			return false;
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 float SmoothStart2( float t )
 {
 	return t * t;
@@ -959,6 +1006,23 @@ Vec3 CrossProduct3D( const Vec3& vecFrom, const Vec3& vecTo )
 	result.y = ( vecFrom.z * vecTo.x ) - ( vecFrom.x * vecTo.z );
 	result.z = ( vecFrom.x * vecTo.y ) - ( vecFrom.y * vecTo.x );
 	return result;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec2 TripleCrossProduct2D( const Vec2& vecFrom, const Vec2& vecTo, const Vec2& vecBackTo )
+{
+	Vec3 result3D = TripleCrossProduct3D( Vec3( vecFrom, 0.f ), Vec3( vecTo, 0.f ), Vec3( vecBackTo, 0.f ) );
+	return Vec2( result3D.x, result3D.y );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec3 TripleCrossProduct3D( const Vec3& vecFrom, const Vec3& vecTo, const Vec3& vecBackTo )
+{
+	Vec3 crossResult = CrossProduct3D( vecFrom, vecTo );
+	return CrossProduct3D( crossResult, vecBackTo );
+
 }
 
 

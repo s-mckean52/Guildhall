@@ -31,12 +31,10 @@ static bool DiscVPolygonCollisionCheck( Collider2D const* col0, Collider2D const
 //---------------------------------------------------------------------------------------------------------
 static bool PolygonVPolygonCollisionCheck( Collider2D const* col0, Collider2D const* col1 )
 {
-	UNUSED( col0 );
-	UNUSED( col1 );
-// 	PolygonCollider2D const* polygon0 = (PolygonCollider2D*)col0;
-// 	PolygonCollider2D const* polygon1 = (PolygonCollider2D*)col1;
+	PolygonCollider2D const* polygon0 = (PolygonCollider2D*)col0;
+	PolygonCollider2D const* polygon1 = (PolygonCollider2D*)col1;
 
-	return false;
+	return DoPolygonsOverlap( polygon0->m_worldPolygon, polygon1->m_worldPolygon );
 }
 
 
