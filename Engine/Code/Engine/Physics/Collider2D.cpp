@@ -214,6 +214,32 @@ static bool PolygonVPolygonManifoldGeneration( Collider2D const* col0, Collider2
 
 	for( ;; )
 	{
+		/*
+		Polygon2D simplexPoly = Polygon2D( simplex );
+		for(;;)
+		{
+			if( !ExpandSimplex )
+			{
+				normalPoint = simplexPoly = GetNearestPointOnEdge( Vec2 )
+				penetration = normalPoint.Length()
+				collisionNormal = -normalPoint.GetNormalized;
+				if( normalPoint == Vec2::ZERO )
+					collisionNormal = edgeNormal;
+			}
+		}
+
+		polygonB.GetMinAndMaxOnPlane();
+		if( min == max )
+		{
+			Set Manifold;
+			return;
+		}
+
+		std::vector contacts = GetContactsOnEdge( polyA, min, max );
+		Segment2D collisionSegment = GetMinAndMaxAlongOnDirection( contacts, plane );
+		SetManifold
+		*/
+
 // 		for (int i = 0; i < simplex.size(); ++i)
 // 		{
 // 			Vec3 edgeStart = Vec3( simplex[i], 0.f );
@@ -233,6 +259,7 @@ static bool PolygonVPolygonManifoldGeneration( Collider2D const* col0, Collider2
 		Vec2 edgeStartPosition;
 		Vec2 edgeEndPosition;
 		GetClosestEdgeToOriginOnSimplex( simplex, edgeStartIndex, edgeStartPosition, edgeEndPosition );
+
 
 		Vec2 closestEdge = edgeEndPosition - edgeStartPosition;
 		Vec2 closestEdgeNormal = closestEdge.GetNormalized();

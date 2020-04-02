@@ -70,6 +70,15 @@ void Game::StartUp()
 	g_theEventSystem->SubscribeEventCallbackFunction( "set_physics_update", SetPhysicsUpdate );
 	DebugAddWorldPoint(Vec3(0.f, 0.f, 0.f), 10.f, Rgba8::RED, 10.f, DEBUG_RENDER_ALWAYS);
 	//DebugAddWorldLine(Vec3(0.f,0.f, 0.f), Vec3(1.f, 1.f, 0.f), Rgba8::RED, 10.f, DEBUG_RENDER_ALWAYS);
+
+	float groundPolyHalfWidth = 8.f;
+	std::vector<Vec2> groundPolygon = {
+		Vec2( -groundPolyHalfWidth, -4.5f ),
+		Vec2( groundPolyHalfWidth, -4.5f ),
+		Vec2( groundPolyHalfWidth, -4.f ),
+		Vec2( -groundPolyHalfWidth, -4.f ),
+	};
+	m_gameObjects.push_back( CreatePolygon( groundPolygon ) );
 }
 
 
@@ -115,6 +124,7 @@ void Game::Render() const
 	g_theRenderer->BeginCamera( *m_worldCamera );
 	DrawNewPolygonPoints();
 	DrawGameObjects();
+	DrawWorldBounds();
 	g_theRenderer->EndCamera( *m_worldCamera );
 
 
@@ -635,12 +645,24 @@ void Game::DrawGameObjects() const
 
 
 //---------------------------------------------------------------------------------------------------------
+void Game::DrawWorldBounds() const
+{
+	std::vector<Vertex_PCU> worldBoundsVerts;
+	AppendVertsForAABB2OutlineAtPoint( worldBoundsVerts, m_worldBounds, Rgba8::CYAN, 0.1f );
+
+	g_theRenderer->BindTexture( nullptr );
+	g_theRenderer->BindShader( (Shader*)nullptr );
+	g_theRenderer->DrawVertexArray( worldBoundsVerts );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::UpdateGameObjects( float deltaSeconds )
 {
 	for( int goIndex = 0; goIndex < m_gameObjects.size(); ++goIndex )
 	{
 		GameObject* currentGameObject = m_gameObjects[ goIndex ];
-		if( currentGameObject )
+		if( currentGameObject != nullptr )
 		{
 			currentGameObject->Update( deltaSeconds );
 			HandleGameObjectsOutOfBounds( currentGameObject );
@@ -652,8 +674,9 @@ void Game::UpdateGameObjects( float deltaSeconds )
 //---------------------------------------------------------------------------------------------------------
 void Game::HandleGameObjectsOutOfBounds( GameObject* gameObject )
 {
-	MoveGameObjectToOppositeSideOfScreen( gameObject );
-	BounceGameObjectOffBottomOfScreen( gameObject );
+	//MoveGameObjectToOppositeSideOfScreen( gameObject );
+	//BounceGameObjectOffBottomOfScreen( gameObject );
+	DestroyObjectOutsideWorldBounds( gameObject );
 }
 
 
@@ -688,6 +711,17 @@ void Game::MoveGameObjectToOppositeSideOfScreen( GameObject* gameObject )
 		{
 			gameObject->SetPosition( Vec2( orientationPosition, gameObjectWorldPosition.y ) );
 		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::DestroyObjectOutsideWorldBounds( GameObject* gameObject )
+{
+	AABB2 objectBounds = gameObject->GetCollider()->GetWorldBounds();
+	if( !gameObject->m_isHeld && !DoAABB2sOverlap( m_worldBounds, objectBounds ) )
+	{
+		gameObject->m_isDestroyed = true;
 	}
 }
 
@@ -756,7 +790,7 @@ void Game::DestroyGameObjects()
 {
 	for( int goIndex = 0; goIndex < m_gameObjects.size(); ++goIndex )
 	{
-		if( m_gameObjects[ goIndex] && m_gameObjects[goIndex]->m_isDestroyed )
+		if( m_gameObjects[ goIndex ] && m_gameObjects[goIndex]->m_isDestroyed )
 		{
 			delete m_gameObjects[ goIndex ];
 			m_gameObjects[ goIndex ] = nullptr;
@@ -870,20 +904,15 @@ void Game::DrawNewPolygonPoints() const
 //---------------------------------------------------------------------------------------------------------
 void Game::AddGameObject( GameObject* gameObject )
 {
-	bool wasPlaced = false;
 	for( int goIndex = 0; goIndex < m_gameObjects.size(); ++goIndex )
 	{
-		if( m_gameObjects[goIndex] == nullptr )
+		if( m_gameObjects[ goIndex ] == nullptr )
 		{
-			m_gameObjects[goIndex] = gameObject;
-			wasPlaced = true;
-			break;
+			m_gameObjects[ goIndex ] = gameObject;
+			return;
 		}
 	}
-	if( !wasPlaced )
-	{
-		m_gameObjects.push_back( gameObject );
-	}
+	m_gameObjects.push_back( gameObject );
 }
 
 

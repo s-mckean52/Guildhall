@@ -5,6 +5,7 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/Vec3.hpp"
+#include "Engine/Math/AABB2.hpp"
 
 class Entity;
 class XboxController;
@@ -62,9 +63,11 @@ public:
 	void AddPointToNewPolygon();
 	Vec2 AveragePositions( std::vector<Vec2> points );
 	void DrawGameObjects() const;
+	void DrawWorldBounds() const;
 	void UpdateGameObjects( float deltaSeconds );
 	void HandleGameObjectsOutOfBounds( GameObject* gameObject );
 	void MoveGameObjectToOppositeSideOfScreen( GameObject* gameObject );
+	void DestroyObjectOutsideWorldBounds( GameObject* gameObject );
 	void BounceGameObjectOffBottomOfScreen( GameObject* gameObject );
 	void CheckGameObjectOverlap( GameObject* gameObject );
 	void SetDraggedObject();
@@ -88,11 +91,13 @@ private:
 	Camera* m_worldCamera = nullptr;
 	Camera* m_uiCamera = nullptr;
 
+	AABB2 m_worldBounds = AABB2( -10.f, -10.f, 10.f, 10.f );
+
 	Vec2 m_mousePos = Vec2();
 	Vec3 m_focalPoint = Vec3();
 	float m_cameraHeight = CAMERA_SIZE_Y;
 	float m_cameraMinHeight = CAMERA_SIZE_Y * 0.5f;
-	float m_cameraMaxHeight = CAMERA_SIZE_Y * 1.5f;
+	float m_cameraMaxHeight = CAMERA_SIZE_Y * 3.f;
 	float m_cameraMoveAmountPerFrame = 0.05f;
 
 	Vec2 m_draggedObjectOffset;

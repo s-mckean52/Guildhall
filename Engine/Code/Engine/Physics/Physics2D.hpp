@@ -28,6 +28,7 @@ public:
 	void DetectCollisions();
 	void ResolveCollisions();
 	void ResolveCollision( Collision2D const& collision );
+	void ClearFrameCollisions();
 	void EulerStep( float deltaSeconds, Rigidbody2D* rb );
 	void ApplyImpulseOnCollision( Collision2D const& collision );
 

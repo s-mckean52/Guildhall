@@ -142,7 +142,6 @@ void Physics2D::DetectCollisions()
 		Rigidbody2D* thisRigidbody = m_rigidbodies2D[ thisRigidbodyIndex ];
 		for( int otherRigidbodyIndex = thisRigidbodyIndex + 1; otherRigidbodyIndex < m_rigidbodies2D.size(); ++otherRigidbodyIndex )
 		{
-			Manifold2* newManifold = new Manifold2();
 			Rigidbody2D* otherRigidbody = m_rigidbodies2D[ otherRigidbodyIndex ];
 
 			if( thisRigidbody == nullptr || otherRigidbody == nullptr ) continue;
@@ -153,6 +152,7 @@ void Physics2D::DetectCollisions()
 
 			if( thisCollider == nullptr || otherCollider == nullptr ) continue;
 
+			Manifold2* newManifold = new Manifold2();
 			if( thisCollider->GetManifold( otherCollider, newManifold ) )
 			{
 				if( thisRigidbody->m_simulationMode == SIMULATION_MODE_STATIC && 
@@ -170,6 +170,11 @@ void Physics2D::DetectCollisions()
 				}
 				m_frameCollisions.push_back( newCollision );
 			}
+			else
+			{
+				delete newManifold;
+				newManifold = nullptr;
+			}
 		}
 	}
 }
@@ -184,7 +189,7 @@ void Physics2D::ResolveCollisions()
 		ResolveCollision( *currentCollision );
 	}
 
-	m_frameCollisions.clear();
+	ClearFrameCollisions();
 }
 
 
@@ -226,6 +231,16 @@ void Physics2D::ResolveCollision( Collision2D const& collision )
 	ApplyImpulseOnCollision( collision );
 }
 
+
+void Physics2D::ClearFrameCollisions()
+{
+	for( int frameCollisionIndex = 0; frameCollisionIndex < m_frameCollisions.size(); ++frameCollisionIndex )
+	{
+		delete m_frameCollisions[ frameCollisionIndex ];
+		m_frameCollisions[ frameCollisionIndex ] = nullptr;
+	}
+	m_frameCollisions.clear();
+}
 
 //---------------------------------------------------------------------------------------------------------
 void Physics2D::EulerStep( float deltaSeconds, Rigidbody2D* rb )
