@@ -1,5 +1,6 @@
 #include "Engine/Math/Vec4.hpp"
 #include "Engine/Math/Vec3.hpp"
+#include "Engine/Math/Vec2.hpp"
 
 //---------------------------------------------------------------------------------------------------------
 Vec4::Vec4( float initialX, float initialY, float initialZ, float initialW )
@@ -28,6 +29,16 @@ Vec4::Vec4( const Vec3& toCopy, float initialW )
 	, z( toCopy.z )
 	, w( initialW )
 {
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec4::Vec4( const Vec2& toCopyFirst, const Vec2& toCopySecond )
+{
+	x = toCopyFirst.x;
+	y = toCopyFirst.y;
+	z = toCopySecond.x;
+	w = toCopySecond.y;
 }
 
 //---------------------------------------------------------------------------------------------------------

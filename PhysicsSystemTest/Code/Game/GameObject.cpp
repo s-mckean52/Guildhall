@@ -65,14 +65,14 @@ void GameObject::UpdateColors()
 		m_currentBorderColor = m_defaultBorderColor;
 	}
 
-	if( m_isOverlapping )
-	{
-		m_currentFillColor = Rgba8::RED;
-	}
-	else if( !m_isOverlapping )
-	{
-		m_currentFillColor = Rgba8::WHITE;
-	}
+// 	if( m_isOverlapping )
+// 	{
+// 		m_currentFillColor = Rgba8::RED;
+// 	}
+// 	else if( !m_isOverlapping )
+// 	{
+// 		m_currentFillColor = Rgba8::WHITE;
+// 	}
 }
 
 

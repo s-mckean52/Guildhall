@@ -13,6 +13,8 @@
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Core/Clock.hpp"
+#include "Engine/Core/DebugRender.hpp"
+#include "Engine/Renderer/Camera.hpp"
 
 
 EventSystem*	g_theEventSystem	= nullptr;
@@ -39,6 +41,7 @@ void App::StartUp()
 	g_theRenderer->StartUp( g_theWindow );
 	g_theInput->StartUp( g_theWindow );
 	g_theConsole->StartUp( g_theInput, g_theEventSystem );
+	DebugRenderSystemStartup( g_theRenderer );
 	g_theGame->StartUp();
 
 	g_theWindow->SetInputSystem( g_theInput );
@@ -46,15 +49,23 @@ void App::StartUp()
 
 	g_theEventSystem->SubscribeEventCallbackFunction( "quit", QuitRequested );
 	g_theEventSystem->SubscribeEventCallbackFunction( "help", HelpCommand );
+
+	m_devConsoleCamera = new Camera( g_theRenderer );
+	m_devConsoleCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void App::ShutDown()
 {
+	delete m_devConsoleCamera;
+	m_devConsoleCamera = nullptr;
+
 	g_theGame->ShutDown();
 	delete g_theGame;
 	g_theGame = nullptr;
+
+	DebugRenderSystemShutdown();
 
 	g_theEventSystem->ShutDown();
 	delete g_theEventSystem;
@@ -164,6 +175,8 @@ void App::BeginFrame()
 	g_theInput->BeginFrame();
 	g_theAudio->BeginFrame();
 	g_theGame->BeginFrame();
+
+	DebugRenderBeginFrame();
 }
 
 
@@ -194,6 +207,8 @@ void App::Update()
 void App::Render() const
 {
 	g_theGame->Render();
+	DebugRenderScreenTo( g_theRenderer->GetBackBuffer() );
+	g_theConsole->Render( *g_theRenderer, *m_devConsoleCamera, 0.1f, g_testFont );
 }
 
 
@@ -204,4 +219,5 @@ void App::EndFrame()
 	g_theRenderer->EndFrame();
 	g_theInput->EndFrame();
 	g_theAudio->EndFrame();
+	DebugRenderEndFrame();
 }

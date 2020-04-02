@@ -93,7 +93,7 @@ private:
 	float m_cameraHeight = CAMERA_SIZE_Y;
 	float m_cameraMinHeight = CAMERA_SIZE_Y * 0.5f;
 	float m_cameraMaxHeight = CAMERA_SIZE_Y * 1.5f;
-	float m_cameraMoveAmountPerFrame = 5.f;
+	float m_cameraMoveAmountPerFrame = 0.05f;
 
 	Vec2 m_draggedObjectOffset;
 	GameObject* m_draggedObject;

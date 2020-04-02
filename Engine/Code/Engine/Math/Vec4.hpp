@@ -1,5 +1,6 @@
 #pragma once
 
+struct Vec2;
 struct Vec3;
 
 struct Vec4
@@ -14,6 +15,7 @@ public:
 	~Vec4() {};
 	Vec4( const Vec4& toCopy );
 	Vec4( const Vec3& toCopy, float initialW );
+	Vec4( const Vec2& toCopyFirst, const Vec2& toCopySecond );
 	explicit Vec4( float initialX, float initialY, float initialZ, float initialW );
 
 	bool		operator==( const Vec4& toCompare ) const;

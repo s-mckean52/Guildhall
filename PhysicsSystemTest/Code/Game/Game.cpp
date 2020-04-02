@@ -24,6 +24,7 @@
 #include "Engine/Physics/PolygonCollider2D.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Core/Clock.hpp"
+#include "Engine/Core/DebugRender.hpp"
 #include <string>
 
 
@@ -44,6 +45,7 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
+	EnableDebugRendering();
 	m_gameClock = new Clock();
 	g_theRenderer->SetGameClock( m_gameClock );
 	m_physics2D = new Physics2D( m_gameClock );
@@ -59,13 +61,15 @@ void Game::StartUp()
 	LoadAssets();
 
 	m_worldCamera->SetPosition( m_focalPoint );
-	m_worldCamera->SetProjectionOrthographic( m_cameraHeight );
+	m_worldCamera->SetProjectionOrthographic( m_cameraHeight, -20.f, 20.f );
 	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT, Rgba8::BLACK );
 	
 	m_uiCamera->SetPosition( m_focalPoint );
 	m_uiCamera->SetProjectionOrthographic( m_cameraHeight );
 
 	g_theEventSystem->SubscribeEventCallbackFunction( "set_physics_update", SetPhysicsUpdate );
+	DebugAddWorldPoint(Vec3(0.f, 0.f, 0.f), 10.f, Rgba8::RED, 10.f, DEBUG_RENDER_ALWAYS);
+	//DebugAddWorldLine(Vec3(0.f,0.f, 0.f), Vec3(1.f, 1.f, 0.f), Rgba8::RED, 10.f, DEBUG_RENDER_ALWAYS);
 }
 
 
@@ -117,8 +121,9 @@ void Game::Render() const
 	//UI Camera
 	g_theRenderer->BeginCamera( *m_uiCamera );
 	RenderUI();
-	g_theConsole->Render( *g_theRenderer, *m_uiCamera, 10.f, g_testFont );
 	g_theRenderer->EndCamera( *m_uiCamera );
+
+	DebugRenderWorldToCamera( m_worldCamera );
 }
 
 
@@ -161,20 +166,20 @@ void Game::Update()
 	
 	m_physics2D->Update();
 
-	for( int goIndex = 0; goIndex < m_gameObjects.size(); ++goIndex )
-	{
-		GameObject* currentGO = m_gameObjects[ goIndex ];
-		currentGO->m_isOverlapping = false;
-		for( int indexToCheck = 0; indexToCheck < m_gameObjects.size(); ++indexToCheck )
-		{
-			if( currentGO == m_gameObjects[ indexToCheck ] ) continue;
-			if( currentGO->GetCollider()->Intersects( m_gameObjects[ indexToCheck ]->GetCollider() ) )
-			{
-				currentGO->m_isOverlapping = true;
-				m_gameObjects[ indexToCheck ]->m_isOverlapping = true;
-			}
-		}
-	}
+// 	for( int goIndex = 0; goIndex < m_gameObjects.size(); ++goIndex )
+// 	{
+// 		GameObject* currentGO = m_gameObjects[ goIndex ];
+// 		currentGO->m_isOverlapping = false;
+// 		for( int indexToCheck = 0; indexToCheck < m_gameObjects.size(); ++indexToCheck )
+// 		{
+// 			if( currentGO == m_gameObjects[ indexToCheck ] ) continue;
+// 			if( currentGO->GetCollider()->Intersects( m_gameObjects[ indexToCheck ]->GetCollider() ) )
+// 			{
+// 				currentGO->m_isOverlapping = true;
+// 				m_gameObjects[ indexToCheck ]->m_isOverlapping = true;
+// 			}
+// 		}
+// 	}
 
 	UpdateGameObjects( deltaSeconds );
 	UpdateCameras( deltaSeconds );
@@ -226,7 +231,7 @@ void Game::UpdateGameStatesFromInput( float deltaSeconds )
 	float scrollAmount = g_theInput->GetScrollAmount();
 	if( scrollAmount != 0.f )
 	{
-		m_cameraHeight += 100.f * -scrollAmount;
+		m_cameraHeight += 1.f * -scrollAmount;
 		Clamp( m_cameraHeight, m_cameraMinHeight, m_cameraMaxHeight );
 	}
 

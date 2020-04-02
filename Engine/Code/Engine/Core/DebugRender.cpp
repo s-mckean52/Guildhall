@@ -500,7 +500,11 @@ void DebugRenderBeginFrame()
 //---------------------------------------------------------------------------------------------------------
 void DebugRenderWorldToCamera( Camera* cam )
 {
-	if( !s_debugRenderSystem->IsRenderingEnabled() ) return;
+	if( !s_debugRenderSystem->IsRenderingEnabled() ) 
+	{
+		ClearDebugRendering();
+		return;
+	}
 
 	RenderContext* context = cam->GetRenderContext();
 	s_debugRenderSystem->SetRenderContext( context );
@@ -526,7 +530,6 @@ void DebugRenderWorldToCamera( Camera* cam )
 	s_debugRenderSystem->SetCamera( debugCamera );
 
 	context->BeginCamera( *debugCamera );
-	//context->SetCullMode( CULL_MODE_BACK );
 	for( int objectIndex = 0; objectIndex < s_debugRenderWorldObjects.size(); ++objectIndex )
 	{	
 		DebugRenderObject* object = s_debugRenderWorldObjects[ objectIndex ];
@@ -547,7 +550,11 @@ void DebugRenderWorldToCamera( Camera* cam )
 //---------------------------------------------------------------------------------------------------------
 void DebugRenderScreenTo( Texture* output )
 {
-	if( !s_debugRenderSystem->IsRenderingEnabled() ) return;
+	if( !s_debugRenderSystem->IsRenderingEnabled() )
+	{
+		ClearDebugRendering();
+		return;
+	}
 
 	RenderContext* context = output->GetOwner();
 	s_debugRenderSystem->SetRenderContext( context );
@@ -1055,7 +1062,7 @@ void DebugAddScreenArrow( Vec2 p0, Vec2 p1, Rgba8 start_color, Rgba8 end_color, 
 	AppendVertsForArrowBetweenPoints( screenObject->m_objectVerticies, Vec2::ZERO, p1 - p0, start_color, 10.f );
 	//screenObject->m_objectIndicies = { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
 
-	AppendDebugRenderObjectToVector(s_debugRenderScreenObjects, screenObject);
+	AppendDebugRenderObjectToVector( s_debugRenderScreenObjects, screenObject );
 }
 
 

@@ -55,6 +55,28 @@ float Atan2Degrees( float y, float x )
 
 
 //---------------------------------------------------------------------------------------------------------
+float Minf( float a, float b )
+{
+	if( a < b )
+	{
+		return a;
+	}
+	return b;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float Maxf( float a, float b )
+{
+	if( a > b )
+	{
+		return a;
+	}
+	return b;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 float GetDistance2D( const Vec2& positionA, const Vec2& positionB )
 {
 	float deltaX = positionA.x - positionB.x;
@@ -157,6 +179,16 @@ float RangeMapFloat( float fromBegin, float fromEnd, float toBegin, float toEnd,
 	float fromRange = fromEnd - fromBegin;
 	float fractionOfRange = fromDisplacement / fromRange;
 	return Lerp( toBegin, toEnd, fractionOfRange );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec2 RangeMapFloatToVec2( float fromBegin, float fromEnd, const Vec2& toBegin, const Vec2& toEnd, float fromValue )
+{
+	float fromDisplacement = fromValue - fromBegin;
+	float fromRange = fromEnd - fromBegin;
+	float fractionOfRange = fromDisplacement / fromRange;
+	return toBegin + fractionOfRange * ( toEnd - toBegin );
 }
 
 
@@ -716,7 +748,7 @@ bool DoPolygonAndDiscOverlap( const Polygon2D& polygon, const Vec2& discCenter, 
 
 
 //---------------------------------------------------------------------------------------------------------
-bool DoPolygonsOverlap( Polygon2D polygonA, Polygon2D polygonB ) 
+bool DoPolygonsOverlap( Polygon2D polygonA, Polygon2D polygonB, std::vector<Vec2>* out_simplexResult ) 
 {
 	Vec2 simplexVerts[ 3 ];
 	Vec2 direction = Vec2::LEFT;
@@ -751,11 +783,23 @@ bool DoPolygonsOverlap( Polygon2D polygonA, Polygon2D polygonB )
 			lastDirectionChecked = edge2Perp;
 		}
 		else {
+			if( out_simplexResult != nullptr )
+			{
+				out_simplexResult->push_back( simplexVerts[ 0 ] );
+				out_simplexResult->push_back( simplexVerts[ 1 ] );
+				out_simplexResult->push_back( simplexVerts[ 2 ] );
+			}
 			return true;
 		}
 
 		if( DotProduct2D( lastDirectionChecked, simplexVerts[ 2 ] ) < 0 )
 		{
+			if( out_simplexResult != nullptr )
+			{
+				out_simplexResult->push_back( simplexVerts[ 0 ] );
+				out_simplexResult->push_back( simplexVerts[ 1 ] );
+				out_simplexResult->push_back( simplexVerts[ 2 ] );
+			}
 			return false;
 		}
 	}

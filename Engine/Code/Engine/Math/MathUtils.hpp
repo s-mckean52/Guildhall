@@ -22,6 +22,9 @@ float		SinDegrees				( float degrees );
 float		TanDegrees				( float degrees );
 float		Atan2Degrees			( float y, float x );
 
+float		Minf					( float a, float b );
+float		Maxf					( float a, float b );
+
 float		GetDistance2D			( const Vec2& positionA, const Vec2& positionB );
 float		GetDistanceSquared2D	( const Vec2& positionA, const Vec2& positionB );
 float		GetAngleToPointDegrees	( const Vec2& startPosition, const Vec2& positionToRotateTo );
@@ -34,6 +37,7 @@ float		GetDistanceXYSquared3D	( const Vec3& positionA, const Vec3& positionB );
 float		Lerp					( float rangeBegin, float rangeEnd, float fractionOfRangeEnd );
 Rgba8		Rgba8Lerp				( const Rgba8& beginColor, const Rgba8& endColor, float fractionOfRange );
 float		RangeMapFloat			( float fromBegin, float fromEnd, float toBegin, float toEnd, float fromValue );
+Vec2		RangeMapFloatToVec2		( float fromBegin, float fromEnd, const Vec2& toBegin, const Vec2& toEnd, float fromValue );
 int			GetClamp				( int valueToClamp, int lowerLimit, int upperLimit );
 float		GetClamp				( float valueToClamp, float lowerLimit, float upperLimit );
 double		GetClamp				( double valueToClamp, double lowerLimit, double upperLimit );
@@ -57,7 +61,7 @@ void		TransformVertexArray	( std::vector<Vertex_PCU>& vertexArray, float scale, 
 void		TranslateVertexArray	( int numVerticies, Vertex_PCU* vertexArray, const Vec3& translation );
 void		TranslateVertexArray	( std::vector<Vertex_PCU>& vertexArray, const Vec3& translation );
 
-int			PositiveMod( int numberToMod, int numberToModBy );
+int			PositiveMod						( int numberToMod, int numberToModBy );
 int			RoundDownToInt					( float valueToRound );
 float		GetShortestAngularDisplacement	( float startAngle, float endAngle );
 float		GetTurnedToward					( float startAngle, float endAngle, float amountToTurnDegrees );
@@ -87,7 +91,7 @@ bool		DoOBBAndLineSegmentOverlap2D( const OBB2& obb, const Vec2& lineStart, cons
 bool		DoOBBAndCapsuleOverlap2D( const OBB2& obb, const Vec2& capsuleMidStart, const Vec2& capsuleMidEnd, float capsuleRadius );
 bool		DoOBBAndDiscOverlap2D( const OBB2& obb, const Vec2& discCenter, float discRadius );
 bool		DoPolygonAndDiscOverlap( const Polygon2D& polygon, const Vec2& discCenter, float discRadius );
-bool		DoPolygonsOverlap( Polygon2D polygonA, Polygon2D polygonB );
+bool		DoPolygonsOverlap( Polygon2D polygonA, Polygon2D polygonB, std::vector<Vec2>* out_craetedSimplex = nullptr );
 
 void		PushDiscOutOfAABB2( Vec2& discCenterPosition, float discRadius, const AABB2& box );
 void		PushDiscsOutOfEachOther2D( Vec2& discACenterPosition, float discARadius, Vec2& discBCenterPosition, float discBRadius );
