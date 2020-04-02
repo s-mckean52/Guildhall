@@ -91,7 +91,7 @@ private:
 	Camera* m_worldCamera = nullptr;
 	Camera* m_uiCamera = nullptr;
 
-	AABB2 m_worldBounds = AABB2( -10.f, -10.f, 10.f, 10.f );
+	AABB2 m_worldBounds = AABB2( -22.5f, -12.5f, 22.5f, 12.5f );
 
 	Vec2 m_mousePos = Vec2();
 	Vec3 m_focalPoint = Vec3();

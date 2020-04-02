@@ -8,6 +8,8 @@
 #include "Engine/Physics/Collision2D.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Core/Clock.hpp"
+#include "Engine/Core/DebugRender.hpp"
+#include "Engine/Math/Vec3.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -225,10 +227,10 @@ void Physics2D::ResolveCollision( Collision2D const& collision )
 		pushOnThem = 1.f;
 	}
 
+	ApplyImpulseOnCollision( collision );
+
 	collision.thisCollider->Move( pushOnMe * collision.GetNormal() * collision.GetPenetration() );
 	collision.otherCollider->Move( -pushOnThem * collision.GetNormal() * collision.GetPenetration() );
-
-	ApplyImpulseOnCollision( collision );
 }
 
 
@@ -300,10 +302,15 @@ void Physics2D::ApplyImpulseOnCollision( Collision2D const& collision )
 	Vec2 theirDisplacementToContactTangent = theirDisplacementToContact.GetRotated90Degrees();
 	
 	float myTangentDotNormal = DotProduct2D( myDisplacementToContactTangent, collisionNormal );
+	float myTangentDotTangent = DotProduct2D( myDisplacementToContactTangent, collisionTangent );
+
 	float theirTangentDotNormal = DotProduct2D( theirDisplacementToContactTangent, collisionNormal );
+	float theirTangentDotTangent = DotProduct2D( theirDisplacementToContactTangent, collisionTangent );
 	
 	float myRotationalForce = ( ( myTangentDotNormal * myTangentDotNormal ) / myMoment );
+	float myTangentRotationalForce = ( ( myTangentDotTangent * myTangentDotTangent) / myMoment);
 	float theirRotationalForce = ( ( theirTangentDotNormal * theirTangentDotNormal ) / theirMoment );
+	float theirTangentRotationalForce = ( ( theirTangentDotTangent * theirTangentDotTangent ) / theirMoment );
 
 	float coefficientOfRestitution	= me->GetBounceWith( them );
 	float frictionalCoefficient		= me->GetFrictionWith( them );
@@ -313,7 +320,7 @@ void Physics2D::ApplyImpulseOnCollision( Collision2D const& collision )
 	if( them->m_rigidbody->m_simulationMode != SIMULATION_MODE_DYNAMIC  )
 	{
 		normalImpulseConstant /= ( 1 / myMass ) + myRotationalForce;
-		tangentImpulseConstant /= ( 1 / myMass ) + myRotationalForce;
+		tangentImpulseConstant /= ( 1 / myMass ) + myTangentRotationalForce;
 
 		float normalImpulse = normalImpulseConstant * velocityDiffDotCollisionNormal;
 		me->m_rigidbody->ApplyImpulseAt( myImpulseApplicationPoint, normalImpulse * collisionNormal );
@@ -323,11 +330,12 @@ void Physics2D::ApplyImpulseOnCollision( Collision2D const& collision )
 			float tangentImpulse = tangentImpulseConstant * velocityDiffDotCollisionTangent;
 			me->m_rigidbody->ApplyFrictionAt( myImpulseApplicationPoint, frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, tangentImpulse );
 		}
+		//DebugAddWorldArrow( Vec3( collisionEdgeCenter, 0.f ), Vec3( collisionEdgeCenter, 0.f ) + Vec3( collisionNormal, 0.f ) * normalImpulse, Rgba8::GREEN, 0.1f, DEBUG_RENDER_ALWAYS );
 	}
 	else if( me->m_rigidbody->m_simulationMode != SIMULATION_MODE_DYNAMIC )
 	{
 		normalImpulseConstant /= ( 1 / theirMass ) + theirRotationalForce;
-		tangentImpulseConstant /= ( 1 / theirMass ) + theirRotationalForce;
+		tangentImpulseConstant /= ( 1 / theirMass ) + theirTangentRotationalForce;
 
 		float normalImpulse = normalImpulseConstant * velocityDiffDotCollisionNormal;
 		them->m_rigidbody->ApplyImpulseAt( theirImpulseApplicationPoint, collisionNormal * -normalImpulse );
@@ -335,14 +343,15 @@ void Physics2D::ApplyImpulseOnCollision( Collision2D const& collision )
 		if( them->m_rigidbody->m_simulationMode == SIMULATION_MODE_DYNAMIC )
 		{
 			float tangentImpulse = tangentImpulseConstant * velocityDiffDotCollisionTangent;
-			them->m_rigidbody->ApplyFrictionAt( theirImpulseApplicationPoint, frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, -tangentImpulse );
+			them->m_rigidbody->ApplyFrictionAt( theirImpulseApplicationPoint, frictionalCoefficient, collisionNormal, normalImpulse, collisionTangent, -tangentImpulse );	
 		}
+		//DebugAddWorldArrow( Vec3( collisionEdgeCenter, 0.f ), Vec3( collisionEdgeCenter, 0.f ) + Vec3( collisionNormal, 0.f ) * -normalImpulse, Rgba8::GREEN, 0.1f, DEBUG_RENDER_ALWAYS );
 	}
 	else
 	{
-		float massRatio = ( 1 / myMass ) + ( 1 / theirMass ) + myRotationalForce + theirRotationalForce;
-		normalImpulseConstant /= massRatio;
-		tangentImpulseConstant /= massRatio;
+		float massRatio = ( 1 / myMass ) + ( 1 / theirMass );
+		normalImpulseConstant /= ( massRatio + myRotationalForce + theirRotationalForce );
+		tangentImpulseConstant /= ( massRatio + myTangentRotationalForce + theirTangentRotationalForce );
 
 		float normalImpulse = normalImpulseConstant * velocityDiffDotCollisionNormal;
 		float tangentImpulse = tangentImpulseConstant * velocityDiffDotCollisionTangent;

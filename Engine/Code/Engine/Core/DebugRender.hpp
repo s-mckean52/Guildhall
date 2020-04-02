@@ -76,6 +76,8 @@ void DebugAddWorldArrow( Vec3 start, Vec3 end, Rgba8 color, float duration, eDeb
 
 // Quads
 void DebugAddWorldQuad( Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3, AABB2 uvs, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode = DEBUG_RENDER_USE_DEPTH );
+void DebugAddWorldPoly( Vec3 const* counterClockwisePolyPoints, Rgba8 const& start_color, Rgba8 const& end_color, float duration, eDebugRenderMode mode = DEBUG_RENDER_USE_DEPTH );
+void DebugAddWorldPoly( Vec2 const* counterClockwisePolyPoints, Rgba8 const& start_color, Rgba8 const& end_color, float duration, eDebugRenderMode mode = DEBUG_RENDER_USE_DEPTH );
 
 // bounds
 void DebugAddWorldWireBounds( OBB3 bounds, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode = DEBUG_RENDER_USE_DEPTH );

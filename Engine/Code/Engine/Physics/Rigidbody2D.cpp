@@ -5,6 +5,8 @@
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Renderer/MeshUtils.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/Vec3.hpp"
+#include "Engine/Core/DebugRender.hpp"
 
 //---------------------------------------------------------------------------------------------------------
 void Rigidbody2D::Destroy()
@@ -220,6 +222,7 @@ void Rigidbody2D::ApplyFrictionAt( Vec2 const& worldContactPosition, float frict
 	{
 		tangentImpulse = Signf( tangentImpulse ) * normalImpulse * frictionCoefficient;
 	}
+	//DebugAddWorldArrow(Vec3(worldContactPosition, 0.f), Vec3(worldContactPosition, 0.f) + Vec3(collisionTangent, 0.f) * tangentImpulse * 8.f, Rgba8::RED, 0.5f, DEBUG_RENDER_ALWAYS );
 	ApplyImpulseAt( worldContactPosition, collisionTangent * tangentImpulse );
 }
 

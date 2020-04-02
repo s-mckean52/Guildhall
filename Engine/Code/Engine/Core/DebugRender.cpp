@@ -730,6 +730,41 @@ void DebugAddWorldQuad( Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3, AABB2 uvs, Rgba8 sta
 
 
 //---------------------------------------------------------------------------------------------------------
+void DebugAddWorldPoly( Vec3 const* counterClockwisePolyPoints, Rgba8 const& start_color, Rgba8 const& end_color, float duration, eDebugRenderMode mode )
+{
+	UNUSED(counterClockwisePolyPoints);
+	UNUSED(start_color);
+	UNUSED(end_color);
+	UNUSED(duration);
+	UNUSED(mode);
+// 	DebugRenderObject* object = new DebugRenderObject();
+// 
+// 	object->m_transformMatrix = Mat44::IDENTITY;
+// 	object->m_durationTimer.SetSeconds( duration );
+// 	object->m_startColor = start_color;
+// 	object->m_endColor = end_color;
+// 	object->m_renderMode = mode;
+// 
+// 	for (int i = 0; i < simplex.size(); ++i)
+// 	{
+// 		Vec3 edgeStart = Vec3( simplex[i], 0.f );
+// 		Vec3 edgeEnd;
+// 		if (i >= simplex.size() - 1 )
+// 		{
+// 			edgeEnd = Vec3(simplex[0], 0.f);
+// 		}
+// 		else
+// 		{
+// 			edgeEnd = Vec3(simplex[i + 1], 0.f);
+// 		}
+// 		DebugAddWorldLine( edgeStart, edgeEnd, Rgba8::ORANGE, debugduration, DEBUG_RENDER_ALWAYS );
+// 	}
+// 
+// 	AppendDebugRenderObjectToVector( s_debugRenderWorldObjects, object );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void DebugAddWorldWireBounds( OBB3 bounds, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode )
 {
 	DebugRenderObject* object = new DebugRenderObject();

@@ -211,49 +211,35 @@ static bool PolygonVPolygonManifoldGeneration( Collider2D const* col0, Collider2
 		simplex[ 1 ] = simplex[ 2 ];
 		simplex[ 2 ] = tempPoint;
 	}
+	//Polygon2D simplexPoly = Polygon2D::MakeFromLineLoop( &simplex[0], static_cast<unsigned int>( simplex.size() ) );
 
 	for( ;; )
 	{
-		/*
-		Polygon2D simplexPoly = Polygon2D( simplex );
-		for(;;)
+		/*if( !ExpandMinkowskiDifference( polygonA, polygonB, simplexPoly )
 		{
-			if( !ExpandSimplex )
-			{
-				normalPoint = simplexPoly = GetNearestPointOnEdge( Vec2 )
-				penetration = normalPoint.Length()
-				collisionNormal = -normalPoint.GetNormalized;
-				if( normalPoint == Vec2::ZERO )
-					collisionNormal = edgeNormal;
-			}
+			normalPoint = simplexPoly.GetClosestPointOnEdgeNearestToPoint();
+			penetration = normalPoint.GetLength();
+			collisionNormal = -normalPoint.GetNormalized;
+			if( normalPoint == Vec2::ZERO )
+				collisionNormal = edgeNormal;
 		}
 
-		polygonB.GetMinAndMaxOnPlane();
-		if( min == max )
+		manifold->collisionNormal = collisionNormal;
+		manifold->penetrationDistance = penetration;
+
+		Vec2 pointOnCullingPlane = polygonB.GetSupportPointInDirection( collisionNormal );
+		Plane2D cullingPlane = Plane2D( collisionNormal, pointOnCullingPlane );
+		Vec2 planeTangent = cullingPlane.GetTangent();
+		Segment2 refSegment = polygonB.GetMinAndMaxPointsOnPlane();
+		if( refSegment.IsPoint() )
 		{
-			Set Manifold;
-			return;
+			manifold->collisionSegment = refSegment;
+			return true;
 		}
 
-		std::vector contacts = GetContactsOnEdge( polyA, min, max );
-		Segment2D collisionSegment = GetMinAndMaxAlongOnDirection( contacts, plane );
-		SetManifold
-		*/
-
-// 		for (int i = 0; i < simplex.size(); ++i)
-// 		{
-// 			Vec3 edgeStart = Vec3( simplex[i], 0.f );
-// 			Vec3 edgeEnd;
-// 			if (i >= simplex.size() - 1 )
-// 			{
-// 				edgeEnd = Vec3(simplex[0], 0.f);
-// 			}
-// 			else
-// 			{
-// 				edgeEnd = Vec3(simplex[i + 1], 0.f);
-// 			}
-// 			DebugAddWorldLine( edgeStart, edgeEnd, Rgba8::ORANGE, debugduration, DEBUG_RENDER_ALWAYS );
-// 		}
+		std::vector<Vec2> contacts = polygonA.GetContactsOnEdgeBehindPlane( refSegment, cullingPlane );
+		Segment2D collisionSegment = GetMinAndMaxPointsInDirection( contacts, cullingPlane );
+		manifold->collisionSegment = collisionSegment;*/
 
 		int edgeStartIndex = 0;
 		Vec2 edgeStartPosition;
@@ -330,15 +316,11 @@ static bool PolygonVPolygonManifoldGeneration( Collider2D const* col0, Collider2
 	if( minCullingPoint == maxCullingPoint )
 	{
 		manifold->SetContactEdge( minCullingPoint, maxCullingPoint );
-		//DebugAddWorldLine( Vec3( minCullingPoint, 0.f ), Vec3( maxCullingPoint.x + 0.1f, maxCullingPoint.y, 0.f ), Rgba8::ORANGE, debugduration, DEBUG_RENDER_ALWAYS );
 		return true;
 	}
 
 	Vec2 cullingSegmentNormal = ( maxCullingPoint - minCullingPoint ).GetNormalized();
 	cullingSegmentNormal.RotateMinus90Degrees();
-	//DebugAddWorldLine( Vec3( minCullingPoint, 0.f ), Vec3( maxCullingPoint, 0.f ), Rgba8::RED, debugduration, DEBUG_RENDER_ALWAYS );
-// 	DebugAddWorldArrow( Vec3( minCullingPoint, 0.f ), Vec3( minCullingPoint.x + cullingSegmentNormal.x, minCullingPoint.y + cullingSegmentNormal.y, 0.f ), Rgba8::GREEN, debugduration, DEBUG_RENDER_ALWAYS );
-// 	DebugAddWorldArrow( Vec3( maxCullingPoint, 0.f ), Vec3( maxCullingPoint.x + collisionNormal.x, maxCullingPoint.y + collisionNormal.y, 0.f ), Rgba8::BLUE, debugduration, DEBUG_RENDER_ALWAYS );
 
 	std::vector<Vec2> contacts;
 	for( int polygonAEdgeIndex = 0; polygonAEdgeIndex < polygonA.GetEdgeCount(); ++polygonAEdgeIndex )
@@ -349,14 +331,11 @@ static bool PolygonVPolygonManifoldGeneration( Collider2D const* col0, Collider2
 
 		Vec2 segmentNormal = ( segmentEnd - segmentStart ).GetNormalized();
 		segmentNormal.RotateMinus90Degrees();
-/*		DebugAddWorldArrow( Vec3( segmentStart, 0.f ), Vec3( segmentStart.x + segmentNormal.x, segmentStart.y + segmentNormal.y, 0.f ), Rgba8::YELLOW, debugduration, DEBUG_RENDER_ALWAYS );*/
 
 		if( DotProduct2D( segmentNormal, cullingSegmentNormal ) > 0.f )
 		{
 			Vec2 clippedSegmentStart;
 			Vec2 clippedSegmentEnd;
-
-			//DebugAddWorldLine( Vec3( segmentStart, 0.f ), Vec3( segmentEnd, 0.f ), Rgba8::MAGENTA, debugduration, DEBUG_RENDER_ALWAYS );
 			if( ClipSegmentToSegement( segmentStart, segmentEnd, minCullingPoint, maxCullingPoint, clippedSegmentStart, clippedSegmentEnd ) ) 
 			{
 				if( !cullingPlane.IsPointInFrontOfPlane( clippedSegmentStart ) )
@@ -371,13 +350,6 @@ static bool PolygonVPolygonManifoldGeneration( Collider2D const* col0, Collider2
 
 		}
 	}
-
-// 	for (int i = 0; i < contacts.size(); ++i)
-// 	{
-// 		Vec3 uppoint1 = Vec3::UP * 0.1f;
-// 		DebugAddWorldLine(Vec3( contacts[ i ], 0.f ), Vec3( contacts[ i ], 0.f ) + uppoint1, Rgba8::ORANGE, debugduration, DEBUG_RENDER_ALWAYS);
-// 	}
-
 
 	Vec2 minContact;
 	Vec2 maxContact;
@@ -401,10 +373,6 @@ static bool PolygonVPolygonManifoldGeneration( Collider2D const* col0, Collider2
 			maxContactDistance = distanceAlongCollisionTangent;
 		}
 	}
-
-// 	Vec3 uppoint1 = Vec3::UP * 0.1f;
-// 	DebugAddWorldLine(Vec3( minContact, 0.f ), Vec3( minContact, 0.f ) + uppoint1, Rgba8::ORANGE, debugduration, DEBUG_RENDER_ALWAYS);
-// 	DebugAddWorldLine(Vec3( maxContact, 0.f ), Vec3( maxContact, 0.f ) + uppoint1, Rgba8::ORANGE, debugduration, DEBUG_RENDER_ALWAYS);
 
 	manifold->SetContactEdge( minContact, maxContact );
 	return true;
