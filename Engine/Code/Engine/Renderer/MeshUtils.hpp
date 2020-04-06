@@ -1,5 +1,7 @@
 #pragma once
+#include "Engine/Core/Vertex_Master.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
+#include "Engine/Core/Vertex_PCUTBN.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include <vector>
@@ -15,7 +17,6 @@ class	GPUMesh;
 typedef Vec3( *graph_cb )( float, float );
 
 void AppendVertsForAABB2D( std::vector<Vertex_PCU>& vertexArray, const AABB2& box, const Rgba8& color, const Vec2& uvAtMins = Vec2::ZERO, const Vec2& uvAtMaxes = Vec2::UNIT );
-void AppendVertsForQuad3D( std::vector<Vertex_PCU>& vertexArray, const Vec3& p0, const Vec3& p1, const Vec3& p2, const Vec3& p3, const Rgba8& color, const Vec2& uvAtMins = Vec2::ZERO, const Vec2& uvAtMaxes = Vec2::UNIT );
 void AppendVertsForOBB2D( std::vector<Vertex_PCU>& vertexArray, const OBB2& box, const Rgba8& tint, const Vec2& uvAtMins = Vec2::ZERO, const Vec2& uvAtMaxes = Vec2::UNIT );
 void AppendVertsForCapsule2D( std::vector<Vertex_PCU>& vertexArray, const Vec2& capsuleMidStart, const Vec2& capsuleMidEnd, float radius, const Rgba8& color );
 void AppendVertsForLineBetweenPoints( std::vector<Vertex_PCU>& lineVerts, const Vec2& startPosition, const Vec2& endPosition, const Rgba8& color, float thickness );
@@ -29,26 +30,53 @@ void AppendVertsForPolygon2DFilled( std::vector<Vertex_PCU>& vertexArray, Polygo
 
 
 //---------------------------------------------------------------------------------------------------------
+void AppendMasterVertsToPCUArray( std::vector<Vertex_Master>& masterVertArray, std::vector<Vertex_PCU>& pcuArray );
+void AppendMasterVertsToPCUTBNArray( std::vector<Vertex_Master>& masterVertArray, std::vector<Vertex_PCUTBN>& pcutbnArray );
+
+//---------------------------------------------------------------------------------------------------------
+// Quad3D
+void AppendVertsForQuad3D( std::vector<Vertex_Master>& vertexArray, const Vec3& p0, const Vec3& p1, const Vec3& p2, const Vec3& p3, const Rgba8& color, const Vec2& uvAtMins = Vec2::ZERO, const Vec2& uvAtMaxes = Vec2::UNIT );
+void AppendVertsForQuad3D( std::vector<Vertex_PCU>& vertexArray, const Vec3& p0, const Vec3& p1, const Vec3& p2, const Vec3& p3, const Rgba8& color, const Vec2& uvAtMins = Vec2::ZERO, const Vec2& uvAtMaxes = Vec2::UNIT );
+void AppendVertsForQuad3D( std::vector<Vertex_PCUTBN>& vertexArray, const Vec3& p0, const Vec3& p1, const Vec3& p2, const Vec3& p3, const Rgba8& color, const Vec2& uvAtMins = Vec2::ZERO, const Vec2& uvAtMaxes = Vec2::UNIT );
+
+//---------------------------------------------------------------------------------------------------------
+// Cube
 void AddVerticiesAndIndiciesForCubeMesh( GPUMesh* cubeMesh, float sideLength );
+void AddBoxToIndexedVertexArray( std::vector<Vertex_Master>& verts, std::vector<unsigned int>& indices, AABB3 const& box, Rgba8 const& color );
 void AddBoxToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, AABB3 const& box, Rgba8 const& color );
+void AddBoxToIndexedVertexArray( std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indices, AABB3 const& box, Rgba8 const& color );
+
+//---------------------------------------------------------------------------------------------------------
+// Sphere
+void AddUVSphereToIndexedVertexArray( std::vector<Vertex_Master>& verts, std::vector<unsigned int>& indices, Vec3 const& center, float radius, unsigned int horizontalCuts, unsigned int verticalCuts, Rgba8 const& color );
 void AddUVSphereToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, Vec3 const& center, float radius, unsigned int horizontalCuts, unsigned int verticalCuts, Rgba8 const& color );
+void AddUVSphereToIndexedVertexArray( std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indices, Vec3 const& center, float radius, unsigned int horizontalCuts, unsigned int verticalCuts, Rgba8 const& color );
+
+//---------------------------------------------------------------------------------------------------------
+// Plane
 void AddPlaneToIndexedVertexArray(	std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices,
 									Vec3 const& origin, Rgba8 const& color,
 									Vec3 const& right, float xMin, float xMax,
 									Vec3 const& up, float yMin, float yMax,
 									unsigned int xSteps = 1, unsigned int ySteps = 0 );
 
+//---------------------------------------------------------------------------------------------------------
+// Surface
 void AddSurfaceToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices,
 									 Vec3 const& origin, Rgba8 const& color,
 									 float xMin, float xMax, unsigned int xSteps,
 									 float yMin, float yMax, unsigned int ySteps,
 									 graph_cb graphFunction );
 
+//---------------------------------------------------------------------------------------------------------
+// Cylinder
 void AddCylinderToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indicies,
 									  Vec3 const& startPosition, float startRadius,
 									  Vec3 const& endPosition, float endRadius,
 									  Rgba8 const& color, unsigned int cuts );
 
+//---------------------------------------------------------------------------------------------------------
+// Cone
 void AddConeToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indicies,
 								  Vec3 const& startPosition, float startRadius,
 								  Vec3 const& endPosition,

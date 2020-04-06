@@ -238,6 +238,12 @@
     <ClCompile Include="Math\Plane2D.cpp">
       <Filter>Math</Filter>
     </ClCompile>
+    <ClCompile Include="Core\Vertex_Master.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Vertex_PCUTBN.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -467,6 +473,12 @@
     </ClInclude>
     <ClInclude Include="Math\Plane2D.hpp">
       <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Vertex_Master.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Vertex_PCUTBN.hpp">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -26,6 +26,7 @@ struct ID3D11BlendState;
 struct IDXGIDebug;
 struct ID3D11DepthStencilState;
 struct ID3D11RasterizerState;
+struct ID3D11InputLayout;
 
 enum class BlendMode
 {
@@ -109,6 +110,7 @@ public:
 	void DrawVertexArray( int numVerticies, const Vertex_PCU* verticies );
 	void DrawVertexArray( const std::vector<Vertex_PCU>& vertexArray );
 	void DrawMesh( GPUMesh* mesh );
+	void UpdateCurrentLayout( buffer_attribute_t const* newLayout );
 
 	void		SetModelMatrix( Mat44 const& modelMatrix );
 	void		SetCullMode( CullMode cullMode );
@@ -168,6 +170,7 @@ public:
 	Texture*					m_textueDefaultColor		= nullptr;
 	Sampler*					m_samplerDefault			= nullptr;
 	VertexBuffer*				m_immediateVBO				= nullptr;
+	ID3D11InputLayout*			m_currentLayout				= nullptr;			
 	IndexBuffer*				m_immediateIBO				= nullptr;
 	RenderBuffer*				m_frameUBO					= nullptr;
 	RenderBuffer*				m_modelUBO					= nullptr;

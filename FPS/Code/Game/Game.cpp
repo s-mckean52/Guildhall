@@ -69,22 +69,19 @@ void Game::StartUp()
 
 	std::vector< Vertex_PCU > uvSphereVerticies;
 	std::vector< unsigned int > uvSphereIndicies;
-	m_uvSphere = new GPUMesh( g_theRenderer );
 	AddUVSphereToIndexedVertexArray( uvSphereVerticies, uvSphereIndicies, Vec3(), 2.f, 32, 64, Rgba8::WHITE );
-	m_uvSphere->UpdateVerticies( static_cast<unsigned int>( uvSphereVerticies.size() ), &uvSphereVerticies[ 0 ] );
-	m_uvSphere->UpdateIndicies( static_cast<unsigned int>( uvSphereIndicies.size() ), &uvSphereIndicies[ 0 ] );
+	m_uvSphere = new GPUMesh( g_theRenderer, uvSphereVerticies, uvSphereIndicies );
 
 	std::vector<Vertex_PCU> planeVerts;
 	std::vector<unsigned int> planeIndicies;
-	m_plane = new GPUMesh( g_theRenderer );
 // 	AddPlaneToIndexedVertexArray(	planeVerts, planeIndicies, Vec3(), Rgba8::GREEN,
 // 									Vec3::RIGHT, -1.f, 1.f,
 // 									Vec3::UP, -1.f, 1.f, 3 );
 	AddSurfaceToIndexedVertexArray( planeVerts, planeIndicies, Vec3(), Rgba8::GREEN,
 									-1.f, 1.f, 10,
 									-1.f, 1.f, 10, ParabolaEquation );
-	m_plane->UpdateVerticies( static_cast<unsigned int>( planeVerts.size() ), &planeVerts[ 0 ] );
-	m_plane->UpdateIndicies( static_cast<unsigned int>( planeIndicies.size() ), &planeIndicies[ 0 ] );
+	m_plane = new GPUMesh( g_theRenderer, planeVerts, planeIndicies );
+
 
 	m_cubeTransform = new Transform();
 	m_sphereTransform = new Transform();

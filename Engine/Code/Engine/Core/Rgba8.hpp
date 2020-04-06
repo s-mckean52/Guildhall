@@ -16,8 +16,10 @@ public:
 	Rgba8( const Rgba8& copyFrom);
 	explicit Rgba8( unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255 );
 	explicit Rgba8( Vec4 const& fractions );
-
+	
+	Vec4 GetValuesAsFractions();
 	void SetFromText( const char* text );
+	static Rgba8 MakeFromFloats( float red, float green, float blue, float alpha = 1.f );
 
 // 	const Rgba8 operator-( const Rgba8& colorToSubtract ) const;
 // 	const Rgba8 operator+( const Rgba8& colorToAdd ) const;

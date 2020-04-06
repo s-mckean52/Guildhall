@@ -1,6 +1,7 @@
 #pragma once
 
 class RenderContext;
+struct buffer_attribute_t;
 struct ID3D11Buffer;
 
 #define BIT_FLAG( b )		( 1 << ( b ) )
@@ -56,5 +57,9 @@ public:
 class VertexBuffer : public RenderBuffer
 {
 public:
-	VertexBuffer( RenderContext* context, RenderMemoryHint memHint );
+	VertexBuffer( RenderContext* context, RenderMemoryHint memHint, buffer_attribute_t const* bufferAttribute );
+	~VertexBuffer();
+
+public:
+	buffer_attribute_t const* m_boundBufferAttribute;
 };

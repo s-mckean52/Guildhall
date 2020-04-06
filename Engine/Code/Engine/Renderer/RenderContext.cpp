@@ -14,24 +14,27 @@
 //---------------------------------------------------------------------------------------------------------
 
 #include "Engine/Renderer/RenderContext.hpp"
-#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/Texture.hpp"
-#include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Math/IntVec2.hpp"
-#include "Engine/Core/StringUtils.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
-#include "Engine/Platform/Window.hpp"
 #include "Engine/Renderer/SwapChain.hpp"
 #include "Engine/Renderer/TextureView.hpp"
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/RenderBuffer.hpp"
-#include "Engine/Core/Time.hpp"
 #include "Engine/Renderer/Sampler.hpp"
 #include "Engine/Renderer/BuiltInShader.hpp"
-#include "Engine/Math/Transform.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
 #include "Engine/Renderer/GPUMesh.hpp"
+#include "Engine/Core/Vertex_Master.hpp"
+#include "Engine/Core/Vertex_PCU.hpp"
+#include "Engine/Core/Vertex_PCUTBN.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/Time.hpp"
 #include "Engine/Core/Clock.hpp"
+#include "Engine/Math/IntVec2.hpp"
+#include "Engine/Math/Transform.hpp"
+#include "Engine/Platform/Window.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -85,7 +88,7 @@ void RenderContext::StartUp( Window* theWindow )
 	m_errorShader = CreateShaderFromSourceCode( BuiltInShader::BUILT_IN_ERROR );
 	m_defaultShader = CreateShaderFromSourceCode( BuiltInShader::BUILT_IN_DEFAULT );
 
-	m_immediateVBO = new VertexBuffer( this, MEMORY_HINT_DYNAMIC );
+	m_immediateVBO = new VertexBuffer( this, MEMORY_HINT_DYNAMIC, Vertex_Master::LAYOUT );
 	m_immediateIBO = new IndexBuffer( this, MEMORY_HINT_DYNAMIC );
 
 	m_frameUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
@@ -356,9 +359,6 @@ Texture* RenderContext::GetBackBuffer() const
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::Draw( int numVertices, int vertexOffset )
 {
-	ID3D11InputLayout* inputLayout = m_currentShader->GetOrCreateInputLayout( Vertex_PCU::LAYOUT );
-	m_context->IASetInputLayout( inputLayout );
-
 	m_context->Draw( numVertices, vertexOffset );
 }
 
@@ -366,9 +366,6 @@ void RenderContext::Draw( int numVertices, int vertexOffset )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::DrawIndexed( int numIndicies, int indexOffset, int vertexOffset )
 {
-	ID3D11InputLayout* inputLayout = m_currentShader->GetOrCreateInputLayout( Vertex_PCU::LAYOUT );
-	m_context->IASetInputLayout( inputLayout );
-
 	m_context->DrawIndexed( numIndicies, indexOffset, vertexOffset );
 }
 
@@ -382,11 +379,12 @@ void RenderContext::DrawIndexedVertexArray( std::vector<Vertex_PCU>& verticies, 
 	unsigned int vertexStride = sizeof( Vertex_PCU );
 	unsigned int byteSize = vertexCount * vertexStride;
 	m_immediateVBO->Update( &verticies[ 0 ], byteSize, vertexStride );
+	m_immediateVBO->m_boundBufferAttribute = Vertex_PCU::LAYOUT;
 
 	unsigned int indexCount = static_cast<unsigned int>( indicies.size() );
 
 	BindVertexInput( m_immediateVBO );
-	//UpdateLayoutIfNeeded();
+	UpdateCurrentLayout( m_immediateVBO->m_boundBufferAttribute );
 
 	bool hasIndicies = indexCount > 0;
 
@@ -410,9 +408,11 @@ void RenderContext::DrawVertexArray( int numVerticies, const Vertex_PCU* vertici
 	size_t byteSize		= numVerticies * sizeof( Vertex_PCU );
 	size_t elementSize	= sizeof( Vertex_PCU );
 	m_immediateVBO->Update( verticies, byteSize, elementSize );
+	m_immediateVBO->m_boundBufferAttribute = Vertex_PCU::LAYOUT;
 
 	//Bind
 	BindVertexInput( m_immediateVBO );
+	UpdateCurrentLayout( m_immediateVBO->m_boundBufferAttribute );
 
 	//Draw
 	Draw( numVerticies );
@@ -430,7 +430,7 @@ void RenderContext::DrawVertexArray( const std::vector<Vertex_PCU>& vertexArray 
 void RenderContext::DrawMesh( GPUMesh* mesh )
 {
 	BindVertexInput( mesh->GetVertexBuffer() );
-	//UpdateLayoutIfNeeded();
+	UpdateCurrentLayout( mesh->GetVertexBuffer()->m_boundBufferAttribute );
 
 	bool hasIndicies = mesh->GetIndexCount() > 0;
 
@@ -443,6 +443,18 @@ void RenderContext::DrawMesh( GPUMesh* mesh )
 	{
 		Draw( mesh->GetVertexCount() );
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::UpdateCurrentLayout( buffer_attribute_t const* newLayout )
+{
+	ID3D11InputLayout* inputLayout = m_currentShader->GetOrCreateInputLayout( newLayout );
+	if( inputLayout != m_currentLayout )
+	{
+		m_currentLayout = inputLayout;
+	}
+	m_context->IASetInputLayout( m_currentLayout );
 }
 
 
@@ -828,7 +840,7 @@ void RenderContext::BindShader( const char* filepath )
 void RenderContext::BindVertexInput( VertexBuffer* vbo )
 {
 	ID3D11Buffer* vboHandle = vbo->m_handle;
-	UINT stride = sizeof( Vertex_PCU );
+	UINT stride = static_cast<UINT>( vbo->m_elementByteSize );
 	UINT offset = 0;
 
 	if( m_lastBoundVBOHandle != vboHandle )

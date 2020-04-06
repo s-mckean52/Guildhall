@@ -61,6 +61,7 @@ public:
 	static const Vec3 ZERO;
 	static const Vec3 RIGHT;
 	static const Vec3 UP;
+	static const Vec3 INTO;
 	static const Vec3 FORWARD;
 	static const Vec3 UNIT;
 };

@@ -31,18 +31,40 @@ void AppendVertsForAABB2D( std::vector<Vertex_PCU>& vertexArray, const AABB2& bo
 
 
 //---------------------------------------------------------------------------------------------------------
-void AppendVertsForQuad3D( std::vector<Vertex_PCU>& vertexArray, const Vec3& p0, const Vec3& p1, const Vec3& p2, const Vec3& p3, const Rgba8& color, const Vec2& uvAtMins, const Vec2& uvAtMaxes )
+void AppendVertsForQuad3D( std::vector<Vertex_Master>& vertexArray, const Vec3& p0, const Vec3& p1, const Vec3& p2, const Vec3& p3, const Rgba8& color, const Vec2& uvAtMins, const Vec2& uvAtMaxes )
 {
 	Vec2 uvAtBottomRight( uvAtMaxes.x, uvAtMins.y );
 	Vec2 uvAtTopLeft( uvAtMins.x, uvAtMaxes.y );
 
-	vertexArray.push_back( Vertex_PCU( p0, color, uvAtMins));
-	vertexArray.push_back( Vertex_PCU( p1, color, uvAtBottomRight));
-	vertexArray.push_back( Vertex_PCU( p2, color, uvAtMaxes));
+	Vec3 tangent = ( p1 - p0 ).GetNormalize();
+	Vec3 bitangent = ( p3 - p0 ).GetNormalize();
+	Vec3 normal = CrossProduct3D( tangent, bitangent );
+
+	vertexArray.push_back( Vertex_Master( p0, color, tangent, bitangent, normal, uvAtMins ) );
+	vertexArray.push_back( Vertex_Master( p1, color, tangent, bitangent, normal, uvAtBottomRight ) );
+	vertexArray.push_back( Vertex_Master( p2, color, tangent, bitangent, normal, uvAtMaxes ) );
 						   
-	vertexArray.push_back( Vertex_PCU( p0, color, uvAtMins));
-	vertexArray.push_back( Vertex_PCU( p2, color, uvAtMaxes));
-	vertexArray.push_back( Vertex_PCU( p3, color, uvAtTopLeft));
+	vertexArray.push_back( Vertex_Master( p0, color, tangent, bitangent, normal, uvAtMins ) );
+	vertexArray.push_back( Vertex_Master( p2, color, tangent, bitangent, normal, uvAtMaxes ) );
+	vertexArray.push_back( Vertex_Master( p3, color, tangent, bitangent, normal, uvAtTopLeft ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void AppendVertsForQuad3D( std::vector<Vertex_PCU>& vertexArray, const Vec3& p0, const Vec3& p1, const Vec3& p2, const Vec3& p3, const Rgba8& color, const Vec2& uvAtMins, const Vec2& uvAtMaxes )
+{
+	std::vector<Vertex_Master> masterVerts;
+	AppendVertsForQuad3D( masterVerts, p0, p1, p2, p3, color, uvAtMins, uvAtMaxes );
+	AppendMasterVertsToPCUArray( masterVerts, vertexArray );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void AppendVertsForQuad3D( std::vector<Vertex_PCUTBN>& vertexArray, const Vec3& p0, const Vec3& p1, const Vec3& p2, const Vec3& p3, const Rgba8& color, const Vec2& uvAtMins, const Vec2& uvAtMaxes )
+{
+	std::vector<Vertex_Master> masterVerts;
+	AppendVertsForQuad3D( masterVerts, p0, p1, p2, p3, color, uvAtMins, uvAtMaxes );
+	AppendMasterVertsToPCUTBNArray( masterVerts, vertexArray );
 }
 
 
@@ -328,6 +350,30 @@ void AppendVertsForPolygon2DFilled( std::vector<Vertex_PCU>& vertexArray, Polygo
 
 
 //---------------------------------------------------------------------------------------------------------
+void AppendMasterVertsToPCUArray( std::vector<Vertex_Master>& masterVertArray, std::vector<Vertex_PCU>& pcuArray )
+{
+	for( unsigned int masterVertIndex = 0; masterVertIndex < masterVertArray.size(); ++masterVertIndex )
+	{
+		Vertex_Master masterVert = masterVertArray[ masterVertIndex ];
+		Vertex_PCU vertAsPCU = Vertex_Master::ToVertexPCU( masterVert );
+		pcuArray.push_back( vertAsPCU );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void AppendMasterVertsToPCUTBNArray( std::vector<Vertex_Master>& masterVertArray, std::vector<Vertex_PCUTBN>& pcutbnArray )
+{
+	for( unsigned int masterVertIndex = 0; masterVertIndex < masterVertArray.size(); ++masterVertIndex )
+	{
+		Vertex_Master masterVert = masterVertArray[ masterVertIndex ];
+		Vertex_PCUTBN vertAsPCUTBN = Vertex_Master::ToVertexPCUTBN( masterVert );
+		pcutbnArray.push_back( vertAsPCUTBN );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void AddVerticiesAndIndiciesForCubeMesh( GPUMesh* cubeMesh, float sideLength )
 {
 	float halfSideLength = sideLength * 0.5f;
@@ -347,7 +393,7 @@ void AddVerticiesAndIndiciesForCubeMesh( GPUMesh* cubeMesh, float sideLength )
 
 
 //---------------------------------------------------------------------------------------------------------
-void AddBoxToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, AABB3 const& box, Rgba8 const& color )
+void AddBoxToIndexedVertexArray( std::vector<Vertex_Master>& verts, std::vector<unsigned int>& indices, AABB3 const& box, Rgba8 const& color )
 {
 	Vec3 frontBottomLeft = box.mins;
 	Vec3 frontBottomRight = Vec3( box.maxes.x, box.mins.y, box.mins.z );
@@ -360,42 +406,46 @@ void AddBoxToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<uns
 	Vec3 backTopLeft = Vec3( box.maxes.x, box.maxes.y, box.maxes.z );
 	Vec3 backTopRight = Vec3( box.mins.x, box.maxes.y, box.maxes.z );
 
-	std::vector<Vertex_PCU> boxVerticies = {
+	Vec3 frontTangent = ( frontBottomRight - frontBottomLeft ).GetNormalize();
+	Vec3 frontBitangent = ( frontTopLeft - frontBottomLeft ).GetNormalize();
+	Vec3 frontNormal = CrossProduct3D( frontTangent, frontBitangent );
+
+	std::vector<Vertex_Master> boxVerticies = {
 		//Front
-		Vertex_PCU( frontBottomLeft,	color,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( frontBottomRight,	color,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( frontTopLeft,		color,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( frontTopRight,		color,	Vec2( 1.f, 1.f ) ),
+		Vertex_Master( frontBottomLeft,		color,	frontTangent,	frontBitangent,		frontNormal,	Vec2( 0.f, 0.f ) ),
+		Vertex_Master( frontBottomRight,	color,	frontTangent,	frontBitangent,		frontNormal,	Vec2( 1.f, 0.f ) ),
+		Vertex_Master( frontTopLeft,		color,	frontTangent,	frontBitangent,		frontNormal,	Vec2( 0.f, 1.f ) ),
+		Vertex_Master( frontTopRight,		color,	frontTangent,	frontBitangent,		frontNormal,	Vec2( 1.f, 1.f ) ),
 
 		//Right
-		Vertex_PCU( frontBottomRight,	color,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( backBottomLeft,		color,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( frontTopRight,		color,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( backTopLeft,		color,	Vec2( 1.f, 1.f ) ),
+		Vertex_Master( frontBottomRight,	color,	-frontNormal,	frontBitangent,		frontTangent,	Vec2( 0.f, 0.f ) ),
+		Vertex_Master( backBottomLeft,		color,	-frontNormal,	frontBitangent,		frontTangent,	Vec2( 1.f, 0.f ) ),
+		Vertex_Master( frontTopRight,		color,	-frontNormal,	frontBitangent,		frontTangent,	Vec2( 0.f, 1.f ) ),
+		Vertex_Master( backTopLeft,			color,	-frontNormal,	frontBitangent,		frontTangent,	Vec2( 1.f, 1.f ) ),
 
 		//Back
-		Vertex_PCU( backBottomLeft,		color,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( backBottomRight,	color,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( backTopLeft,		color,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( backTopRight,		color,	Vec2( 1.f, 1.f ) ),
+		Vertex_Master( backBottomLeft,		color,	-frontTangent,	frontBitangent,		-frontNormal,	Vec2( 0.f, 0.f ) ),
+		Vertex_Master( backBottomRight,		color,	-frontTangent,	frontBitangent,		-frontNormal,	Vec2( 1.f, 0.f ) ),
+		Vertex_Master( backTopLeft,			color,	-frontTangent,	frontBitangent,		-frontNormal,	Vec2( 0.f, 1.f ) ),
+		Vertex_Master( backTopRight,		color,	-frontTangent,	frontBitangent,		-frontNormal,	Vec2( 1.f, 1.f ) ),
 
 		//Left
-		Vertex_PCU( backBottomRight,	color,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU( frontBottomLeft,	color,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( backTopRight,		color,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( frontTopLeft,		color,	Vec2( 1.f, 1.f ) ),
+		Vertex_Master( backBottomRight,		color,	frontNormal,	frontBitangent,		-frontTangent,	Vec2( 0.f, 0.f ) ),
+		Vertex_Master( frontBottomLeft,		color,	frontNormal,	frontBitangent,		-frontTangent,	Vec2( 1.f, 0.f ) ),
+		Vertex_Master( backTopRight,		color,	frontNormal,	frontBitangent,		-frontTangent,	Vec2( 0.f, 1.f ) ),
+		Vertex_Master( frontTopLeft,		color,	frontNormal,	frontBitangent,		-frontTangent,	Vec2( 1.f, 1.f ) ),
 
 		//Top
-		Vertex_PCU( frontTopLeft,		color,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCU(	frontTopRight,		color,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( backTopRight,		color,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU(	backTopLeft, 		color,	Vec2( 1.f, 1.f ) ),
+		Vertex_Master( frontTopLeft,		color,	frontTangent,	-frontNormal,		frontBitangent,	Vec2( 0.f, 0.f ) ),
+		Vertex_Master( frontTopRight,		color,	frontTangent,	-frontNormal,		frontBitangent,	Vec2( 1.f, 0.f ) ),
+		Vertex_Master( backTopRight,		color,	frontTangent,	-frontNormal,		frontBitangent,	Vec2( 0.f, 1.f ) ),
+		Vertex_Master( backTopLeft, 		color,	frontTangent,	-frontNormal,		frontBitangent,	Vec2( 1.f, 1.f ) ),
 
 		//Bottom
-		Vertex_PCU( backBottomRight,	color,	Vec2( 1.f, 1.f ) ),
-		Vertex_PCU( backBottomLeft,		color,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCU( frontBottomLeft,	color,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCU( frontBottomRight,	color,	Vec2( 0.f, 0.f ) ),
+		Vertex_Master( backBottomRight,		color,	frontTangent,	frontNormal,		frontBitangent, Vec2( 1.f, 1.f ) ),
+		Vertex_Master( backBottomLeft,		color,	frontTangent,	frontNormal,		frontBitangent, Vec2( 0.f, 1.f ) ),
+		Vertex_Master( frontBottomLeft,		color,	frontTangent,	frontNormal,		frontBitangent, Vec2( 1.f, 0.f ) ),
+		Vertex_Master( frontBottomRight,	color,	frontTangent,	frontNormal,		frontBitangent, Vec2( 0.f, 0.f ) ),
 	};
 
 	std::vector<unsigned int> boxIndicies = {
@@ -438,7 +488,25 @@ void AddBoxToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<uns
 
 
 //---------------------------------------------------------------------------------------------------------
-void AddUVSphereToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, Vec3 const& center, float radius, unsigned int horizontalCuts, unsigned int verticalCuts, Rgba8 const& color )
+void AddBoxToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, AABB3 const& box, Rgba8 const& color )
+{
+	std::vector<Vertex_Master> masterVerts;
+	AddBoxToIndexedVertexArray( masterVerts, indices, box, color );
+	AppendMasterVertsToPCUArray( masterVerts, verts );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void AddBoxToIndexedVertexArray(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indices, AABB3 const& box, Rgba8 const& color)
+{
+	std::vector<Vertex_Master> masterVerts;
+	AddBoxToIndexedVertexArray( masterVerts, indices, box, color );
+	AppendMasterVertsToPCUTBNArray( masterVerts, verts );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void AddUVSphereToIndexedVertexArray( std::vector<Vertex_Master>& verts, std::vector<unsigned int>& indices, Vec3 const& center, float radius, unsigned int horizontalCuts, unsigned int verticalCuts, Rgba8 const& color )
 {
 	float deltaThetaDegrees = 360.f / verticalCuts;
 	float deltaPsiDegrees = 180.f / horizontalCuts;
@@ -466,7 +534,11 @@ void AddUVSphereToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vecto
 			float v = RangeMapFloat( -90.f, 90.f, 0.f, 1.f, currentPsiDegrees );
 			Vec2 vertUV = Vec2( u, v );
 
-			verts.push_back( Vertex_PCU( vertPosition, color, vertUV ) );
+			Vec3 tangent = Vec3( -sinTheta, 0.f, cosTheta );
+			Vec3 bitangent = Vec3( sinTheta, cosPsi, cosTheta );
+			Vec3 normal = CrossProduct3D( tangent, bitangent );
+
+			verts.push_back( Vertex_Master( vertPosition, color, tangent, bitangent, normal, vertUV ) );
 			currentThetaDegrees += deltaThetaDegrees;
 		}
 
@@ -494,6 +566,24 @@ void AddUVSphereToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vecto
 			indices.push_back( indexOffset + topLeft );
 		}
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void AddUVSphereToIndexedVertexArray(std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, Vec3 const& center, float radius, unsigned int horizontalCuts, unsigned int verticalCuts, Rgba8 const& color)
+{
+	std::vector<Vertex_Master> masterVerts;
+	AddUVSphereToIndexedVertexArray( masterVerts, indices, center, radius, horizontalCuts, verticalCuts, color );
+	AppendMasterVertsToPCUArray( masterVerts, verts );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void AddUVSphereToIndexedVertexArray(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indices, Vec3 const& center, float radius, unsigned int horizontalCuts, unsigned int verticalCuts, Rgba8 const& color)
+{
+	std::vector<Vertex_Master> masterVerts;
+	AddUVSphereToIndexedVertexArray( masterVerts, indices, center, radius, horizontalCuts, verticalCuts, color );
+	AppendMasterVertsToPCUTBNArray( masterVerts, verts );
 }
 
 

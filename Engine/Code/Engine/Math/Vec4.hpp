@@ -13,6 +13,7 @@ public:
 
 public:
 	~Vec4() {};
+	Vec4() {};
 	Vec4( const Vec4& toCopy );
 	Vec4( const Vec3& toCopy, float initialW );
 	Vec4( const Vec2& toCopyFirst, const Vec2& toCopySecond );

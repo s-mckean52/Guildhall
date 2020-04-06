@@ -1,16 +1,14 @@
 #include "Engine/Renderer/GPUMesh.hpp"
-#include "Engine/Renderer/RenderBuffer.hpp"
-#include "Engine/Renderer/IndexBuffer.hpp"
+#include "Engine/Core/Vertex_Master.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
 GPUMesh::GPUMesh( RenderContext* context )
 {
-	m_vertexBuffer = new VertexBuffer( context, MEMORY_HINT_DYNAMIC );
+	m_vertexBuffer = new VertexBuffer( context, MEMORY_HINT_DYNAMIC, Vertex_Master::LAYOUT );
 	m_indexBuffer = new IndexBuffer( context, MEMORY_HINT_DYNAMIC );
 }
-
 
 //---------------------------------------------------------------------------------------------------------
 GPUMesh::~GPUMesh()
@@ -26,10 +24,10 @@ GPUMesh::~GPUMesh()
 //---------------------------------------------------------------------------------------------------------
 void GPUMesh::UpdateVerticies( unsigned int vertexCount, void const* vertexData, unsigned int vertexStride, buffer_attribute_t const* layout )
 {
-	UNUSED( layout );
 	m_vertexCount = vertexCount;
 	unsigned int byteSize = vertexCount * vertexStride;
 	m_vertexBuffer->Update( vertexData, byteSize, vertexStride );
+	m_vertexBuffer->m_boundBufferAttribute = layout;
 }
 
 

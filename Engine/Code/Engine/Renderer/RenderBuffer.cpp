@@ -2,6 +2,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/D3D11Common.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
+#include "Engine/Renderer/buffer_attribute_t.hpp"
 
 
 //TODO: Move to D3D11Common
@@ -167,7 +168,15 @@ UINT ToDXUsage( RenderBufferUsage usage )
 
 
 //---------------------------------------------------------------------------------------------------------
-VertexBuffer::VertexBuffer( RenderContext* context, RenderMemoryHint memHint )
+VertexBuffer::VertexBuffer( RenderContext* context, RenderMemoryHint memHint, buffer_attribute_t const* bufferAttribute )
 	: RenderBuffer( context, VERTEX_BUFFER_BIT, memHint )
 {
+	m_boundBufferAttribute = bufferAttribute;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+VertexBuffer::~VertexBuffer()
+{
+	//m_boundBufferAttribute = nullptr;
 }

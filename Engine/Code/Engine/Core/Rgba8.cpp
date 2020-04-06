@@ -34,6 +34,31 @@ Rgba8::Rgba8( Vec4 const& fractions )
 
 
 //---------------------------------------------------------------------------------------------------------
+STATIC Rgba8 Rgba8::MakeFromFloats( float red, float green, float blue, float alpha )
+{
+	Rgba8 fromFloats;
+	fromFloats.r = static_cast<unsigned char>( 255.f * red );
+	fromFloats.g = static_cast<unsigned char>( 255.f * green );
+	fromFloats.b = static_cast<unsigned char>( 255.f * blue );
+	fromFloats.a = static_cast<unsigned char>( 255.f * alpha );
+	return fromFloats;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec4 Rgba8::GetValuesAsFractions()
+{
+	Vec4 colorAsFloats;
+	colorAsFloats.x = static_cast<float>( r ) / 255.f;
+	colorAsFloats.y = static_cast<float>( g ) / 255.f;
+	colorAsFloats.z = static_cast<float>( b ) / 255.f;
+	colorAsFloats.w = static_cast<float>( a ) / 255.f;
+
+	return colorAsFloats;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Rgba8::SetFromText( const char* text )
 {
 	Strings splitText = SplitStringOnDelimiter( text, ',' );

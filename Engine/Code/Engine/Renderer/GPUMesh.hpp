@@ -1,4 +1,6 @@
 #pragma once
+#include "Engine/Renderer/RenderBuffer.hpp"
+#include "Engine/Renderer/IndexBuffer.hpp"
 #include <vector>
 
 class VertexBuffer;
@@ -26,7 +28,16 @@ public:
 	void UpdateVerticies( unsigned int vertexCount, VERTEX_TYPE const* verticies )
 	{
 		UpdateVerticies( vertexCount, verticies, sizeof( VERTEX_TYPE ), VERTEX_TYPE::LAYOUT );
-	}	
+	}
+
+	template <typename VERTEX_TYPE>
+	GPUMesh( RenderContext* context, std::vector<VERTEX_TYPE>& verts, std::vector<unsigned int>& indicies )
+	{
+		m_vertexBuffer = new VertexBuffer( context, MEMORY_HINT_DYNAMIC, VERTEX_TYPE::LAYOUT );
+		m_indexBuffer = new IndexBuffer( context, MEMORY_HINT_DYNAMIC );
+		UpdateVerticies( static_cast<unsigned int>( verts.size() ), &verts[0] );
+		UpdateIndicies( static_cast<unsigned int>( indicies.size() ), &indicies[0] );
+	}
 
 public:
 	int m_indexCount = 0;
