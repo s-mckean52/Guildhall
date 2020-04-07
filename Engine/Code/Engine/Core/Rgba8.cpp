@@ -46,7 +46,7 @@ STATIC Rgba8 Rgba8::MakeFromFloats( float red, float green, float blue, float al
 
 
 //---------------------------------------------------------------------------------------------------------
-Vec4 Rgba8::GetValuesAsFractions()
+Vec4 Rgba8::GetValuesAsFractions() const
 {
 	Vec4 colorAsFloats;
 	colorAsFloats.x = static_cast<float>( r ) / 255.f;

@@ -93,6 +93,7 @@ void RenderContext::StartUp( Window* theWindow )
 
 	m_frameUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
 	m_modelUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
+	m_lightUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
 
 	m_samplerDefault = new Sampler( this, SAMPLER_POINT );
 	m_textueDefaultColor = CreateTextureFromColor( Rgba8::WHITE );
@@ -131,6 +132,9 @@ void RenderContext::ShutDown()
 	delete m_modelUBO;
 	m_modelUBO = nullptr;
 
+	delete m_lightUBO;
+	m_lightUBO = nullptr;
+
 	delete m_immediateVBO;
 	m_immediateVBO = nullptr;
 
@@ -156,6 +160,17 @@ void RenderContext::UpdateFrameTime()
 	frameData.system_delta_time = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
 
 	m_frameUBO->Update( &frameData, sizeof( frameData ), sizeof( frameData ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::UpdateLightUBO()
+{
+	light_data_t lightData;
+	lightData.ambient = m_ambientLight;
+	lightData.light = m_lights[0];
+
+	m_lightUBO->Update( &lightData, sizeof( lightData ), sizeof( lightData ) );
 }
 
 
@@ -302,11 +317,13 @@ void RenderContext::BeginCamera( Camera& camera )
 	m_lastBoundVBOHandle = nullptr;
 
 	camera.UpdateCameraUBO();
+	UpdateLightUBO();
 	SetModelMatrix( Mat44::IDENTITY );
 
 	BindUniformBuffer( UBO_FRAME_SLOT, m_frameUBO );
 	BindUniformBuffer( UBO_CAMERA_SLOT, camera.GetUBO() );
 	BindUniformBuffer( UBO_MODEL_MATRIX_SLOT, m_modelUBO );
+	BindUniformBuffer( UBO_LIGHT_SLOT, m_lightUBO );
 }
 
 
@@ -689,17 +706,16 @@ BitmapFont* RenderContext::CreateOrGetBitmapFontFromFile( const char* imageFileP
 //---------------------------------------------------------------------------------------------------------
 Shader* RenderContext::GetOrCreateShader( char const* filename )
 {
-	Shader* newShader = new Shader( this );
-	
 	for( int shaderIndex = 0; shaderIndex < m_loadedShaders.size(); ++shaderIndex )
 	{
 		Shader* shader = m_loadedShaders[ shaderIndex ];
-		if( shader->GetFilePath() == filename )
+		if( strcmp( shader->GetFilePath(), filename ) == 0 )
 		{
 			return shader;
 		}
 	}
 
+	Shader* newShader = new Shader( this );
 	if( newShader->CreateFromFile( filename ) )
 	{
 		m_loadedShaders.push_back( newShader );
@@ -918,6 +934,55 @@ Texture* RenderContext::CreateDepthStencilBuffer( IntVec2 const& imageTexelDimen
 	Texture* newTexture = new Texture( this, textureHandle );
 	m_loadedTextures.push_back( newTexture );
 	return newTexture;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::SetAmbientColor( Rgba8 const& ambientColor )
+{
+	Vec4 ambientColorAsFloats = ambientColor.GetValuesAsFractions();
+	m_ambientLight.x = ambientColorAsFloats.x;
+	m_ambientLight.y = ambientColorAsFloats.y;
+	m_ambientLight.z = ambientColorAsFloats.z;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::SetAmbientIntensity( float ambientIntensity )
+{
+	m_ambientLight.w = ambientIntensity;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::SetAmbientLight( Rgba8 const& ambientColor, float ambientIntensity )
+{
+	SetAmbientColor( ambientColor );
+	SetAmbientIntensity( ambientIntensity );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::EnableLight( unsigned int index, Light const& lightInfo )
+{
+	m_lights[ index ] = lightInfo;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::DisableLight( unsigned int index )
+{
+	m_lights[ index ].intensity = 0.f;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::DisableAllLights()
+{
+	for( unsigned int lightIndex = 0; lightIndex < 8; ++lightIndex )
+	{
+		DisableLight( lightIndex );
+	}
 }
 
 

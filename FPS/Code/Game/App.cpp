@@ -36,8 +36,8 @@ void App::StartUp()
 	g_theConsole = new DevConsole();
 	g_theGame = new Game();
 
-	g_theRenderer->StartUp( g_theWindow );
 	g_theEventSystem->StartUp();
+	g_theRenderer->StartUp( g_theWindow );
 	g_theInput->StartUp( g_theWindow );
 	g_theConsole->StartUp( g_theInput, g_theEventSystem );
 

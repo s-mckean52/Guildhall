@@ -412,40 +412,40 @@ void AddBoxToIndexedVertexArray( std::vector<Vertex_Master>& verts, std::vector<
 
 	std::vector<Vertex_Master> boxVerticies = {
 		//Front
-		Vertex_Master( frontBottomLeft,		color,	frontTangent,	frontBitangent,		frontNormal,	Vec2( 0.f, 0.f ) ),
-		Vertex_Master( frontBottomRight,	color,	frontTangent,	frontBitangent,		frontNormal,	Vec2( 1.f, 0.f ) ),
-		Vertex_Master( frontTopLeft,		color,	frontTangent,	frontBitangent,		frontNormal,	Vec2( 0.f, 1.f ) ),
-		Vertex_Master( frontTopRight,		color,	frontTangent,	frontBitangent,		frontNormal,	Vec2( 1.f, 1.f ) ),
+		Vertex_Master( frontBottomLeft,		color,	frontTangent,	frontBitangent,		frontNormal,		Vec2( 0.f, 0.f ) ),
+		Vertex_Master( frontBottomRight,	color,	frontTangent,	frontBitangent,		frontNormal,		Vec2( 1.f, 0.f ) ),
+		Vertex_Master( frontTopLeft,		color,	frontTangent,	frontBitangent,		frontNormal,		Vec2( 0.f, 1.f ) ),
+		Vertex_Master( frontTopRight,		color,	frontTangent,	frontBitangent,		frontNormal,		Vec2( 1.f, 1.f ) ),
 
 		//Right
-		Vertex_Master( frontBottomRight,	color,	-frontNormal,	frontBitangent,		frontTangent,	Vec2( 0.f, 0.f ) ),
-		Vertex_Master( backBottomLeft,		color,	-frontNormal,	frontBitangent,		frontTangent,	Vec2( 1.f, 0.f ) ),
-		Vertex_Master( frontTopRight,		color,	-frontNormal,	frontBitangent,		frontTangent,	Vec2( 0.f, 1.f ) ),
-		Vertex_Master( backTopLeft,			color,	-frontNormal,	frontBitangent,		frontTangent,	Vec2( 1.f, 1.f ) ),
+		Vertex_Master( frontBottomRight,	color,	-frontNormal,	frontBitangent,		frontTangent,		Vec2( 0.f, 0.f ) ),
+		Vertex_Master( backBottomLeft,		color,	-frontNormal,	frontBitangent,		frontTangent,		Vec2( 1.f, 0.f ) ),
+		Vertex_Master( frontTopRight,		color,	-frontNormal,	frontBitangent,		frontTangent,		Vec2( 0.f, 1.f ) ),
+		Vertex_Master( backTopLeft,			color,	-frontNormal,	frontBitangent,		frontTangent,		Vec2( 1.f, 1.f ) ),
 
 		//Back
-		Vertex_Master( backBottomLeft,		color,	-frontTangent,	frontBitangent,		-frontNormal,	Vec2( 0.f, 0.f ) ),
-		Vertex_Master( backBottomRight,		color,	-frontTangent,	frontBitangent,		-frontNormal,	Vec2( 1.f, 0.f ) ),
-		Vertex_Master( backTopLeft,			color,	-frontTangent,	frontBitangent,		-frontNormal,	Vec2( 0.f, 1.f ) ),
-		Vertex_Master( backTopRight,		color,	-frontTangent,	frontBitangent,		-frontNormal,	Vec2( 1.f, 1.f ) ),
+		Vertex_Master( backBottomLeft,		color,	-frontTangent,	frontBitangent,		-frontNormal,		Vec2( 0.f, 0.f ) ),
+		Vertex_Master( backBottomRight,		color,	-frontTangent,	frontBitangent,		-frontNormal,		Vec2( 1.f, 0.f ) ),
+		Vertex_Master( backTopLeft,			color,	-frontTangent,	frontBitangent,		-frontNormal,		Vec2( 0.f, 1.f ) ),
+		Vertex_Master( backTopRight,		color,	-frontTangent,	frontBitangent,		-frontNormal,		Vec2( 1.f, 1.f ) ),
 
 		//Left
-		Vertex_Master( backBottomRight,		color,	frontNormal,	frontBitangent,		-frontTangent,	Vec2( 0.f, 0.f ) ),
-		Vertex_Master( frontBottomLeft,		color,	frontNormal,	frontBitangent,		-frontTangent,	Vec2( 1.f, 0.f ) ),
-		Vertex_Master( backTopRight,		color,	frontNormal,	frontBitangent,		-frontTangent,	Vec2( 0.f, 1.f ) ),
-		Vertex_Master( frontTopLeft,		color,	frontNormal,	frontBitangent,		-frontTangent,	Vec2( 1.f, 1.f ) ),
+		Vertex_Master( backBottomRight,		color,	frontNormal,	frontBitangent,		-frontTangent,		Vec2( 0.f, 0.f ) ),
+		Vertex_Master( frontBottomLeft,		color,	frontNormal,	frontBitangent,		-frontTangent,		Vec2( 1.f, 0.f ) ),
+		Vertex_Master( backTopRight,		color,	frontNormal,	frontBitangent,		-frontTangent,		Vec2( 0.f, 1.f ) ),
+		Vertex_Master( frontTopLeft,		color,	frontNormal,	frontBitangent,		-frontTangent,		Vec2( 1.f, 1.f ) ),
 
 		//Top
-		Vertex_Master( frontTopLeft,		color,	frontTangent,	-frontNormal,		frontBitangent,	Vec2( 0.f, 0.f ) ),
-		Vertex_Master( frontTopRight,		color,	frontTangent,	-frontNormal,		frontBitangent,	Vec2( 1.f, 0.f ) ),
-		Vertex_Master( backTopRight,		color,	frontTangent,	-frontNormal,		frontBitangent,	Vec2( 0.f, 1.f ) ),
-		Vertex_Master( backTopLeft, 		color,	frontTangent,	-frontNormal,		frontBitangent,	Vec2( 1.f, 1.f ) ),
+		Vertex_Master( frontTopLeft,		color,	frontTangent,	-frontNormal,		frontBitangent,		Vec2( 0.f, 0.f ) ),
+		Vertex_Master( frontTopRight,		color,	frontTangent,	-frontNormal,		frontBitangent,		Vec2( 1.f, 0.f ) ),
+		Vertex_Master( backTopRight,		color,	frontTangent,	-frontNormal,		frontBitangent,		Vec2( 0.f, 1.f ) ),
+		Vertex_Master( backTopLeft, 		color,	frontTangent,	-frontNormal,		frontBitangent,		Vec2( 1.f, 1.f ) ),
 
 		//Bottom
-		Vertex_Master( backBottomRight,		color,	frontTangent,	frontNormal,		frontBitangent, Vec2( 1.f, 1.f ) ),
-		Vertex_Master( backBottomLeft,		color,	frontTangent,	frontNormal,		frontBitangent, Vec2( 0.f, 1.f ) ),
-		Vertex_Master( frontBottomLeft,		color,	frontTangent,	frontNormal,		frontBitangent, Vec2( 1.f, 0.f ) ),
-		Vertex_Master( frontBottomRight,	color,	frontTangent,	frontNormal,		frontBitangent, Vec2( 0.f, 0.f ) ),
+		Vertex_Master( backBottomRight,		color,	frontTangent,	frontNormal,		-frontBitangent,	Vec2( 0.f, 0.f ) ),
+		Vertex_Master( backBottomLeft,		color,	frontTangent,	frontNormal,		-frontBitangent,	Vec2( 1.f, 0.f ) ),
+		Vertex_Master( frontBottomLeft,		color,	frontTangent,	frontNormal,		-frontBitangent,	Vec2( 0.f, 1.f ) ),
+		Vertex_Master( frontBottomRight,	color,	frontTangent,	frontNormal,		-frontBitangent,	Vec2( 1.f, 1.f ) ),
 	};
 
 	std::vector<unsigned int> boxIndicies = {
@@ -534,8 +534,8 @@ void AddUVSphereToIndexedVertexArray( std::vector<Vertex_Master>& verts, std::ve
 			float v = RangeMapFloat( -90.f, 90.f, 0.f, 1.f, currentPsiDegrees );
 			Vec2 vertUV = Vec2( u, v );
 
-			Vec3 tangent = Vec3( -sinTheta, 0.f, cosTheta );
-			Vec3 bitangent = Vec3( sinTheta, cosPsi, cosTheta );
+			Vec3 tangent = Vec3( -sinTheta, 0.f, cosTheta ).GetNormalize();
+			Vec3 bitangent = Vec3( -sinPsi * sinTheta , cosPsi, -sinPsi * cosTheta ).GetNormalize();
 			Vec3 normal = CrossProduct3D( tangent, bitangent );
 
 			verts.push_back( Vertex_Master( vertPosition, color, tangent, bitangent, normal, vertUV ) );

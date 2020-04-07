@@ -178,5 +178,4 @@ VertexBuffer::VertexBuffer( RenderContext* context, RenderMemoryHint memHint, bu
 //---------------------------------------------------------------------------------------------------------
 VertexBuffer::~VertexBuffer()
 {
-	//m_boundBufferAttribute = nullptr;
 }

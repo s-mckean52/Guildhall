@@ -54,7 +54,7 @@ public:
 	ID3D11InputLayout*	GetOrCreateInputLayout( buffer_attribute_t const* attribute );
 
 public:
-	const char* m_filePath = "";
+	std::string m_filePath = "";
 
 	ShaderStage m_vertexStage;
 	ShaderStage m_fragmentStage;

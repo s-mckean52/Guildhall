@@ -2,9 +2,11 @@
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Renderer/Camera.hpp"
-#include "Engine/Math/AABB2.hpp"
 #include "Engine/Renderer/Texture.hpp"
+#include "Engine/Renderer/Light.hpp"
+#include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/Mat44.hpp"
+#include "Engine/Math/Vec4.hpp"
 #include <vector>
 
 
@@ -40,6 +42,7 @@ enum BufferSlot
 	UBO_FRAME_SLOT			= 0,
 	UBO_CAMERA_SLOT			= 1,
 	UBO_MODEL_MATRIX_SLOT	= 2,
+	UBO_LIGHT_SLOT			= 3,
 };
 
 enum CompareFunc
@@ -81,6 +84,13 @@ struct model_matrix_t
 {
 	Mat44 model;
 };
+
+struct light_data_t
+{
+	Vec4 ambient;
+	Light light;
+};
+
 
 class RenderContext
 {
@@ -132,6 +142,16 @@ public:
 	Texture*	CreateTextureFromColor( Rgba8 const& color );
 	Texture*	CreateDepthStencilBuffer( IntVec2 const& imageDimensions );
 
+	//Light Methods
+	void UpdateLightUBO();
+	void SetAmbientColor( Rgba8 const& ambientColor );
+	void SetAmbientIntensity( float ambientIntensity );
+	void SetAmbientLight( Rgba8 const& ambientColor, float ambientIntensity );
+	void EnableLight( unsigned int index, Light const& lightInfo );
+	void DisableLight( unsigned int index );
+	void DisableAllLights();
+
+	//Clean Up Methods
 	void ReleaseLoadedAssets();
 	void ReleaseBlendStates();
 
@@ -147,6 +167,9 @@ private:
 
 private:
 	Clock* m_gameClock = nullptr;
+
+	Vec4 m_ambientLight = Vec4( 1.f, 1.f, 1.f, 1.f );
+	Light m_lights[8];
 
 	bool m_isDrawing = false;
 	ID3D11Buffer* m_lastBoundVBOHandle = nullptr;
@@ -174,7 +197,7 @@ public:
 	IndexBuffer*				m_immediateIBO				= nullptr;
 	RenderBuffer*				m_frameUBO					= nullptr;
 	RenderBuffer*				m_modelUBO					= nullptr;
-	//RenderBuffer*				m_lightingUBO				= nullptr;
+	RenderBuffer*				m_lightUBO					= nullptr;
 	Texture*					m_defaultDepthStencil		= nullptr;
 
 	ID3D11BlendState* m_alphaBlendStateHandle		= nullptr;

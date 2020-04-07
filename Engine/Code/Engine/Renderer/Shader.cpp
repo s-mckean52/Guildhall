@@ -165,7 +165,7 @@ Shader::~Shader()
 //---------------------------------------------------------------------------------------------------------
 bool Shader::CreateFromFile( std::string const& filename )
 {
-	m_filePath = filename.c_str();
+	m_filePath = filename;
 	size_t file_size = 0;
 	void* source = FileReadToNewBuffer( filename, &file_size );
 	if( source == nullptr )
@@ -197,7 +197,7 @@ bool Shader::CreateFromSourceCode( const char* sourceCode )
 //---------------------------------------------------------------------------------------------------------
 const char* Shader::GetFilePath() const
 {
-	return m_filePath;
+	return m_filePath.c_str();
 }
 
 

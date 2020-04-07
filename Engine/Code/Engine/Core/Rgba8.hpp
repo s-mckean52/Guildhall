@@ -17,7 +17,7 @@ public:
 	explicit Rgba8( unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha = 255 );
 	explicit Rgba8( Vec4 const& fractions );
 	
-	Vec4 GetValuesAsFractions();
+	Vec4 GetValuesAsFractions() const;
 	void SetFromText( const char* text );
 	static Rgba8 MakeFromFloats( float red, float green, float blue, float alpha = 1.f );
 
