@@ -1,9 +1,9 @@
 #define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Platform/Window.hpp"
+#include <Windows.h>
 
 //extern HWND g_hWnd;
 
@@ -46,6 +46,7 @@ const unsigned char KEY_CODE_COMMA			= VK_OEM_COMMA;
 const unsigned char KEY_CODE_PERIOD			= VK_OEM_PERIOD;
 const unsigned char KEY_CODE_SEMICOLON		= VK_OEM_1;
 const unsigned char KEY_CODE_BACK_SLASH		= VK_OEM_2;
+const unsigned char KEY_CODE_APOSTROPHE		= VK_OEM_7;
 
 //Define Mouse Codes
 const unsigned char MOUSE_CODE_LEFT			= MK_LBUTTON;

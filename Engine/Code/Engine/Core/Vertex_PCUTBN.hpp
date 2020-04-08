@@ -16,7 +16,7 @@ public:
 
 	Vec3	m_tangent	= Vec3( 1.f, 0.f, 0.f );
 	Vec3	m_bitangent = Vec3( 0.f, 1.f, 0.f );
-	Vec3	m_normal	= Vec3( 0.f, 0.f, 1.f );
+	Vec3	m_normal	= Vec3( 0.f, 0.f, -1.f );
 
 	static const buffer_attribute_t LAYOUT[];
 

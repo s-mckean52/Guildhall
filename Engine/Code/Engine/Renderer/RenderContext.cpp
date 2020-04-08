@@ -325,6 +325,7 @@ void RenderContext::BeginCamera( Camera& camera )
 	CreateRasterState();
 	BindShader( (Shader*)nullptr );
 	BindTexture( (Texture*)nullptr );
+	BindNormalTexture( nullptr );
 	BindSampler( (Sampler*)nullptr );
 	m_lastBoundVBOHandle = nullptr;
 

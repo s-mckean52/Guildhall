@@ -38,6 +38,7 @@ cbuffer camera_constants : register(b1)
 cbuffer model_constants : register(b2)
 {
 	float4x4 MODEL;
+	float4 TINT;
 }
 
 Texture2D <float4> tDiffuse	: register(t0);
@@ -72,7 +73,7 @@ v2f_t VertexFunction( vs_input_t input )
 
    // forward vertex input onto the next stage
    v2f.position = float4( input.position, 1.0f ); 
-   v2f.color = input.color; 
+   v2f.color = input.color * TINT; 
    v2f.uv = input.uv; 
 
    float4 worldPos = float4( input.position, 1 );

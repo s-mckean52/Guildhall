@@ -76,6 +76,7 @@ extern const unsigned char KEY_CODE_COMMA;
 extern const unsigned char KEY_CODE_PERIOD;
 extern const unsigned char KEY_CODE_SEMICOLON;
 extern const unsigned char KEY_CODE_BACK_SLASH;
+extern const unsigned char KEY_CODE_APOSTROPHE;
 
 extern const unsigned char MOUSE_CODE_LEFT;
 extern const unsigned char MOUSE_CODE_RIGHT;

@@ -39,6 +39,8 @@ public:
 	//Other
 	void UpdateBasedOnMouseMovement();
 	void UpdateObjectRotations( float deltaSeconds );
+	void UpdateLightPositions();
+
 	void TranslateCamera( Camera& camera, const Vec3& directionToMove );
 	void ChangeClearColor( float deltaSeconds );
 	void UpdateCameras( float deltaSeconds );
@@ -48,6 +50,8 @@ public:
 	void AddSpecFactor( float factorToAdd );
 	void AddSpecPower( float powerToAdd );
 	void CycleAttenuationMode();
+	void ChangeShader( int direction );
+	void AddShader( std::string shaderName, Shader* shader );
 
 
 	//Static
@@ -82,6 +86,7 @@ private:
 	Light m_pointLight;
 
 	bool m_isPointLightFollowCamera = false;
+	bool m_isPointLightAnimated		= false;
 
 	float m_distanceFromCamera = -1.f;
 
@@ -89,14 +94,17 @@ private:
 	Texture* m_pokeball			= nullptr;
 	Texture* m_normalMap		= nullptr;
 	
-	Shader* m_currentShaderToUse	= nullptr;
+	int m_currentShaderIndex = 0;
+	std::vector<std::string> m_shaderNames;
+	std::vector<Shader*> m_shadersToUse;
+
 	Shader* m_invertColorShader		= nullptr;
 	Shader* m_litShader				= nullptr;
 	Shader* m_defaultShader			= nullptr;
 	Shader* m_normalsShader			= nullptr;
 	Shader* m_tangentsShader		= nullptr;
 	Shader* m_bitangentsShader		= nullptr;
-	Shader* m_sufaceNormalsShader	= nullptr;
+	Shader* m_surfaceNormalsShader	= nullptr;
 
 	float m_specularFactor = 0.f;
 	float m_specularPower = 32.f;

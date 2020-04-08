@@ -117,13 +117,20 @@ void Game::StartUp()
 	m_pokeball			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/pokeball.png" );
 	m_normalMap			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/example_normal.png" );
 
+	m_defaultShader = nullptr;
 	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
 	m_litShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Lit.hlsl" );
-	m_defaultShader = nullptr;
-// 	m_normalsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Normals.hlsl" );
-// 	m_tangentsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Tangents.hlsl" );
-// 	m_bitangentsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Bitangents.hlsl" );
-// 	m_sufaceNormalsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/SurfaceNormals.hlsl" );
+ 	m_normalsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Normals.hlsl" );
+ 	m_tangentsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Tangents.hlsl" );
+ 	m_bitangentsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Bitangents.hlsl" );
+ 	m_surfaceNormalsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/SurfaceNormals.hlsl" );
+
+	AddShader( "Lit", m_litShader );
+	AddShader( "Color Only", nullptr );
+	AddShader( "Vertex Normals", m_normalsShader );
+	AddShader( "Vertex Tangents", m_tangentsShader );
+	AddShader( "Vertex Bitangents", m_bitangentsShader );
+	AddShader( "Surface Normals", m_surfaceNormalsShader );
 }
 
 
@@ -197,7 +204,7 @@ void Game::Render() const
 void Game::RenderWorld() const
 {
 	//RenderRingOfSpheres();
-	g_theRenderer->BindShader( m_litShader );
+	g_theRenderer->BindShader( m_shadersToUse[ m_currentShaderIndex ] );
 	g_theRenderer->BindTexture( m_testImage );
 	g_theRenderer->BindNormalTexture( m_normalMap );
 
@@ -257,17 +264,17 @@ void Game::RenderUI() const
 	std::vector<std::string> strings;
 	std::vector<Vertex_PCU> textVerts;
 
-	strings.push_back( Stringf( "[F5]  - Position At Origin" ) );
-	strings.push_back( Stringf( "[F6]  - Position At Camera" ) );
-	strings.push_back( Stringf( "[F7]  - Follow Camera" ) );
-	strings.push_back( Stringf( "[F8]  - Animate Position" ) );
+	strings.push_back( Stringf( "[F4]  - Position At Origin" ) );
+	strings.push_back( Stringf( "[F5]  - Position At Camera" ) );
+	strings.push_back( Stringf( "[F6]  - Follow Camera" ) );
+	strings.push_back( Stringf( "[F7]  - Animate Position" ) );
 	strings.push_back( Stringf( "[g,h] - Gamma: %.2f"						, g_theRenderer->GetGamma() ) );
 	strings.push_back( Stringf( "[0,9] - Ambient Intensity: %.2f"			, m_ambientIntensity ) );
 	strings.push_back( Stringf( "[-,+] - Point Light Intensity: %.2f"		, m_pointLight.intensity ) );
 	strings.push_back( Stringf( "[T]   - Attenuation: (%.2f, %.2f, %.2f)"	, m_pointLight.attenuation.x, m_pointLight.attenuation.y, m_pointLight.attenuation.z ) );
 	strings.push_back( Stringf( "[{,}] - Specular Factor: %.2f"				, m_specularFactor ) );
 	strings.push_back( Stringf( "[;,'] - Specular Power: %.2f"				, m_specularPower ) );
-	strings.push_back( Stringf( "[<,>] - Shader Mode: %s", "Lit" ) );
+	strings.push_back( Stringf( "[<,>] - Shader Mode: %s"					, m_shaderNames[ m_currentShaderIndex ].c_str() ) );
 
 	Vec2 textStartPos = Vec2( paddingFromLeft, m_UICamera->GetCameraDimensions().y - paddingFromTop - textHeight );
 	for( int stringIndex = 0; stringIndex < strings.size(); ++stringIndex )
@@ -277,6 +284,7 @@ void Game::RenderUI() const
 	}
 
 	g_theRenderer->BindShader( (Shader*)nullptr );
+	g_theRenderer->BindNormalTexture( nullptr );
 	g_theRenderer->BindTexture( g_devConsoleFont->GetTexture() );
 	g_theRenderer->DrawVertexArray( textVerts );
 }
@@ -300,6 +308,33 @@ void Game::UpdateObjectRotations( float deltaSeconds )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Game::UpdateLightPositions()
+{
+
+	if( m_isPointLightFollowCamera )
+	{
+		m_pointLight.position = m_worldCamera->GetPosition();
+		return;
+	}
+
+	if( m_isPointLightAnimated )
+	{
+		const float animateRadius = 7.f;
+		Vec3 animateCenter = m_quadTransform->GetPosition();
+		float time = static_cast<float>( m_gameClock->GetTotalElapsedSeconds() );
+		
+		Vec3 lightPosition = animateCenter;
+		lightPosition += Vec3( static_cast<float>( cos( time ) ), 0.f, static_cast<float>( sin( time ) ) ) * animateRadius;
+		m_pointLight.position = lightPosition;
+	}
+
+	Vec3 pointPos = m_pointLight.position;
+	Rgba8 pointColor = Rgba8::MakeFromFloats( m_pointLight.color.x, m_pointLight.color.y, m_pointLight.color.z, GetClampZeroToOne( m_pointLight.intensity ) );
+	DebugAddWorldPoint( pointPos, pointColor, 0.f, DEBUG_RENDER_XRAY );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::TranslateCamera( Camera& camera, const Vec3& directionToMove )
 {
 	//Mat44 cameraView = camera.GetViewMatrix();
@@ -319,18 +354,7 @@ void Game::Update()
 		UpdateFromInput( deltaSeconds );
 	}
 	UpdateObjectRotations( deltaSeconds );
-
-
-	if( !m_isPointLightFollowCamera )
-	{
-		Vec3 pointPos = m_pointLight.position;
-		Rgba8 pointColor = Rgba8::MakeFromFloats( m_pointLight.color.x, m_pointLight.color.y, m_pointLight.color.z, m_pointLight.intensity );
-		DebugAddWorldPoint( pointPos, pointColor, 0.f, DEBUG_RENDER_XRAY );
-	}
-	else
-	{
-		m_pointLight.position = m_worldCamera->GetPosition();
-	}
+	UpdateLightPositions();
 
 	//ChangeClearColor( deltaSeconds );
 }
@@ -449,11 +473,11 @@ void Game::UpdateInputLights( float deltaSeconds )
 		AddSpecFactor( specularFactorUpdateAmount * deltaSeconds );
 	}
 	// Update Specular Power
-	if( g_theInput->IsKeyPressed( KEY_CODE_COMMA ) )
+	if( g_theInput->IsKeyPressed( KEY_CODE_SEMICOLON ) )
 	{
 		AddSpecPower( -specularPowerUpdateAmount * deltaSeconds );
 	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_PERIOD ) )
+	if( g_theInput->IsKeyPressed( KEY_CODE_APOSTROPHE ) )
 	{
 		AddSpecPower( specularPowerUpdateAmount * deltaSeconds );
 	}
@@ -467,26 +491,39 @@ void Game::UpdateInputLights( float deltaSeconds )
 		AddGamma( gammaUpdateAmount * deltaSeconds );
 	}
 	// Update Shader
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_COMMA ) )
+	{
+		ChangeShader( -1 );
+	}
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_PERIOD ) )
+	{
+		ChangeShader( 1 );
+	}
+
 
 
 	//---------------------------------------------------------------------------------------------------------
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_F4 ) )
+	{
+		m_isPointLightFollowCamera = false;
+		m_isPointLightAnimated = false;
+		m_pointLight.position = Vec3::ZERO;
+	}
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F5 ) )
 	{
 		m_isPointLightFollowCamera = false;
-		m_pointLight.position = Vec3::ZERO;
+		m_isPointLightAnimated = false;
+		m_pointLight.position = m_worldCamera->GetPosition();
 	}
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F6 ) )
 	{
-		m_isPointLightFollowCamera = false;
-		m_pointLight.position = m_worldCamera->GetPosition();
+		m_isPointLightAnimated = false;
+		m_isPointLightFollowCamera = !m_isPointLightFollowCamera;
 	}
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F7 ) )
 	{
-		m_isPointLightFollowCamera = !m_isPointLightFollowCamera;
-	}
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_F8 ) )
-	{
-		//TODO - ANIMATE
+		m_isPointLightFollowCamera = false;
+		m_isPointLightAnimated = !m_isPointLightAnimated;
 	}
 }
 
@@ -570,8 +607,12 @@ void Game::AddPointLightIntensity( float intensityToAdd )
 {
 	float newIntensity = m_pointLight.intensity;
 	newIntensity += intensityToAdd;
-
-	m_pointLight.intensity = GetClampZeroToOne( newIntensity );
+	if( newIntensity >= 0.f )
+	{
+		m_pointLight.intensity = newIntensity;
+		return;
+	}
+	m_pointLight.intensity = 0.f;
 }
 
 
@@ -614,11 +655,11 @@ void Game::CycleAttenuationMode()
 	Vec3 currentAttenuation = m_pointLight.attenuation;
 	if( currentAttenuation == Vec3( 0.f, 1.f, 0.f ) )
 	{
-		currentAttenuation = Vec3( 1.f, 0.f, 0.f );
-	}
-	else if( currentAttenuation == Vec3( 1.f, 0.f, 0.f ) )
-	{
 		currentAttenuation = Vec3( 0.f, 0.f, 1.f );
+	}
+	else if( currentAttenuation == Vec3( 0.f, 0.f, 1.f ) )
+	{
+		currentAttenuation = Vec3( 1.f, 0.f, 0.f );
 	}
 	else
 	{
@@ -626,6 +667,30 @@ void Game::CycleAttenuationMode()
 	}
 	m_pointLight.attenuation = currentAttenuation;
 	m_pointLight.specAttenuation = currentAttenuation;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ChangeShader( int direction )
+{
+	int numShaders = static_cast<int>( m_shadersToUse.size() );
+	m_currentShaderIndex += direction;
+	if( m_currentShaderIndex < 0 )
+	{
+		m_currentShaderIndex = numShaders - 1;
+	}
+	else if( m_currentShaderIndex >= numShaders )
+	{
+		m_currentShaderIndex = 0;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddShader( std::string shaderName, Shader* shader )
+{
+	m_shaderNames.push_back( shaderName );
+	m_shadersToUse.push_back( shader );
 }
 
 

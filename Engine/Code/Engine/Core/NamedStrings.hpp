@@ -1,8 +1,8 @@
 #pragma once
-#include <map>
-#include <string>
 #include "Engine/Core/XmlUtils.hpp"
 #include "Engine/Core/Rgba8.hpp"
+#include <string>
+#include <map>
 
 struct Vec2;
 struct Vec3;

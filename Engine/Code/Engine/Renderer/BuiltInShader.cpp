@@ -36,6 +36,7 @@ STATIC const char* BuiltInShader::BUILT_IN_DEFAULT( R"(
 	cbuffer model_constants : register(b2)
 	{
 		float4x4 MODEL;
+		float4 TINT;
 	}
 
 	Texture2D <float4> tDiffuse	: register(t0);
@@ -61,7 +62,7 @@ STATIC const char* BuiltInShader::BUILT_IN_DEFAULT( R"(
 		v2f_t v2f = (v2f_t)0;
 
 		v2f.position = float4( input.position, 1.0f );
-		v2f.color = input.color;
+		v2f.color = input.color * TINT;
 		v2f.uv = input.uv;
 
 		float4 worldPos = float4( input.position, 1 );

@@ -97,7 +97,6 @@ struct v2f_t
    float3 world_position : POSITION;
    float3 world_normal : NORMAL;
    float3 world_tangent : TANGENT;
-   float3 world_bitangent : BITANGENT;
 }; 
 
 float RangeMap( float val, float inMin, float inMax, float outMin, float outMax )
@@ -120,10 +119,8 @@ v2f_t VertexFunction( vs_input_t input )
 
    float4 local_normal = float4( input.normal, 0.0f );
    float4 local_tangent = float4( input.tangent, 0.0f );
-   float4 local_bitangent = float4( input.bitangent, 0.0f );
    float4 world_normal = mul( MODEL, local_normal );
    float4 world_tangent = mul( MODEL, local_tangent );
-   float4 world_bitangent = mul( MODEL, local_bitangent );
 
    v2f.position = clip_position;
    v2f.color = input.color * TINT;
@@ -131,7 +128,6 @@ v2f_t VertexFunction( vs_input_t input )
    v2f.world_position = world_position.xyz;
    v2f.world_normal = world_normal.xyz;
    v2f.world_tangent = world_tangent.xyz;
-   v2f.world_bitangent = world_bitangent.xyz;
 
    return v2f;
 }
@@ -143,55 +139,17 @@ v2f_t VertexFunction( vs_input_t input )
 // is being drawn to the first bound color target.
 float4 FragmentFunction( v2f_t input ) : SV_Target0
 {
-	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
-
 	float3 normal = normalize( input.world_normal );
 	float3 tangent = normalize( input.world_tangent );
-	float3 bitangent = normalize( input.world_bitangent );
+	float3 bitangent = normalize( cross( input.world_normal, input.world_tangent ) );
 	float3x3 tbn = float3x3( tangent, bitangent, normal );
 
-	float4 texture_color = tDiffuse.Sample( sSampler, input.uv );
 	float4 normal_color = tNormal.Sample( sSampler, input.uv );
 
-	float3 surface_color = pow( texture_color.xyz, INVERSE_GAMMA.xxx );
-	surface_color *= input.color.xyz;
-	float surface_alpha = ( input.color.a * texture_color.a );
-
-	float3 diffuse = AMBIENT.xyz * AMBIENT.w;
 	float3 surface_normal = ( normal_color.xyz * float3( 2.0f, 2.0f, 1.0f ) ) - float3( 1.0f, 1.0f, 0.0f );
-	float3 world_normal = normalize( mul( surface_normal, tbn ) );
-	//return float4( world_normal, 1.f );
+	float3 world_normal = mul( surface_normal, tbn );
+	float3 world_normal_as_color = ( world_normal + float3( 1.0f, 1.0f, 0.0f ) ) * float3( 0.5f, 0.5f, 1.0f );
 
-	float3 light_color = LIGHT.color.xyz;
-	float3 light_position = LIGHT.world_position;
-	float3 vec_to_light = light_position - input.world_position;
-	float dist_to_light = length( vec_to_light );
-	float3 dir_to_light = normalize( vec_to_light );
-	float3 att_vec = float3( 1.0f, dist_to_light, dist_to_light * dist_to_light );
-
-	float diffuse_att = LIGHT.intensity / dot( att_vec, LIGHT.attenuation );
-	float specular_att = LIGHT.intensity / dot( att_vec, LIGHT.spec_attenuation );
-
-	//Diffuse
-	float dot3 = max( 0.0f, dot( dir_to_light, world_normal ) );
-
-	//Specular
-	//Phong
-	//float3 dir_to_light_reflect = reflect( -dir_to_light, input.world_normal );
-	//float specular = max( 0.0f, dot( dir_to_light_reflect, dir_to_eye ) );
-
-	//Blinn-Phong
-	float3 half_vector = normalize( dir_to_light + dir_to_eye );
-	float specular = max( 0.0f, dot( world_normal, half_vector ) );
-	specular = SPECULAR_FACTOR * pow( specular, SPECULAR_POWER );
-	specular *= specular_att;
-
-	diffuse += dot3 * diffuse_att * light_color;
-	float3 specular_color = light_color * specular;
-
-	diffuse = saturate( diffuse );
-
-	float3 final_color = diffuse * surface_color + specular_color;
-	final_color = pow( final_color.xyz, GAMMA );
-	return float4( final_color, surface_alpha );
+	float3 final_color = world_normal_as_color;
+	return float4( final_color, 1.f );
 }
