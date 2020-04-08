@@ -154,7 +154,7 @@ void DebugRenderObject::Draw()
 		context->SetFillMode( FILL_MODE_SOLID );
 	}
 
- 	context->SetModelMatrix( m_transformMatrix );
+ 	context->SetModelUBO( m_transformMatrix );
  	context->BindTexture( m_texture );
  	context->BindShader( (Shader*)nullptr );
 

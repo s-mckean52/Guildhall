@@ -97,6 +97,7 @@ void RenderContext::StartUp( Window* theWindow )
 
 	m_samplerDefault = new Sampler( this, SAMPLER_POINT );
 	m_textueDefaultColor = CreateTextureFromColor( Rgba8::WHITE );
+	m_textureDefaultNormalColor = CreateTextureFromColor( Rgba8( 127, 127, 255, 255 ) );
 
 	SetGameClock( nullptr );
 	CreateBlendStates();
@@ -106,7 +107,7 @@ void RenderContext::StartUp( Window* theWindow )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::BeginFrame()
 {
-	UpdateFrameTime();
+	UpdateFrameUBO();
 }
 
 
@@ -153,13 +154,23 @@ void RenderContext::ShutDown()
 
 
 //---------------------------------------------------------------------------------------------------------
-void RenderContext::UpdateFrameTime()
+void RenderContext::UpdateFrameUBO()
 {
 	frame_data_t frameData;
 	frameData.system_time = static_cast<float>( m_gameClock->GetTotalElapsedSeconds() );
 	frameData.system_delta_time = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
+	frameData.gamma = m_gamma;
+	frameData.inverseGamma = m_inverseGamma;
 
 	m_frameUBO->Update( &frameData, sizeof( frameData ), sizeof( frameData ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::UpdateGamma( float gamma )
+{
+	m_gamma = gamma;
+	m_inverseGamma = 1.f / gamma;
 }
 
 
@@ -268,6 +279,7 @@ void RenderContext::BeginCamera( Camera& camera )
 	m_context->ClearState();
 	
 	SetBlendMode( BlendMode::ALPHA );
+	m_currentVertexLayout = nullptr;
 
 	Texture* colorTarget = camera.GetColorTarget();
 	if( colorTarget == nullptr )
@@ -318,7 +330,7 @@ void RenderContext::BeginCamera( Camera& camera )
 
 	camera.UpdateCameraUBO();
 	UpdateLightUBO();
-	SetModelMatrix( Mat44::IDENTITY );
+	SetModelUBO( Mat44::IDENTITY );
 
 	BindUniformBuffer( UBO_FRAME_SLOT, m_frameUBO );
 	BindUniformBuffer( UBO_CAMERA_SLOT, camera.GetUBO() );
@@ -466,20 +478,23 @@ void RenderContext::DrawMesh( GPUMesh* mesh )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::UpdateCurrentLayout( buffer_attribute_t const* newLayout )
 {
-	ID3D11InputLayout* inputLayout = m_currentShader->GetOrCreateInputLayout( newLayout );
-	if( inputLayout != m_currentLayout )
+	if( newLayout != m_currentVertexLayout )
 	{
-		m_currentLayout = inputLayout;
+		ID3D11InputLayout* inputLayout = m_currentShader->GetOrCreateInputLayout( newLayout );
+		m_context->IASetInputLayout( inputLayout );
+		m_currentVertexLayout = newLayout;
 	}
-	m_context->IASetInputLayout( m_currentLayout );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void RenderContext::SetModelMatrix( Mat44 const& modelMatrix )
+void RenderContext::SetModelUBO( Mat44 const& modelMatrix, Rgba8 const& modelTint, float specularFactor, float specularPower )
 {
-	model_matrix_t modelData;
-	modelData.model = modelMatrix;
+	model_data_t modelData;
+	modelData.model				= modelMatrix;
+	modelData.specularFactor	= specularFactor;
+	modelData.specularPower		= specularPower;
+	modelData.tint				= modelTint.GetValuesAsFractions();
 
 	m_modelUBO->Update( &modelData, sizeof( modelData ), sizeof( modelData ) );
 }
@@ -817,7 +832,21 @@ void RenderContext::BindTexture( const Texture* constTexture )
 	TextureView* shaderResourceView = texture->GetOrCreateShaderResourceView();
 	ID3D11ShaderResourceView* srvHandle = shaderResourceView->GetAsSRV();
 	m_context->PSSetShaderResources( 0, 1, &srvHandle ); //srv
+}
 
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::BindNormalTexture( const Texture* constTexture )
+{
+	Texture* texture = const_cast<Texture*>( constTexture );
+	if( constTexture == nullptr )
+	{
+		texture = m_textureDefaultNormalColor;
+	}
+
+	TextureView* shaderResourceView = texture->GetOrCreateShaderResourceView();
+	ID3D11ShaderResourceView* srvHandle = shaderResourceView->GetAsSRV();
+	m_context->PSSetShaderResources( 1, 1, &srvHandle ); //srv
 }
 
 

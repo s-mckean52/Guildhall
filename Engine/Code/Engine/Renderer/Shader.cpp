@@ -204,10 +204,12 @@ const char* Shader::GetFilePath() const
 //---------------------------------------------------------------------------------------------------------
 ID3D11InputLayout* Shader::GetOrCreateInputLayout( buffer_attribute_t const* attribute )
 {
-	if( m_inputLayout != nullptr )
+	if( m_lastBoundLayout == attribute )
 	{
 		return m_inputLayout;
 	}
+	
+	DX_SAFE_RELEASE( m_inputLayout );
 
 	int vertDescIndex = 0;
 	D3D11_INPUT_ELEMENT_DESC newVertexAttribute;

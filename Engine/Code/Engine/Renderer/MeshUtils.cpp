@@ -534,9 +534,9 @@ void AddUVSphereToIndexedVertexArray( std::vector<Vertex_Master>& verts, std::ve
 			float v = RangeMapFloat( -90.f, 90.f, 0.f, 1.f, currentPsiDegrees );
 			Vec2 vertUV = Vec2( u, v );
 
-			Vec3 tangent = Vec3( -sinTheta, 0.f, cosTheta ).GetNormalize();
-			Vec3 bitangent = Vec3( -sinPsi * sinTheta , cosPsi, -sinPsi * cosTheta ).GetNormalize();
-			Vec3 normal = CrossProduct3D( tangent, bitangent );
+			Vec3 tangent = Vec3( -sinTheta, 0.f, -cosTheta );
+			Vec3 normal = Vec3( cosPsi * cosTheta, sinPsi, -cosPsi * sinTheta );
+			Vec3 bitangent = CrossProduct3D( normal, tangent );
 
 			verts.push_back( Vertex_Master( vertPosition, color, tangent, bitangent, normal, vertUV ) );
 			currentThetaDegrees += deltaThetaDegrees;
@@ -570,7 +570,7 @@ void AddUVSphereToIndexedVertexArray( std::vector<Vertex_Master>& verts, std::ve
 
 
 //---------------------------------------------------------------------------------------------------------
-void AddUVSphereToIndexedVertexArray(std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, Vec3 const& center, float radius, unsigned int horizontalCuts, unsigned int verticalCuts, Rgba8 const& color)
+void AddUVSphereToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<unsigned int>& indices, Vec3 const& center, float radius, unsigned int horizontalCuts, unsigned int verticalCuts, Rgba8 const& color )
 {
 	std::vector<Vertex_Master> masterVerts;
 	AddUVSphereToIndexedVertexArray( masterVerts, indices, center, radius, horizontalCuts, verticalCuts, color );
@@ -579,7 +579,7 @@ void AddUVSphereToIndexedVertexArray(std::vector<Vertex_PCU>& verts, std::vector
 
 
 //---------------------------------------------------------------------------------------------------------
-void AddUVSphereToIndexedVertexArray(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indices, Vec3 const& center, float radius, unsigned int horizontalCuts, unsigned int verticalCuts, Rgba8 const& color)
+void AddUVSphereToIndexedVertexArray( std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indices, Vec3 const& center, float radius, unsigned int horizontalCuts, unsigned int verticalCuts, Rgba8 const& color )
 {
 	std::vector<Vertex_Master> masterVerts;
 	AddUVSphereToIndexedVertexArray( masterVerts, indices, center, radius, horizontalCuts, verticalCuts, color );

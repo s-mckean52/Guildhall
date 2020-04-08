@@ -60,6 +60,7 @@ public:
 	ShaderStage m_fragmentStage;
 	RenderContext* m_owner = nullptr;
 
+	buffer_attribute_t const* m_lastBoundLayout = nullptr;
 	ID3D11InputLayout* m_inputLayout = nullptr;
 };
 

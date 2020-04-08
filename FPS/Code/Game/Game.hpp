@@ -44,6 +44,10 @@ public:
 	void UpdateCameras( float deltaSeconds );
 	void AddAmbientLightIntensity( float intensityToAdd );
 	void AddPointLightIntensity( float intensityToAdd );
+	void AddGamma( float gammaToAdd );
+	void AddSpecFactor( float factorToAdd );
+	void AddSpecPower( float powerToAdd );
+	void CycleAttenuationMode();
 
 
 	//Static
@@ -83,6 +87,7 @@ private:
 
 	Texture* m_testImage		= nullptr;
 	Texture* m_pokeball			= nullptr;
+	Texture* m_normalMap		= nullptr;
 	
 	Shader* m_currentShaderToUse	= nullptr;
 	Shader* m_invertColorShader		= nullptr;
@@ -92,6 +97,9 @@ private:
 	Shader* m_tangentsShader		= nullptr;
 	Shader* m_bitangentsShader		= nullptr;
 	Shader* m_sufaceNormalsShader	= nullptr;
+
+	float m_specularFactor = 0.f;
+	float m_specularPower = 32.f;
 
 	Rgba8	m_clearColor = Rgba8::BLACK;
 	float	m_colorChangeDelay = 1.f;

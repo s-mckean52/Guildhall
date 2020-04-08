@@ -71,18 +71,26 @@ struct frame_data_t
 	float system_time;
 	float system_delta_time;
 
-	float padding[2];
+	float gamma;
+	float inverseGamma;
 };
 
 struct camera_data_t
 {				  
 	Mat44 projection;
 	Mat44 view;
+	Mat44 model;
+	Vec3 position;
+	float padding;
 };
 
-struct model_matrix_t
+struct model_data_t
 {
 	Mat44 model;
+	Vec4 tint;
+	float specularFactor;
+	float specularPower;
+	Vec2 padding;
 };
 
 struct light_data_t
@@ -100,7 +108,9 @@ public:
 	void EndFrame();
 	void ShutDown();
 
-	void UpdateFrameTime();
+	void UpdateFrameUBO();
+	void UpdateGamma( float gamma );
+	float GetGamma() const			{ return m_gamma; }
 	
 	void SetGameClock( Clock* clock );
 	void SetBlendMode( BlendMode blendMode );
@@ -122,7 +132,7 @@ public:
 	void DrawMesh( GPUMesh* mesh );
 	void UpdateCurrentLayout( buffer_attribute_t const* newLayout );
 
-	void		SetModelMatrix( Mat44 const& modelMatrix );
+	void		SetModelUBO( Mat44 const& modelMatrix, Rgba8 const& modelTint = Rgba8::WHITE, float specularFactor = 1.f, float specularPower = 1.f );
 	void		SetCullMode( CullMode cullMode );
 	void		SetFillMode( FillMode fillMode );
 	void		SetFrontFaceWindOrder( bool isCounterClockwise );
@@ -134,6 +144,7 @@ public:
 	void		BindUniformBuffer( unsigned int slot, RenderBuffer* ubo );
 	void		BindSampler( Sampler* sampler );
 	void		BindTexture( const Texture* constTexture );
+	void		BindNormalTexture( const Texture* constTexture );
 
 	Texture*	CreateOrGetTextureFromFile( const char* imageFilePath );
 	BitmapFont* CreateOrGetBitmapFontFromFile( const char* imageFilePath );
@@ -168,6 +179,8 @@ private:
 private:
 	Clock* m_gameClock = nullptr;
 
+	float m_gamma = 2.f;
+	float m_inverseGamma = 1 / m_gamma;
 	Vec4 m_ambientLight = Vec4( 1.f, 1.f, 1.f, 1.f );
 	Light m_lights[8];
 
@@ -191,14 +204,15 @@ public:
 	Shader*						m_defaultShader				= nullptr;
 	Shader*						m_errorShader				= nullptr;
 	Texture*					m_textueDefaultColor		= nullptr;
+	Texture*					m_textureDefaultNormalColor	= nullptr;
 	Sampler*					m_samplerDefault			= nullptr;
 	VertexBuffer*				m_immediateVBO				= nullptr;
-	ID3D11InputLayout*			m_currentLayout				= nullptr;			
 	IndexBuffer*				m_immediateIBO				= nullptr;
 	RenderBuffer*				m_frameUBO					= nullptr;
 	RenderBuffer*				m_modelUBO					= nullptr;
 	RenderBuffer*				m_lightUBO					= nullptr;
 	Texture*					m_defaultDepthStencil		= nullptr;
+	buffer_attribute_t const*	m_currentVertexLayout		= nullptr;			
 
 	ID3D11BlendState* m_alphaBlendStateHandle		= nullptr;
 	ID3D11BlendState* m_additiveBlendStateHandle	= nullptr;

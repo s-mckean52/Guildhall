@@ -287,6 +287,8 @@ void Camera::UpdateCameraUBO()
 {
 	camera_data_t cameraData;
 	cameraData.projection = m_projection;
+	cameraData.model = m_transform.ToMatrix();
+	cameraData.position = GetPosition();
 	
 	UpdateViewMatrix();
 	cameraData.view = m_view;

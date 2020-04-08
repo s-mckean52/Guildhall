@@ -112,9 +112,10 @@ void Game::StartUp()
 	m_cubeTransform->SetPosition( Vec3( 5.f, 0.f, -12.f ) );
 	m_sphereTransform->SetPosition( Vec3( -5.f, 0.f, -12.f ) );
 
-	m_testImage			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
-	m_pokeball			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/pokeball.png" );
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
+	m_testImage			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/example_color.png" );
+	m_pokeball			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/pokeball.png" );
+	m_normalMap			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/example_normal.png" );
 
 	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
 	m_litShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Lit.hlsl" );
@@ -197,20 +198,19 @@ void Game::RenderWorld() const
 {
 	//RenderRingOfSpheres();
 	g_theRenderer->BindShader( m_litShader );
+	g_theRenderer->BindTexture( m_testImage );
+	g_theRenderer->BindNormalTexture( m_normalMap );
 
 	//Render Quad
-	g_theRenderer->SetModelMatrix( m_quadTransform->ToMatrix() );
-	g_theRenderer->BindTexture( nullptr );
+	g_theRenderer->SetModelUBO( m_quadTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_quad );
 
 	//Render Sphere
-	g_theRenderer->SetModelMatrix( m_sphereTransform->ToMatrix() );
-	g_theRenderer->BindTexture( nullptr );
+	g_theRenderer->SetModelUBO( m_sphereTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_uvSphere );
 
 	//Render Cube
-	g_theRenderer->SetModelMatrix( m_cubeTransform->ToMatrix() );
-	g_theRenderer->BindTexture( m_testImage );
+	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_meshCube );
 
 }
@@ -239,7 +239,7 @@ void Game::RenderRingOfSpheres() const
 		Vec3 worldPosition = ringMat.TransformPosition3D( Vec3( ringRadius, 0.f, 0.f ) );
 		sphereMat.SetTranslation3D( worldPosition );
 
-		g_theRenderer->SetModelMatrix( sphereMat );
+		g_theRenderer->SetModelUBO( sphereMat );
 		g_theRenderer->DrawMesh( m_uvSphere );
 
 		currentAngleDegrees += degreeStep;
@@ -261,12 +261,12 @@ void Game::RenderUI() const
 	strings.push_back( Stringf( "[F6]  - Position At Camera" ) );
 	strings.push_back( Stringf( "[F7]  - Follow Camera" ) );
 	strings.push_back( Stringf( "[F8]  - Animate Position" ) );
-	strings.push_back( Stringf( "[g,h] - Gamma: %.2f"						, 1.123456f ) );
+	strings.push_back( Stringf( "[g,h] - Gamma: %.2f"						, g_theRenderer->GetGamma() ) );
 	strings.push_back( Stringf( "[0,9] - Ambient Intensity: %.2f"			, m_ambientIntensity ) );
 	strings.push_back( Stringf( "[-,+] - Point Light Intensity: %.2f"		, m_pointLight.intensity ) );
-	strings.push_back( Stringf( "[T]   - Attenuation: (%.2f, %.2f, %.2f)"	, 0.f, 0.f, 1.f ) );
-	strings.push_back( Stringf( "[{,}] - Specular Factor: %.2f"				, 0.1234f ) );
-	strings.push_back( Stringf( "[;,'] - Specular Power: %.2f"				, 5.12345f ) );
+	strings.push_back( Stringf( "[T]   - Attenuation: (%.2f, %.2f, %.2f)"	, m_pointLight.attenuation.x, m_pointLight.attenuation.y, m_pointLight.attenuation.z ) );
+	strings.push_back( Stringf( "[{,}] - Specular Factor: %.2f"				, m_specularFactor ) );
+	strings.push_back( Stringf( "[;,'] - Specular Power: %.2f"				, m_specularPower ) );
 	strings.push_back( Stringf( "[<,>] - Shader Mode: %s", "Lit" ) );
 
 	Vec2 textStartPos = Vec2( paddingFromLeft, m_UICamera->GetCameraDimensions().y - paddingFromTop - textHeight );
@@ -412,31 +412,61 @@ void Game::UpdateInputLights( float deltaSeconds )
 {
 	const float ambientIntensityUpdateAmount = 0.5f;
 	const float pointLightIntensityUpdateAmount = 0.5f;
+	const float specularFactorUpdateAmount = 0.5f;
+	const float specularPowerUpdateAmount = 1.5f;
+	const float gammaUpdateAmount = 0.75;
 
+	// Update Ambinet Intensity
 	if( g_theInput->IsKeyPressed( '9' ) )
 	{
 		AddAmbientLightIntensity( -ambientIntensityUpdateAmount * deltaSeconds );
 	}
-
 	if( g_theInput->IsKeyPressed( '0' ) )
 	{
 		AddAmbientLightIntensity( ambientIntensityUpdateAmount * deltaSeconds );
 	}
-
+	// Cycle Attenuation Mode
 	if( g_theInput->WasKeyJustPressed( 'T' ) )
 	{
-		//CycleAttenuationMode();
+		CycleAttenuationMode();
 	}
-
+	// Update Point Light Intensity
 	if( g_theInput->IsKeyPressed( KEY_CODE_PLUS ) )
 	{
 		AddPointLightIntensity( pointLightIntensityUpdateAmount * deltaSeconds );
 	}
-
 	if( g_theInput->IsKeyPressed( KEY_CODE_MINUS ) )
 	{
 		AddPointLightIntensity( -pointLightIntensityUpdateAmount * deltaSeconds );
 	}
+	// Update Specular Factor
+	if( g_theInput->IsKeyPressed( KEY_CODE_LEFT_BRACKET ) )
+	{
+		AddSpecFactor( -specularFactorUpdateAmount * deltaSeconds );
+	}
+	if( g_theInput->IsKeyPressed( KEY_CODE_RIGHT_BRACKET ) )
+	{
+		AddSpecFactor( specularFactorUpdateAmount * deltaSeconds );
+	}
+	// Update Specular Power
+	if( g_theInput->IsKeyPressed( KEY_CODE_COMMA ) )
+	{
+		AddSpecPower( -specularPowerUpdateAmount * deltaSeconds );
+	}
+	if( g_theInput->IsKeyPressed( KEY_CODE_PERIOD ) )
+	{
+		AddSpecPower( specularPowerUpdateAmount * deltaSeconds );
+	}
+	// Update Gamma
+	if( g_theInput->IsKeyPressed( 'G' ) )
+	{
+		AddGamma( -gammaUpdateAmount * deltaSeconds );
+	}
+	if( g_theInput->IsKeyPressed( 'H' ) )
+	{
+		AddGamma( gammaUpdateAmount * deltaSeconds );
+	}
+	// Update Shader
 
 
 	//---------------------------------------------------------------------------------------------------------
@@ -546,6 +576,60 @@ void Game::AddPointLightIntensity( float intensityToAdd )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Game::AddGamma( float gammaToAdd )
+{
+	float newGamma = g_theRenderer->GetGamma();
+	newGamma += gammaToAdd;
+	Clamp( newGamma, 0.25f, 4.f );
+	g_theRenderer->UpdateGamma( newGamma );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddSpecFactor( float factorToAdd )
+{
+	float newSpecFactor = m_specularFactor;
+	newSpecFactor += factorToAdd;
+	m_specularFactor = GetClampZeroToOne( newSpecFactor );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddSpecPower( float powerToAdd )
+{
+	float newSpecPower = m_specularPower;
+	newSpecPower += powerToAdd;
+	if (newSpecPower >= 1.f)
+	{
+		m_specularPower = newSpecPower;
+		return;
+	}
+	m_specularPower = 1.f;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::CycleAttenuationMode()
+{
+	Vec3 currentAttenuation = m_pointLight.attenuation;
+	if( currentAttenuation == Vec3( 0.f, 1.f, 0.f ) )
+	{
+		currentAttenuation = Vec3( 1.f, 0.f, 0.f );
+	}
+	else if( currentAttenuation == Vec3( 1.f, 0.f, 0.f ) )
+	{
+		currentAttenuation = Vec3( 0.f, 0.f, 1.f );
+	}
+	else
+	{
+		currentAttenuation = Vec3( 0.f, 1.f, 0.f );
+	}
+	m_pointLight.attenuation = currentAttenuation;
+	m_pointLight.specAttenuation = currentAttenuation;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 STATIC Vec3 Game::ParabolaEquation( float x, float y )
 {
 	UNUSED( y );
@@ -577,7 +661,7 @@ STATIC void Game::light_set_ambient_color( NamedStrings* args )
 	Vec3 ambientColor = args->GetValue( "color", defaultAmbientColor );
 
 	Rgba8 ambientRGBA8 = Rgba8::MakeFromFloats( ambientColor.x, ambientColor.y, ambientColor.z, 0.f );
-	g_theRenderer->SetAmbientColor( ambientRGBA8 );
+	g_theGame->m_ambientColor = ambientRGBA8;
 }
 
 
