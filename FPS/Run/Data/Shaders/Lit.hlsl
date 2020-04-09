@@ -174,10 +174,11 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 
 	//Diffuse
 	float dot3 = max( 0.0f, dot( dir_to_light, world_normal ) );
+	float facing = smoothstep( -0.5, 0.0f, dot( dir_to_light, world_normal ) );
 
 	//Specular
 	//Phong
-	//float3 dir_to_light_reflect = reflect( -dir_to_light, input.world_normal );
+	//float3 dir_to_light_reflect = reflect( -dir_to_light, world_normal );
 	//float specular = max( 0.0f, dot( dir_to_light_reflect, dir_to_eye ) );
 
 	//Blinn-Phong
@@ -185,6 +186,8 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 	float specular = max( 0.0f, dot( world_normal, half_vector ) );
 	specular = SPECULAR_FACTOR * pow( specular, SPECULAR_POWER );
 	specular *= specular_att;
+
+	specular *= facing;
 
 	diffuse += dot3 * diffuse_att * light_color;
 	float3 specular_color = light_color * specular;
