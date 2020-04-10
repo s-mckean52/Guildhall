@@ -153,7 +153,7 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 	float4 texture_color = tDiffuse.Sample( sSampler, input.uv );
 	float4 normal_color = tNormal.Sample( sSampler, input.uv );
 
-	float3 surface_color = pow( texture_color.xyz, INVERSE_GAMMA.xxx );
+	float3 surface_color = pow( texture_color.xyz, GAMMA.xxx );
 	surface_color *= input.color.xyz;
 	float surface_alpha = ( input.color.a * texture_color.a );
 
@@ -195,6 +195,6 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 	diffuse = saturate( diffuse );
 
 	float3 final_color = diffuse * surface_color + specular_color;
-	final_color = pow( final_color.xyz, GAMMA );
+	final_color = pow(final_color.xyz, INVERSE_GAMMA);
 	return float4( final_color, surface_alpha );
 }
