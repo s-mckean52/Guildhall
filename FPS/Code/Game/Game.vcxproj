@@ -203,6 +203,7 @@
     <ClCompile Include="Main_Windows.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnimatedLight.hpp" />
     <ClInclude Include="App.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />
     <ClInclude Include="Entity.hpp" />

@@ -8,15 +8,18 @@ struct Light
 public:
 	Vec3 position;
 	float intensity = 0.f;
-
+	
+	Vec3 direction = Vec3::FORWARD;
+	float cosInnerHalfAngle = 360.f;
+	
 	Vec3 color = Vec3::UNIT;
-	float padding_00 = 0.f;
-
+	float cosOutterHalfAngle = 360.f;
+	
 	Vec3 attenuation = Vec3( 0.f, 1.f, 0.f );
-	float padding_01 = 0.f;
-
+	float isDirectional = 0.f;
+	
 	Vec3 specAttenuation = Vec3( 0.f, 1.f, 0.f );
-	float padding_02 = 0.f;
+	float padding = 0.f;
 
 public:
 	Light() = default;

@@ -53,5 +53,8 @@
     <ClInclude Include="GameCommon.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
+    <ClInclude Include="AnimatedLight.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

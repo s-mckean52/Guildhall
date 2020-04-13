@@ -27,7 +27,6 @@
 #include "Engine/Core/Vertex_Master.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Core/Vertex_PCUTBN.hpp"
-#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Time.hpp"
@@ -179,7 +178,10 @@ void RenderContext::UpdateLightUBO()
 {
 	light_data_t lightData;
 	lightData.ambient = m_ambientLight;
-	lightData.light = m_lights[0];
+	for( int lightIndex = 0; lightIndex < MAX_LIGHTS; ++lightIndex )
+	{
+		lightData.lights[lightIndex] = m_lights[lightIndex];
+	}
 
 	m_lightUBO->Update( &lightData, sizeof( lightData ), sizeof( lightData ) );
 }

@@ -185,7 +185,7 @@ void Game::Render() const
 
 	g_theRenderer->DisableAllLights();
 	g_theRenderer->SetAmbientLight( m_ambientColor, m_ambientIntensity );
-	g_theRenderer->EnableLight( 0, m_pointLight );
+	EnableLightsForRendering();
 
 	RenderWorld();
 
@@ -264,14 +264,17 @@ void Game::RenderUI() const
 	std::vector<std::string> strings;
 	std::vector<Vertex_PCU> textVerts;
 
+	Light currentLight = m_animatedLights[m_selectedLight].light;
+
+	strings.push_back( Stringf( "Current Light[%i] - %s"					, m_selectedLight, "Point" ) );
 	strings.push_back( Stringf( "[F4]  - Position At Origin" ) );
 	strings.push_back( Stringf( "[F5]  - Position At Camera" ) );
 	strings.push_back( Stringf( "[F6]  - Follow Camera" ) );
 	strings.push_back( Stringf( "[F7]  - Animate Position" ) );
 	strings.push_back( Stringf( "[g,h] - Gamma: %.2f"						, g_theRenderer->GetGamma() ) );
 	strings.push_back( Stringf( "[0,9] - Ambient Intensity: %.2f"			, m_ambientIntensity ) );
-	strings.push_back( Stringf( "[-,+] - Point Light Intensity: %.2f"		, m_pointLight.intensity ) );
-	strings.push_back( Stringf( "[T]   - Attenuation: (%.2f, %.2f, %.2f)"	, m_pointLight.attenuation.x, m_pointLight.attenuation.y, m_pointLight.attenuation.z ) );
+	strings.push_back( Stringf( "[-,+] - Point Light Intensity: %.2f"		, currentLight.intensity ) );
+	strings.push_back( Stringf( "[T]   - Attenuation: (%.2f, %.2f, %.2f)"	, currentLight.attenuation.x, currentLight.attenuation.y, currentLight.attenuation.z ) );
 	strings.push_back( Stringf( "[{,}] - Specular Factor: %.2f"				, m_specularFactor ) );
 	strings.push_back( Stringf( "[;,'] - Specular Power: %.2f"				, m_specularPower ) );
 	strings.push_back( Stringf( "[<,>] - Shader Mode: %s"					, m_shaderNames[ m_currentShaderIndex ].c_str() ) );
@@ -287,6 +290,16 @@ void Game::RenderUI() const
 	g_theRenderer->BindNormalTexture( nullptr );
 	g_theRenderer->BindTexture( g_devConsoleFont->GetTexture() );
 	g_theRenderer->DrawVertexArray( textVerts );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::EnableLightsForRendering() const
+{
+	for( unsigned int lightIndex = 0; lightIndex < MAX_LIGHTS; ++lightIndex )
+	{
+		g_theRenderer->EnableLight( lightIndex, m_animatedLights[lightIndex].light );
+	}
 }
 
 
@@ -310,27 +323,64 @@ void Game::UpdateObjectRotations( float deltaSeconds )
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateLightPositions()
 {
-
-	if( m_isPointLightFollowCamera )
+	for( unsigned int lightIndex = 0; lightIndex < MAX_LIGHTS; ++lightIndex )
 	{
-		m_pointLight.position = m_worldCamera->GetPosition();
-		return;
+		Light currentLight = m_animatedLights[ lightIndex ].light;
+		switch( m_animatedLights->moveType )
+		{
+		case LIGHT_MOVEMENT_FOLLOW:
+		{
+			currentLight.position = m_worldCamera->GetPosition();
+			break;
+		}
+		case LIGHT_MOVEMENT_ANIMATED:
+		{
+			const float animateRadius = 7.f;
+			Vec3 animateCenter = m_quadTransform->GetPosition();
+			float time = static_cast<float>(m_gameClock->GetTotalElapsedSeconds());
+
+			Vec3 lightPosition = animateCenter;
+			lightPosition += Vec3(static_cast<float>(cos(time)), 0.f, static_cast<float>(sin(time))) * animateRadius;
+			currentLight.position = lightPosition;
+		}
+		case LIGHT_MOVEMENT_STATIONARY:
+		{
+			Vec3 pointPos = currentLight.position;
+			Rgba8 pointColor = Rgba8::MakeFromFloats( currentLight.color.x, currentLight.color.y, currentLight.color.z, GetClampZeroToOne( currentLight.intensity ) );
+			DebugAddWorldPoint( pointPos, pointColor, 0.f, DEBUG_RENDER_XRAY );
+			break;
+		}
+		default:
+			break;
+		}
+
+		m_animatedLights[ lightIndex ].light = currentLight;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::CycleLightToModify()
+{
+	int currentlySelectedLight = m_selectedLight;
+	if( g_theInput->WasKeyJustPressed( 'Q' ) )
+	{
+		currentlySelectedLight -= 1;
+	}
+	if( g_theInput->WasKeyJustPressed( 'E' ) )
+	{
+		currentlySelectedLight += 1;
 	}
 
-	if( m_isPointLightAnimated )
+	if( currentlySelectedLight > static_cast<int>( MAX_LIGHTS - 1 ) )
 	{
-		const float animateRadius = 7.f;
-		Vec3 animateCenter = m_quadTransform->GetPosition();
-		float time = static_cast<float>( m_gameClock->GetTotalElapsedSeconds() );
-		
-		Vec3 lightPosition = animateCenter;
-		lightPosition += Vec3( static_cast<float>( cos( time ) ), 0.f, static_cast<float>( sin( time ) ) ) * animateRadius;
-		m_pointLight.position = lightPosition;
+		currentlySelectedLight = 0;
 	}
-
-	Vec3 pointPos = m_pointLight.position;
-	Rgba8 pointColor = Rgba8::MakeFromFloats( m_pointLight.color.x, m_pointLight.color.y, m_pointLight.color.z, GetClampZeroToOne( m_pointLight.intensity ) );
-	DebugAddWorldPoint( pointPos, pointColor, 0.f, DEBUG_RENDER_XRAY );
+	else if( currentlySelectedLight < 0 )
+	{
+		currentlySelectedLight = MAX_LIGHTS - 1;
+	}
+	m_selectedLight = currentlySelectedLight;
 }
 
 
@@ -378,7 +428,7 @@ void Game::UpdateFromInput( float deltaSeconds )
 		m_worldCamera->SetPitchYawRollRotationDegrees( 0.f, 0.f, 0.0f );
 	}
 
-	UpdateDrawDebugObjects();
+	//UpdateDrawDebugObjects();
 	UpdateInputLights( deltaSeconds );
 }
 
@@ -434,6 +484,8 @@ void Game::UpdateDrawDebugObjects()
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateInputLights( float deltaSeconds )
 {
+	CycleLightToModify();
+
 	const float ambientIntensityUpdateAmount = 0.5f;
 	const float pointLightIntensityUpdateAmount = 0.5f;
 	const float specularFactorUpdateAmount = 0.5f;
@@ -505,25 +557,25 @@ void Game::UpdateInputLights( float deltaSeconds )
 	//---------------------------------------------------------------------------------------------------------
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F4 ) )
 	{
-		m_isPointLightFollowCamera = false;
-		m_isPointLightAnimated = false;
-		m_pointLight.position = Vec3::ZERO;
+		m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_STATIONARY;
+		m_animatedLights[m_selectedLight].light.position = Vec3::ZERO;
 	}
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F5 ) )
-	{
-		m_isPointLightFollowCamera = false;
-		m_isPointLightAnimated = false;
-		m_pointLight.position = m_worldCamera->GetPosition();
+	{	
+		m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_STATIONARY;
+		m_animatedLights[m_selectedLight].light.position = m_worldCamera->GetPosition();
 	}
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F6 ) )
 	{
-		m_isPointLightAnimated = false;
-		m_isPointLightFollowCamera = !m_isPointLightFollowCamera;
+		LightMovement currentMovement = m_animatedLights[m_selectedLight].moveType;
+		if( currentMovement == LIGHT_MOVEMENT_FOLLOW ) m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_STATIONARY;
+		else if( currentMovement == LIGHT_MOVEMENT_STATIONARY ) m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_FOLLOW;
 	}
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F7 ) )
 	{
-		m_isPointLightFollowCamera = false;
-		m_isPointLightAnimated = !m_isPointLightAnimated;
+		LightMovement currentMovement = m_animatedLights[m_selectedLight].moveType;
+		if( currentMovement == LIGHT_MOVEMENT_ANIMATED ) m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_STATIONARY;
+		else if( currentMovement == LIGHT_MOVEMENT_STATIONARY ) m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_ANIMATED;
 	}
 }
 
@@ -605,14 +657,18 @@ void Game::AddAmbientLightIntensity( float intensityToAdd )
 //---------------------------------------------------------------------------------------------------------
 void Game::AddPointLightIntensity( float intensityToAdd )
 {
-	float newIntensity = m_pointLight.intensity;
+	Light currentLight = m_animatedLights[m_selectedLight].light;
+	float newIntensity = currentLight.intensity;
 	newIntensity += intensityToAdd;
 	if( newIntensity >= 0.f )
 	{
-		m_pointLight.intensity = newIntensity;
-		return;
+		currentLight.intensity = newIntensity;
 	}
-	m_pointLight.intensity = 0.f;
+	else
+	{
+		currentLight.intensity = 0.f;
+	}
+	m_animatedLights[m_selectedLight].light = currentLight;
 }
 
 
@@ -652,7 +708,7 @@ void Game::AddSpecPower( float powerToAdd )
 //---------------------------------------------------------------------------------------------------------
 void Game::CycleAttenuationMode()
 {
-	Vec3 currentAttenuation = m_pointLight.attenuation;
+	Vec3 currentAttenuation = m_animatedLights[m_selectedLight].light.attenuation;
 	if( currentAttenuation == Vec3( 0.f, 1.f, 0.f ) )
 	{
 		currentAttenuation = Vec3( 0.f, 0.f, 1.f );
@@ -665,8 +721,8 @@ void Game::CycleAttenuationMode()
 	{
 		currentAttenuation = Vec3( 0.f, 1.f, 0.f );
 	}
-	m_pointLight.attenuation = currentAttenuation;
-	m_pointLight.specAttenuation = currentAttenuation;
+	m_animatedLights[m_selectedLight].light.attenuation = currentAttenuation;
+	m_animatedLights[m_selectedLight].light.specAttenuation = currentAttenuation;
 }
 
 
@@ -733,8 +789,13 @@ STATIC void Game::light_set_ambient_color( NamedStrings* args )
 //---------------------------------------------------------------------------------------------------------
 STATIC void Game::light_set_color( NamedStrings* args )
 {
+	int defaultLightIndex = 0;
 	Vec3 defaultPointLightColor = Vec3::UNIT;
+
+	int lightIndex = args->GetValue( "index", defaultLightIndex );
 	Vec3 pointLightColor = args->GetValue( "color", defaultPointLightColor );
 
-	g_theGame->m_pointLight.color = pointLightColor;
+	Clamp( lightIndex, 0, MAX_LIGHTS );
+
+	g_theGame->m_animatedLights[lightIndex].light.color = pointLightColor;
 }

@@ -29,15 +29,18 @@ struct light_t
 {
 	float3 world_position;
 	float intensity;
-	
+
+	float3 direction;
+	float cos_inner_half_angle;
+
 	float3 color;
-	float padding_00;
+	float cos_outter_half_angle;
 
 	float3 attenuation;
-	float padding_01;
+	float is_directional;
 
 	float3 spec_attenuation;
-	float padding_02;
+	float padding;
 };
 
 static float SHIFT = 0.75f;
@@ -73,7 +76,7 @@ cbuffer model_constants : register(b2)
 cbuffer light_constants : register(b3)
 {
 	float4 AMBIENT;
-	light_t LIGHT;
+	light_t LIGHTS[8];
 }
 
 
@@ -157,40 +160,49 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 	surface_color *= input.color.xyz;
 	float surface_alpha = ( input.color.a * texture_color.a );
 
-	float3 diffuse = AMBIENT.xyz * AMBIENT.w;
 	float3 surface_normal = ( normal_color.xyz * float3( 2.0f, 2.0f, 1.0f ) ) - float3( 1.0f, 1.0f, 0.0f );
 	float3 world_normal = normalize( mul( surface_normal, tbn ) );
+
+	float3 diffuse = AMBIENT.xyz * AMBIENT.w;
+	float3 specular_color = float3( 0.0f, 0.0f, 0.0f );
 	//return float4( world_normal, 1.f );
 
-	float3 light_color = LIGHT.color.xyz;
-	float3 light_position = LIGHT.world_position;
-	float3 vec_to_light = light_position - input.world_position;
-	float dist_to_light = length( vec_to_light );
-	float3 dir_to_light = normalize( vec_to_light );
-	float3 att_vec = float3( 1.0f, dist_to_light, dist_to_light * dist_to_light );
+	for (int i = 0; i < 8; ++i)
+	{
+		light_t light = LIGHTS[i];
+		float3 light_color = light.color.xyz;
+		float3 light_position = light.world_position;
+		float3 light_direction = normalize( light.direction );
 
-	float diffuse_att = LIGHT.intensity / dot( att_vec, LIGHT.attenuation );
-	float specular_att = LIGHT.intensity / dot( att_vec, LIGHT.spec_attenuation );
+		float3 vec_to_light = light_position - input.world_position;
+		float dist_to_light = length( vec_to_light );
+		float3 dir_to_light = normalize( vec_to_light );
+		float directional_distance = dot( -vec_to_light, light_direction );
 
-	//Diffuse
-	float dot3 = max( 0.0f, dot( dir_to_light, world_normal ) );
-	float facing = smoothstep( -0.5, 0.0f, dot( dir_to_light, world_normal ) );
+		float3 att_vec = float3( 1.0f, dist_to_light, dist_to_light * dist_to_light );
+		float diffuse_att = light.intensity / dot( att_vec, light.attenuation );
+		float specular_att = light.intensity / dot( att_vec, light.spec_attenuation );
 
-	//Specular
-	//Phong
-	//float3 dir_to_light_reflect = reflect( -dir_to_light, world_normal );
-	//float specular = max( 0.0f, dot( dir_to_light_reflect, dir_to_eye ) );
+		//Diffuse
+		float dot3 = max( 0.0f, dot( dir_to_light, world_normal ) );
+		float facing = smoothstep( -0.5, 0.0f, dot( dir_to_light, world_normal ) );
 
-	//Blinn-Phong
-	float3 half_vector = normalize( dir_to_light + dir_to_eye );
-	float specular = max( 0.0f, dot( world_normal, half_vector ) );
-	specular = SPECULAR_FACTOR * pow( specular, SPECULAR_POWER );
-	specular *= specular_att;
+		//Specular
+		//Phong
+		//float3 dir_to_light_reflect = reflect( -dir_to_light, world_normal );
+		//float specular = max( 0.0f, dot( dir_to_light_reflect, dir_to_eye ) );
 
-	specular *= facing;
+		//Blinn-Phong
+		float3 half_vector = normalize( dir_to_light + dir_to_eye );
+		float specular = max( 0.0f, dot( world_normal, half_vector ) );
+		specular = SPECULAR_FACTOR * pow( specular, SPECULAR_POWER );
+		specular *= specular_att;
 
-	diffuse += dot3 * diffuse_att * light_color;
-	float3 specular_color = light_color * specular;
+		specular *= facing;
+
+		diffuse += dot3 * diffuse_att * light_color;
+		specular_color += light_color * specular;
+	}
 
 	diffuse = saturate( diffuse );
 

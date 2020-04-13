@@ -1,7 +1,8 @@
 #pragma once
 #include "Game/GameCommon.hpp"
+#include "Game/AnimatedLight.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/Camera.hpp"
-#include "Engine/Renderer/Light.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Transform.hpp"
 #include <vector>
@@ -35,11 +36,13 @@ public:
 	void RenderWorld() const;
 	void RenderRingOfSpheres() const;
 	void RenderUI() const;
+	void EnableLightsForRendering() const;
 
 	//Other
 	void UpdateBasedOnMouseMovement();
 	void UpdateObjectRotations( float deltaSeconds );
 	void UpdateLightPositions();
+	void CycleLightToModify();
 
 	void TranslateCamera( Camera& camera, const Vec3& directionToMove );
 	void ChangeClearColor( float deltaSeconds );
@@ -81,12 +84,10 @@ private:
 	Transform* m_sphereTransform = nullptr;
 	Transform* m_ringTransform = nullptr;
 
+	unsigned int m_selectedLight = 0;
 	Rgba8 m_ambientColor = Rgba8::WHITE;
 	float m_ambientIntensity = 1.f;
-	Light m_pointLight;
-
-	bool m_isPointLightFollowCamera = false;
-	bool m_isPointLightAnimated		= false;
+	AnimatedLight m_animatedLights[MAX_LIGHTS];
 
 	float m_distanceFromCamera = -1.f;
 

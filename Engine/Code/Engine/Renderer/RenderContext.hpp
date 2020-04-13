@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/Light.hpp"
@@ -96,7 +97,7 @@ struct model_data_t
 struct light_data_t
 {
 	Vec4 ambient;
-	Light light;
+	Light lights[MAX_LIGHTS];
 };
 
 
@@ -182,7 +183,7 @@ private:
 	float m_gamma = 2.f;
 	float m_inverseGamma = 1 / m_gamma;
 	Vec4 m_ambientLight = Vec4( 1.f, 1.f, 1.f, 1.f );
-	Light m_lights[8];
+	Light m_lights[MAX_LIGHTS];
 
 	bool m_isDrawing = false;
 	ID3D11Buffer* m_lastBoundVBOHandle = nullptr;
