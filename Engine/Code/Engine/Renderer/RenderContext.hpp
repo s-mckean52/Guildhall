@@ -44,6 +44,7 @@ enum BufferSlot
 	UBO_CAMERA_SLOT			= 1,
 	UBO_MODEL_MATRIX_SLOT	= 2,
 	UBO_LIGHT_SLOT			= 3,
+	UBO_MATERIAL_SLOT		= 5,
 };
 
 enum CompareFunc
@@ -146,8 +147,9 @@ public:
 	void		BindSampler( Sampler* sampler );
 	void		BindTexture( const Texture* constTexture );
 	void		BindNormalTexture( const Texture* constTexture );
+	void		BindMaterialTexture( unsigned int slot, const Texture* constTexture );
 
-	Texture*	CreateOrGetTextureFromFile( const char* imageFilePath );
+	Texture*	CreateOrGetTextureFromFile(const char* imageFilePath);
 	BitmapFont* CreateOrGetBitmapFontFromFile( const char* imageFilePath );
 	Shader*		GetOrCreateShader( char const* filename );
 	Shader*		CreateShaderFromSourceCode( char const* sourceCode);
@@ -162,6 +164,9 @@ public:
 	void EnableLight( unsigned int index, Light const& lightInfo );
 	void DisableLight( unsigned int index );
 	void DisableAllLights();
+
+	//Material Methods
+	void SetMaterialUBO( void const* data, unsigned int dataSize );
 
 	//Clean Up Methods
 	void ReleaseLoadedAssets();
@@ -212,6 +217,7 @@ public:
 	RenderBuffer*				m_frameUBO					= nullptr;
 	RenderBuffer*				m_modelUBO					= nullptr;
 	RenderBuffer*				m_lightUBO					= nullptr;
+	RenderBuffer*				m_materialUBO				= nullptr;
 	Texture*					m_defaultDepthStencil		= nullptr;
 	buffer_attribute_t const*	m_currentVertexLayout		= nullptr;			
 

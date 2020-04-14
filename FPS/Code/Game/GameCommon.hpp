@@ -18,6 +18,7 @@ class EventSystem;
 class Window;
 struct AABB2;
 
+
 extern EventSystem* g_theEventSystem;
 extern App* g_theApp;
 extern Game* g_theGame;

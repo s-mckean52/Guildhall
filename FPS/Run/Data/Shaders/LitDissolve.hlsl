@@ -79,10 +79,19 @@ cbuffer light_constants : register(b3)
 	light_t LIGHTS[8];
 }
 
+cbuffer dissolve_constants : register(b5)
+{
+	float3 EDGE_START_COLOR;
+	float DISSOLVE_AMOUNT;
+	float3 EDGE_END_COLOR;
+	float EDGE_WIDTH;
+}
 
-Texture2D <float4> tDiffuse	: register(t0);
-Texture2D <float4> tNormal	: register(t1);
-SamplerState sSampler		: register(s0);
+
+Texture2D <float4> tDiffuse		: register(t0);
+Texture2D <float4> tNormal		: register(t1);
+Texture2D <float4> tDissolve	: register(t8);
+SamplerState sSampler			: register(s0);
 
 
 //--------------------------------------------------------------------------------------
@@ -144,8 +153,18 @@ v2f_t VertexFunction( vs_input_t input )
 // 
 // SV_Target0 at the end means the float4 being returned
 // is being drawn to the first bound color target.
-float4 FragmentFunction( v2f_t input ) : SV_Target0
+float4 FragmentFunction(v2f_t input) : SV_Target0
 {
+	float4 dissolve_color = tDissolve.Sample(sSampler, input.uv);
+	float height = dissolve_color.x;
+	float dissolve_range = 1.0f + EDGE_WIDTH;
+	float min_dissolve = -EDGE_WIDTH + dissolve_range * DISSOLVE_AMOUNT;
+	float max_dissolve = min_dissolve + EDGE_WIDTH;
+	clip( height - min_dissolve );
+	float edge_color_fraction = ( height - min_dissolve ) / ( max_dissolve - min_dissolve );
+	edge_color_fraction = clamp( edge_color_fraction, 0, 1 );
+	float3 edge_color = lerp( EDGE_START_COLOR, EDGE_END_COLOR, edge_color_fraction );
+
 	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
 
 	float3 normal = normalize( input.world_normal );
@@ -175,18 +194,13 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 		float3 light_direction = normalize( light.direction );
 
 		float3 vec_to_light = light_position - input.world_position;
-		float dist_to_light_position = length( vec_to_light );
+		float dist_to_light = length( vec_to_light );
+		float3 dir_to_light = normalize( vec_to_light );
 		float directional_distance = dot( -vec_to_light, light_direction );
 
-		float3 dir_to_light = lerp( normalize( vec_to_light ), -light_direction, light.is_directional );
-		float dist_to_light = lerp( dist_to_light_position, directional_distance, light.is_directional );
-
-		float cos_angle_to_light_dir = dot( -dir_to_light, light_direction );
-		float att_factor = smoothstep( light.cos_outter_half_angle, light.cos_inner_half_angle, cos_angle_to_light_dir );
-
 		float3 att_vec = float3( 1.0f, dist_to_light, dist_to_light * dist_to_light );
-		float diffuse_att = ( light.intensity / dot( att_vec, light.attenuation ) ) * att_factor;
-		float specular_att = ( light.intensity / dot( att_vec, light.spec_attenuation ) ) * att_factor;
+		float diffuse_att = light.intensity / dot( att_vec, light.attenuation );
+		float specular_att = light.intensity / dot( att_vec, light.spec_attenuation );
 
 		//Diffuse
 		float dot3 = max( 0.0f, dot( dir_to_light, world_normal ) );
@@ -213,5 +227,6 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 
 	float3 final_color = diffuse * surface_color + specular_color;
 	final_color = pow(final_color.xyz, INVERSE_GAMMA);
+	final_color = lerp( edge_color, final_color, edge_color_fraction );
 	return float4( final_color, surface_alpha );
 }

@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Math/MathUtils.hpp"
 
 
 struct Light
@@ -10,10 +11,10 @@ public:
 	float intensity = 0.f;
 	
 	Vec3 direction = Vec3::FORWARD;
-	float cosInnerHalfAngle = 360.f;
+	float cosInnerHalfAngle = -1.f;
 	
 	Vec3 color = Vec3::UNIT;
-	float cosOutterHalfAngle = 360.f;
+	float cosOutterHalfAngle = -1.f;
 	
 	Vec3 attenuation = Vec3( 0.f, 1.f, 0.f );
 	float isDirectional = 0.f;

@@ -93,6 +93,7 @@ void RenderContext::StartUp( Window* theWindow )
 	m_frameUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
 	m_modelUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
 	m_lightUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
+	m_materialUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
 
 	m_samplerDefault = new Sampler( this, SAMPLER_POINT );
 	m_textueDefaultColor = CreateTextureFromColor( Rgba8::WHITE );
@@ -134,6 +135,9 @@ void RenderContext::ShutDown()
 
 	delete m_lightUBO;
 	m_lightUBO = nullptr;
+
+	delete m_materialUBO;
+	m_materialUBO = nullptr;
 
 	delete m_immediateVBO;
 	m_immediateVBO = nullptr;
@@ -339,6 +343,7 @@ void RenderContext::BeginCamera( Camera& camera )
 	BindUniformBuffer( UBO_CAMERA_SLOT, camera.GetUBO() );
 	BindUniformBuffer( UBO_MODEL_MATRIX_SLOT, m_modelUBO );
 	BindUniformBuffer( UBO_LIGHT_SLOT, m_lightUBO );
+	BindUniformBuffer( UBO_MATERIAL_SLOT, m_materialUBO );
 }
 
 
@@ -854,6 +859,21 @@ void RenderContext::BindNormalTexture( const Texture* constTexture )
 
 
 //---------------------------------------------------------------------------------------------------------
+void RenderContext::BindMaterialTexture( unsigned int slot, const Texture* constTexture )
+{
+	Texture* texture = const_cast<Texture*>(constTexture);
+	if (constTexture == nullptr)
+	{
+		texture = m_textueDefaultColor;
+	}
+
+	TextureView* shaderResourceView = texture->GetOrCreateShaderResourceView();
+	ID3D11ShaderResourceView* srvHandle = shaderResourceView->GetAsSRV();
+	m_context->PSSetShaderResources( slot, 1, &srvHandle ); //srv
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void RenderContext::BindShader( Shader* shader )
 {
 	ASSERT_OR_DIE( IsDrawing(), "Cannot bind shader if begin camera has not been called first" );
@@ -1015,6 +1035,14 @@ void RenderContext::DisableAllLights()
 	{
 		DisableLight( lightIndex );
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::SetMaterialUBO( void const* data, unsigned int dataSize )
+{
+	m_materialUBO->Update( data, dataSize, dataSize );
+	BindUniformBuffer( UBO_MATERIAL_SLOT, m_materialUBO );
 }
 
 

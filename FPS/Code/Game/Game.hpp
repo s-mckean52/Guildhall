@@ -4,6 +4,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Transform.hpp"
 #include <vector>
 
@@ -13,6 +14,25 @@ class Shader;
 class GPUMesh;
 class Clock;
 class NamedStrings;
+
+
+struct fresnel_t
+{
+	Vec3 color;
+	float power;
+	float factor;
+	float padding[3];
+};
+
+
+struct dissolve_t
+{
+	Vec3 edgeStartColor;
+	float amount;
+	Vec3 edgeEndColor;
+	float edgeRange;
+};
+
 
 class Game
 {
@@ -94,6 +114,7 @@ private:
 	Texture* m_testImage		= nullptr;
 	Texture* m_pokeball			= nullptr;
 	Texture* m_normalMap		= nullptr;
+	Texture* m_dissolveImage	= nullptr;
 	
 	int m_currentShaderIndex = 0;
 	std::vector<std::string> m_shaderNames;
@@ -106,6 +127,8 @@ private:
 	Shader* m_tangentsShader		= nullptr;
 	Shader* m_bitangentsShader		= nullptr;
 	Shader* m_surfaceNormalsShader	= nullptr;
+	Shader* m_fresnelShader			= nullptr;
+	Shader* m_dissolveShader		= nullptr;
 
 	float m_specularFactor = 0.f;
 	float m_specularPower = 32.f;
@@ -116,4 +139,6 @@ private:
 	Camera*	m_worldCamera = nullptr;
 	Camera* m_UICamera = nullptr;
 	bool	m_isQuitting = false;
+
+	float m_dissolveAmount = 0.f;
 };

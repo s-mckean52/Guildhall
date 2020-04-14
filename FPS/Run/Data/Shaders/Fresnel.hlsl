@@ -80,6 +80,14 @@ cbuffer light_constants : register(b3)
 }
 
 
+cbuffer fresnel_constants : register(b5)
+{
+	float3 FRESNEL_COLOR;
+	float FRESNEL_POWER;
+	float FRESNEL_FACTOR;
+}
+
+
 Texture2D <float4> tDiffuse	: register(t0);
 Texture2D <float4> tNormal	: register(t1);
 SamplerState sSampler		: register(s0);
@@ -146,72 +154,20 @@ v2f_t VertexFunction( vs_input_t input )
 // is being drawn to the first bound color target.
 float4 FragmentFunction( v2f_t input ) : SV_Target0
 {
-	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
+	float3 dir_to_surface = normalize( input.world_position - CAMERA_POSITION );
 
 	float3 normal = normalize( input.world_normal );
 	float3 tangent = normalize( input.world_tangent );
 	float3 bitangent = normalize( input.world_bitangent );
 	float3x3 tbn = float3x3( tangent, bitangent, normal );
 
-	float4 texture_color = tDiffuse.Sample( sSampler, input.uv );
 	float4 normal_color = tNormal.Sample( sSampler, input.uv );
-
-	float3 surface_color = pow( texture_color.xyz, GAMMA.xxx );
-	surface_color *= input.color.xyz;
-	float surface_alpha = ( input.color.a * texture_color.a );
 
 	float3 surface_normal = ( normal_color.xyz * float3( 2.0f, 2.0f, 1.0f ) ) - float3( 1.0f, 1.0f, 0.0f );
 	float3 world_normal = normalize( mul( surface_normal, tbn ) );
 
-	float3 diffuse = AMBIENT.xyz * AMBIENT.w;
-	float3 specular_color = float3( 0.0f, 0.0f, 0.0f );
-	//return float4( world_normal, 1.f );
+	float dp = length( cross( dir_to_surface, world_normal ) );
+	float factor = FRESNEL_FACTOR * pow( dp, FRESNEL_POWER );
 
-	for (int i = 0; i < 8; ++i)
-	{
-		light_t light = LIGHTS[i];
-		float3 light_color = light.color.xyz;
-		float3 light_position = light.world_position;
-		float3 light_direction = normalize( light.direction );
-
-		float3 vec_to_light = light_position - input.world_position;
-		float dist_to_light_position = length( vec_to_light );
-		float directional_distance = dot( -vec_to_light, light_direction );
-
-		float3 dir_to_light = lerp( normalize( vec_to_light ), -light_direction, light.is_directional );
-		float dist_to_light = lerp( dist_to_light_position, directional_distance, light.is_directional );
-
-		float cos_angle_to_light_dir = dot( -dir_to_light, light_direction );
-		float att_factor = smoothstep( light.cos_outter_half_angle, light.cos_inner_half_angle, cos_angle_to_light_dir );
-
-		float3 att_vec = float3( 1.0f, dist_to_light, dist_to_light * dist_to_light );
-		float diffuse_att = ( light.intensity / dot( att_vec, light.attenuation ) ) * att_factor;
-		float specular_att = ( light.intensity / dot( att_vec, light.spec_attenuation ) ) * att_factor;
-
-		//Diffuse
-		float dot3 = max( 0.0f, dot( dir_to_light, world_normal ) );
-		float facing = smoothstep( -0.5, 0.0f, dot( dir_to_light, world_normal ) );
-
-		//Specular
-		//Phong
-		//float3 dir_to_light_reflect = reflect( -dir_to_light, world_normal );
-		//float specular = max( 0.0f, dot( dir_to_light_reflect, dir_to_eye ) );
-
-		//Blinn-Phong
-		float3 half_vector = normalize( dir_to_light + dir_to_eye );
-		float specular = max( 0.0f, dot( world_normal, half_vector ) );
-		specular = SPECULAR_FACTOR * pow( specular, SPECULAR_POWER );
-		specular *= specular_att;
-
-		specular *= facing;
-
-		diffuse += dot3 * diffuse_att * light_color;
-		specular_color += light_color * specular;
-	}
-
-	diffuse = saturate( diffuse );
-
-	float3 final_color = diffuse * surface_color + specular_color;
-	final_color = pow(final_color.xyz, INVERSE_GAMMA);
-	return float4( final_color, surface_alpha );
+	return float4( FRESNEL_COLOR, factor );
 }

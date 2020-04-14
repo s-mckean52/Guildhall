@@ -116,6 +116,7 @@ void Game::StartUp()
 	m_testImage			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/example_color.png" );
 	m_pokeball			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/pokeball.png" );
 	m_normalMap			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/example_normal.png" );
+	m_dissolveImage		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/noise.png" );
 
 	m_defaultShader = nullptr;
 	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
@@ -124,6 +125,8 @@ void Game::StartUp()
  	m_tangentsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Tangents.hlsl" );
  	m_bitangentsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Bitangents.hlsl" );
  	m_surfaceNormalsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/SurfaceNormals.hlsl" );
+	m_fresnelShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Fresnel.hlsl" );
+	m_dissolveShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/LitDissolve.hlsl" );
 
 	AddShader( "Lit", m_litShader );
 	AddShader( "Color Only", nullptr );
@@ -217,9 +220,26 @@ void Game::RenderWorld() const
 	g_theRenderer->DrawMesh( m_uvSphere );
 
 	//Render Cube
+	dissolve_t dissolveData;
+	dissolveData.amount = m_dissolveAmount;
+	dissolveData.edgeRange = 0.3f;
+	dissolveData.edgeEndColor = Vec3( 1.f, 0.f, 0.f );
+	dissolveData.edgeStartColor = Vec3( 1.f, 1.f, 0.f );
+	g_theRenderer->BindMaterialTexture( 8, m_dissolveImage );
+	g_theRenderer->BindShader( m_dissolveShader );
+	g_theRenderer->SetMaterialUBO( &dissolveData, sizeof( dissolveData ) );
 	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_meshCube );
 
+	//Render Fresnel
+	fresnel_t fresnelData;
+	fresnelData.color = Vec3( 0.f, 1.f, 0.f );
+	fresnelData.power = 32.f;
+	fresnelData.factor = 1.f;
+	g_theRenderer->SetMaterialUBO( &fresnelData, sizeof( fresnelData ) );
+	g_theRenderer->BindShader( m_fresnelShader );
+	g_theRenderer->SetModelUBO(m_sphereTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower);
+	g_theRenderer->DrawMesh(m_uvSphere);
 }
 
 
@@ -405,6 +425,17 @@ void Game::Update()
 	}
 	UpdateObjectRotations( deltaSeconds );
 	UpdateLightPositions();
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_UP_ARROW ) )
+	{
+		m_dissolveAmount += 0.5f * deltaSeconds;
+		ClampZeroToOne( m_dissolveAmount );
+	}
+	if( g_theInput->IsKeyPressed( KEY_CODE_DOWN_ARROW ) )
+	{
+		m_dissolveAmount -= 0.5f * deltaSeconds;
+		ClampZeroToOne( m_dissolveAmount );
+	}
 
 	//ChangeClearColor( deltaSeconds );
 }
