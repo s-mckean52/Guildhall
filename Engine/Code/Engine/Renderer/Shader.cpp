@@ -50,6 +50,12 @@ ShaderStage::~ShaderStage()
 //---------------------------------------------------------------------------------------------------------
 bool ShaderStage::Compile( RenderContext* ctx, std::string const& filename, void const* source, size_t const sourceByteLen, ShaderType stage )
 {
+	if( IsValid() )
+	{
+		DX_SAFE_RELEASE( m_byteCode );
+		DX_SAFE_RELEASE( m_handle );
+	}
+
 	char const* entrypoint = GetDefaultEntryPointForStage( stage );
 	char const* shaderModel = GetShaderModelForStage( stage );
 	
@@ -159,6 +165,25 @@ Shader::Shader( RenderContext* context )
 Shader::~Shader()
 {
 	DX_SAFE_RELEASE( m_inputLayout );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool Shader::Recompile()
+{
+	size_t file_size = 0;
+	void* source = FileReadToNewBuffer( m_filePath, &file_size );
+	if( source == nullptr )
+	{
+		return false;
+	}
+
+	m_vertexStage.Compile( m_owner, m_filePath, source, file_size, SHADER_TYPE_VERTEX );
+	m_fragmentStage.Compile( m_owner, m_filePath, source, file_size, SHADER_TYPE_FRAGMENT );
+
+	delete[] source;
+
+	return m_vertexStage.IsValid() && m_fragmentStage.IsValid();
 }
 
 

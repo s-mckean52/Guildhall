@@ -171,6 +171,11 @@ void App::Update()
 		RestartGame();
 	}
 
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_F9 ) )
+	{
+		g_theRenderer->ReloadShaders();
+	}
+
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_TILDE ) )
 	{
 		g_theConsole->ToggleIsOpen();

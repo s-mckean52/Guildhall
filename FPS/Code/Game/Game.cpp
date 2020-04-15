@@ -66,6 +66,7 @@ void Game::StartUp()
 	m_worldCamera->SetProjectionPerspective( 60.f, -0.1f, -100.f );
 	m_worldCamera->SetDepthStencilTarget( g_theRenderer->m_defaultDepthStencil );
 	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, m_clearColor, 1.0f, 0 );
+	g_theRenderer->EnableFog( ( 100.f - 0.1f ) * 0.5f, 100.f, Rgba8::YELLOW, Rgba8::RED );
 
 	m_UICamera = new Camera( g_theRenderer );
 	m_UICamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
@@ -134,6 +135,7 @@ void Game::StartUp()
 	m_fresnelShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Fresnel.hlsl" );
 	m_dissolveShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/LitDissolve.hlsl" );
 	m_triplanarShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Triplanar.hlsl" );
+	m_fogShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/LitFog.hlsl" );
 
 	AddShader( "Lit", m_litShader );
 	AddShader( "Color Only", nullptr );
@@ -219,6 +221,7 @@ void Game::RenderWorld() const
 	g_theRenderer->BindNormalTexture( m_couchNormal );
 
 	//Render Quad
+	g_theRenderer->BindShader( m_fogShader );
 	g_theRenderer->SetModelUBO( m_quadTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_quad );
 
@@ -230,6 +233,7 @@ void Game::RenderWorld() const
 // 	g_theRenderer->BindMaterialTexture( 8 + 4, m_barkDiffuse );
 // 	g_theRenderer->BindMaterialTexture( 8 + 5, m_barkNormal );
 // 	g_theRenderer->BindShader( m_triplanarShader );
+	g_theRenderer->BindShader( m_shadersToUse[ m_currentShaderIndex ] );
 	g_theRenderer->SetModelUBO( m_sphereTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_uvSphere );
 

@@ -72,9 +72,13 @@ struct frame_data_t
 {
 	float system_time;
 	float system_delta_time;
-
 	float gamma;
 	float inverseGamma;
+
+	Vec3 fogNearColor;
+	float fogNear;
+	Vec3 fogFarColor;
+	float fogFar;
 };
 
 struct camera_data_t
@@ -111,8 +115,10 @@ public:
 	void ShutDown();
 
 	void UpdateFrameUBO();
-	void UpdateGamma( float gamma );
 	float GetGamma() const			{ return m_gamma; }
+	void UpdateGamma( float gamma );
+	void DisableFog();
+	void EnableFog( float fogNear, float fogFar, Rgba8 const& fogNearColor, Rgba8 const& fogFarColor );
 	
 	void SetGameClock( Clock* clock );
 	void SetBlendMode( BlendMode blendMode );
@@ -149,10 +155,11 @@ public:
 	void		BindNormalTexture( const Texture* constTexture );
 	void		BindMaterialTexture( unsigned int slot, const Texture* constTexture );
 
-	Texture*	CreateOrGetTextureFromFile(const char* imageFilePath);
+	void		ReloadShaders();
+	Texture*	CreateOrGetTextureFromFile( const char* imageFilePath );
 	BitmapFont* CreateOrGetBitmapFontFromFile( const char* imageFilePath );
 	Shader*		GetOrCreateShader( char const* filename );
-	Shader*		CreateShaderFromSourceCode( char const* sourceCode);
+	Shader*		CreateShaderFromSourceCode( char const* sourceCode );
 	Texture*	CreateTextureFromColor( Rgba8 const& color );
 	Texture*	CreateDepthStencilBuffer( IntVec2 const& imageDimensions );
 
@@ -177,6 +184,7 @@ private:
 	void CreateRasterState();
 	bool CreateTextureFromFile( const char* imageFilePath );
 	bool CreateBitmapFontFromFile( const char* fontFilePath );
+	Shader* CreateShaderFromFilePath( char const* filename );
 
 	void ReportLiveObjects();
 	void CreateDebugModule();
@@ -187,6 +195,11 @@ private:
 
 	float m_gamma = 2.f;
 	float m_inverseGamma = 1 / m_gamma;
+	Rgba8 m_fogNearColor = Rgba8::WHITE;
+	Rgba8 m_fogFarColor = Rgba8::WHITE;
+	float m_fogNear = -1.f;
+	float m_fogFar = -1.5f;
+
 	Vec4 m_ambientLight = Vec4( 1.f, 1.f, 1.f, 1.f );
 	Light m_lights[MAX_LIGHTS];
 

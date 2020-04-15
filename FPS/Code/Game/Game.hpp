@@ -137,6 +137,7 @@ private:
 	Shader* m_fresnelShader			= nullptr;
 	Shader* m_dissolveShader		= nullptr;
 	Shader* m_triplanarShader		= nullptr;
+	Shader* m_fogShader				= nullptr;
 
 	float m_specularFactor = 0.f;
 	float m_specularPower = 32.f;

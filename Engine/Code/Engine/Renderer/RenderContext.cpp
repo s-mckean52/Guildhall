@@ -165,6 +165,14 @@ void RenderContext::UpdateFrameUBO()
 	frameData.gamma = m_gamma;
 	frameData.inverseGamma = m_inverseGamma;
 
+	frameData.fogFar = m_fogFar;
+	frameData.fogNear = m_fogNear;
+	Vec4 nearColor = m_fogNearColor.GetValuesAsFractions();
+	Vec4 farColor = m_fogFarColor.GetValuesAsFractions();
+
+	frameData.fogNearColor = Vec3( nearColor.x, nearColor.y, nearColor.z );
+	frameData.fogFarColor = Vec3( farColor.x, farColor.y, farColor.z );
+
 	m_frameUBO->Update( &frameData, sizeof( frameData ), sizeof( frameData ) );
 }
 
@@ -174,6 +182,16 @@ void RenderContext::UpdateGamma( float gamma )
 {
 	m_gamma = gamma;
 	m_inverseGamma = 1.f / gamma;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::DisableFog()
+{
+	m_fogNear = -1.f;
+	m_fogFar = -1.5f;
+	m_fogNearColor = Rgba8::WHITE;
+	m_fogFarColor = Rgba8::WHITE;
 }
 
 
@@ -188,6 +206,16 @@ void RenderContext::UpdateLightUBO()
 	}
 
 	m_lightUBO->Update( &lightData, sizeof( lightData ), sizeof( lightData ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::EnableFog( float fogNear, float fogFar, Rgba8 const& fogNearColor, Rgba8 const& fogFarColor )
+{
+	m_fogFar = fogFar;
+	m_fogNear = fogNear;
+	m_fogFarColor = fogFarColor;
+	m_fogNearColor = fogNearColor;
 }
 
 
@@ -567,6 +595,21 @@ void RenderContext::SetFrontFaceWindOrder( bool isCounterClockwise )
 
 
 //---------------------------------------------------------------------------------------------------------
+Shader* RenderContext::CreateShaderFromFilePath( char const* filename )
+{
+	Shader* newShader = new Shader( this );
+	if( newShader->CreateFromFile( filename ) )
+	{
+		m_loadedShaders.push_back( newShader );
+		return newShader;
+	}
+
+	delete newShader;
+	return m_errorShader;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void RenderContext::CreateBlendStates()
 {
 	D3D11_BLEND_DESC alphaDesc;
@@ -732,21 +775,12 @@ Shader* RenderContext::GetOrCreateShader( char const* filename )
 	for( int shaderIndex = 0; shaderIndex < m_loadedShaders.size(); ++shaderIndex )
 	{
 		Shader* shader = m_loadedShaders[ shaderIndex ];
-		if( strcmp( shader->GetFilePath(), filename ) == 0 )
+		if( shader != nullptr && strcmp( shader->GetFilePath(), filename ) == 0 )
 		{
 			return shader;
 		}
 	}
-
-	Shader* newShader = new Shader( this );
-	if( newShader->CreateFromFile( filename ) )
-	{
-		m_loadedShaders.push_back( newShader );
-		return newShader;
-	}
-
-	delete newShader;
-	return m_errorShader;
+	return CreateShaderFromFilePath( filename );
 }
 
 
@@ -870,6 +904,20 @@ void RenderContext::BindMaterialTexture( unsigned int slot, const Texture* const
 	TextureView* shaderResourceView = texture->GetOrCreateShaderResourceView();
 	ID3D11ShaderResourceView* srvHandle = shaderResourceView->GetAsSRV();
 	m_context->PSSetShaderResources( slot, 1, &srvHandle ); //srv
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::ReloadShaders()
+{
+	for( int shaderIndex = 0; shaderIndex < m_loadedShaders.size(); ++shaderIndex )
+	{
+		Shader* currentShader = m_loadedShaders[ shaderIndex ];
+		if( currentShader != nullptr && strcmp( currentShader->GetFilePath(), "" ) != 0)
+		{
+			currentShader->Recompile();
+		}
+	}
 }
 
 

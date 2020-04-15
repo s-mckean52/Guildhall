@@ -47,6 +47,7 @@ class Shader
 public:
 	Shader( RenderContext* context );
 	~Shader();
+	bool Recompile();
 	bool CreateFromFile( std::string const& filename );
 	bool CreateFromSourceCode( const char* sourceCode );
 
