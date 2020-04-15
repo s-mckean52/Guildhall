@@ -62,7 +62,9 @@ public:
 	void UpdateBasedOnMouseMovement();
 	void UpdateObjectRotations( float deltaSeconds );
 	void UpdateLightPositions();
+	void DebugDrawLight( AnimatedLight* lightToDraw );
 	void CycleLightToModify();
+	void CycleLightType( AnimatedLight* lightToModify );
 
 	void TranslateCamera( Camera& camera, const Vec3& directionToMove );
 	void ChangeClearColor( float deltaSeconds );
@@ -111,10 +113,15 @@ private:
 
 	float m_distanceFromCamera = -1.f;
 
-	Texture* m_testImage		= nullptr;
-	Texture* m_pokeball			= nullptr;
-	Texture* m_normalMap		= nullptr;
+	Texture* m_test				= nullptr;
+	Texture* m_couchDiffuse		= nullptr;
+	Texture* m_couchNormal		= nullptr;
+	Texture* m_barkDiffuse		= nullptr;
+	Texture* m_barkNormal		= nullptr;
+	Texture* m_brickDiffuse		= nullptr;
+	Texture* m_brickNormal		= nullptr;
 	Texture* m_dissolveImage	= nullptr;
+	Texture* m_pokeball			= nullptr;
 	
 	int m_currentShaderIndex = 0;
 	std::vector<std::string> m_shaderNames;
@@ -129,6 +136,7 @@ private:
 	Shader* m_surfaceNormalsShader	= nullptr;
 	Shader* m_fresnelShader			= nullptr;
 	Shader* m_dissolveShader		= nullptr;
+	Shader* m_triplanarShader		= nullptr;
 
 	float m_specularFactor = 0.f;
 	float m_specularPower = 32.f;

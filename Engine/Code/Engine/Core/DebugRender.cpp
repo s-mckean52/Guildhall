@@ -713,6 +713,31 @@ void DebugAddWorldArrow( Vec3 start, Vec3 end, Rgba8 color, float duration, eDeb
 
 
 //---------------------------------------------------------------------------------------------------------
+void DebugAddWorldCone( Vec3 const& startPos, float startRadius, Vec3 const& endPos, float endRadius, Rgba8 const& startColor, Rgba8 const& endColor, float duration, eDebugRenderMode mode )
+{
+	DebugRenderObject* object = new DebugRenderObject();
+
+	object->m_transformMatrix.SetTranslation3D( startPos );
+	object->m_durationTimer.SetSeconds( duration );
+	object->m_startColor = startColor;
+	object->m_endColor = endColor;
+	object->m_renderMode = mode;
+	object->m_isWireMesh = true;
+
+	AddCylinderToIndexedVertexArray( object->m_objectVerticies, object->m_objectIndicies, Vec3::ZERO, startRadius, endPos - startPos, endRadius, startColor, 32 );
+
+	AppendDebugRenderObjectToVector( s_debugRenderWorldObjects, object );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DebugAddWorldCone( Vec3 const& startPos, Vec3 const& endPos, float endRadius, Rgba8 const& color, float duration, eDebugRenderMode mode )
+{
+	DebugAddWorldCone( startPos, 0.f, endPos, endRadius, color, color, duration, mode );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void DebugAddWorldQuad( Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3, AABB2 uvs, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode )
 {
 	DebugRenderObject* object = new DebugRenderObject();

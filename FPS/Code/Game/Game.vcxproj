@@ -196,6 +196,7 @@
     <Xml Include="..\..\Run\Data\GameConfig.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AnimatedLight.cpp" />
     <ClCompile Include="App.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Game.cpp" />

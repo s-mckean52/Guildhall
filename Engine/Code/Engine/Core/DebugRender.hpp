@@ -74,6 +74,10 @@ void DebugAddWorldLineStrip( unsigned int count, Vec3 const* positions,
 void DebugAddWorldArrow( Vec3 p0, Vec3 p1, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode );
 void DebugAddWorldArrow( Vec3 start, Vec3 end, Rgba8 color, float duration, eDebugRenderMode mode = DEBUG_RENDER_USE_DEPTH );
 
+//Cone
+void DebugAddWorldCone( Vec3 const& startPos, float startRadius, Vec3 const& endPos, float endRadius, Rgba8 const& startColor, Rgba8 const& endColor, float duration, eDebugRenderMode mode );
+void DebugAddWorldCone( Vec3 const& startPos, Vec3 const& endPos, float endRadius, Rgba8 const& color, float duration, eDebugRenderMode mode );
+
 // Quads
 void DebugAddWorldQuad( Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3, AABB2 uvs, Rgba8 start_color, Rgba8 end_color, float duration, eDebugRenderMode mode = DEBUG_RENDER_USE_DEPTH );
 void DebugAddWorldPoly( Vec3 const* counterClockwisePolyPoints, Rgba8 const& start_color, Rgba8 const& end_color, float duration, eDebugRenderMode mode = DEBUG_RENDER_USE_DEPTH );

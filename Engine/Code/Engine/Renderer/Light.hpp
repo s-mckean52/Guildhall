@@ -24,5 +24,19 @@ public:
 
 public:
 	Light() = default;
-	Light( Vec3 const& toPosition, Rgba8 const& toColor, float toIntensity, Vec3 const& toAttenuation, Vec3 const& toSpecAttenuation );
+	Light(	Vec3 const& toPosition,
+			Vec3 const& toDirection,
+			Vec3 const& toAttenuation,
+			Vec3 const& toSpecAttenuation,
+			Rgba8 const& toColor,
+			float toIntensity,
+			float innerHalfAngleDegrees,
+			float outterHalfAngleDegrees,
+			float toIsDirectional
+	);
+
+public:
+	static const Light POINT;
+	static const Light DIRECTIONAL;
+	static const Light SPOTLIGHT;
 };

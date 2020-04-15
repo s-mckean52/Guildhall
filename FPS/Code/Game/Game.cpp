@@ -113,10 +113,16 @@ void Game::StartUp()
 	m_sphereTransform->SetPosition( Vec3( -5.f, 0.f, -12.f ) );
 
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
-	m_testImage			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/example_color.png" );
+
 	m_pokeball			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/pokeball.png" );
-	m_normalMap			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/example_normal.png" );
 	m_dissolveImage		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/noise.png" );
+	m_couchDiffuse		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/example_color.png" );
+	m_couchNormal		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/example_normal.png" );
+	m_barkDiffuse		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/bark_diffuse.png" );
+	m_barkNormal		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/bark_normal.png" );
+	m_brickDiffuse		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/brick_diffuse.png" );
+	m_brickNormal		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/brick_normal.png" );
+	m_test				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
 
 	m_defaultShader = nullptr;
 	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
@@ -127,6 +133,7 @@ void Game::StartUp()
  	m_surfaceNormalsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/SurfaceNormals.hlsl" );
 	m_fresnelShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Fresnel.hlsl" );
 	m_dissolveShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/LitDissolve.hlsl" );
+	m_triplanarShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Triplanar.hlsl" );
 
 	AddShader( "Lit", m_litShader );
 	AddShader( "Color Only", nullptr );
@@ -208,21 +215,28 @@ void Game::RenderWorld() const
 {
 	//RenderRingOfSpheres();
 	g_theRenderer->BindShader( m_shadersToUse[ m_currentShaderIndex ] );
-	g_theRenderer->BindTexture( m_testImage );
-	g_theRenderer->BindNormalTexture( m_normalMap );
+	g_theRenderer->BindTexture( m_couchDiffuse );
+	g_theRenderer->BindNormalTexture( m_couchNormal );
 
 	//Render Quad
 	g_theRenderer->SetModelUBO( m_quadTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_quad );
 
 	//Render Sphere
+// 	g_theRenderer->BindMaterialTexture( 8 + 0, m_couchDiffuse );
+// 	g_theRenderer->BindMaterialTexture( 8 + 1, m_couchNormal );
+// 	g_theRenderer->BindMaterialTexture( 8 + 2, m_brickDiffuse );
+// 	g_theRenderer->BindMaterialTexture( 8 + 3, m_brickNormal );
+// 	g_theRenderer->BindMaterialTexture( 8 + 4, m_barkDiffuse );
+// 	g_theRenderer->BindMaterialTexture( 8 + 5, m_barkNormal );
+// 	g_theRenderer->BindShader( m_triplanarShader );
 	g_theRenderer->SetModelUBO( m_sphereTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_uvSphere );
 
 	//Render Cube
 	dissolve_t dissolveData;
 	dissolveData.amount = m_dissolveAmount;
-	dissolveData.edgeRange = 0.3f;
+	dissolveData.edgeRange = 0.1f;
 	dissolveData.edgeEndColor = Vec3( 1.f, 0.f, 0.f );
 	dissolveData.edgeStartColor = Vec3( 1.f, 1.f, 0.f );
 	g_theRenderer->BindMaterialTexture( 8, m_dissolveImage );
@@ -238,8 +252,8 @@ void Game::RenderWorld() const
 	fresnelData.factor = 1.f;
 	g_theRenderer->SetMaterialUBO( &fresnelData, sizeof( fresnelData ) );
 	g_theRenderer->BindShader( m_fresnelShader );
-	g_theRenderer->SetModelUBO(m_sphereTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower);
-	g_theRenderer->DrawMesh(m_uvSphere);
+	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
+	g_theRenderer->DrawMesh( m_meshCube );
 }
 
 
@@ -285,8 +299,10 @@ void Game::RenderUI() const
 	std::vector<Vertex_PCU> textVerts;
 
 	Light currentLight = m_animatedLights[m_selectedLight].light;
+	std::string	lightType = m_animatedLights[m_selectedLight].GetLightTypeAsString();
 
-	strings.push_back( Stringf( "Current Light[%i] - %s"					, m_selectedLight, "Point" ) );
+	strings.push_back( Stringf( "[q,e] - Current Light [%i]"				, m_selectedLight ) );
+	strings.push_back( Stringf( "[R]   - Light Type - %s"					, lightType.c_str() ) );
 	strings.push_back( Stringf( "[F4]  - Position At Origin" ) );
 	strings.push_back( Stringf( "[F5]  - Position At Camera" ) );
 	strings.push_back( Stringf( "[F6]  - Follow Camera" ) );
@@ -346,14 +362,12 @@ void Game::UpdateLightPositions()
 	for( unsigned int lightIndex = 0; lightIndex < MAX_LIGHTS; ++lightIndex )
 	{
 		Light currentLight = m_animatedLights[ lightIndex ].light;
-		switch( m_animatedLights->moveType )
-		{
-		case LIGHT_MOVEMENT_FOLLOW:
+		if( m_animatedLights[lightIndex].moveType == LIGHT_MOVEMENT_FOLLOW )
 		{
 			currentLight.position = m_worldCamera->GetPosition();
-			break;
+			currentLight.direction = -m_worldCamera->GetTransform().ToMatrix().GetKBasis3D();
 		}
-		case LIGHT_MOVEMENT_ANIMATED:
+		else if( m_animatedLights[lightIndex].moveType == LIGHT_MOVEMENT_ANIMATED )
 		{
 			const float animateRadius = 7.f;
 			Vec3 animateCenter = m_quadTransform->GetPosition();
@@ -362,19 +376,39 @@ void Game::UpdateLightPositions()
 			Vec3 lightPosition = animateCenter;
 			lightPosition += Vec3(static_cast<float>(cos(time)), 0.f, static_cast<float>(sin(time))) * animateRadius;
 			currentLight.position = lightPosition;
-		}
-		case LIGHT_MOVEMENT_STATIONARY:
-		{
-			Vec3 pointPos = currentLight.position;
-			Rgba8 pointColor = Rgba8::MakeFromFloats( currentLight.color.x, currentLight.color.y, currentLight.color.z, GetClampZeroToOne( currentLight.intensity ) );
-			DebugAddWorldPoint( pointPos, pointColor, 0.f, DEBUG_RENDER_XRAY );
-			break;
-		}
-		default:
-			break;
+			currentLight.direction = Mat44::LookAt( lightPosition, animateCenter ).GetKBasis3D();
 		}
 
 		m_animatedLights[ lightIndex ].light = currentLight;
+		DebugDrawLight( &m_animatedLights[ lightIndex ] );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::DebugDrawLight( AnimatedLight* lightToDraw )
+{
+	if( lightToDraw->moveType == LIGHT_MOVEMENT_FOLLOW ) return; 
+
+	Light currentLight = lightToDraw->light;
+	Vec3 pointPos = currentLight.position;
+	Rgba8 pointColor = Rgba8::MakeFromFloats( currentLight.color.x, currentLight.color.y, currentLight.color.z, GetClampZeroToOne(currentLight.intensity) );
+
+	if( lightToDraw->lightType == LIGHT_TYPE_SPOTLIGHT )
+	{
+		const float coneHeight = 1.f;
+		Vec3 coneEndPosition = pointPos + ( currentLight.direction * coneHeight );
+		float coneEndRadius = sinf( acosf( currentLight.cosOutterHalfAngle ) ) * coneHeight;
+		DebugAddWorldCone( pointPos, coneEndPosition, coneEndRadius, pointColor, 0.f, DEBUG_RENDER_XRAY );
+	}
+	else if( lightToDraw->lightType == LIGHT_TYPE_DIRECTIONAL )
+	{
+		const float arrowLength = 1.f;
+		DebugAddWorldArrow( pointPos, pointPos + ( currentLight.direction * arrowLength ), pointColor, 0.f, DEBUG_RENDER_XRAY );
+	}
+	else
+	{
+		DebugAddWorldPoint( pointPos, pointColor, 0.f, DEBUG_RENDER_XRAY );
 	}
 }
 
@@ -405,6 +439,15 @@ void Game::CycleLightToModify()
 
 
 //---------------------------------------------------------------------------------------------------------
+void Game::CycleLightType( AnimatedLight* lightToModify )
+{
+	LightType currentLightType = lightToModify->lightType;
+	LightType newLightType = ( LightType )( ( currentLightType + 1 ) % NUM_LIGHT_TYPES );
+	lightToModify->SetLightType( newLightType );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::TranslateCamera( Camera& camera, const Vec3& directionToMove )
 {
 	//Mat44 cameraView = camera.GetViewMatrix();
@@ -425,17 +468,6 @@ void Game::Update()
 	}
 	UpdateObjectRotations( deltaSeconds );
 	UpdateLightPositions();
-
-	if( g_theInput->IsKeyPressed( KEY_CODE_UP_ARROW ) )
-	{
-		m_dissolveAmount += 0.5f * deltaSeconds;
-		ClampZeroToOne( m_dissolveAmount );
-	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_DOWN_ARROW ) )
-	{
-		m_dissolveAmount -= 0.5f * deltaSeconds;
-		ClampZeroToOne( m_dissolveAmount );
-	}
 
 	//ChangeClearColor( deltaSeconds );
 }
@@ -459,7 +491,18 @@ void Game::UpdateFromInput( float deltaSeconds )
 		m_worldCamera->SetPitchYawRollRotationDegrees( 0.f, 0.f, 0.0f );
 	}
 
-	//UpdateDrawDebugObjects();
+	if( g_theInput->IsKeyPressed( KEY_CODE_UP_ARROW ) )
+	{
+		m_dissolveAmount += 0.5f * deltaSeconds;
+		ClampZeroToOne( m_dissolveAmount );
+	}
+	if( g_theInput->IsKeyPressed( KEY_CODE_DOWN_ARROW ) )
+	{
+		m_dissolveAmount -= 0.5f * deltaSeconds;
+		ClampZeroToOne( m_dissolveAmount );
+	}
+
+	UpdateDrawDebugObjects();
 	UpdateInputLights( deltaSeconds );
 }
 
@@ -508,7 +551,7 @@ void Game::UpdateDrawDebugObjects()
 	if( g_theInput->WasKeyJustPressed( '7' ) )
 	{
 		AABB2 textureBounds = AABB2( 500.f, 500.f, 700.f, 700.f );
-		DebugAddScreenTexturedQuad( textureBounds, m_testImage, AABB2(), Rgba8::MAGENTA, Rgba8::CYAN, 10.f );
+		DebugAddScreenTexturedQuad( textureBounds, m_couchDiffuse, AABB2(), Rgba8::MAGENTA, Rgba8::CYAN, 10.f );
 	}
 }
 
@@ -582,6 +625,10 @@ void Game::UpdateInputLights( float deltaSeconds )
 	{
 		ChangeShader( 1 );
 	}
+	if( g_theInput->WasKeyJustPressed( 'R' ) )
+	{
+		CycleLightType( &m_animatedLights[m_selectedLight] );
+	}
 
 
 
@@ -595,18 +642,31 @@ void Game::UpdateInputLights( float deltaSeconds )
 	{	
 		m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_STATIONARY;
 		m_animatedLights[m_selectedLight].light.position = m_worldCamera->GetPosition();
+		m_animatedLights[m_selectedLight].light.direction = -m_worldCamera->GetTransform().ToMatrix().GetKBasis3D();
 	}
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F6 ) )
 	{
 		LightMovement currentMovement = m_animatedLights[m_selectedLight].moveType;
-		if( currentMovement == LIGHT_MOVEMENT_FOLLOW ) m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_STATIONARY;
-		else if( currentMovement == LIGHT_MOVEMENT_STATIONARY ) m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_FOLLOW;
+		if( currentMovement == LIGHT_MOVEMENT_FOLLOW )
+		{ 
+			m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_STATIONARY;
+		}
+		else
+		{
+			m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_FOLLOW;
+		}
 	}
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F7 ) )
 	{
 		LightMovement currentMovement = m_animatedLights[m_selectedLight].moveType;
-		if( currentMovement == LIGHT_MOVEMENT_ANIMATED ) m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_STATIONARY;
-		else if( currentMovement == LIGHT_MOVEMENT_STATIONARY ) m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_ANIMATED;
+		if( currentMovement == LIGHT_MOVEMENT_ANIMATED ) 
+		{ 
+			m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_STATIONARY;
+		}
+		else
+		{
+			m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_ANIMATED;
+		}
 	}
 }
 

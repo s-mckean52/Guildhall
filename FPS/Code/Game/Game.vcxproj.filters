@@ -36,6 +36,9 @@
     <ClCompile Include="Main_Windows.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
+    <ClCompile Include="AnimatedLight.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
