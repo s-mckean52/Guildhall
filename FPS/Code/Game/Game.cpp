@@ -1,13 +1,13 @@
 #include "Game/Game.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/Entity.hpp"
+#include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/DebugRender.hpp"
-#include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/Image.hpp"
@@ -121,9 +121,11 @@ void Game::StartUp()
 	m_couchNormal		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/example_normal.png" );
 	m_barkDiffuse		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/bark_diffuse.png" );
 	m_barkNormal		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/bark_normal.png" );
-	m_brickDiffuse		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/brick_diffuse.png" );
-	m_brickNormal		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/brick_normal.png" );
+	m_brickDiffuse		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Brick/brick_diffuse.png" );
+	m_brickNormal		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Brick/brick_normal.png" );
+	m_brickHeight		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Brick/brick_height.png" );
 	m_test				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
+	m_projectionImage	= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
 
 	m_defaultShader = nullptr;
 	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
@@ -136,6 +138,8 @@ void Game::StartUp()
 	m_dissolveShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/LitDissolve.hlsl" );
 	m_triplanarShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Triplanar.hlsl" );
 	m_fogShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/LitFog.hlsl" );
+	m_projectionShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Projection.hlsl" );
+	m_parallaxShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/LitParallax.hlsl" );
 
 	AddShader( "Lit", m_litShader );
 	AddShader( "Color Only", nullptr );
@@ -215,15 +219,18 @@ void Game::Render() const
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderWorld() const
 {
+	//Render Quad
+	g_theRenderer->BindTexture( m_brickDiffuse );
+	g_theRenderer->BindNormalTexture( m_brickNormal );
+	g_theRenderer->BindMaterialTexture( 8, m_brickHeight );
+	g_theRenderer->BindShader( m_parallaxShader );
+	g_theRenderer->SetModelUBO( m_quadTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
+	g_theRenderer->DrawMesh( m_quad );
+
 	//RenderRingOfSpheres();
 	g_theRenderer->BindShader( m_shadersToUse[ m_currentShaderIndex ] );
 	g_theRenderer->BindTexture( m_couchDiffuse );
 	g_theRenderer->BindNormalTexture( m_couchNormal );
-
-	//Render Quad
-	g_theRenderer->BindShader( m_fogShader );
-	g_theRenderer->SetModelUBO( m_quadTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
-	g_theRenderer->DrawMesh( m_quad );
 
 	//Render Sphere
 // 	g_theRenderer->BindMaterialTexture( 8 + 0, m_couchDiffuse );
@@ -249,13 +256,39 @@ void Game::RenderWorld() const
 	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_meshCube );
 
+
 	//Render Fresnel
 	fresnel_t fresnelData;
 	fresnelData.color = Vec3( 0.f, 1.f, 0.f );
 	fresnelData.power = 32.f;
 	fresnelData.factor = 1.f;
+	g_theRenderer->SetDepthTest( COMPARE_FUNC_EQUAL, true );
 	g_theRenderer->SetMaterialUBO( &fresnelData, sizeof( fresnelData ) );
 	g_theRenderer->BindShader( m_fresnelShader );
+	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
+	g_theRenderer->DrawMesh( m_meshCube );
+
+
+	//Render Projection
+	projection_t projectionData;
+	Light light = m_animatedLights[0].light;
+	Mat44 projection = Mat44::CreatePerspectiveProjection( 90.f, 1.f, 0.1f, 100.f );
+	Mat44 view = Mat44::LookAt( light.position, light.position + light.direction );
+	MatrixInvert( view );
+	projectionData.matrix = view.GetTransformMatrixBy( projection );
+	projectionData.position = light.position;
+	projectionData.intensity = m_projectionIntensity;
+
+	g_theRenderer->BindMaterialTexture( 8, m_projectionImage );
+	g_theRenderer->SetDepthTest( COMPARE_FUNC_EQUAL, true );
+	g_theRenderer->SetMaterialUBO( &projectionData, sizeof( projectionData ) );
+	g_theRenderer->BindShader( m_projectionShader );
+
+	//Redraw all objects for Projection
+	g_theRenderer->SetModelUBO( m_quadTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
+	g_theRenderer->DrawMesh( m_quad );
+	g_theRenderer->SetModelUBO( m_sphereTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
+	g_theRenderer->DrawMesh( m_uvSphere );
 	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_meshCube );
 }
@@ -504,6 +537,17 @@ void Game::UpdateFromInput( float deltaSeconds )
 	{
 		m_dissolveAmount -= 0.5f * deltaSeconds;
 		ClampZeroToOne( m_dissolveAmount );
+	}
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_RIGHT_ARROW ) )
+	{
+		m_projectionIntensity += 0.5f * deltaSeconds;
+		ClampZeroToOne( m_projectionIntensity );
+	}
+	if( g_theInput->IsKeyPressed( KEY_CODE_LEFT_ARROW ) )
+	{
+		m_projectionIntensity -= 0.5f * deltaSeconds;
+		ClampZeroToOne( m_projectionIntensity );
 	}
 
 	UpdateDrawDebugObjects();

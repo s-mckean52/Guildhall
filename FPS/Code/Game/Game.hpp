@@ -6,6 +6,7 @@
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Transform.hpp"
+#include "Engine/Math/Mat44.hpp"
 #include <vector>
 
 class Entity;
@@ -31,6 +32,14 @@ struct dissolve_t
 	float amount;
 	Vec3 edgeEndColor;
 	float edgeRange;
+};
+
+
+struct projection_t
+{
+	Mat44 matrix;
+	Vec3 position;
+	float intensity;
 };
 
 
@@ -120,7 +129,9 @@ private:
 	Texture* m_barkNormal		= nullptr;
 	Texture* m_brickDiffuse		= nullptr;
 	Texture* m_brickNormal		= nullptr;
+	Texture* m_brickHeight		= nullptr;
 	Texture* m_dissolveImage	= nullptr;
+	Texture* m_projectionImage	= nullptr;
 	Texture* m_pokeball			= nullptr;
 	
 	int m_currentShaderIndex = 0;
@@ -138,6 +149,8 @@ private:
 	Shader* m_dissolveShader		= nullptr;
 	Shader* m_triplanarShader		= nullptr;
 	Shader* m_fogShader				= nullptr;
+	Shader* m_projectionShader		= nullptr;
+	Shader* m_parallaxShader		= nullptr;
 
 	float m_specularFactor = 0.f;
 	float m_specularPower = 32.f;
@@ -150,4 +163,5 @@ private:
 	bool	m_isQuitting = false;
 
 	float m_dissolveAmount = 0.f;
+	float m_projectionIntensity = 0.5f;
 };
