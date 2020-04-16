@@ -26,6 +26,7 @@
 #include "Engine/Math/Vec4.hpp"
 #include "Engine/Math/Transform.hpp"
 #include "Engine/Math/MatrixUtils.hpp"
+#include "Engine/Renderer/Sampler.hpp"
 #include <string>
 
 
@@ -66,7 +67,7 @@ void Game::StartUp()
 	m_worldCamera->SetProjectionPerspective( 60.f, -0.1f, -100.f );
 	m_worldCamera->SetDepthStencilTarget( g_theRenderer->m_defaultDepthStencil );
 	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, m_clearColor, 1.0f, 0 );
-	g_theRenderer->EnableFog( ( 100.f - 0.1f ) * 0.5f, 100.f, Rgba8::YELLOW, Rgba8::RED );
+	g_theRenderer->EnableFog( ( 100.f - 0.1f ) * 0.5f, 100.f, Rgba8::YELLOW, m_clearColor );
 
 	m_UICamera = new Camera( g_theRenderer );
 	m_UICamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
@@ -109,9 +110,11 @@ void Game::StartUp()
 	m_sphereTransform = new Transform();
 	m_ringTransform = new Transform();
 	m_quadTransform = new Transform();
+	m_triplanarSphereTransform = new Transform();
 	m_quadTransform->SetPosition( Vec3( 0.f, 0.f, -12.f ) );
 	m_cubeTransform->SetPosition( Vec3( 5.f, 0.f, -12.f ) );
 	m_sphereTransform->SetPosition( Vec3( -5.f, 0.f, -12.f ) );
+	m_triplanarSphereTransform->SetPosition( Vec3( -10.f, 0.f, -12.f ) );
 
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 
@@ -141,7 +144,7 @@ void Game::StartUp()
 	m_projectionShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Projection.hlsl" );
 	m_parallaxShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/LitParallax.hlsl" );
 
-	AddShader( "Lit", m_litShader );
+	AddShader( "Lit Fog", m_fogShader );
 	AddShader( "Color Only", nullptr );
 	AddShader( "Vertex Normals", m_normalsShader );
 	AddShader( "Vertex Tangents", m_tangentsShader );
@@ -177,6 +180,9 @@ void Game::ShutDown()
 	delete m_sphereTransform;
 	m_sphereTransform = nullptr;
 
+	delete m_triplanarSphereTransform;
+	m_triplanarSphereTransform = nullptr;
+
 	delete m_ringTransform;
 	m_ringTransform = nullptr;
 
@@ -196,6 +202,7 @@ void Game::Render() const
 {
 	//Render worldCamera
 	g_theRenderer->BeginCamera( *m_worldCamera );
+	g_theRenderer->BindSampler( nullptr );
 	g_theRenderer->SetCullMode( CULL_MODE_BACK );
 	g_theRenderer->SetDepthTest( COMPARE_FUNC_LEQUAL, true );
 
@@ -223,23 +230,22 @@ void Game::RenderWorld() const
 	g_theRenderer->BindTexture( m_brickDiffuse );
 	g_theRenderer->BindNormalTexture( m_brickNormal );
 	g_theRenderer->BindMaterialTexture( 8, m_brickHeight );
+	g_theRenderer->BindSampler( g_theRenderer->m_samplerLinear );
 	g_theRenderer->BindShader( m_parallaxShader );
+
+	parallax_t parallaxData;
+	parallaxData.depth = m_parallaxDepth;
+	g_theRenderer->SetMaterialUBO( &parallaxData, sizeof( parallaxData ) );
 	g_theRenderer->SetModelUBO( m_quadTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_quad );
 
-	//RenderRingOfSpheres();
+
 	g_theRenderer->BindShader( m_shadersToUse[ m_currentShaderIndex ] );
+	g_theRenderer->BindSampler( nullptr );
 	g_theRenderer->BindTexture( m_couchDiffuse );
 	g_theRenderer->BindNormalTexture( m_couchNormal );
 
 	//Render Sphere
-// 	g_theRenderer->BindMaterialTexture( 8 + 0, m_couchDiffuse );
-// 	g_theRenderer->BindMaterialTexture( 8 + 1, m_couchNormal );
-// 	g_theRenderer->BindMaterialTexture( 8 + 2, m_brickDiffuse );
-// 	g_theRenderer->BindMaterialTexture( 8 + 3, m_brickNormal );
-// 	g_theRenderer->BindMaterialTexture( 8 + 4, m_barkDiffuse );
-// 	g_theRenderer->BindMaterialTexture( 8 + 5, m_barkNormal );
-// 	g_theRenderer->BindShader( m_triplanarShader );
 	g_theRenderer->BindShader( m_shadersToUse[ m_currentShaderIndex ] );
 	g_theRenderer->SetModelUBO( m_sphereTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_uvSphere );
@@ -255,6 +261,18 @@ void Game::RenderWorld() const
 	g_theRenderer->SetMaterialUBO( &dissolveData, sizeof( dissolveData ) );
 	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_meshCube );
+
+
+	//Render Sphere
+	g_theRenderer->BindMaterialTexture( 8 + 0, m_couchDiffuse );
+	g_theRenderer->BindMaterialTexture( 8 + 1, m_couchNormal );
+	g_theRenderer->BindMaterialTexture( 8 + 2, m_brickDiffuse );
+	g_theRenderer->BindMaterialTexture( 8 + 3, m_brickNormal );
+	g_theRenderer->BindMaterialTexture( 8 + 4, m_barkDiffuse );
+	g_theRenderer->BindMaterialTexture( 8 + 5, m_barkNormal );
+	g_theRenderer->BindShader( m_triplanarShader );
+	g_theRenderer->SetModelUBO( m_triplanarSphereTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
+	g_theRenderer->DrawMesh( m_uvSphere );
 
 
 	//Render Fresnel
@@ -288,6 +306,8 @@ void Game::RenderWorld() const
 	g_theRenderer->SetModelUBO( m_quadTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_quad );
 	g_theRenderer->SetModelUBO( m_sphereTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
+	g_theRenderer->DrawMesh( m_uvSphere );
+	g_theRenderer->SetModelUBO( m_triplanarSphereTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_uvSphere );
 	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->DrawMesh( m_meshCube );
@@ -351,6 +371,7 @@ void Game::RenderUI() const
 	strings.push_back( Stringf( "[{,}] - Specular Factor: %.2f"				, m_specularFactor ) );
 	strings.push_back( Stringf( "[;,'] - Specular Power: %.2f"				, m_specularPower ) );
 	strings.push_back( Stringf( "[<,>] - Shader Mode: %s"					, m_shaderNames[ m_currentShaderIndex ].c_str() ) );
+	strings.push_back( Stringf( "[N,M] - Parallax Depth: %.2f"				, m_parallaxDepth ) );
 
 	Vec2 textStartPos = Vec2( paddingFromLeft, m_UICamera->GetCameraDimensions().y - paddingFromTop - textHeight );
 	for( int stringIndex = 0; stringIndex < strings.size(); ++stringIndex )
@@ -433,7 +454,7 @@ void Game::DebugDrawLight( AnimatedLight* lightToDraw )
 
 	if( lightToDraw->lightType == LIGHT_TYPE_SPOTLIGHT )
 	{
-		const float coneHeight = 1.f;
+		const float coneHeight = 0.5f;
 		Vec3 coneEndPosition = pointPos + ( currentLight.direction * coneHeight );
 		float coneEndRadius = sinf( acosf( currentLight.cosOutterHalfAngle ) ) * coneHeight;
 		DebugAddWorldCone( pointPos, coneEndPosition, coneEndRadius, pointColor, 0.f, DEBUG_RENDER_XRAY );
@@ -481,6 +502,30 @@ void Game::CycleLightType( AnimatedLight* lightToModify )
 	LightType currentLightType = lightToModify->lightType;
 	LightType newLightType = ( LightType )( ( currentLightType + 1 ) % NUM_LIGHT_TYPES );
 	lightToModify->SetLightType( newLightType );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ToggleFog()
+{
+	if( m_isFogEnabled )
+	{
+		g_theRenderer->DisableFog();
+		m_isFogEnabled = false;
+	}
+	else
+	{
+		g_theRenderer->EnableFog( ( 100 - 0.1f ) * 0.5f, 100.f, Rgba8::YELLOW, m_clearColor );
+		m_isFogEnabled = true;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddParallaxDepth( float depthToAdd )
+{
+	m_parallaxDepth += depthToAdd;
+	Clamp( m_parallaxDepth, 0.01f, 0.1f );
 }
 
 
@@ -548,6 +593,20 @@ void Game::UpdateFromInput( float deltaSeconds )
 	{
 		m_projectionIntensity -= 0.5f * deltaSeconds;
 		ClampZeroToOne( m_projectionIntensity );
+	}
+
+	if( g_theInput->WasKeyJustPressed( 'F' ) )
+	{
+		ToggleFog();
+	}
+
+	if (g_theInput->IsKeyPressed( 'N' ) )
+	{
+		AddParallaxDepth( -0.05f * deltaSeconds );
+	}
+	if (g_theInput->IsKeyPressed( 'M' ) )
+	{
+		AddParallaxDepth( 0.05f * deltaSeconds );
 	}
 
 	UpdateDrawDebugObjects();
@@ -934,7 +993,7 @@ STATIC void Game::light_set_color( NamedStrings* args )
 	int lightIndex = args->GetValue( "index", defaultLightIndex );
 	Vec3 pointLightColor = args->GetValue( "color", defaultPointLightColor );
 
-	Clamp( lightIndex, 0, MAX_LIGHTS );
+	Clamp( lightIndex, 0, MAX_LIGHTS - 1 );
 
 	g_theGame->m_animatedLights[lightIndex].light.color = pointLightColor;
 }

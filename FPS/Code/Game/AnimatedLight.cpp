@@ -31,6 +31,8 @@ void AnimatedLight::SetLightType( LightType typeToSetTo )
 		break;
 	case LIGHT_TYPE_DIRECTIONAL:
 		lightToCopy = Light::DIRECTIONAL;
+		light.attenuation = lightToCopy.attenuation;
+		light.specAttenuation = lightToCopy.specAttenuation;
 		break;
 	case LIGHT_TYPE_SPOTLIGHT:
 		lightToCopy = Light::SPOTLIGHT;

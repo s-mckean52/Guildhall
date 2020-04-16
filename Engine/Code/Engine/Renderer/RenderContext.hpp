@@ -76,10 +76,11 @@ struct frame_data_t
 	float gamma;
 	float inverseGamma;
 
-	Vec3 fogNearColor;
+	Vec4 fogNearColor;
+	Vec4 fogFarColor;
 	float fogNear;
-	Vec3 fogFarColor;
 	float fogFar;
+	float padding[2];
 };
 
 struct camera_data_t
@@ -225,7 +226,8 @@ public:
 	Shader*						m_errorShader				= nullptr;
 	Texture*					m_textueDefaultColor		= nullptr;
 	Texture*					m_textureDefaultNormalColor	= nullptr;
-	Sampler*					m_samplerDefault			= nullptr;
+	Sampler*					m_samplerPoint				= nullptr;
+	Sampler*					m_samplerLinear				= nullptr;
 	VertexBuffer*				m_immediateVBO				= nullptr;
 	IndexBuffer*				m_immediateIBO				= nullptr;
 	RenderBuffer*				m_frameUBO					= nullptr;

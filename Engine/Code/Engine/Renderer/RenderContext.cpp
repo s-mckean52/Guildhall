@@ -95,7 +95,8 @@ void RenderContext::StartUp( Window* theWindow )
 	m_lightUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
 	m_materialUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
 
-	m_samplerDefault = new Sampler( this, SAMPLER_POINT );
+	m_samplerPoint = new Sampler( this, SAMPLER_POINT );
+	m_samplerLinear = new Sampler( this, SAMPLER_BILINEAR );
 	m_textueDefaultColor = CreateTextureFromColor( Rgba8::WHITE );
 	m_textureDefaultNormalColor = CreateTextureFromColor( Rgba8( 127, 127, 255, 255 ) );
 
@@ -124,8 +125,11 @@ void RenderContext::ShutDown()
 	ReleaseLoadedAssets();
 	ReleaseBlendStates();
 
-	delete m_samplerDefault;
-	m_samplerDefault = nullptr;
+	delete m_samplerPoint;
+	m_samplerPoint = nullptr;
+
+	delete m_samplerLinear;
+	m_samplerLinear = nullptr;
 
 	delete m_frameUBO;
 	m_frameUBO = nullptr;
@@ -167,11 +171,14 @@ void RenderContext::UpdateFrameUBO()
 
 	frameData.fogFar = m_fogFar;
 	frameData.fogNear = m_fogNear;
-	Vec4 nearColor = m_fogNearColor.GetValuesAsFractions();
-	Vec4 farColor = m_fogFarColor.GetValuesAsFractions();
+	frameData.fogNearColor = m_fogNearColor.GetValuesAsFractions();
+	frameData.fogFarColor = m_fogFarColor.GetValuesAsFractions();
+// 	Vec4 nearColor = m_fogNearColor.GetValuesAsFractions();
+// 	Vec4 farColor = m_fogFarColor.GetValuesAsFractions();
+// 
+// 	frameData.fogNearColor = Vec4( nearColor.x, nearColor.y, nearColor.z );
+// 	frameData.fogFarColor = Vec4( farColor.x, farColor.y, farColor.z );
 
-	frameData.fogNearColor = Vec3( nearColor.x, nearColor.y, nearColor.z );
-	frameData.fogFarColor = Vec3( farColor.x, farColor.y, farColor.z );
 
 	m_frameUBO->Update( &frameData, sizeof( frameData ), sizeof( frameData ) );
 }
@@ -995,7 +1002,7 @@ void RenderContext::BindSampler( Sampler* sampler )
 {
 	if( sampler == nullptr )
 	{
-		sampler = m_samplerDefault;
+		sampler = m_samplerPoint;
 	}
 
 	ID3D11SamplerState* sampleHandle = sampler->GetHandle();

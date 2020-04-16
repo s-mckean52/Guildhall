@@ -79,40 +79,17 @@ cbuffer light_constants : register(b3)
 	light_t LIGHTS[8];
 }
 
+cbuffer parallax_constants : register(b5)
+{
+	float DEPTH;
+	float3 padding_02;
+}
+
 
 Texture2D <float4> tDiffuse	: register(t0);
 Texture2D <float4> tNormal	: register(t1);
 Texture2D <float4> tHeight	: register(t8);
 SamplerState sSampler		: register(s0);
-
-
-float2 GetHeightUVs( float2 start_uv, float3 look_dir )
-{
-	int STEPS = 32;
-	float DEPTH = 0.1f;
-	const float step_dis = 1.0f / (float)STEPS;
-	float2 uv_movement = look_dir.xy * step_dis * DEPTH;
-	float2 uv = start_uv;
-	float ray_pos = 0.f;
-
-	float this_height = 1.f - tHeight.Sample( sSampler, uv ).x;
-	for( int i = 0; i < STEPS; ++i )
-	{
-		float2 next_uv = uv + uv_movement;
-		float next_height = 1.f - tHeight.Sample( sSampler, next_uv ).x;
-		if( ( ray_pos + step_dis ) >= next_height )
-		{
-			float height_dif = this_height - next_height;
-			float uv_fraction = this_height / step_dis;
-			uv_fraction = clamp( uv_fraction, 0.f, 1.f );
-			return lerp( uv, next_uv, uv_fraction );
-		}
-		this_height = next_height;
-		uv += uv_movement;
-		ray_pos += step_dis;
-	}
-	return uv;
-}
 
 
 //--------------------------------------------------------------------------------------
@@ -167,6 +144,35 @@ v2f_t VertexFunction( vs_input_t input )
    v2f.world_bitangent = world_bitangent.xyz;
 
    return v2f;
+}
+
+
+//-------------------------------------------------------------------------------------------------
+float2 GetHeightUVs(float2 start_uv, float3 look_dir)
+{
+	int STEPS = 32;
+	const float step_dis = 1.0f / (float)STEPS;
+	float2 uv_movement = look_dir.xy * step_dis * DEPTH;
+	float2 uv = start_uv;
+	float ray_pos = 0.f;
+
+	float this_height = 1.f - tHeight.Sample(sSampler, uv).x;
+	for (int i = 0; i < STEPS; ++i)
+	{
+		float2 next_uv = uv + uv_movement;
+		float next_height = 1.f - tHeight.Sample(sSampler, next_uv).x;
+		if ((ray_pos + step_dis) >= next_height)
+		{
+			float height_dif = this_height - next_height;
+			float uv_fraction = this_height / step_dis;
+			uv_fraction = clamp(uv_fraction, 0.f, 1.f);
+			return lerp(uv, next_uv, uv_fraction);
+		}
+		this_height = next_height;
+		uv += uv_movement;
+		ray_pos += step_dis;
+	}
+	return uv;
 }
 
 //--------------------------------------------------------------------------------------

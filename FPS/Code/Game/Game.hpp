@@ -43,6 +43,13 @@ struct projection_t
 };
 
 
+struct parallax_t
+{
+	float depth;
+	float padding[3];
+};
+
+
 class Game
 {
 public:
@@ -74,6 +81,8 @@ public:
 	void DebugDrawLight( AnimatedLight* lightToDraw );
 	void CycleLightToModify();
 	void CycleLightType( AnimatedLight* lightToModify );
+	void ToggleFog();
+	void AddParallaxDepth( float depthToAdd );
 
 	void TranslateCamera( Camera& camera, const Vec3& directionToMove );
 	void ChangeClearColor( float deltaSeconds );
@@ -114,6 +123,7 @@ private:
 	Transform* m_cubeTransform = nullptr;
 	Transform* m_sphereTransform = nullptr;
 	Transform* m_ringTransform = nullptr;
+	Transform* m_triplanarSphereTransform = nullptr;
 
 	unsigned int m_selectedLight = 0;
 	Rgba8 m_ambientColor = Rgba8::WHITE;
@@ -162,6 +172,8 @@ private:
 	Camera* m_UICamera = nullptr;
 	bool	m_isQuitting = false;
 
+	bool m_isFogEnabled = true;
 	float m_dissolveAmount = 0.f;
-	float m_projectionIntensity = 0.5f;
+	float m_projectionIntensity = 0.1f;
+	float m_parallaxDepth = 0.01f;
 };

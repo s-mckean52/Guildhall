@@ -52,10 +52,11 @@ cbuffer time_constants : register(b0)
 	float GAMMA;
 	float INVERSE_GAMMA;
 
-	float3 FOG_NEAR_COLOR;
+	float4 FOG_NEAR_COLOR;
+	float4 FOG_FAR_COLOR;
 	float FOG_NEAR;
-	float3 FOG_FAR_COLOR;
 	float FOG_FAR;
+	float2 padding;
 };
 
 cbuffer camera_constants : register(b1)
@@ -152,9 +153,10 @@ v2f_t VertexFunction( vs_input_t input )
 float4 FragmentFunction( v2f_t input ) : SV_Target0
 {
 	float3 distance_to_camera = length( CAMERA_POSITION - input.world_position );
-	float fog_fraction = ( distance_to_camera - FOG_NEAR ) / ( FOG_FAR - FOG_NEAR );
-	fog_fraction = clamp( fog_fraction, 0.0f, 1.0f );
-	float3 fog_color = lerp( FOG_NEAR_COLOR, FOG_FAR_COLOR, fog_fraction );
+	float fog_fraction = smoothstep( FOG_NEAR, FOG_FAR, distance_to_camera );
+	float3 fog_color = lerp( FOG_NEAR_COLOR.xyz, FOG_FAR_COLOR.xyz, fog_fraction );
+	float fog_intensity = lerp( FOG_NEAR_COLOR.w, FOG_FAR_COLOR.w, fog_fraction );
+	fog_color *= fog_intensity;
 
 	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
 
@@ -222,7 +224,7 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 	diffuse = saturate( diffuse );
 
 	float3 final_color = diffuse * surface_color + specular_color;
-	final_color = lerp( final_color, fog_color, fog_fraction );
 	final_color = pow(final_color.xyz, INVERSE_GAMMA);
+	final_color = lerp( final_color, fog_color, fog_fraction );
 	return float4( final_color, surface_alpha );
 }
