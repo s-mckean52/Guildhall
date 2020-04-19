@@ -7,6 +7,9 @@ struct Mat44;
 class Transform
 {
 public:
+	//explicit Transform();
+	explicit Transform( Vec3 const& position = Vec3::ZERO, Vec3 const& rotationPitchYawRollDegrees = Vec3::ZERO, Vec3 const& scale = Vec3::UNIT );
+
 	Vec3 GetPosition() const						{ return m_position; }
 	Vec3 GetScale()	const							{ return m_scale; }
 	Vec3 GetRotationPitchYawRollDegrees() const		{ return m_rotationPitchYawRollDegrees; }

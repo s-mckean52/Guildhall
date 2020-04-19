@@ -43,20 +43,13 @@ constexpr float CAMERA_SIZE_Y			= 9.f;
 constexpr float CLIENT_ASPECT			= CAMERA_SIZE_X / CAMERA_SIZE_Y;
 constexpr float HALF_SCREEN_X			= CAMERA_SIZE_X * 0.5f;
 constexpr float HALF_SCREEN_Y			= CAMERA_SIZE_Y * 0.5f;
-constexpr int	MAX_NUM_PLAYERS			= 1;
 constexpr float RAYCAST_STEP_PER_UNIT	= 100.f;
 constexpr float RAYCAST_STEP_DISTANCE	= 1.f / RAYCAST_STEP_PER_UNIT;
-constexpr float DEBUG_THICKNESS			= 0.02f;
+constexpr float DEBUG_THICKNESS			= 2.f;
 
 constexpr float TRIGGER_ACTIVATION_FRACTION	= 0.6f;
 
-constexpr float SCREEN_SHAKE_ABBERATION				= 1.f / 2.f;
-constexpr float MAX_SCREEN_SHAKE_DISPLACEMENT		= 1.0f;
-constexpr float PLAYER_DEATH_SCREEN_SHAKE_INTENSITY = 1.f;
-
 constexpr float DEV_CONSOLE_LINE_HEIGHT				= 0.15f;
-
-
 
 // Game Specific Colors
 const Rgba8 RGBA8_BALI_HAI				( 132, 156, 169 ); //Teal Grey

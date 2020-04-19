@@ -807,6 +807,23 @@ bool DoPolygonsOverlap( Polygon2D polygonA, Polygon2D polygonB, std::vector<Vec2
 
 
 //---------------------------------------------------------------------------------------------------------
+void PushDiscOutOfOBB2(Vec2& discCenterPosition, float discRadius, const OBB2& box)
+{
+	if( !DoOBBAndDiscOverlap2D( box, discCenterPosition, discRadius ) ) return;
+
+	Vec2 nearestPointOnBox = GetNearestPointOnOBB2D( discCenterPosition, box );
+	Vec2 displacementToBox = nearestPointOnBox - discCenterPosition;
+
+	float distanceToBox = displacementToBox.GetLength();
+	displacementToBox.Normalize();
+
+	float overlapDistance = distanceToBox - discRadius;
+	
+	discCenterPosition += displacementToBox * overlapDistance;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 float SmoothStart2( float t )
 {
 	return t * t;

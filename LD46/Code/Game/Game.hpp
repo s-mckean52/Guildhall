@@ -1,6 +1,6 @@
 #pragma once
 #include "Game/GameCommon.hpp"
-#include "Game/AnimatedLight.hpp"
+#include "Game/EnvironmentObject.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Math/Vec2.hpp"
@@ -15,6 +15,10 @@ class Shader;
 class GPUMesh;
 class Clock;
 class NamedStrings;
+class GameObject;
+class PlayerObject;
+class EnemyObject;
+class Lamp;
 
 
 struct fresnel_t
@@ -50,6 +54,14 @@ struct parallax_t
 };
 
 
+enum GameState
+{
+	GAME_STATE_PLAY,
+	GAME_STATE_LOSE,
+	GAME_STATE_WIN,
+};
+
+
 class Game
 {
 public:
@@ -62,73 +74,52 @@ public:
 	void Render() const;
 	void Update();
 
+	//Start Up
+	void LoadFonts();
+	void LoadTextures();
+	void LoadShaders();
+	void CreateWorldObjects();
+	void SpawnEnvironmentObject( EnvironmentObjectType objectType, Vec3 const& objectPosition = Vec3::ZERO, Vec3 const& objectDimensions = Vec3::UNIT, float objectOrientationAroundYDegrees = 0.f, Rgba8 const& tint = Rgba8::WHITE );
+
+	//Shut Down
+	void DeleteEnvironmentObjects();
+
 	//Input
 	void UpdateFromInput( float deltaSeconds );
-	void UpdateDrawDebugObjects();
 	void UpdateInputLights( float deltaSeconds );
-	void MoveWorldCamera( float deltaSeconds );
+	void UpdateGameState();
 
 	//Rendering
 	void RenderWorld() const;
-	void RenderRingOfSpheres() const;
 	void RenderUI() const;
+	void RenderTiledFloor() const;
 	void EnableLightsForRendering() const;
 
 	//Other
-	void UpdateBasedOnMouseMovement();
-	void UpdateObjectRotations( float deltaSeconds );
-	void UpdateLightPositions();
-	void DebugDrawLight( AnimatedLight* lightToDraw );
-	void CycleLightToModify();
-	void CycleLightType( AnimatedLight* lightToModify );
-	void ToggleFog();
-	void AddParallaxDepth( float depthToAdd );
-
-	void TranslateCamera( Camera& camera, const Vec3& directionToMove );
-	void ChangeClearColor( float deltaSeconds );
+	void UpdatePlayerLightIntensity( float deltaSeconds );
+	void PushPlayerOutOfObjects();
 	void UpdateCameras( float deltaSeconds );
-	void AddAmbientLightIntensity( float intensityToAdd );
-	void AddPointLightIntensity( float intensityToAdd );
-	void AddGamma( float gammaToAdd );
-	void AddSpecFactor( float factorToAdd );
-	void AddSpecPower( float powerToAdd );
-	void CycleAttenuationMode();
-	void ChangeShader( int direction );
-	void AddShader( std::string shaderName, Shader* shader );
+	void TranslateCamera( Camera& camera, const Vec3& directionToMove );
 
+	void AddAmbientLightIntensity( float intensityToAdd );
 
 	//Static
-	static Vec3 ParabolaEquation( float x, float y );
 	static void GainFocus( NamedStrings* args );
 	static void LoseFocus( NamedStrings* args );
 	static void light_set_ambient_color( NamedStrings* args );
-	static void light_set_color( NamedStrings* args );
 
 	bool IsQuitting() const { return m_isQuitting; }
 
 private:
+	//Infastructure
 	Clock* m_gameClock = nullptr;
 
 	GPUMesh* m_meshCube = nullptr;
 	GPUMesh* m_uvSphere = nullptr;
-	GPUMesh* m_plane = nullptr;
 	GPUMesh* m_quad = nullptr;
 
-	Vec3 m_p0;
-	Vec3 m_p1;
-	Vec3 m_p2;
-	Vec3 m_p3;
-
-	Transform* m_quadTransform = nullptr;
-	Transform* m_cubeTransform = nullptr;
-	Transform* m_sphereTransform = nullptr;
-	Transform* m_ringTransform = nullptr;
-	Transform* m_triplanarSphereTransform = nullptr;
-
-	unsigned int m_selectedLight = 0;
 	Rgba8 m_ambientColor = Rgba8::WHITE;
-	float m_ambientIntensity = 1.f;
-	AnimatedLight m_animatedLights[MAX_LIGHTS];
+	float m_ambientIntensity = 0.f;
 
 	float m_distanceFromCamera = -1.f;
 
@@ -143,10 +134,7 @@ private:
 	Texture* m_dissolveImage	= nullptr;
 	Texture* m_projectionImage	= nullptr;
 	Texture* m_pokeball			= nullptr;
-	
-	int m_currentShaderIndex = 0;
-	std::vector<std::string> m_shaderNames;
-	std::vector<Shader*> m_shadersToUse;
+	Texture* m_sunriseImage		= nullptr;
 
 	Shader* m_invertColorShader		= nullptr;
 	Shader* m_litShader				= nullptr;
@@ -162,18 +150,18 @@ private:
 	Shader* m_projectionShader		= nullptr;
 	Shader* m_parallaxShader		= nullptr;
 
-	float m_specularFactor = 0.f;
-	float m_specularPower = 32.f;
-
 	Rgba8	m_clearColor = Rgba8::BLACK;
-	float	m_colorChangeDelay = 1.f;
 	
 	Camera*	m_worldCamera = nullptr;
 	Camera* m_UICamera = nullptr;
 	bool	m_isQuitting = false;
 
-	bool m_isFogEnabled = true;
-	float m_dissolveAmount = 0.f;
-	float m_projectionIntensity = 0.1f;
-	float m_parallaxDepth = 0.01f;
+
+	//Game World
+	AABB2 m_endZone;
+	GameState m_gameState = GAME_STATE_PLAY;
+	PlayerObject* m_player;
+	std::vector<EnvironmentObject*> m_enviromentObjects;
+	std::vector<EnemyObject*> m_enemyObjects;
+	Lamp* m_lamps[5];
 };

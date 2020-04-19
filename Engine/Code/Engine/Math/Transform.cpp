@@ -5,6 +5,14 @@
 
 
 //---------------------------------------------------------------------------------------------------------
+Transform::Transform( Vec3 const& position, Vec3 const& rotationPitchYawRollDegrees, Vec3 const& scale )
+{
+	m_position = position;
+	m_rotationPitchYawRollDegrees = rotationPitchYawRollDegrees;
+	m_scale = scale;
+}
+
+//---------------------------------------------------------------------------------------------------------
 void Transform::SetPosition( Vec3 const& position )
 {
 	m_position = position;

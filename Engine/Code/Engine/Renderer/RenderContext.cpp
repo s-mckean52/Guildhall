@@ -173,12 +173,6 @@ void RenderContext::UpdateFrameUBO()
 	frameData.fogNear = m_fogNear;
 	frameData.fogNearColor = m_fogNearColor.GetValuesAsFractions();
 	frameData.fogFarColor = m_fogFarColor.GetValuesAsFractions();
-// 	Vec4 nearColor = m_fogNearColor.GetValuesAsFractions();
-// 	Vec4 farColor = m_fogFarColor.GetValuesAsFractions();
-// 
-// 	frameData.fogNearColor = Vec4( nearColor.x, nearColor.y, nearColor.z );
-// 	frameData.fogFarColor = Vec4( farColor.x, farColor.y, farColor.z );
-
 
 	m_frameUBO->Update( &frameData, sizeof( frameData ), sizeof( frameData ) );
 }
@@ -483,6 +477,7 @@ void RenderContext::DrawVertexArray( int numVerticies, const Vertex_PCU* vertici
 	size_t elementSize	= sizeof( Vertex_PCU );
 	m_immediateVBO->Update( verticies, byteSize, elementSize );
 	m_immediateVBO->m_boundBufferAttribute = Vertex_PCU::LAYOUT;
+	UpdateCurrentLayout( Vertex_PCU::LAYOUT );
 
 	//Bind
 	BindVertexInput( m_immediateVBO );
@@ -523,11 +518,12 @@ void RenderContext::DrawMesh( GPUMesh* mesh )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::UpdateCurrentLayout( buffer_attribute_t const* newLayout )
 {
-	if( newLayout != m_currentVertexLayout )
+	if( newLayout != m_currentVertexLayout || m_currentShader != m_lastBoundShader )
 	{
 		ID3D11InputLayout* inputLayout = m_currentShader->GetOrCreateInputLayout( newLayout );
 		m_context->IASetInputLayout( inputLayout );
 		m_currentVertexLayout = newLayout;
+		m_lastBoundShader = m_currentShader;
 	}
 }
 

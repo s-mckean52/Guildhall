@@ -1,6 +1,9 @@
 #include "Game/Game.hpp"
 #include "Game/GameCommon.hpp"
-#include "Game/Entity.hpp"
+#include "Game/GameObject.hpp"
+#include "Game/PlayerObject.hpp"
+#include "Game/EnemyObject.hpp"
+#include "Game/Lamp.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/EngineCommon.hpp"
@@ -59,7 +62,6 @@ void Game::StartUp()
 	g_theEventSystem->SubscribeEventCallbackFunction( "GainFocus", GainFocus );
 	g_theEventSystem->SubscribeEventCallbackFunction( "LoseFocus", LoseFocus );
 	g_theEventSystem->SubscribeEventCallbackFunction( "light_set_ambient_color", light_set_ambient_color );
-	g_theEventSystem->SubscribeEventCallbackFunction( "light_set_color", light_set_color );
 
 	g_theInput->SetCursorMode( MOUSE_MODE_RELATIVE );
 
@@ -83,79 +85,138 @@ void Game::StartUp()
 	AddUVSphereToIndexedVertexArray( uvSphereVerticies, uvSphereIndicies, Vec3::ZERO, 1.f, 32, 64, Rgba8::WHITE );
 	m_uvSphere = new GPUMesh( g_theRenderer, uvSphereVerticies, uvSphereIndicies );
 
-	m_p0 = Vec3( -1.f, -1.f, 0.f );
-	m_p1 = Vec3( 1.f, -1.f, 0.f );
-	m_p2 = Vec3( 1.f, 1.f, 0.f );
-	m_p3 = Vec3( -1.f, 1.f, 0.f );
-
+	Vec3 p0 = Vec3(-0.5f, 0.f, 0.5f);
+	Vec3 p1 = Vec3(0.5f, 0.f, 0.5f);
+	Vec3 p2 = Vec3(0.5f, 0.f, -0.5f);
+	Vec3 p3 = Vec3(-0.5f, 0.f, -0.5f);
 	std::vector<Vertex_PCUTBN> litQuadVerts;
-	AppendVertsForQuad3D( litQuadVerts, m_p0, m_p1, m_p2, m_p3, Rgba8::WHITE );
+	AppendVertsForQuad3D( litQuadVerts, p0, p1, p2, p3, Rgba8::WHITE );
 	m_quad = new GPUMesh( g_theRenderer );
 	m_quad->UpdateVerticies( static_cast<unsigned int>( litQuadVerts.size() ), &litQuadVerts[0] );
 
+	LoadFonts();
+	LoadTextures();
+	LoadShaders();
+
+	CreateWorldObjects();
+}
 
 
-// 	std::vector<Vertex_PCU> planeVerts;
-// 	std::vector<unsigned int> planeIndicies;
-// 	AddPlaneToIndexedVertexArray(	planeVerts, planeIndicies, Vec3(), Rgba8::GREEN,
-// 									Vec3::RIGHT, -1.f, 1.f,
-// 									Vec3::UP, -1.f, 1.f, 3 );
-// 	AddSurfaceToIndexedVertexArray( planeVerts, planeIndicies, Vec3(), Rgba8::GREEN,
-// 									-1.f, 1.f, 10,
-// 									-1.f, 1.f, 10, ParabolaEquation );
-// 	m_plane = new GPUMesh( g_theRenderer, planeVerts, planeIndicies );
+//---------------------------------------------------------------------------------------------------------
+void Game::LoadFonts()
+{
+	g_devConsoleFont = g_theRenderer->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont");
+}
 
 
-	m_cubeTransform = new Transform();
-	m_sphereTransform = new Transform();
-	m_ringTransform = new Transform();
-	m_quadTransform = new Transform();
-	m_triplanarSphereTransform = new Transform();
-	m_quadTransform->SetPosition( Vec3( 0.f, 0.f, -12.f ) );
-	m_cubeTransform->SetPosition( Vec3( 5.f, 0.f, -12.f ) );
-	m_sphereTransform->SetPosition( Vec3( -5.f, 0.f, -12.f ) );
-	m_triplanarSphereTransform->SetPosition( Vec3( -10.f, 0.f, -12.f ) );
+//---------------------------------------------------------------------------------------------------------
+void Game::LoadTextures()
+{
+	m_dissolveImage = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/noise.png");
+	m_couchDiffuse = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/example_color.png");
+	m_couchNormal = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/example_normal.png");
+	m_barkDiffuse = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/bark_diffuse.png");
+	m_barkNormal = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/bark_normal.png");
+	m_brickDiffuse = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Brick/brick_diffuse.png");
+	m_brickNormal = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Brick/brick_normal.png");
+	m_brickHeight = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Brick/brick_height.png");
+	m_test = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Test_StbiFlippedAndOpenGL.png");
+	m_projectionImage = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Test_StbiFlippedAndOpenGL.png");
+	m_sunriseImage = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/sunrise.png");
+}
 
-	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 
-	m_pokeball			= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/pokeball.png" );
-	m_dissolveImage		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/noise.png" );
-	m_couchDiffuse		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/example_color.png" );
-	m_couchNormal		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/example_normal.png" );
-	m_barkDiffuse		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/bark_diffuse.png" );
-	m_barkNormal		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/bark_normal.png" );
-	m_brickDiffuse		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Brick/brick_diffuse.png" );
-	m_brickNormal		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Brick/brick_normal.png" );
-	m_brickHeight		= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Brick/brick_height.png" );
-	m_test				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
-	m_projectionImage	= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
-
+//---------------------------------------------------------------------------------------------------------
+void Game::LoadShaders()
+{
 	m_defaultShader = nullptr;
-	m_invertColorShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/invertColor.hlsl" );
-	m_litShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Lit.hlsl" );
- 	m_normalsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Normals.hlsl" );
- 	m_tangentsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Tangents.hlsl" );
- 	m_bitangentsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Bitangents.hlsl" );
- 	m_surfaceNormalsShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/SurfaceNormals.hlsl" );
-	m_fresnelShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Fresnel.hlsl" );
-	m_dissolveShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/LitDissolve.hlsl" );
-	m_triplanarShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Triplanar.hlsl" );
-	m_fogShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/LitFog.hlsl" );
-	m_projectionShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/Projection.hlsl" );
-	m_parallaxShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/LitParallax.hlsl" );
+	m_invertColorShader = g_theRenderer->GetOrCreateShader("Data/Shaders/invertColor.hlsl");
+	m_litShader = g_theRenderer->GetOrCreateShader("Data/Shaders/Lit.hlsl");
+	m_normalsShader = g_theRenderer->GetOrCreateShader("Data/Shaders/Normals.hlsl");
+	m_tangentsShader = g_theRenderer->GetOrCreateShader("Data/Shaders/Tangents.hlsl");
+	m_bitangentsShader = g_theRenderer->GetOrCreateShader("Data/Shaders/Bitangents.hlsl");
+	m_surfaceNormalsShader = g_theRenderer->GetOrCreateShader("Data/Shaders/SurfaceNormals.hlsl");
+	m_fresnelShader = g_theRenderer->GetOrCreateShader("Data/Shaders/Fresnel.hlsl");
+	m_dissolveShader = g_theRenderer->GetOrCreateShader("Data/Shaders/LitDissolve.hlsl");
+	m_triplanarShader = g_theRenderer->GetOrCreateShader("Data/Shaders/Triplanar.hlsl");
+	m_fogShader = g_theRenderer->GetOrCreateShader("Data/Shaders/LitFog.hlsl");
+	m_projectionShader = g_theRenderer->GetOrCreateShader("Data/Shaders/Projection.hlsl");
+	m_parallaxShader = g_theRenderer->GetOrCreateShader("Data/Shaders/LitParallax.hlsl");
+}
 
-	AddShader( "Lit Fog", m_fogShader );
-	AddShader( "Color Only", nullptr );
-	AddShader( "Vertex Normals", m_normalsShader );
-	AddShader( "Vertex Tangents", m_tangentsShader );
-	AddShader( "Vertex Bitangents", m_bitangentsShader );
-	AddShader( "Surface Normals", m_surfaceNormalsShader );
+
+//---------------------------------------------------------------------------------------------------------
+void Game::CreateWorldObjects()
+{
+	m_player = new PlayerObject( Vec3( 0.f, 0.5f, 0.f ), 0.5f );
+	m_player->SetCamera( m_worldCamera );
+
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( -3.f, 0.f, 2.f ),		Vec3( 18.f, 10.f, 2.f ),	0.f,	Rgba8::CYAN );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( -3.f, 0.f, -1.5f ),	Vec3( 4.f, 10.f, 5.f ),		0.f,	Rgba8::CYAN );
+ 	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( 3.5f, 0.f, -1.5f ),	Vec3( 5.f, 10.f, 5.f ),		0.f,	Rgba8::CYAN );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( -13.f, 0.f, -9.f ),	Vec3( 2.f, 10.f, 22.f ),	0.f,	Rgba8::CYAN );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( -8.5f, 0.f, -22.f ),	Vec3( 7.f, 10.f, 6.f ),		0.f,	Rgba8::CYAN );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( -13.f, 0.f, -29.5f ),	Vec3( 6.f, 10.f, 9.f ),		0.f,	Rgba8::CYAN );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( -17.f, 0.f, -41.f ),	Vec3( 2.f, 10.f, 14.f ),	0.f,	Rgba8::CYAN );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( -12.f, 0.f, -49.f ),	Vec3( 8.f, 10.f, 2.f ),		0.f,	Rgba8::CYAN );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( -7.f, 0.f, -45.f ),	Vec3( 2.f, 10.f, 6.f ),		0.f,	Rgba8::CYAN );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( -4.f, 0.f, -48.f ),	Vec3( 4.f, 10.f, 2.f ),		0.f,	Rgba8::CYAN );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( 10.f, 0.f, -48.f ),	Vec3( 20.f, 10.f, 2.f ),	0.f,	Rgba8::CYAN );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( 21.f, 0.f, -36.f ),	Vec3( 2.f, 10.f, 22.f ),	0.f,	Rgba8::CYAN );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( 13.f, 0.f, -23.f ),	Vec3( 14.f, 10.f, 4.f ),	0.f,	Rgba8::CYAN );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( 16.f, 0.f, -14.5f ),	Vec3( 2.f, 10.f, 13.f ),	0.f,	Rgba8::CYAN );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( 10.5f, 0.f, -6.f ),	Vec3( 9.f, 10.f, 4.f ),		0.f,	Rgba8::CYAN );
+	//First Inner
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( -8.5f, 0.f, -3.5f ),	Vec3( 3.f, 10.f, 5.f ),		0.f,	Rgba8::RED );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( -6.5f, 0.f, -11.5f ),	Vec3( 7.f, 10.f, 11.f ),	0.f,	Rgba8::RED );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( 0.5f, 0.f, -12.5f ),	Vec3( 7.f, 10.f, 13.f ),	0.f,	Rgba8::RED );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( 0.5f, 0.f, -22.f ),	Vec3( 7.f, 10.f, 6.f ),		0.f,	Rgba8::RED );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( 8.5f, 0.f, -14.5f ),	Vec3( 9.f, 10.f, 9.f ),		0.f,	Rgba8::RED );
+	//Second Inner
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( -4.5f, 0.f, -30.5f ),	Vec3( 7.f, 10.f, 7.f ),		0.f,	Rgba8::RED );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( 3.f, 0.f, -28.5f ),	Vec3( 8.f, 10.f, 3.f ),		0.f,	Rgba8::RED );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( 12.5f, 0.f, -30.5f ),	Vec3( 11.f, 10.f, 7.f ),	0.f,	Rgba8::RED );
+	//Third Inner
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( -12.f, 0.f, -41.f ),	Vec3( 4.f, 10.f, 10.f ),	0.f,	Rgba8::RED );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( -7.f, 0.f, -38.f ),	Vec3( 6.f, 10.f, 4.f ),		0.f,	Rgba8::GREEN );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( 7.f, 0.f, -40.5f ),	Vec3( 22.f, 10.f, 9.f ),	0.f,	Rgba8::BLUE );
+	SpawnEnvironmentObject( ENVIROMENT_OBJECT_AABB,		Vec3( 3.f, 0.f, -34.f ),	Vec3( 4.f, 10.f, 4.f ),		0.f,	Rgba8::ORANGE );
+
+	m_lamps[0] = new Lamp( Vec3( -6.f, 0.f, -5.f ) );
+	m_lamps[1] = new Lamp( Vec3( -4.f, 0.f, -18.f ) );
+	m_lamps[2] = new Lamp( Vec3( 3.f, 0.f, -31.f ) );
+	m_lamps[3] = new Lamp( Vec3( 19.f, 0.f, -41.f ) );
+	m_lamps[4] = new Lamp( Vec3( 14.f, 0.f, -9.f ) );
+
+	m_endZone = AABB2( -2.f, -47.f, 0.f, -49.f );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::SpawnEnvironmentObject( EnvironmentObjectType objectType, Vec3 const& objectPosition, Vec3 const& objectDimensions, float objectOrientationAroundYDegrees, Rgba8 const& tint )
+{
+	Vec3 adjustedObjectPosition = objectPosition;
+	adjustedObjectPosition.y += objectDimensions.y * 0.5f;
+	m_enviromentObjects.push_back( new EnvironmentObject( objectType, adjustedObjectPosition, objectDimensions, objectOrientationAroundYDegrees, tint ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::DeleteEnvironmentObjects()
+{
+	for( int environmentObjectIndex = 0; environmentObjectIndex < m_enviromentObjects.size(); ++environmentObjectIndex )
+	{
+		delete m_enviromentObjects[environmentObjectIndex];
+		m_enviromentObjects[environmentObjectIndex] = nullptr;
+	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Game::ShutDown()
 {
+	DeleteEnvironmentObjects();
+
 	delete g_RNG;
 	g_RNG = nullptr;
 
@@ -171,29 +232,14 @@ void Game::ShutDown()
 	delete m_quad;
 	m_quad = nullptr;
 
-	delete m_quadTransform;
-	m_quadTransform = nullptr;
-
-	delete m_cubeTransform;
-	m_cubeTransform = nullptr;
-
-	delete m_sphereTransform;
-	m_sphereTransform = nullptr;
-
-	delete m_triplanarSphereTransform;
-	m_triplanarSphereTransform = nullptr;
-
-	delete m_ringTransform;
-	m_ringTransform = nullptr;
-
 	delete m_uvSphere;
 	m_uvSphere = nullptr;
 
-	delete m_plane;
-	m_plane = nullptr;
-
 	delete m_gameClock;
 	m_gameClock = nullptr;
+
+	delete m_player;
+	m_player = nullptr;
 }
 
 
@@ -225,122 +271,15 @@ void Game::Render() const
 
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderWorld() const
-{
-	//Render Quad
-	g_theRenderer->BindTexture( m_brickDiffuse );
-	g_theRenderer->BindNormalTexture( m_brickNormal );
-	g_theRenderer->BindMaterialTexture( 8, m_brickHeight );
-	g_theRenderer->BindSampler( g_theRenderer->m_samplerLinear );
-	g_theRenderer->BindShader( m_parallaxShader );
+{ 
+	m_player->Render();
 
-	parallax_t parallaxData;
-	parallaxData.depth = m_parallaxDepth;
-	g_theRenderer->SetMaterialUBO( &parallaxData, sizeof( parallaxData ) );
-	g_theRenderer->SetModelUBO( m_quadTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
-	g_theRenderer->DrawMesh( m_quad );
+	RenderTiledFloor();
 
-
-	g_theRenderer->BindShader( m_shadersToUse[ m_currentShaderIndex ] );
-	g_theRenderer->BindSampler( nullptr );
-	g_theRenderer->BindTexture( m_couchDiffuse );
-	g_theRenderer->BindNormalTexture( m_couchNormal );
-
-	//Render Sphere
-	g_theRenderer->BindShader( m_shadersToUse[ m_currentShaderIndex ] );
-	g_theRenderer->SetModelUBO( m_sphereTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
-	g_theRenderer->DrawMesh( m_uvSphere );
-
-	//Render Cube
-	dissolve_t dissolveData;
-	dissolveData.amount = m_dissolveAmount;
-	dissolveData.edgeRange = 0.1f;
-	dissolveData.edgeEndColor = Vec3( 1.f, 0.f, 0.f );
-	dissolveData.edgeStartColor = Vec3( 1.f, 1.f, 0.f );
-	g_theRenderer->BindMaterialTexture( 8, m_dissolveImage );
-	g_theRenderer->BindShader( m_dissolveShader );
-	g_theRenderer->SetMaterialUBO( &dissolveData, sizeof( dissolveData ) );
-	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
-	g_theRenderer->DrawMesh( m_meshCube );
-
-
-	//Render Sphere
-	g_theRenderer->BindMaterialTexture( 8 + 0, m_couchDiffuse );
-	g_theRenderer->BindMaterialTexture( 8 + 1, m_couchNormal );
-	g_theRenderer->BindMaterialTexture( 8 + 2, m_brickDiffuse );
-	g_theRenderer->BindMaterialTexture( 8 + 3, m_brickNormal );
-	g_theRenderer->BindMaterialTexture( 8 + 4, m_barkDiffuse );
-	g_theRenderer->BindMaterialTexture( 8 + 5, m_barkNormal );
-	g_theRenderer->BindShader( m_triplanarShader );
-	g_theRenderer->SetModelUBO( m_triplanarSphereTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
-	g_theRenderer->DrawMesh( m_uvSphere );
-
-
-	//Render Fresnel
-	fresnel_t fresnelData;
-	fresnelData.color = Vec3( 0.f, 1.f, 0.f );
-	fresnelData.power = 32.f;
-	fresnelData.factor = 1.f;
-	g_theRenderer->SetDepthTest( COMPARE_FUNC_EQUAL, true );
-	g_theRenderer->SetMaterialUBO( &fresnelData, sizeof( fresnelData ) );
-	g_theRenderer->BindShader( m_fresnelShader );
-	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
-	g_theRenderer->DrawMesh( m_meshCube );
-
-
-	//Render Projection
-	projection_t projectionData;
-	Light light = m_animatedLights[0].light;
-	Mat44 projection = Mat44::CreatePerspectiveProjection( 90.f, 1.f, 0.1f, 100.f );
-	Mat44 view = Mat44::LookAt( light.position, light.position + light.direction );
-	MatrixInvert( view );
-	projectionData.matrix = view.GetTransformMatrixBy( projection );
-	projectionData.position = light.position;
-	projectionData.intensity = m_projectionIntensity;
-
-	g_theRenderer->BindMaterialTexture( 8, m_projectionImage );
-	g_theRenderer->SetDepthTest( COMPARE_FUNC_EQUAL, true );
-	g_theRenderer->SetMaterialUBO( &projectionData, sizeof( projectionData ) );
-	g_theRenderer->BindShader( m_projectionShader );
-
-	//Redraw all objects for Projection
-	g_theRenderer->SetModelUBO( m_quadTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
-	g_theRenderer->DrawMesh( m_quad );
-	g_theRenderer->SetModelUBO( m_sphereTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
-	g_theRenderer->DrawMesh( m_uvSphere );
-	g_theRenderer->SetModelUBO( m_triplanarSphereTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
-	g_theRenderer->DrawMesh( m_uvSphere );
-	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
-	g_theRenderer->DrawMesh( m_meshCube );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::RenderRingOfSpheres() const
-{
-/*	Mat44 model = m_sphereTransform->ToMatrix();*/
-/*	g_theRenderer->SetModelMatrix( model );*/
-	g_theRenderer->BindTexture( m_pokeball );
-	g_theRenderer->BindShader( (Shader*)nullptr );
-/*	g_theRenderer->DrawMesh( m_uvSphere );*/
-
-	float ringRadius = 50.f;
-	int numberOfSpheres = 64;
-	float degreeStep = 360.f / numberOfSpheres;
-
-	float currentAngleDegrees = 0.f;
-	for( int sphereNum = 0; sphereNum < numberOfSpheres; ++sphereNum )
+	for( int enviromentObjectIndex = 0; enviromentObjectIndex < m_enviromentObjects.size(); ++enviromentObjectIndex )
 	{
-		Mat44 ringMat = m_ringTransform->ToMatrix();
-		ringMat.RotateZDegrees( currentAngleDegrees );
-
-		Mat44 sphereMat = m_sphereTransform->ToMatrix();
-		Vec3 worldPosition = ringMat.TransformPosition3D( Vec3( ringRadius, 0.f, 0.f ) );
-		sphereMat.SetTranslation3D( worldPosition );
-
-		g_theRenderer->SetModelUBO( sphereMat );
-		g_theRenderer->DrawMesh( m_uvSphere );
-
-		currentAngleDegrees += degreeStep;
+		EnvironmentObject* currentEnviromentObject = m_enviromentObjects[enviromentObjectIndex];
+		currentEnviromentObject->Render();
 	}
 }
 
@@ -348,191 +287,108 @@ void Game::RenderRingOfSpheres() const
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderUI() const
 {
-	const float textHeight = 0.15f;
-	const float paddingFromLeft = 0.015f;
-	const float paddingFromTop = 0.05f;
-
-	std::vector<std::string> strings;
-	std::vector<Vertex_PCU> textVerts;
-
-	Light currentLight = m_animatedLights[m_selectedLight].light;
-	std::string	lightType = m_animatedLights[m_selectedLight].GetLightTypeAsString();
-
-	strings.push_back( Stringf( "[q,e] - Current Light [%i]"				, m_selectedLight ) );
-	strings.push_back( Stringf( "[R]   - Light Type - %s"					, lightType.c_str() ) );
-	strings.push_back( Stringf( "[F4]  - Position At Origin" ) );
-	strings.push_back( Stringf( "[F5]  - Position At Camera" ) );
-	strings.push_back( Stringf( "[F6]  - Follow Camera" ) );
-	strings.push_back( Stringf( "[F7]  - Animate Position" ) );
-	strings.push_back( Stringf( "[g,h] - Gamma: %.2f"						, g_theRenderer->GetGamma() ) );
-	strings.push_back( Stringf( "[0,9] - Ambient Intensity: %.2f"			, m_ambientIntensity ) );
-	strings.push_back( Stringf( "[-,+] - Point Light Intensity: %.2f"		, currentLight.intensity ) );
-	strings.push_back( Stringf( "[T]   - Attenuation: (%.2f, %.2f, %.2f)"	, currentLight.attenuation.x, currentLight.attenuation.y, currentLight.attenuation.z ) );
-	strings.push_back( Stringf( "[{,}] - Specular Factor: %.2f"				, m_specularFactor ) );
-	strings.push_back( Stringf( "[;,'] - Specular Power: %.2f"				, m_specularPower ) );
-	strings.push_back( Stringf( "[<,>] - Shader Mode: %s"					, m_shaderNames[ m_currentShaderIndex ].c_str() ) );
-	strings.push_back( Stringf( "[N,M] - Parallax Depth: %.2f"				, m_parallaxDepth ) );
-
-	Vec2 textStartPos = Vec2( paddingFromLeft, m_UICamera->GetCameraDimensions().y - paddingFromTop - textHeight );
-	for( int stringIndex = 0; stringIndex < strings.size(); ++stringIndex )
-	{
-		g_devConsoleFont->AddVertsForText2D( textVerts, textStartPos, textHeight, strings[ stringIndex ], Rgba8::WHITE );
-		textStartPos -= Vec2( 0.f, textHeight + paddingFromTop );
-	}
-
+	AABB2 screenAABB2 = AABB2( 0.f, 0.f, CAMERA_SIZE_X, CAMERA_SIZE_Y );
+	
+	g_theRenderer->BindSampler(nullptr);
+	g_theRenderer->SetCullMode(CULL_MODE_BACK);
+	g_theRenderer->SetDepthTest(COMPARE_FUNC_LEQUAL, true);
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->BindNormalTexture( nullptr );
-	g_theRenderer->BindTexture( g_devConsoleFont->GetTexture() );
-	g_theRenderer->DrawVertexArray( textVerts );
+
+	switch (m_gameState)
+	{
+	case GAME_STATE_PLAY:
+		break;
+	case GAME_STATE_LOSE:
+	{
+		float textSize = 0.5f;
+		std::vector<Vertex_PCU> loseText;
+		std::string loseString = "THE DARKNESS ENVELOPS YOU";
+		g_devConsoleFont->AddVertsForTextInBox2D( loseText, screenAABB2, textSize, loseString, Rgba8::RED );
+		g_theRenderer->BindTexture(g_devConsoleFont->GetTexture());
+		g_theRenderer->DrawVertexArray( loseText );
+		break;
+	}
+	case GAME_STATE_WIN:
+	{
+		g_theRenderer->BindTexture( m_sunriseImage );
+		std::vector<Vertex_PCU> verts;
+		AppendVertsForAABB2D( verts, screenAABB2, Rgba8::WHITE );
+		g_theRenderer->DrawVertexArray(verts);
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::RenderTiledFloor() const
+{
+	Transform startTrans = Transform( Vec3( -20.f, -0.02f, 3.f ), Vec3::ZERO, Vec3( 10.f, 1.f, 10.f ) );
+	g_theRenderer->BindTexture(m_brickDiffuse);
+	g_theRenderer->BindNormalTexture(m_brickNormal);
+	g_theRenderer->BindSampler(g_theRenderer->m_samplerLinear);
+	g_theRenderer->SetCullMode(CULL_MODE_BACK);
+	g_theRenderer->SetDepthTest(COMPARE_FUNC_LEQUAL, true);
+	g_theRenderer->BindShader(m_litShader);
+
+	for (int x = 0; x < 5; ++x)
+	{
+		for (int y = 0; y < 6; ++y)
+		{
+			Transform trans = startTrans;
+			trans.Translate( Vec3( 10.f * x, 0.f, -10.f * y ) );
+			g_theRenderer->SetModelUBO(trans.ToMatrix(), Rgba8::WHITE, 0.2f, 32.f);
+			g_theRenderer->DrawMesh(m_quad);
+		}
+	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Game::EnableLightsForRendering() const
 {
-	for( unsigned int lightIndex = 0; lightIndex < MAX_LIGHTS; ++lightIndex )
+	//Enable Player Light
+	m_player->EnableLight();
+
+	//Enable Lamp Lights
+	for( int lampIndex = 0; lampIndex < 5; ++lampIndex )
 	{
-		g_theRenderer->EnableLight( lightIndex, m_animatedLights[lightIndex].light );
+		m_lamps[lampIndex]->EnableLight( lampIndex + 1 );
 	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::UpdateBasedOnMouseMovement()
+void Game::UpdatePlayerLightIntensity( float deltaSeconds )
 {
-	Vec2 relativeMovement = g_theInput->GetCursorRelativeMovement();
-	m_worldCamera->AddPitchYawRollRotationDegrees( relativeMovement.y, relativeMovement.x, 0.f );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::UpdateObjectRotations( float deltaSeconds )
-{
-	m_cubeTransform->AddRotationPitchYawRollDegrees( 45.f * deltaSeconds, 90.f * deltaSeconds, 0.f );
-	m_sphereTransform->AddRotationPitchYawRollDegrees( 45.f * deltaSeconds, 90.f * deltaSeconds, 0.f );
-	m_ringTransform->AddRotationPitchYawRollDegrees( 0.f, 0.f, 10.f * deltaSeconds );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::UpdateLightPositions()
-{
-	for( unsigned int lightIndex = 0; lightIndex < MAX_LIGHTS; ++lightIndex )
+	for( int lampIndex = 0; lampIndex < 5; ++lampIndex )
 	{
-		Light currentLight = m_animatedLights[ lightIndex ].light;
-		if( m_animatedLights[lightIndex].moveType == LIGHT_MOVEMENT_FOLLOW )
+		if( m_lamps[lampIndex]->DiscIsInLight( m_player->GetPosition2D(), m_player->GetRadius() ) )
 		{
-			currentLight.position = m_worldCamera->GetPosition();
-			currentLight.direction = -m_worldCamera->GetTransform().ToMatrix().GetKBasis3D();
+			m_player->IncreseLightIntensity( 0.1f, deltaSeconds );
 		}
-		else if( m_animatedLights[lightIndex].moveType == LIGHT_MOVEMENT_ANIMATED )
-		{
-			const float animateRadius = 7.f;
-			Vec3 animateCenter = m_quadTransform->GetPosition();
-			float time = static_cast<float>(m_gameClock->GetTotalElapsedSeconds());
-
-			Vec3 lightPosition = animateCenter;
-			lightPosition += Vec3(static_cast<float>(cos(time)), 0.f, static_cast<float>(sin(time))) * animateRadius;
-			currentLight.position = lightPosition;
-			currentLight.direction = Mat44::LookAt( lightPosition, animateCenter ).GetKBasis3D();
-		}
-
-		m_animatedLights[ lightIndex ].light = currentLight;
-		DebugDrawLight( &m_animatedLights[ lightIndex ] );
 	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::DebugDrawLight( AnimatedLight* lightToDraw )
+void Game::PushPlayerOutOfObjects()
 {
-	if( lightToDraw->moveType == LIGHT_MOVEMENT_FOLLOW ) return; 
-
-	Light currentLight = lightToDraw->light;
-	Vec3 pointPos = currentLight.position;
-	Rgba8 pointColor = Rgba8::MakeFromFloats( currentLight.color.x, currentLight.color.y, currentLight.color.z, GetClampZeroToOne(currentLight.intensity) );
-
-	if( lightToDraw->lightType == LIGHT_TYPE_SPOTLIGHT )
+	for( int environmentObjectIndex = 0; environmentObjectIndex < m_enviromentObjects.size(); ++environmentObjectIndex )
 	{
-		const float coneHeight = 0.5f;
-		Vec3 coneEndPosition = pointPos + ( currentLight.direction * coneHeight );
-		float coneEndRadius = sinf( acosf( currentLight.cosOutterHalfAngle ) ) * coneHeight;
-		DebugAddWorldCone( pointPos, coneEndPosition, coneEndRadius, pointColor, 0.f, DEBUG_RENDER_XRAY );
+		EnvironmentObject* currentEnvironmentObject = m_enviromentObjects[environmentObjectIndex];
+		Vec3 newPlayerPosition = currentEnvironmentObject->PushDiscOut( m_player->GetPosition2D(), m_player->GetRadius() );
+		m_player->SetPosition( newPlayerPosition );
 	}
-	else if( lightToDraw->lightType == LIGHT_TYPE_DIRECTIONAL )
-	{
-		const float arrowLength = 1.f;
-		DebugAddWorldArrow( pointPos, pointPos + ( currentLight.direction * arrowLength ), pointColor, 0.f, DEBUG_RENDER_XRAY );
-	}
-	else
-	{
-		DebugAddWorldPoint( pointPos, pointColor, 0.f, DEBUG_RENDER_XRAY );
-	}
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::CycleLightToModify()
-{
-	int currentlySelectedLight = m_selectedLight;
-	if( g_theInput->WasKeyJustPressed( 'Q' ) )
-	{
-		currentlySelectedLight -= 1;
-	}
-	if( g_theInput->WasKeyJustPressed( 'E' ) )
-	{
-		currentlySelectedLight += 1;
-	}
-
-	if( currentlySelectedLight > static_cast<int>( MAX_LIGHTS - 1 ) )
-	{
-		currentlySelectedLight = 0;
-	}
-	else if( currentlySelectedLight < 0 )
-	{
-		currentlySelectedLight = MAX_LIGHTS - 1;
-	}
-	m_selectedLight = currentlySelectedLight;
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::CycleLightType( AnimatedLight* lightToModify )
-{
-	LightType currentLightType = lightToModify->lightType;
-	LightType newLightType = ( LightType )( ( currentLightType + 1 ) % NUM_LIGHT_TYPES );
-	lightToModify->SetLightType( newLightType );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::ToggleFog()
-{
-	if( m_isFogEnabled )
-	{
-		g_theRenderer->DisableFog();
-		m_isFogEnabled = false;
-	}
-	else
-	{
-		g_theRenderer->EnableFog( ( 100 - 0.1f ) * 0.5f, 100.f, Rgba8::YELLOW, m_clearColor );
-		m_isFogEnabled = true;
-	}
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::AddParallaxDepth( float depthToAdd )
-{
-	m_parallaxDepth += depthToAdd;
-	Clamp( m_parallaxDepth, 0.01f, 0.1f );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Game::TranslateCamera( Camera& camera, const Vec3& directionToMove )
 {
-	//Mat44 cameraView = camera.GetViewMatrix();
 	Mat44 cameraView = camera.GetTransform().ToMatrix();
 	Vec3 translation = cameraView.TransformVector3D( directionToMove );
 	camera.Translate( translation );
@@ -546,22 +402,18 @@ void Game::Update()
 
 	if( !g_theConsole->IsOpen() )
 	{
+		m_player->Update( deltaSeconds );
 		UpdateFromInput( deltaSeconds );
 	}
-	UpdateObjectRotations( deltaSeconds );
-	UpdateLightPositions();
-
-	//ChangeClearColor( deltaSeconds );
+	PushPlayerOutOfObjects();
+	UpdatePlayerLightIntensity( deltaSeconds );
+	UpdateGameState();
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateFromInput( float deltaSeconds )
 {
-	UpdateBasedOnMouseMovement();
-
-	MoveWorldCamera( deltaSeconds );
-
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
 	{
 		m_isQuitting = true;
@@ -572,101 +424,13 @@ void Game::UpdateFromInput( float deltaSeconds )
 		m_worldCamera->SetPosition( Vec3( 0.0f ) );
 		m_worldCamera->SetPitchYawRollRotationDegrees( 0.f, 0.f, 0.0f );
 	}
-
-	if( g_theInput->IsKeyPressed( KEY_CODE_UP_ARROW ) )
-	{
-		m_dissolveAmount += 0.5f * deltaSeconds;
-		ClampZeroToOne( m_dissolveAmount );
-	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_DOWN_ARROW ) )
-	{
-		m_dissolveAmount -= 0.5f * deltaSeconds;
-		ClampZeroToOne( m_dissolveAmount );
-	}
-
-	if( g_theInput->IsKeyPressed( KEY_CODE_RIGHT_ARROW ) )
-	{
-		m_projectionIntensity += 0.5f * deltaSeconds;
-		ClampZeroToOne( m_projectionIntensity );
-	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_LEFT_ARROW ) )
-	{
-		m_projectionIntensity -= 0.5f * deltaSeconds;
-		ClampZeroToOne( m_projectionIntensity );
-	}
-
-	if( g_theInput->WasKeyJustPressed( 'F' ) )
-	{
-		ToggleFog();
-	}
-
-	if (g_theInput->IsKeyPressed( 'N' ) )
-	{
-		AddParallaxDepth( -0.05f * deltaSeconds );
-	}
-	if (g_theInput->IsKeyPressed( 'M' ) )
-	{
-		AddParallaxDepth( 0.05f * deltaSeconds );
-	}
-
-	UpdateDrawDebugObjects();
 	UpdateInputLights( deltaSeconds );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::UpdateDrawDebugObjects()
-{
-	Mat44 cameraTransform = m_worldCamera->GetTransform().ToMatrix();
-	//draw world line
-	if( g_theInput->WasKeyJustPressed( '1' ) )
-	{
-		DebugAddWorldLine( cameraTransform.GetTranslation3D(), Vec3::ZERO, Rgba8::WHITE, Rgba8::BLACK, 10.f, DEBUG_RENDER_USE_DEPTH );
-	}
-	//draw world arrow
-	if( g_theInput->WasKeyJustPressed( '2' ) )
-	{
-		DebugAddWorldArrow( Vec3::ZERO, cameraTransform.GetTranslation3D(), Rgba8::GREEN, 10.f, DEBUG_RENDER_XRAY );
-	}
-	//draw world basis
-	if( g_theInput->WasKeyJustPressed( '3' ) )
-	{
-		DebugAddWorldBasis( cameraTransform, Rgba8::WHITE, Rgba8::BLACK, 20.f, DEBUG_RENDER_ALWAYS );
-	}
-	//draw world quad
-	if( g_theInput->WasKeyJustPressed( '4' ) )
-	{
-		Vec3 cameraPosition = cameraTransform.GetTranslation3D();
-		Vec3 p0 = Vec3::ZERO;
-		Vec3 p1 = Vec3( cameraPosition.x, 0.f, cameraPosition.z );
-		Vec3 p2 = cameraPosition;
-		Vec3 p3 = Vec3( 0.f, cameraPosition.y, 0.f );
-		DebugAddWorldQuad( p0, p1, p2, p3, AABB2(), Rgba8::CYAN, Rgba8::MAGENTA, 5.f, DEBUG_RENDER_ALWAYS );
-	}
-	//draw world text
-	if( g_theInput->WasKeyJustPressed( '5' ) )
-	{
-		Vec3 cameraPosition = cameraTransform.GetTranslation3D();
-		DebugAddWorldTextf( cameraTransform, ALIGN_CENTERED, Rgba8::ORANGE, 10.f, DEBUG_RENDER_XRAY, "x: %.2f, y: %.2f, z: %.2f", cameraPosition.x, cameraPosition.y, cameraPosition.z );
-	}
-	//draw screen line
-	if( g_theInput->WasKeyJustPressed( '6' ) )
-	{
-		DebugAddScreenArrow( Vec2::ZERO, Vec2::UNIT * 100.f, Rgba8::WHITE, 10.f );
-	}
-	//draw screen textured quad
-	if( g_theInput->WasKeyJustPressed( '7' ) )
-	{
-		AABB2 textureBounds = AABB2( 500.f, 500.f, 700.f, 700.f );
-		DebugAddScreenTexturedQuad( textureBounds, m_couchDiffuse, AABB2(), Rgba8::MAGENTA, Rgba8::CYAN, 10.f );
-	}
-}
-
-//---------------------------------------------------------------------------------------------------------
 void Game::UpdateInputLights( float deltaSeconds )
 {
-	CycleLightToModify();
-
 	const float ambientIntensityUpdateAmount = 0.5f;
 	const float pointLightIntensityUpdateAmount = 0.5f;
 	const float specularFactorUpdateAmount = 0.5f;
@@ -682,155 +446,23 @@ void Game::UpdateInputLights( float deltaSeconds )
 	{
 		AddAmbientLightIntensity( ambientIntensityUpdateAmount * deltaSeconds );
 	}
-	// Cycle Attenuation Mode
-	if( g_theInput->WasKeyJustPressed( 'T' ) )
-	{
-		CycleAttenuationMode();
-	}
-	// Update Point Light Intensity
-	if( g_theInput->IsKeyPressed( KEY_CODE_PLUS ) )
-	{
-		AddPointLightIntensity( pointLightIntensityUpdateAmount * deltaSeconds );
-	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_MINUS ) )
-	{
-		AddPointLightIntensity( -pointLightIntensityUpdateAmount * deltaSeconds );
-	}
-	// Update Specular Factor
-	if( g_theInput->IsKeyPressed( KEY_CODE_LEFT_BRACKET ) )
-	{
-		AddSpecFactor( -specularFactorUpdateAmount * deltaSeconds );
-	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_RIGHT_BRACKET ) )
-	{
-		AddSpecFactor( specularFactorUpdateAmount * deltaSeconds );
-	}
-	// Update Specular Power
-	if( g_theInput->IsKeyPressed( KEY_CODE_SEMICOLON ) )
-	{
-		AddSpecPower( -specularPowerUpdateAmount * deltaSeconds );
-	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_APOSTROPHE ) )
-	{
-		AddSpecPower( specularPowerUpdateAmount * deltaSeconds );
-	}
-	// Update Gamma
-	if( g_theInput->IsKeyPressed( 'G' ) )
-	{
-		AddGamma( -gammaUpdateAmount * deltaSeconds );
-	}
-	if( g_theInput->IsKeyPressed( 'H' ) )
-	{
-		AddGamma( gammaUpdateAmount * deltaSeconds );
-	}
-	// Update Shader
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_COMMA ) )
-	{
-		ChangeShader( -1 );
-	}
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_PERIOD ) )
-	{
-		ChangeShader( 1 );
-	}
-	if( g_theInput->WasKeyJustPressed( 'R' ) )
-	{
-		CycleLightType( &m_animatedLights[m_selectedLight] );
-	}
-
-
-
-	//---------------------------------------------------------------------------------------------------------
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_F4 ) )
-	{
-		m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_STATIONARY;
-		m_animatedLights[m_selectedLight].light.position = Vec3::ZERO;
-	}
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_F5 ) )
-	{	
-		m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_STATIONARY;
-		m_animatedLights[m_selectedLight].light.position = m_worldCamera->GetPosition();
-		m_animatedLights[m_selectedLight].light.direction = -m_worldCamera->GetTransform().ToMatrix().GetKBasis3D();
-	}
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_F6 ) )
-	{
-		LightMovement currentMovement = m_animatedLights[m_selectedLight].moveType;
-		if( currentMovement == LIGHT_MOVEMENT_FOLLOW )
-		{ 
-			m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_STATIONARY;
-		}
-		else
-		{
-			m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_FOLLOW;
-		}
-	}
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_F7 ) )
-	{
-		LightMovement currentMovement = m_animatedLights[m_selectedLight].moveType;
-		if( currentMovement == LIGHT_MOVEMENT_ANIMATED ) 
-		{ 
-			m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_STATIONARY;
-		}
-		else
-		{
-			m_animatedLights[m_selectedLight].moveType = LIGHT_MOVEMENT_ANIMATED;
-		}
-	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::MoveWorldCamera( float deltaSeconds )
+void Game::UpdateGameState()
 {
-	float moveSpeed = 5.f * deltaSeconds;
-	if( g_theInput->IsKeyPressed( KEY_CODE_SHIFT ) )
+	if( m_gameState != GAME_STATE_PLAY ) return;
+
+	if (m_player->IsDead())
 	{
-		moveSpeed *= 2.f;
+		m_gameState = GAME_STATE_LOSE;
+	}
+	else if( DoDiscAndAABB2Overlap( m_endZone, m_player->GetPosition2D(), m_player->GetRadius() ) )
+	{
+		m_gameState = GAME_STATE_WIN;
 	}
 
-	if( g_theInput->IsKeyPressed( 'W' ) )
-	{
-		TranslateCamera( *m_worldCamera, Vec3( 0.f, 0.f, -moveSpeed ) );
-	}	
-	if( g_theInput->IsKeyPressed( 'S' ) )
-	{
-		TranslateCamera( *m_worldCamera, Vec3( 0.f, 0.f, moveSpeed ) );
-	}	
-
-	if( g_theInput->IsKeyPressed( 'A' ) )
-	{
-		TranslateCamera( *m_worldCamera, Vec3( -moveSpeed, 0.f, 0.f ) );
-	}	
-	if( g_theInput->IsKeyPressed( 'D' ) )
-	{
-		TranslateCamera( *m_worldCamera, Vec3( moveSpeed, 0.f, 0.f ) );
-	}
-
-	if( g_theInput->IsKeyPressed( KEY_CODE_SPACEBAR ) )
-	{
-		TranslateCamera( *m_worldCamera, Vec3( 0.f, moveSpeed, 0.f ) );
-	}
-	if( g_theInput->IsKeyPressed( 'C' ) )
-	{
-		TranslateCamera( *m_worldCamera, Vec3( 0.f, -moveSpeed, 0.f ) );
-	}
-}
-
-//---------------------------------------------------------------------------------------------------------
-void Game::ChangeClearColor( float deltaSeconds )
-{
-	m_colorChangeDelay -= deltaSeconds;
-
-	if( m_clearColor.r > 29 && m_colorChangeDelay <= 0 )
-	{
-		m_clearColor.r -= 30;
-		m_colorChangeDelay = 1.f;
-	}
-	else if( m_clearColor.r < 30 && m_colorChangeDelay <= 0 )
-	{
-		m_clearColor.r = 0;
-	}
-
-	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, m_clearColor, 1.0f, 0 );
 }
 
 
@@ -851,111 +483,6 @@ void Game::AddAmbientLightIntensity( float intensityToAdd )
 	m_ambientIntensity = newIntensity;
 }
 
-
-//---------------------------------------------------------------------------------------------------------
-void Game::AddPointLightIntensity( float intensityToAdd )
-{
-	Light currentLight = m_animatedLights[m_selectedLight].light;
-	float newIntensity = currentLight.intensity;
-	newIntensity += intensityToAdd;
-	if( newIntensity >= 0.f )
-	{
-		currentLight.intensity = newIntensity;
-	}
-	else
-	{
-		currentLight.intensity = 0.f;
-	}
-	m_animatedLights[m_selectedLight].light = currentLight;
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::AddGamma( float gammaToAdd )
-{
-	float newGamma = g_theRenderer->GetGamma();
-	newGamma += gammaToAdd;
-	Clamp( newGamma, 0.25f, 4.f );
-	g_theRenderer->UpdateGamma( newGamma );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::AddSpecFactor( float factorToAdd )
-{
-	float newSpecFactor = m_specularFactor;
-	newSpecFactor += factorToAdd;
-	m_specularFactor = GetClampZeroToOne( newSpecFactor );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::AddSpecPower( float powerToAdd )
-{
-	float newSpecPower = m_specularPower;
-	newSpecPower += powerToAdd;
-	if (newSpecPower >= 1.f)
-	{
-		m_specularPower = newSpecPower;
-		return;
-	}
-	m_specularPower = 1.f;
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::CycleAttenuationMode()
-{
-	Vec3 currentAttenuation = m_animatedLights[m_selectedLight].light.attenuation;
-	if( currentAttenuation == Vec3( 0.f, 1.f, 0.f ) )
-	{
-		currentAttenuation = Vec3( 0.f, 0.f, 1.f );
-	}
-	else if( currentAttenuation == Vec3( 0.f, 0.f, 1.f ) )
-	{
-		currentAttenuation = Vec3( 1.f, 0.f, 0.f );
-	}
-	else
-	{
-		currentAttenuation = Vec3( 0.f, 1.f, 0.f );
-	}
-	m_animatedLights[m_selectedLight].light.attenuation = currentAttenuation;
-	m_animatedLights[m_selectedLight].light.specAttenuation = currentAttenuation;
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::ChangeShader( int direction )
-{
-	int numShaders = static_cast<int>( m_shadersToUse.size() );
-	m_currentShaderIndex += direction;
-	if( m_currentShaderIndex < 0 )
-	{
-		m_currentShaderIndex = numShaders - 1;
-	}
-	else if( m_currentShaderIndex >= numShaders )
-	{
-		m_currentShaderIndex = 0;
-	}
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::AddShader( std::string shaderName, Shader* shader )
-{
-	m_shaderNames.push_back( shaderName );
-	m_shadersToUse.push_back( shader );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-STATIC Vec3 Game::ParabolaEquation( float x, float y )
-{
-	UNUSED( y );
-	x -= 0.5f;
-	x *= 2.f;
-	return Vec3( 0.f, 0.f, x * x );
-}
 
 //---------------------------------------------------------------------------------------------------------
 STATIC void Game::GainFocus( NamedStrings* args )
@@ -981,19 +508,4 @@ STATIC void Game::light_set_ambient_color( NamedStrings* args )
 
 	Rgba8 ambientRGBA8 = Rgba8::MakeFromFloats( ambientColor.x, ambientColor.y, ambientColor.z, 0.f );
 	g_theGame->m_ambientColor = ambientRGBA8;
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-STATIC void Game::light_set_color( NamedStrings* args )
-{
-	int defaultLightIndex = 0;
-	Vec3 defaultPointLightColor = Vec3::UNIT;
-
-	int lightIndex = args->GetValue( "index", defaultLightIndex );
-	Vec3 pointLightColor = args->GetValue( "color", defaultPointLightColor );
-
-	Clamp( lightIndex, 0, MAX_LIGHTS - 1 );
-
-	g_theGame->m_animatedLights[lightIndex].light.color = pointLightColor;
 }

@@ -24,9 +24,6 @@
     <ClCompile Include="App.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
-    <ClCompile Include="Entity.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
     <ClCompile Include="Game.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
@@ -36,7 +33,19 @@
     <ClCompile Include="Main_Windows.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
-    <ClCompile Include="AnimatedLight.cpp">
+    <ClCompile Include="GameObject.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="EnvironmentObject.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="EnemyObject.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerObject.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Lamp.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
   </ItemGroup>
@@ -47,16 +56,25 @@
     <ClInclude Include="EngineBuildPreferences.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
-    <ClInclude Include="Entity.hpp">
-      <Filter>Framework</Filter>
-    </ClInclude>
     <ClInclude Include="Game.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="GameCommon.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
-    <ClInclude Include="AnimatedLight.hpp">
+    <ClInclude Include="GameObject.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="EnvironmentObject.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="EnemyObject.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerObject.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Lamp.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>

@@ -280,6 +280,7 @@ ID3D11InputLayout* Shader::GetOrCreateInputLayout( buffer_attribute_t const* att
 		m_vertexStage.GetByteCode(), m_vertexStage.GetByteCodeLength(),
 		&m_inputLayout );
 
+	m_lastBoundLayout = attribute;
 	return m_inputLayout;
 }
 

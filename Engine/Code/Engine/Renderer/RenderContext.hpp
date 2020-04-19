@@ -235,7 +235,8 @@ public:
 	RenderBuffer*				m_lightUBO					= nullptr;
 	RenderBuffer*				m_materialUBO				= nullptr;
 	Texture*					m_defaultDepthStencil		= nullptr;
-	buffer_attribute_t const*	m_currentVertexLayout		= nullptr;			
+	buffer_attribute_t const*	m_currentVertexLayout		= nullptr;
+	Shader*						m_lastBoundShader			= nullptr;
 
 	ID3D11BlendState* m_alphaBlendStateHandle		= nullptr;
 	ID3D11BlendState* m_additiveBlendStateHandle	= nullptr;

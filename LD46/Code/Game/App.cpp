@@ -171,6 +171,12 @@ void App::Update()
 		RestartGame();
 	}
 
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_F7 ) )
+	{
+		g_isDebugDraw = !g_isDebugDraw;
+		g_isDebugCamera = !g_isDebugCamera;
+	}
+
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F9 ) )
 	{
 		g_theRenderer->ReloadShaders();

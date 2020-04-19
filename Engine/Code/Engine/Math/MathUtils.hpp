@@ -93,6 +93,7 @@ bool		DoOBBAndDiscOverlap2D( const OBB2& obb, const Vec2& discCenter, float disc
 bool		DoPolygonAndDiscOverlap( const Polygon2D& polygon, const Vec2& discCenter, float discRadius );
 bool		DoPolygonsOverlap( Polygon2D polygonA, Polygon2D polygonB, std::vector<Vec2>* out_craetedSimplex = nullptr );
 
+void		PushDiscOutOfOBB2( Vec2& discCenterPosition, float discRadius, const OBB2& box );
 void		PushDiscOutOfAABB2( Vec2& discCenterPosition, float discRadius, const AABB2& box );
 void		PushDiscsOutOfEachOther2D( Vec2& discACenterPosition, float discARadius, Vec2& discBCenterPosition, float discBRadius );
 void		PushDiscOutOfPoint2D( Vec2& discCenterPosition, float discRadius, const Vec2& pointToPushOutOf );
