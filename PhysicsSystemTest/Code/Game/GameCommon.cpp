@@ -15,7 +15,7 @@ void DrawLineBetweenPoints( const Vec2& startPosition, const Vec2& endPosition, 
 	
 	AppendVertsForLineBetweenPoints( lineVerts, startPosition, endPosition, color, thickness );
 
-	g_theRenderer->SetModelMatrix( Mat44::IDENTITY );
+	g_theRenderer->SetModelUBO( Mat44::IDENTITY );
 	g_theRenderer->BindTexture( nullptr );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( lineVerts );
@@ -31,7 +31,7 @@ void DrawCircleAtPoint( const Vec2& position, float radius, const Rgba8 color, f
 
 	TransformVertexArray( circleVerts, 1.f, 0.f, position );
 
-	g_theRenderer->SetModelMatrix( Mat44::IDENTITY );
+	g_theRenderer->SetModelUBO( Mat44::IDENTITY );
 	g_theRenderer->BindTexture( nullptr );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( circleVerts );

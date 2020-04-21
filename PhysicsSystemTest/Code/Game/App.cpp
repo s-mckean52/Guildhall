@@ -15,6 +15,7 @@
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/DebugRender.hpp"
 #include "Engine/Renderer/Camera.hpp"
+#include "Engine/Core/Delegate.hpp"
 
 
 EventSystem*	g_theEventSystem	= nullptr;
