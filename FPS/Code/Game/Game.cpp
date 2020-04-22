@@ -6,6 +6,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/FileUtils.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/DebugRender.hpp"
 #include "Engine/Core/StringUtils.hpp"
@@ -51,6 +52,8 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
+	//char const* fileAsString = FileReadToString( "Data/Models/TestMesh.obj" );
+
 	EnableDebugRendering();
 
 	m_gameClock = new Clock();
