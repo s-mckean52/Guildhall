@@ -247,7 +247,7 @@
     <ClCompile Include="Renderer\Light.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Delegate.cpp">
+    <ClCompile Include="Core\FileUtils.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
@@ -489,7 +489,7 @@
     <ClInclude Include="Renderer\Light.hpp">
       <Filter>Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Delegate.hpp">
+    <ClInclude Include="Core\FileUtils.hpp">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>

@@ -3,6 +3,7 @@
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Renderer/buffer_attribute_t.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/FileUtils.hpp"
 
 #include <d3dcompiler.h>
 
@@ -282,35 +283,4 @@ ID3D11InputLayout* Shader::GetOrCreateInputLayout( buffer_attribute_t const* att
 
 	m_lastBoundLayout = attribute;
 	return m_inputLayout;
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void* FileReadToNewBuffer( std::string const& filename, size_t *out_size )
-{
-	FILE* fp = nullptr;
-	fopen_s( &fp, filename.c_str(), "r" );
-	if( fp == nullptr )
-	{
-		return nullptr;
-	}
-
-	fseek( fp, 0, SEEK_END );
-	long file_size = ftell( fp ) + 1;
-
-	unsigned char* buffer = new unsigned char[ file_size ];
-	if( buffer != nullptr )
-	{
-		fseek( fp, 0, SEEK_SET );
-		size_t bytes_read = fread( buffer, 1, file_size, fp );
-		buffer[ bytes_read ] = NULL;
-
-		if( out_size != nullptr )
-		{
-			*out_size = (size_t)bytes_read;
-		}
-	}
-
-	fclose( fp );
-	return buffer;
 }

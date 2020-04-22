@@ -64,3 +64,10 @@ Strings SplitStringOnDelimiter( const std::string& originalString, char delimete
 
 	return splitStrings;
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+char const* FindWord( char const* start )
+{
+	return start;
+}

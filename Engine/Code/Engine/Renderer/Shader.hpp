@@ -64,5 +64,3 @@ public:
 	buffer_attribute_t const* m_lastBoundLayout = nullptr;
 	ID3D11InputLayout* m_inputLayout = nullptr;
 };
-
-void* FileReadToNewBuffer( std::string const& filename, size_t *out_size );
