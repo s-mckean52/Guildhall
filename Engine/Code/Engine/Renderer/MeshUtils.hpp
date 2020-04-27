@@ -4,6 +4,7 @@
 #include "Engine/Core/Vertex_PCUTBN.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
+#include "Engine/Math/Mat44.hpp"
 #include <vector>
 
 struct	AABB2;
@@ -16,6 +17,32 @@ class	GPUMesh;
 
 typedef Vec3( *graph_cb )( float, float );
 
+//---------------------------------------------------------------------------------------------------------
+struct mesh_import_options_t
+{
+public:
+	Mat44 transform = Mat44::IDENTITY;
+	bool invertV = false;
+	bool invertWindingOrder = false;
+	bool generateNormals = false;
+	bool generateTangents = false;
+
+public:
+	mesh_import_options_t() {};
+};
+
+
+//---------------------------------------------------------------------------------------------------------
+void MeshLoadToVertexArray( std::vector<Vertex_PCUTBN>& vertices, mesh_import_options_t const& options = mesh_import_options_t() );
+
+void MeshInvertV( std::vector<Vertex_PCUTBN>& vertices );
+void MeshGenerateNormals( std::vector<Vertex_PCUTBN>& vertices );
+void MeshInvertWindingOrder( std::vector<Vertex_PCUTBN>& vertices );
+void MeshInvertIndexWindingOrder( std::vector<unsigned int>& indices );
+void MeshGenerateTangents( std::vector<Vertex_PCUTBN>& vertices );
+
+
+//---------------------------------------------------------------------------------------------------------
 void AppendVertsForAABB2D( std::vector<Vertex_PCU>& vertexArray, const AABB2& box, const Rgba8& color, const Vec2& uvAtMins = Vec2::ZERO, const Vec2& uvAtMaxes = Vec2::UNIT );
 void AppendVertsForOBB2D( std::vector<Vertex_PCU>& vertexArray, const OBB2& box, const Rgba8& tint, const Vec2& uvAtMins = Vec2::ZERO, const Vec2& uvAtMaxes = Vec2::UNIT );
 void AppendVertsForCapsule2D( std::vector<Vertex_PCU>& vertexArray, const Vec2& capsuleMidStart, const Vec2& capsuleMidEnd, float radius, const Rgba8& color );

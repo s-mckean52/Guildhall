@@ -67,7 +67,31 @@ Strings SplitStringOnDelimiter( const std::string& originalString, char delimete
 
 
 //---------------------------------------------------------------------------------------------------------
-char const* FindWord( char const* start )
+std::string FindNextWord( std::string const& string, unsigned int& startIndex )
 {
-	return start;
+	bool wordFound = false;
+	std::string foundWord = "";
+	unsigned int charIndex = 0;
+	for( charIndex = startIndex; charIndex < string.length(); ++charIndex )
+	{
+		char currentChar = string[ charIndex ];
+		if( !IsWhiteSpace( currentChar ) )
+		{
+			if( !wordFound )
+			{
+				startIndex = charIndex;
+			}
+			wordFound = true;
+		}
+		else if( IsWhiteSpace( currentChar ) && wordFound )
+		{
+			break;
+		}
+	}
+	if( charIndex != startIndex )
+	{
+		foundWord = string.substr( startIndex, charIndex - startIndex );
+		startIndex = charIndex + 1;
+	}
+	return foundWord;
 }

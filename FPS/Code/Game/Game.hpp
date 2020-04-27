@@ -110,6 +110,7 @@ private:
 	Clock* m_gameClock = nullptr;
 
 	GPUMesh* m_meshCube = nullptr;
+	GPUMesh* m_objMesh = nullptr;
 	GPUMesh* m_uvSphere = nullptr;
 	GPUMesh* m_plane = nullptr;
 	GPUMesh* m_quad = nullptr;

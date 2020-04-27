@@ -52,7 +52,11 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
-	//char const* fileAsString = FileReadToString( "Data/Models/TestMesh.obj" );
+	std::vector<Vertex_PCUTBN> objVerts;
+	std::vector<unsigned int> objIndicies;
+	ReadAndParseObjFile( "Data/Models/TestMesh.obj", objVerts );
+	m_objMesh = new GPUMesh( g_theRenderer );
+	m_objMesh->UpdateVerticies( objVerts.size(), &objVerts[0] );
 
 	EnableDebugRendering();
 
@@ -171,6 +175,9 @@ void Game::ShutDown()
 	delete m_meshCube;
 	m_meshCube = nullptr;
 
+	delete m_objMesh;
+	m_objMesh = nullptr;
+
 	delete m_quad;
 	m_quad = nullptr;
 
@@ -213,7 +220,11 @@ void Game::Render() const
 	g_theRenderer->SetAmbientLight( m_ambientColor, m_ambientIntensity );
 	EnableLightsForRendering();
 
-	RenderWorld();
+	g_theRenderer->BindTexture( m_couchDiffuse );
+	g_theRenderer->BindSampler( g_theRenderer->m_samplerLinear );
+	g_theRenderer->BindShader( m_litShader );
+	g_theRenderer->DrawMesh( m_objMesh );
+	//RenderWorld();
 
 	g_theRenderer->EndCamera( *m_worldCamera );
 

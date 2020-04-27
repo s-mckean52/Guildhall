@@ -23,5 +23,8 @@ inline bool IsAlpha( char const c )				{ return (IsUpperCase(c) || IsLowerCase(c
 inline bool IsNumeric( char const c )			{ return ((c >= '0') && (c <= '9')); }
 inline bool IsAlphaNumeric( char const c )		{ return (IsAlpha(c) || IsNumeric(c)); }
 
-char const* FindWord( char const* start );
-char const* AdvanceUntilWhiteSpace( char const* start );
+//---------------------------------------------------------------------------------------------------------
+inline bool IsStringEqual( char const* a, char const* b )	{ return ( strcmp( a, b ) == 0 ); }
+
+//---------------------------------------------------------------------------------------------------------
+std::string FindNextWord( std::string const& stringToParse, unsigned int& startIndex );

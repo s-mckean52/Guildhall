@@ -11,6 +11,60 @@
 
 
 //---------------------------------------------------------------------------------------------------------
+void MeshLoadToVertexArray( std::vector<Vertex_PCUTBN>& vertices, mesh_import_options_t const& options )
+{
+	if( options.invertV )				{ MeshInvertV( vertices ); }
+	if( options.generateNormals )		{ MeshGenerateNormals( vertices ); }
+	if( options.generateTangents )		{ MeshGenerateTangents( vertices ); }
+	
+	if( options.invertWindingOrder )
+	{ 
+		MeshInvertWindingOrder( vertices );
+		//MeshInvertIndexWindingOrder();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void MeshInvertV( std::vector<Vertex_PCUTBN>& vertices )
+{
+	for( int vertexIndex = 0; vertexIndex < vertices.size(); ++vertexIndex )
+	{
+		Vertex_PCUTBN& currentVert = vertices[ vertexIndex ];
+		currentVert.m_uvTexCoords.y = 1.0f - currentVert.m_uvTexCoords.y;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void MeshGenerateNormals( std::vector<Vertex_PCUTBN>& vertices )
+{
+
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void MeshInvertWindingOrder( std::vector<Vertex_PCUTBN>& vertices )
+{
+
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void MeshInvertIndexWindingOrder( std::vector<unsigned int>& indices )
+{
+
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void MeshGenerateTangents( std::vector<Vertex_PCUTBN>& vertices )
+{
+
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void AppendVertsForAABB2D( std::vector<Vertex_PCU>& vertexArray, const AABB2& box, const Rgba8& tint, const Vec2& uvAtMins, const Vec2& uvAtMaxes )
 {
 	Vec2 bottomRight( box.maxes.x, box.mins.y );
