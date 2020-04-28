@@ -132,7 +132,16 @@ Vertex_PCUTBN CreateObjVertFromString( std::vector<Vec3> const& positions, std::
 	Vertex_PCUTBN newVertex;
 
 	if( faceIndiciesAsText[0] != "" ) {
-		positionIndex = atoi( faceIndiciesAsText[0].c_str() ) - 1;
+		positionIndex = atoi( faceIndiciesAsText[0].c_str() );
+		if( positionIndex < 0 )
+		{
+			positionIndex = positions.size() + positionIndex;
+		}
+		else
+		{
+			positionIndex -= 1;
+		}
+
 		lastVertexIndexUsed = positionIndex;
 		newVertex.m_position = positions[ positionIndex ];
 	} else {
@@ -140,7 +149,15 @@ Vertex_PCUTBN CreateObjVertFromString( std::vector<Vec3> const& positions, std::
 	}
 
 	if( faceIndiciesAsText[1] != "" ) {
-		uvIndex = atoi( faceIndiciesAsText[1].c_str() ) - 1;
+		uvIndex = atoi( faceIndiciesAsText[1].c_str() );
+		if( uvIndex < 0 )
+		{
+			uvIndex = uvs.size() + uvIndex;
+		}
+		else
+		{
+			uvIndex -= 1;
+		}
 		newVertex.m_uvTexCoords = uvs[ uvIndex ];
 		lastUVIndexUsed = uvIndex;
 	} else {
@@ -149,7 +166,15 @@ Vertex_PCUTBN CreateObjVertFromString( std::vector<Vec3> const& positions, std::
 	}
 
 	if( faceIndiciesAsText[2] != "" ) {
-		normalIndex = atoi( faceIndiciesAsText[2].c_str() ) - 1;
+		normalIndex = atoi( faceIndiciesAsText[2].c_str() );
+		if( normalIndex < 0 )
+		{
+			normalIndex = normals.size() + normalIndex;
+		}
+		else
+		{
+			normalIndex -= 1;
+		}
 		newVertex.m_normal = normals[ normalIndex ];
 		lastNormalIndexUsed = normalIndex;
 	} else {
@@ -179,10 +204,6 @@ bool ReadAndParseObjFile( std::string const& filepath, std::vector<Vertex_PCUTBN
 		unsigned int stringIndex = 0;
 		std::string currentLine = fileLines[ lineIndex ];
 		std::string identifier = FindNextWord( currentLine, stringIndex );
-		if( identifier == "" )
-		{
-			break;
-		}
 		
 		if( identifier == "v" )
 		{

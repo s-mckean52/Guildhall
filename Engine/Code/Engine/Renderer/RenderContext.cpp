@@ -1043,6 +1043,31 @@ Texture* RenderContext::CreateDepthStencilBuffer( IntVec2 const& imageTexelDimen
 
 
 //---------------------------------------------------------------------------------------------------------
+Texture* RenderContext::CreateRenderTarget( IntVec2 const& imageTexelDimensions )
+{
+	D3D11_TEXTURE2D_DESC depthDesc;
+
+	depthDesc.Width = static_cast<unsigned int>( imageTexelDimensions.x );
+	depthDesc.Height = static_cast<unsigned int>( imageTexelDimensions.y );
+	depthDesc.MipLevels = 1;
+	depthDesc.ArraySize = 1;
+	depthDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	depthDesc.SampleDesc.Count = 1;
+	depthDesc.SampleDesc.Quality = 0;
+	depthDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	depthDesc.CPUAccessFlags = 0;
+	depthDesc.MiscFlags = 0;
+
+	ID3D11Texture2D* textureHandle = nullptr;
+	m_device->CreateTexture2D( &depthDesc, nullptr, &textureHandle );
+	Texture* newTexture = new Texture( this, textureHandle );
+	m_loadedTextures.push_back( newTexture );
+	return newTexture;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void RenderContext::SetAmbientColor( Rgba8 const& ambientColor )
 {
 	Vec4 ambientColorAsFloats = ambientColor.GetValuesAsFractions();

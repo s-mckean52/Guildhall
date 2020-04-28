@@ -35,6 +35,9 @@
     <Filter Include="Platform">
       <UniqueIdentifier>{4544d9d1-4dbc-4411-9024-71225084e6d2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThirdParty\mikkt">
+      <UniqueIdentifier>{1bc1bf67-e3e4-4f98-ad91-90b631ed6b7d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -249,6 +252,18 @@
     </ClCompile>
     <ClCompile Include="Core\FileUtils.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Delegate.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\mikkt\mikktspace.c">
+      <Filter>ThirdParty\mikkt</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\MikkT.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer\ShaderState.cpp">
+      <Filter>Renderer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -491,6 +506,16 @@
     </ClInclude>
     <ClInclude Include="Core\FileUtils.hpp">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Delegate.hpp" />
+    <ClInclude Include="..\ThirdParty\mikkt\mikktspace.h">
+      <Filter>ThirdParty\mikkt</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\MikkT.hpp">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\ShaderState.hpp">
+      <Filter>Renderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

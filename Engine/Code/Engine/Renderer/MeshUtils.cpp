@@ -6,6 +6,7 @@
 #include "Engine/Math/OBB2.hpp"
 #include "Engine/Math/Polygon2D.hpp"
 #include "Engine/Math/Mat44.hpp"
+#include "Engine/Math/MikkT.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 
@@ -13,15 +14,20 @@
 //---------------------------------------------------------------------------------------------------------
 void MeshLoadToVertexArray( std::vector<Vertex_PCUTBN>& vertices, mesh_import_options_t const& options )
 {
-	if( options.invertV )				{ MeshInvertV( vertices ); }
-	if( options.generateNormals )		{ MeshGenerateNormals( vertices ); }
-	if( options.generateTangents )		{ MeshGenerateTangents( vertices ); }
-	
+	Mat44 transformMatrix = options.transform;
+	for( int vertIndex = 0; vertIndex < vertices.size(); ++vertIndex )
+	{
+		transformMatrix.TransformPosition3D( vertices[vertIndex].m_position );
+	}
+
 	if( options.invertWindingOrder )
 	{ 
 		MeshInvertWindingOrder( vertices );
-		//MeshInvertIndexWindingOrder();
 	}
+
+	if( options.invertV )				{ MeshInvertV( vertices ); }	
+	if( options.generateNormals )		{ MeshGenerateNormals( vertices ); }
+	if( options.generateTangents )		{ MeshGenerateTangents( vertices ); }
 }
 
 
@@ -39,28 +45,63 @@ void MeshInvertV( std::vector<Vertex_PCUTBN>& vertices )
 //---------------------------------------------------------------------------------------------------------
 void MeshGenerateNormals( std::vector<Vertex_PCUTBN>& vertices )
 {
+	int numFaces = static_cast<int>( vertices.size() ) / 3;
+	for( int faceIndex = 0; faceIndex < numFaces; ++faceIndex )
+	{
+		int faceStartIndex = faceIndex * 3;
+		Vertex_PCUTBN& vert0 = vertices[ faceStartIndex ];
+		Vertex_PCUTBN& vert1 = vertices[ faceStartIndex + 1 ];
+		Vertex_PCUTBN& vert2 = vertices[ faceStartIndex + 2 ];
 
+		Vec3 rightDir	= vert1.m_position - vert0.m_position;
+		Vec3 upDir		= vert2.m_position - vert0.m_position;
+
+		Vec3 normal = CrossProduct3D( rightDir, upDir );
+		normal.Normalize();
+
+		vert0.m_normal = normal;
+		vert1.m_normal = normal;
+		vert2.m_normal = normal;
+	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void MeshInvertWindingOrder( std::vector<Vertex_PCUTBN>& vertices )
 {
-
+	int numFaces = static_cast<int>( vertices.size() ) / 3;
+	for( int faceIndex = 0; faceIndex < numFaces; ++faceIndex )
+	{
+		int faceStartIndex = faceIndex * 3;
+		Vertex_PCUTBN vert1 = vertices[ faceStartIndex + 1 ];
+		Vertex_PCUTBN vert2 = vertices[ faceStartIndex + 2 ];
+		
+		vertices[ faceStartIndex + 1 ] = vert2;
+		vertices[ faceStartIndex + 2 ] = vert1;
+	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void MeshInvertIndexWindingOrder( std::vector<unsigned int>& indices )
 {
+	int numFaces = static_cast<int>( indices.size() ) / 3;
+	for (int faceIndex = 0; faceIndex < numFaces; ++faceIndex)
+	{
+		int faceStartIndex = faceIndex * 3;
+		int index1 = indices[ faceStartIndex + 1 ];
+		int index2 = indices[ faceStartIndex + 2 ];
 
+		indices[ faceStartIndex + 2 ] = index1;
+		indices[ faceStartIndex + 1 ] = index2;
+	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void MeshGenerateTangents( std::vector<Vertex_PCUTBN>& vertices )
 {
-
+	GenerateTangentsForVertexArray( vertices );
 }
 
 

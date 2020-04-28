@@ -20,6 +20,7 @@
 #include "Engine/Renderer/Shader.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/GPUMesh.hpp"
+#include "Engine/Renderer/Sampler.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Math/AABB3.hpp"
@@ -27,7 +28,7 @@
 #include "Engine/Math/Vec4.hpp"
 #include "Engine/Math/Transform.hpp"
 #include "Engine/Math/MatrixUtils.hpp"
-#include "Engine/Renderer/Sampler.hpp"
+#include "Engine/Platform/Window.hpp"
 #include <string>
 
 
@@ -52,9 +53,15 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
+	mesh_import_options_t scifi_fighter_options;
+	scifi_fighter_options.generateNormals = false;
+	scifi_fighter_options.generateTangents = true;
+	scifi_fighter_options.invertWindingOrder = false;
+	scifi_fighter_options.invertV = false;
 	std::vector<Vertex_PCUTBN> objVerts;
 	std::vector<unsigned int> objIndicies;
-	ReadAndParseObjFile( "Data/Models/TestMesh.obj", objVerts );
+	ReadAndParseObjFile( "Data/Models/scifi_fighter/mesh.obj", objVerts );
+	MeshLoadToVertexArray( objVerts, scifi_fighter_options );
 	m_objMesh = new GPUMesh( g_theRenderer );
 	m_objMesh->UpdateVerticies( objVerts.size(), &objVerts[0] );
 
@@ -220,7 +227,9 @@ void Game::Render() const
 	g_theRenderer->SetAmbientLight( m_ambientColor, m_ambientIntensity );
 	EnableLightsForRendering();
 
-	g_theRenderer->BindTexture( m_couchDiffuse );
+	g_theRenderer->BindTexture( g_theRenderer->CreateOrGetTextureFromFile( "Data/Models/scifi_fighter/diffuse.png" ) );
+	//g_theRenderer->BindNormalTexture( g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/SF_Fighter/SF_Fighter-Normal.png" ) );
+	//g_theRenderer->SetModelUBO( m_quadTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
 	g_theRenderer->BindSampler( g_theRenderer->m_samplerLinear );
 	g_theRenderer->BindShader( m_litShader );
 	g_theRenderer->DrawMesh( m_objMesh );
