@@ -24,6 +24,8 @@
 #include "Engine/Renderer/BuiltInShader.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
 #include "Engine/Renderer/GPUMesh.hpp"
+#include "Engine/Renderer/ShaderState.hpp"
+#include "Engine/Renderer/Material.hpp"
 #include "Engine/Core/Vertex_Master.hpp"
 #include "Engine/Core/Vertex_PCU.hpp"
 #include "Engine/Core/Vertex_PCUTBN.hpp"
@@ -909,6 +911,18 @@ void RenderContext::BindMaterialTexture( unsigned int slot, const Texture* const
 	TextureView* shaderResourceView = texture->GetOrCreateShaderResourceView();
 	ID3D11ShaderResourceView* srvHandle = shaderResourceView->GetAsSRV();
 	m_context->PSSetShaderResources( slot, 1, &srvHandle ); //srv
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::BindShaderState( ShaderState* shaderState )
+{
+	BindShader( shaderState->GetShader() );
+	SetBlendMode( shaderState->GetBlendMode() );
+	SetCullMode( shaderState->GetCullMode() );
+	SetFillMode( shaderState->GetFillMode() );
+	SetDepthTest( shaderState->GetCompareMode(), shaderState->IsWriteOnDepth() );
+	SetFrontFaceWindOrder( shaderState->IsCounterClockwiseWindorder() );
 }
 
 

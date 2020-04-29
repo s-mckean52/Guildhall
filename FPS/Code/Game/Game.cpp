@@ -29,6 +29,7 @@
 #include "Engine/Math/Transform.hpp"
 #include "Engine/Math/MatrixUtils.hpp"
 #include "Engine/Platform/Window.hpp"
+#include "Engine/Renderer/ShaderState.hpp"
 #include <string>
 
 
@@ -53,6 +54,11 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
+	XmlDocument shaderFile = new XmlDocument();
+	shaderFile.LoadFile( "Data/Shaders/lit.shaderstate" );
+	ShaderState testState = ShaderState( g_theRenderer, *shaderFile.RootElement() );
+
+
 	mesh_import_options_t scifi_fighter_options;
 	scifi_fighter_options.generateNormals = false;
 	scifi_fighter_options.generateTangents = true;

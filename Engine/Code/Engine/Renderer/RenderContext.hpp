@@ -22,6 +22,7 @@ class IndexBuffer;
 class Transform;
 class GPUMesh;
 class Clock;
+class ShaderState;
 struct ID3D11Device;
 struct ID3D11Buffer;
 struct ID3D11DeviceContext;
@@ -53,7 +54,7 @@ enum CompareFunc
 	COMPARE_FUNC_ALWAYS,          // D3D11_COMPARISON_ALWAYS
 	COMPARE_FUNC_LEQUAL,          // D3D11_COMPARISON_LESS_EQUAL
 	COMPARE_FUNC_GEQUAL,          // D3D11_COMPARISON_GREATER_EQUAL
-	COMPARE_FUNC_EQUAL,
+	COMPARE_FUNC_EQUAL,				
 };
 
 enum CullMode
@@ -156,6 +157,7 @@ public:
 	void		BindTexture( const Texture* constTexture );
 	void		BindNormalTexture( const Texture* constTexture );
 	void		BindMaterialTexture( unsigned int slot, const Texture* constTexture );
+	void		BindShaderState( ShaderState* shaderState );
 
 	void		ReloadShaders();
 	Texture*	CreateOrGetTextureFromFile( const char* imageFilePath );
