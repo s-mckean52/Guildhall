@@ -122,6 +122,10 @@ void DebugRenderObject::Draw()
 
 	RenderContext* context = s_debugRenderSystem->GetRenderContext();
 
+	context->BindSampler( context->m_samplerPoint );
+	context->SetBlendMode( BlendMode::ALPHA );
+	context->SetFrontFaceWindOrder( true );
+
 	if( m_isWireMesh )
 	{
 		context->SetCullMode( CULL_MODE_NONE );

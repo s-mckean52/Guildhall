@@ -48,3 +48,34 @@ Sampler::~Sampler()
 	DX_SAFE_RELEASE( m_handle );
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+bool Sampler::IsMatching( SamplerType type, TextureAddressMode textureMode )
+{
+	D3D11_SAMPLER_DESC desc;
+	m_handle->GetDesc( &desc );
+
+	if( type == SAMPLER_POINT )
+	{
+		if( desc.Filter != D3D11_FILTER_MIN_MAG_MIP_POINT )
+			return false;
+	}
+	else if( type == SAMPLER_BILINEAR )
+	{
+		if( desc.Filter != D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT )
+			return false;
+	}
+
+	if( desc.AddressU != ToD3D11TextureAddress( textureMode ) ) 
+		return false;
+
+	if( desc.AddressV != ToD3D11TextureAddress( textureMode ) ) 
+		return false;
+
+	if( desc.AddressW != ToD3D11TextureAddress( textureMode ) )
+		return false;
+
+
+	return true;
+}
+

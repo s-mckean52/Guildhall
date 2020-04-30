@@ -10,6 +10,7 @@ typedef tinyxml2::XMLDocument	XmlDocument;
 
 struct Rgba8;
 struct Vec2;
+struct Vec3;
 struct IntVec2;
 struct IntRange;
 struct FloatRange;
@@ -23,6 +24,7 @@ bool ParseXmlAttribute( const XmlElement& element, const char* attributeName, bo
 float ParseXmlAttribute( const XmlElement& element, const char* attributeName, float defaultValue );
 Rgba8 ParseXmlAttribute( const XmlElement& element, const char* attributeName, const Rgba8& defaultValue );
 Vec2 ParseXmlAttribute( const XmlElement& element, const char* attributeName, const Vec2& defaultValue );
+Vec3 ParseXmlAttribute( const XmlElement& element, const char* attributeName, const Vec3& defaultValue );
 IntVec2 ParseXmlAttribute( const XmlElement& element, const char* attributeName, const IntVec2& defaultValue );
 IntRange ParseXmlAttribute( const XmlElement& element, const char* attributeName, const IntRange& defaultValue );
 FloatRange ParseXmlAttribute( const XmlElement& element, const char* attributeName, const FloatRange& defaultValue );

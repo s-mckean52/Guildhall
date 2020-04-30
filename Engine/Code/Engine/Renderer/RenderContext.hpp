@@ -5,6 +5,8 @@
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/Texture.hpp"
 #include "Engine/Renderer/Light.hpp"
+#include "Engine/Renderer/D3D11Common.hpp"
+#include "Engine/Renderer/Sampler.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include "Engine/Math/Vec4.hpp"
@@ -144,7 +146,13 @@ public:
 	void DrawMesh( GPUMesh* mesh );
 	void UpdateCurrentLayout( buffer_attribute_t const* newLayout );
 
-	void		SetModelUBO( Mat44 const& modelMatrix, Rgba8 const& modelTint = Rgba8::WHITE, float specularFactor = 0.f, float specularPower = 32.f );
+	void		UpdateModelUBO();
+	void        SetModelUBO(Mat44 const& modelMatrix, Rgba8 const& modelTint = Rgba8::WHITE, float specularFactor = 0.f, float specularPower = 32.f);
+	void		SetModelMatrix( Mat44 const& modelMatrix );
+	void		SetSpecularFactor( float specFactor );
+	void		SetSpecularPower( float specPower );
+
+	void		SetModelTint( Rgba8 const& modelTint );
 	void		SetCullMode( CullMode cullMode );
 	void		SetFillMode( FillMode fillMode );
 	void		SetFrontFaceWindOrder( bool isCounterClockwise );
@@ -161,6 +169,10 @@ public:
 	void		BindShaderState( ShaderState* shaderState );
 	void		BindMaterial( Material* material );
 
+	void		BindShaderByPath( const char* filepath );
+	void		BindShaderStateByPath( const char* filepath );
+	void		BindMaterialByPath( const char* filepath );
+
 	void		ReloadShaders();
 	Texture*	CreateOrGetTextureFromFile( const char* imageFilePath );
 	BitmapFont* CreateOrGetBitmapFontFromFile( const char* imageFilePath );
@@ -175,6 +187,11 @@ public:
 	void		CopyTexture( Texture* destination, Texture* source );
 	uint		GetTotalRenderTargetCount() const		{ return m_totalRenderTargetsMade; }
 	uint		GetFreeRenderTargetCount() const		{ return static_cast<uint>( m_renderTargetPool.size() ); }
+
+	Sampler*		GetOrCreateSampler( SamplerType samplerType, TextureAddressMode textureMode = TextureAddressMode::TEXTURE_ADDRESS_CLAMP );
+	ShaderState*	GetOrCreateShaderStateFromFile( char const* filepath );
+	Material*		GetOrCreateMaterialFromFile( char const* filepath );
+
 
 
 	//Light Methods
@@ -199,6 +216,9 @@ private:
 	bool CreateTextureFromFile( const char* imageFilePath );
 	bool CreateBitmapFontFromFile( const char* fontFilePath );
 	Shader* CreateShaderFromFilePath( char const* filename );
+	Sampler* CreateSampler( SamplerType samplerType, TextureAddressMode textureMode = TextureAddressMode::TEXTURE_ADDRESS_CLAMP );
+	ShaderState* CreateShaderState( char const* filepath );
+	Material* CreateMaterial( char const* filepath );
 
 	void ReportLiveObjects();
 	void CreateDebugModule();
@@ -214,6 +234,11 @@ private:
 	float m_fogNear = -1.f;
 	float m_fogFar = -1.5f;
 
+	Mat44 m_modelMatrix = Mat44::IDENTITY;
+	Rgba8 m_modelTint = Rgba8::WHITE;
+	float m_specularFactor = 0.f;
+	float m_specularPower = 32.f;
+
 	Vec4 m_ambientLight = Vec4( 1.f, 1.f, 1.f, 1.f );
 	Light m_lights[MAX_LIGHTS];
 
@@ -226,7 +251,10 @@ private:
 	std::vector<Texture*>		m_loadedTextures;
 	std::vector<Texture*>		m_renderTargetPool;
 	std::vector<BitmapFont*>	m_loadedFonts;
+	std::vector<Sampler*>		m_loadedSamplers;
 	std::vector<Shader*>		m_loadedShaders;
+	std::vector<ShaderState*>	m_loadedShaderStates;
+	std::vector<Material*>	m_loadedMaterials;
 
 public:
 	void*						m_debugModule				= nullptr;

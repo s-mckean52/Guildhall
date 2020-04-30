@@ -135,7 +135,7 @@ Vertex_PCUTBN CreateObjVertFromString( std::vector<Vec3> const& positions, std::
 		positionIndex = atoi( faceIndiciesAsText[0].c_str() );
 		if( positionIndex < 0 )
 		{
-			positionIndex = positions.size() + positionIndex;
+			positionIndex = static_cast<int>( positions.size() ) + positionIndex;
 		}
 		else
 		{
@@ -152,7 +152,7 @@ Vertex_PCUTBN CreateObjVertFromString( std::vector<Vec3> const& positions, std::
 		uvIndex = atoi( faceIndiciesAsText[1].c_str() );
 		if( uvIndex < 0 )
 		{
-			uvIndex = uvs.size() + uvIndex;
+			uvIndex = static_cast<int>( uvs.size() ) + uvIndex;
 		}
 		else
 		{
@@ -169,7 +169,7 @@ Vertex_PCUTBN CreateObjVertFromString( std::vector<Vec3> const& positions, std::
 		normalIndex = atoi( faceIndiciesAsText[2].c_str() );
 		if( normalIndex < 0 )
 		{
-			normalIndex = normals.size() + normalIndex;
+			normalIndex = static_cast<int>( normals.size() ) + normalIndex;
 		}
 		else
 		{

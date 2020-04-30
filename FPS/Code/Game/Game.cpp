@@ -55,17 +55,12 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
-	XmlDocument shaderFile = new XmlDocument();
-	shaderFile.LoadFile( "Data/Shaders/lit.shaderstate" );
-	ShaderState testState = ShaderState( g_theRenderer, *shaderFile.RootElement() );
-
-	Material testMaterial = Material( g_theRenderer );
-	testMaterial.SetDiffuseTexture( g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/pokeball.png" ) );
-	testMaterial.AddMaterialTexture( g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/bark_normal.png" ) );
-	parallax_t parallaxData;
-	parallaxData.depth = m_parallaxDepth;
-	testMaterial.SetData( parallaxData );
-
+	Material* dissolve = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/dissolve.material" );
+	dissolve_t* dissolveData = dissolve->GetDataAs<dissolve_t>();
+	dissolveData->amount = 0.3f;
+	dissolveData->edgeRange = 0.1f;
+	dissolveData->edgeEndColor = Vec3(1.f, 0.f, 0.f);
+	dissolveData->edgeStartColor = Vec3(1.f, 1.f, 0.f);
 
 	mesh_import_options_t scifi_fighter_options;
 	scifi_fighter_options.generateNormals = false;
@@ -77,7 +72,7 @@ void Game::StartUp()
 	ReadAndParseObjFile( "Data/Models/scifi_fighter/mesh.obj", objVerts );
 	MeshLoadToVertexArray( objVerts, scifi_fighter_options );
 	m_objMesh = new GPUMesh( g_theRenderer );
-	m_objMesh->UpdateVerticies( objVerts.size(), &objVerts[0] );
+	m_objMesh->UpdateVerticies( static_cast<uint>( objVerts.size() ), &objVerts[0] );
 
 	EnableDebugRendering();
 
@@ -246,15 +241,20 @@ void Game::Render() const
 	g_theRenderer->SetAmbientLight( m_ambientColor, m_ambientIntensity );
 	EnableLightsForRendering();
 
-	g_theRenderer->BindTexture( g_theRenderer->CreateOrGetTextureFromFile( "Data/Models/scifi_fighter/diffuse.png" ) );
-	//g_theRenderer->BindNormalTexture( g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/SF_Fighter/SF_Fighter-Normal.png" ) );
-	//g_theRenderer->SetModelUBO( m_quadTransform->ToMatrix(), Rgba8::WHITE, m_specularFactor, m_specularPower );
-	g_theRenderer->BindSampler( g_theRenderer->m_samplerLinear );
-	g_theRenderer->BindShader( m_litShader );
+// 	g_theRenderer->BindTexture( g_theRenderer->CreateOrGetTextureFromFile( "Data/Models/scifi_fighter/diffuse.png" ) );
+// 	g_theRenderer->BindNormalTexture( g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/SF_Fighter/SF_Fighter-Normal.png" ) );
+// 	g_theRenderer->BindSampler( g_theRenderer->m_samplerLinear );
+// 	g_theRenderer->BindShader( m_litShader );
+// 	Material* material = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/dissolve.material" );
+// 	g_theRenderer->BindMaterial( material );
+	g_theRenderer->BindMaterialByPath( "Data/Shaders/dissolve.material" );
+	g_theRenderer->SetModelMatrix( m_quadTransform->ToMatrix() );
 	g_theRenderer->DrawMesh( m_objMesh );
 	//RenderWorld();
 
 	g_theRenderer->EndCamera( *m_worldCamera );
+
+	DebugRenderWorldToCamera( m_worldCamera );
 
 	Texture* temp = g_theRenderer->AcquireRenderTargetMatching( output );
 	g_theRenderer->CopyTexture( backbuffer, output );
@@ -267,8 +267,6 @@ void Game::Render() const
 	g_theRenderer->BeginCamera( *m_UICamera );
 	RenderUI();
 	g_theRenderer->EndCamera( *m_UICamera );
-
-	DebugRenderWorldToCamera( m_worldCamera );
 }
 
 
@@ -367,7 +365,7 @@ void Game::RenderWorld() const
 void Game::RenderRingOfSpheres() const
 {
 /*	Mat44 model = m_sphereTransform->ToMatrix();*/
-/*	g_theRenderer->SetModelMatrix( model );*/
+/*	g_theRenderer->SetModelUBO( model );*/
 	g_theRenderer->BindTexture( m_pokeball );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 /*	g_theRenderer->DrawMesh( m_uvSphere );*/
@@ -419,7 +417,7 @@ void Game::RenderUI() const
 	strings.push_back( Stringf( "[T]   - Attenuation: (%.2f, %.2f, %.2f)"	, currentLight.attenuation.x, currentLight.attenuation.y, currentLight.attenuation.z ) );
 	strings.push_back( Stringf( "[{,}] - Specular Factor: %.2f"				, m_specularFactor ) );
 	strings.push_back( Stringf( "[;,'] - Specular Power: %.2f"				, m_specularPower ) );
-	strings.push_back( Stringf( "[<,>] - Shader Mode: %s"					, m_shaderNames[ m_currentShaderIndex ].c_str() ) );
+/*	strings.push_back( Stringf( "[<,>] - Shader Mode: %s"					, m_shaderNames[ m_currentShaderIndex ].c_str() ) );*/
 	strings.push_back( Stringf( "[N,M] - Parallax Depth: %.2f"				, m_parallaxDepth ) );
 
 	Vec2 textStartPos = Vec2( paddingFromLeft, m_UICamera->GetCameraDimensions().y - paddingFromTop - textHeight );
@@ -626,11 +624,27 @@ void Game::UpdateFromInput( float deltaSeconds )
 	{
 		m_dissolveAmount += 0.5f * deltaSeconds;
 		ClampZeroToOne( m_dissolveAmount );
+
+		dissolve_t dissolveData;
+		dissolveData.amount = m_dissolveAmount;
+		dissolveData.edgeRange = 0.1f;
+		dissolveData.edgeEndColor = Vec3(0.f, 0.f, 1.f);
+		dissolveData.edgeStartColor = Vec3(1.f, 1.f, 0.f);
+		Material* material = g_theRenderer->GetOrCreateMaterialFromFile("Data/Shaders/dissolve.material");
+		material->SetData(dissolveData);
 	}
 	if( g_theInput->IsKeyPressed( KEY_CODE_DOWN_ARROW ) )
 	{
 		m_dissolveAmount -= 0.5f * deltaSeconds;
 		ClampZeroToOne( m_dissolveAmount );
+
+		dissolve_t dissolveData;
+		dissolveData.amount = m_dissolveAmount;
+		dissolveData.edgeRange = 0.1f;
+		dissolveData.edgeEndColor = Vec3(0.f, 0.f, 1.f);
+		dissolveData.edgeStartColor = Vec3(1.f, 1.f, 0.f);
+		Material* material = g_theRenderer->GetOrCreateMaterialFromFile("Data/Shaders/dissolve.material");
+		material->SetData(dissolveData);
 	}
 
 	if( g_theInput->IsKeyPressed( KEY_CODE_RIGHT_ARROW ) )
@@ -773,14 +787,14 @@ void Game::UpdateInputLights( float deltaSeconds )
 		AddGamma( gammaUpdateAmount * deltaSeconds );
 	}
 	// Update Shader
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_COMMA ) )
-	{
-		ChangeShader( -1 );
-	}
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_PERIOD ) )
-	{
-		ChangeShader( 1 );
-	}
+// 	if( g_theInput->WasKeyJustPressed( KEY_CODE_COMMA ) )
+// 	{
+// 		ChangeShader( -1 );
+// 	}
+// 	if( g_theInput->WasKeyJustPressed( KEY_CODE_PERIOD ) )
+// 	{
+// 		ChangeShader( 1 );
+// 	}
 	if( g_theInput->WasKeyJustPressed( 'R' ) )
 	{
 		CycleLightType( &m_animatedLights[m_selectedLight] );

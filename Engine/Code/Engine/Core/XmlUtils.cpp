@@ -1,6 +1,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/XmlUtils.hpp"
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/IntRange.hpp"
 #include "Engine/Math/FloatRange.hpp"
@@ -185,6 +186,19 @@ AABB2 ParseXmlAttribute( const XmlElement& element, const char* attributeName, c
 {
 	const char* attributeValueText = element.Attribute( attributeName );
 	AABB2 value = defaultValue;
+	if( attributeValueText )
+	{
+		value.SetFromText( attributeValueText );
+	}
+	return value;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec3 ParseXmlAttribute( const XmlElement& element, const char* attributeName, const Vec3& defaultValue )
+{
+	const char* attributeValueText = element.Attribute( attributeName );
+	Vec3 value = defaultValue;
 	if( attributeValueText )
 	{
 		value.SetFromText( attributeValueText );

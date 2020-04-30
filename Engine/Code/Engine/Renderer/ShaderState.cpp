@@ -1,12 +1,18 @@
 #include "Engine/Renderer/ShaderState.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
-ShaderState::ShaderState( RenderContext* context, XmlElement const& xmlElement )
+ShaderState::ShaderState( RenderContext* context, char const* filepath )
 {
 	m_context = context;
-	SetFromXml( xmlElement );
+	m_filepath = filepath;
+
+	XmlDocument shaderStateFile = new XmlDocument();
+	shaderStateFile.LoadFile( filepath );
+	GUARANTEE_OR_DIE( shaderStateFile.ErrorID() == 0, Stringf( "%s could not be loaded", filepath ).c_str() );
+	SetFromXml( *shaderStateFile.RootElement() );
 }
 
 

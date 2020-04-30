@@ -5,7 +5,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "ThirdParty/stb/stb_image.h"
 
-#include "Engine/Renderer/D3D11Common.hpp"
+//#include "Engine/Renderer/D3D11Common.hpp"
 
 #pragma comment( lib, "d3d11.lib" )         // needed a01
 #pragma comment( lib, "dxgi.lib" )          // needed a01
@@ -97,8 +97,8 @@ void RenderContext::StartUp( Window* theWindow )
 	m_lightUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
 	m_materialUBO = new RenderBuffer( this, UNIFORM_BUFFER_BIT, MEMORY_HINT_DYNAMIC );
 
-	m_samplerPoint = new Sampler( this, SAMPLER_POINT );
-	m_samplerLinear = new Sampler( this, SAMPLER_BILINEAR );
+	m_samplerPoint = GetOrCreateSampler( SAMPLER_POINT );
+	m_samplerLinear = GetOrCreateSampler( SAMPLER_BILINEAR );
 	m_textueDefaultColor = CreateTextureFromColor( Rgba8::WHITE );
 	m_textureDefaultNormalColor = CreateTextureFromColor( Rgba8( 127, 127, 255, 255 ) );
 
@@ -126,12 +126,6 @@ void RenderContext::ShutDown()
 {
 	ReleaseLoadedAssets();
 	ReleaseBlendStates();
-
-	delete m_samplerPoint;
-	m_samplerPoint = nullptr;
-
-	delete m_samplerLinear;
-	m_samplerLinear = nullptr;
 
 	delete m_frameUBO;
 	m_frameUBO = nullptr;
@@ -202,6 +196,57 @@ void RenderContext::DisableFog()
 void RenderContext::CopyTexture( Texture* destination, Texture* source )
 {
 	m_context->CopyResource( destination->GetHandle(), source->GetHandle() );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Sampler* RenderContext::GetOrCreateSampler( SamplerType samplerType, TextureAddressMode textureMode )
+{
+	for( uint samplerIndex = 0; samplerIndex < m_loadedSamplers.size(); ++samplerIndex )
+	{
+		Sampler* currentSampler = m_loadedSamplers[ samplerIndex ];
+		if( currentSampler->IsMatching( samplerType, textureMode ) )
+		{
+			return currentSampler;
+		}
+	}
+
+	Sampler* createdSampler = CreateSampler( samplerType, textureMode );
+	return createdSampler;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+ShaderState* RenderContext::GetOrCreateShaderStateFromFile( char const* filepath )
+{
+	for( uint shaderStateIndex = 0; shaderStateIndex < m_loadedShaderStates.size(); ++shaderStateIndex )
+	{
+		ShaderState* currentShaderState = m_loadedShaderStates[ shaderStateIndex ];
+		if( currentShaderState->GetFilePath() == filepath )
+		{
+			return currentShaderState;
+		}
+	}
+
+	ShaderState* createdShaderState = CreateShaderState( filepath );
+	return createdShaderState;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Material* RenderContext::GetOrCreateMaterialFromFile( char const* filepath )
+{
+	for( uint materialIndex = 0; materialIndex < m_loadedMaterials.size(); ++materialIndex )
+	{
+		Material* currentMaterial = m_loadedMaterials[ materialIndex ];
+		if( currentMaterial->m_filepath == filepath )
+		{
+			return currentMaterial;
+		}
+	}
+
+	Material* createdMaterial = CreateMaterial( filepath );
+	return createdMaterial;
 }
 
 
@@ -537,15 +582,57 @@ void RenderContext::UpdateCurrentLayout( buffer_attribute_t const* newLayout )
 
 
 //---------------------------------------------------------------------------------------------------------
-void RenderContext::SetModelUBO( Mat44 const& modelMatrix, Rgba8 const& modelTint, float specularFactor, float specularPower )
+void RenderContext::UpdateModelUBO()
 {
 	model_data_t modelData;
-	modelData.model				= modelMatrix;
-	modelData.specularFactor	= specularFactor;
-	modelData.specularPower		= specularPower;
-	modelData.tint				= modelTint.GetValuesAsFractions();
+	modelData.model = m_modelMatrix;
+	modelData.specularFactor = m_specularFactor;
+	modelData.specularPower = m_specularPower;
+	modelData.tint = m_modelTint.GetValuesAsFractions();
 
 	m_modelUBO->Update( &modelData, sizeof( modelData ), sizeof( modelData ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::SetModelUBO( Mat44 const& modelMatrix, Rgba8 const& modelTint, float specularFactor, float specularPower )
+{
+	SetModelMatrix( modelMatrix );
+	SetModelTint( modelTint );
+	SetSpecularFactor( specularFactor );
+	SetSpecularPower( specularPower );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::SetModelMatrix( Mat44 const& modelMatrix )
+{
+	m_modelMatrix = modelMatrix;
+	UpdateModelUBO();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::SetSpecularFactor( float specFactor )
+{
+	m_specularFactor = specFactor;
+	UpdateModelUBO();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::SetSpecularPower( float specPower )
+{
+	m_specularPower = specPower;
+	UpdateModelUBO();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::SetModelTint( Rgba8 const& modelTint )
+{
+	m_modelTint = modelTint;
+	UpdateModelUBO();
 }
 
 
@@ -619,6 +706,33 @@ Shader* RenderContext::CreateShaderFromFilePath( char const* filename )
 
 	delete newShader;
 	return m_errorShader;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Sampler* RenderContext::CreateSampler( SamplerType samplerType, TextureAddressMode textureMode )
+{
+	Sampler* newSampler = new Sampler( this, samplerType, textureMode );
+	m_loadedSamplers.push_back( newSampler );
+	return newSampler;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+ShaderState* RenderContext::CreateShaderState( char const* filepath )
+{
+	ShaderState* newShaderState = new ShaderState( this, filepath );
+	m_loadedShaderStates.push_back( newShaderState );
+	return newShaderState;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Material* RenderContext::CreateMaterial( char const* filepath )
+{
+	Material* newMaterial = new Material( this, filepath );
+	m_loadedMaterials.push_back( newMaterial );
+	return newMaterial;
 }
 
 
@@ -869,6 +983,24 @@ void RenderContext::ReleaseLoadedAssets()
 		delete m_renderTargetPool[ renderTargetIndex ];
 		m_renderTargetPool[ renderTargetIndex ] = nullptr;
 	}
+
+	for( int samplerIndex = 0; samplerIndex < m_loadedSamplers.size(); ++samplerIndex )
+	{
+		delete m_loadedSamplers[ samplerIndex ];
+		m_loadedSamplers[ samplerIndex ] = nullptr;
+	}
+
+	for( int shaderStateIndex = 0; shaderStateIndex < m_loadedShaderStates.size(); ++shaderStateIndex )
+	{
+		delete m_loadedShaderStates[ shaderStateIndex ];
+		m_loadedShaderStates[ shaderStateIndex ] = nullptr;
+	}
+
+	for( int materialIndex = 0; materialIndex < m_loadedMaterials.size(); ++materialIndex )
+	{
+		delete m_loadedMaterials[ materialIndex ];
+		m_loadedMaterials[ materialIndex ] = nullptr;
+	}
 }
 
 
@@ -929,6 +1061,8 @@ void RenderContext::BindMaterialTexture( unsigned int slot, const Texture* const
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::BindShaderState( ShaderState* shaderState )
 {
+	GUARANTEE_OR_DIE( shaderState != nullptr, "Tried to bind nullptr to ShaderState" );
+
 	BindShader( shaderState->GetShader() );
 	SetBlendMode( shaderState->GetBlendMode() );
 	SetCullMode( shaderState->GetCullMode() );
@@ -941,9 +1075,22 @@ void RenderContext::BindShaderState( ShaderState* shaderState )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::BindMaterial( Material* material )
 {
+	GUARANTEE_OR_DIE( material != nullptr, "Tried to bind nullptr to ShaderState" );
+
+	SetModelTint( material->m_tint );
+	SetSpecularFactor( material->m_specularFactor );
+	SetSpecularPower( material->m_specularPower );
+
 	BindShaderState( material->m_shaderState );
-	BindTexture( material->m_diffuseTexture );
-	BindNormalTexture( material->m_normalTexture );
+	if( material->m_diffuseTexture != nullptr )
+	{
+		BindTexture( material->m_diffuseTexture );
+	}
+
+	if (material->m_diffuseTexture != nullptr)
+	{
+		BindNormalTexture( material->m_normalTexture );
+	}
 	
 	std::vector<Texture*>& texturesToBind = material->m_materialTexturesPerSlot;
 	for( uint textureIndex = 0; textureIndex < texturesToBind.size(); ++ textureIndex )
@@ -959,6 +1106,30 @@ void RenderContext::BindMaterial( Material* material )
 
 	material->UpdateUBOIfDirty();
 	BindUniformBuffer( UBO_MATERIAL_SLOT, material->m_ubo );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::BindShaderByPath( const char* filepath )
+{
+	Shader* shaderToBind = GetOrCreateShader( filepath );
+	BindShader( shaderToBind );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::BindShaderStateByPath( const char* filepath )
+{
+	ShaderState* shaderStateToBind = GetOrCreateShaderStateFromFile( filepath );
+	BindShaderState( shaderStateToBind );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::BindMaterialByPath( const char* filepath )
+{
+	Material* materialToBind = GetOrCreateMaterialFromFile( filepath );
+	BindMaterial( materialToBind );
 }
 
 

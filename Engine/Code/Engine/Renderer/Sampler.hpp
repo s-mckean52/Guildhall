@@ -17,8 +17,9 @@ public:
 	~Sampler();
 
 	ID3D11SamplerState* GetHandle() const { return m_handle; }
+	bool IsMatching( SamplerType type, TextureAddressMode textureMode );
 
 public:
-	RenderContext* m_owner;
-	ID3D11SamplerState* m_handle;
+	RenderContext* m_owner = nullptr;
+	ID3D11SamplerState* m_handle = nullptr;
 };
