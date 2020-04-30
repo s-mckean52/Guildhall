@@ -23,6 +23,7 @@ class Transform;
 class GPUMesh;
 class Clock;
 class ShaderState;
+class Material;
 struct ID3D11Device;
 struct ID3D11Buffer;
 struct ID3D11DeviceContext;
@@ -126,7 +127,7 @@ public:
 	void SetGameClock( Clock* clock );
 	void SetBlendMode( BlendMode blendMode );
 	void SetDepthTest( CompareFunc compareFunc, bool writeDepthOnPass );
-	void ClearScreen( const Rgba8& clearColor );
+	void ClearScreen( const Rgba8& clearColor, Texture* renderTargetToClear );
 	void ClearDepth( Texture* depthStencilTexture, float depth );
 	void BeginCamera( Camera& camera );
 	void EndCamera( const Camera& camera );
@@ -153,11 +154,12 @@ public:
 	void		BindVertexInput( VertexBuffer* vbo );
 	void		BindIndexBuffer( IndexBuffer* ibo );
 	void		BindUniformBuffer( unsigned int slot, RenderBuffer* ubo );
-	void		BindSampler( Sampler* sampler );
+	void		BindSampler( Sampler* sampler, uint slot = 0 );
 	void		BindTexture( const Texture* constTexture );
 	void		BindNormalTexture( const Texture* constTexture );
 	void		BindMaterialTexture( unsigned int slot, const Texture* constTexture );
 	void		BindShaderState( ShaderState* shaderState );
+	void		BindMaterial( Material* material );
 
 	void		ReloadShaders();
 	Texture*	CreateOrGetTextureFromFile( const char* imageFilePath );
@@ -166,7 +168,14 @@ public:
 	Shader*		CreateShaderFromSourceCode( char const* sourceCode );
 	Texture*	CreateTextureFromColor( Rgba8 const& color );
 	Texture*	CreateDepthStencilBuffer( IntVec2 const& imageDimensions );
+
 	Texture*	CreateRenderTarget( IntVec2 const& imageTexelDimensions );
+	Texture*	AcquireRenderTargetMatching( Texture* textureToMatch );
+	void		ReleaseRenderTarget( Texture* textureToRelease );
+	void		CopyTexture( Texture* destination, Texture* source );
+	uint		GetTotalRenderTargetCount() const		{ return m_totalRenderTargetsMade; }
+	uint		GetFreeRenderTargetCount() const		{ return static_cast<uint>( m_renderTargetPool.size() ); }
+
 
 	//Light Methods
 	void UpdateLightUBO();
@@ -211,7 +220,11 @@ private:
 	bool m_isDrawing = false;
 	ID3D11Buffer* m_lastBoundVBOHandle = nullptr;
 
+	//Debug
+	uint m_totalRenderTargetsMade = 0;
+
 	std::vector<Texture*>		m_loadedTextures;
+	std::vector<Texture*>		m_renderTargetPool;
 	std::vector<BitmapFont*>	m_loadedFonts;
 	std::vector<Shader*>		m_loadedShaders;
 

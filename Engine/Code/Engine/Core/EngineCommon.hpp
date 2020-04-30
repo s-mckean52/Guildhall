@@ -7,6 +7,8 @@
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/NamedStrings.hpp"
 
+typedef unsigned int uint;
+
 class DevConsole;
 class EventSystem;
 

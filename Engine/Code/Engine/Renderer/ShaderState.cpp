@@ -19,6 +19,8 @@ ShaderState::~ShaderState()
 //---------------------------------------------------------------------------------------------------------
 void ShaderState::SetFromXml( XmlElement const& xmlElement )
 {
+	m_name = ParseXmlAttribute( xmlElement, "Name", m_name );
+
 	std::string shaderFilePath = ParseXmlAttribute( xmlElement, "Shader", "" );
 	if( shaderFilePath != "" )
 	{

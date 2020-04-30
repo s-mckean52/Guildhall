@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Core/XmlUtils.hpp"
+#include <string>
 
 class RenderContext;
 class Shader;
@@ -13,6 +14,7 @@ public:
 
 	void SetFromXml( XmlElement const& xmlElement );
 
+	std::string	GetName() const							{ return m_name; }
 	Shader*		GetShader() const						{ return m_shader; }
 	BlendMode	GetBlendMode() const					{ return m_blendMode; }
 	CullMode	GetCullMode() const						{ return m_cullMode; }
@@ -30,6 +32,8 @@ private:
 
 
 private:
+	std::string m_name = "";
+
 	RenderContext* m_context = nullptr;
 	Shader* m_shader = nullptr;
 

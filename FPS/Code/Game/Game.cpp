@@ -30,6 +30,7 @@
 #include "Engine/Math/MatrixUtils.hpp"
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Renderer/ShaderState.hpp"
+#include "Engine/Renderer/Material.hpp"
 #include <string>
 
 
@@ -58,6 +59,13 @@ void Game::StartUp()
 	shaderFile.LoadFile( "Data/Shaders/lit.shaderstate" );
 	ShaderState testState = ShaderState( g_theRenderer, *shaderFile.RootElement() );
 
+	Material testMaterial = Material( g_theRenderer );
+	testMaterial.SetDiffuseTexture( g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/pokeball.png" ) );
+	testMaterial.AddMaterialTexture( g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/bark_normal.png" ) );
+	parallax_t parallaxData;
+	parallaxData.depth = m_parallaxDepth;
+	testMaterial.SetData( parallaxData );
+
 
 	mesh_import_options_t scifi_fighter_options;
 	scifi_fighter_options.generateNormals = false;
@@ -65,7 +73,7 @@ void Game::StartUp()
 	scifi_fighter_options.invertWindingOrder = false;
 	scifi_fighter_options.invertV = false;
 	std::vector<Vertex_PCUTBN> objVerts;
-	std::vector<unsigned int> objIndicies;
+	std::vector<uint> objIndicies;
 	ReadAndParseObjFile( "Data/Models/scifi_fighter/mesh.obj", objVerts );
 	MeshLoadToVertexArray( objVerts, scifi_fighter_options );
 	m_objMesh = new GPUMesh( g_theRenderer );
@@ -94,12 +102,12 @@ void Game::StartUp()
 	m_UICamera->SetPosition( Vec3( HALF_SCREEN_X, HALF_SCREEN_Y, 0.f ) );
 
 	std::vector<Vertex_PCUTBN> litCubeVerts;
-	std::vector<unsigned int> litCubeIndicies;
+	std::vector<uint> litCubeIndicies;
 	AddBoxToIndexedVertexArray( litCubeVerts, litCubeIndicies, AABB3( -1.f, -1.f, 1.f, 1.f, 1.f, -1.f ), Rgba8::WHITE );
 	m_meshCube = new GPUMesh( g_theRenderer, litCubeVerts, litCubeIndicies );
 
-	std::vector< Vertex_PCUTBN > uvSphereVerticies;
-	std::vector< unsigned int > uvSphereIndicies;
+	std::vector<Vertex_PCUTBN> uvSphereVerticies;
+	std::vector<uint> uvSphereIndicies;
 	AddUVSphereToIndexedVertexArray( uvSphereVerticies, uvSphereIndicies, Vec3::ZERO, 1.f, 32, 64, Rgba8::WHITE );
 	m_uvSphere = new GPUMesh( g_theRenderer, uvSphereVerticies, uvSphereIndicies );
 
@@ -223,8 +231,13 @@ void Game::ShutDown()
 //---------------------------------------------------------------------------------------------------------
 void Game::Render() const
 {
+	Texture* backbuffer = g_theRenderer->GetBackBuffer();
+	Texture* output = g_theRenderer->AcquireRenderTargetMatching( backbuffer );
+
 	//Render worldCamera
+	m_worldCamera->SetColorTarget( output );	
 	g_theRenderer->BeginCamera( *m_worldCamera );
+
 	g_theRenderer->BindSampler( nullptr );
 	g_theRenderer->SetCullMode( CULL_MODE_BACK );
 	g_theRenderer->SetDepthTest( COMPARE_FUNC_LEQUAL, true );
@@ -243,6 +256,13 @@ void Game::Render() const
 
 	g_theRenderer->EndCamera( *m_worldCamera );
 
+	Texture* temp = g_theRenderer->AcquireRenderTargetMatching( output );
+	g_theRenderer->CopyTexture( backbuffer, output );
+
+	g_theRenderer->ReleaseRenderTarget( temp );
+	g_theRenderer->ReleaseRenderTarget( output );
+
+	//DebugAddScreenText( Vec4( 1.f, 0.f, 0.f, 0.f ), ALIGN_BOTTOM_RIGHT, 20.f, Rgba8::BLUE, Rgba8::BLUE, 0.f, Stringf( "Pool size: %i / %i free", g_theRenderer->GetFreeRenderTargetCount(), g_theRenderer->GetTotalRenderTargetCount() ).c_str() );
 	//Render UI
 	g_theRenderer->BeginCamera( *m_UICamera );
 	RenderUI();

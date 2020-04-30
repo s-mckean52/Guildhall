@@ -1,8 +1,9 @@
 #include "Engine/Renderer/Sampler.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
-#include "Engine/Renderer/D3D11Common.hpp"
 
-Sampler::Sampler( RenderContext* context, SamplerType type )
+
+//---------------------------------------------------------------------------------------------------------
+Sampler::Sampler( RenderContext* context, SamplerType type, TextureAddressMode textureMode )
 {
 	m_handle = nullptr;
 	m_owner = context;
@@ -20,10 +21,10 @@ Sampler::Sampler( RenderContext* context, SamplerType type )
 		desc.Filter = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
 	}
 
-	desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	
+	desc.AddressU = ToD3D11TextureAddress( textureMode );
+	desc.AddressV = ToD3D11TextureAddress( textureMode );
+	desc.AddressW = ToD3D11TextureAddress( textureMode );
+
 	desc.MipLODBias			= 0.0f;
 	desc.MaxAnisotropy		= 0;
 	desc.ComparisonFunc		= D3D11_COMPARISON_NEVER;
@@ -39,6 +40,8 @@ Sampler::Sampler( RenderContext* context, SamplerType type )
 	device->CreateSamplerState( &desc, &m_handle );
 }
 
+
+//---------------------------------------------------------------------------------------------------------
 Sampler::~Sampler()
 {
 	m_owner = nullptr;

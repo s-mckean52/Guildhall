@@ -1,6 +1,6 @@
 <!-- lit Shader State XML -->
 
-<ShaderState id="lit"
+<ShaderState Name="lit"
              Shader       ="Data/Shaders/lit.hlsl"
              BlendMode    ="Alpha"
              CullMode     ="Back"

@@ -21,6 +21,7 @@ public:
 	int					GetNumComponents()	const { return m_numComponents; }
 	std::string const&	GetImageFilePath()	const { return m_imageFilePath; }
 	RenderContext*		GetOwner()			const { return m_owner; }
+	ID3D11Texture2D*	GetHandle()			const { return m_handle; }
 	float				GetAspect()			const;
 	Vec2				GetSize()			const;
 

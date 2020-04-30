@@ -199,6 +199,13 @@ void RenderContext::DisableFog()
 
 
 //---------------------------------------------------------------------------------------------------------
+void RenderContext::CopyTexture( Texture* destination, Texture* source )
+{
+	m_context->CopyResource( destination->GetHandle(), source->GetHandle() );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void RenderContext::UpdateLightUBO()
 {
 	light_data_t lightData;
@@ -286,7 +293,7 @@ void RenderContext::SetDepthTest( CompareFunc compareFunc, bool writeDepthOnPass
 
 
 //---------------------------------------------------------------------------------------------------------
-void RenderContext::ClearScreen( const Rgba8& clearColor )
+void RenderContext::ClearScreen( const Rgba8& clearColor, Texture* renderTargetToClear )
 {
 	float clearFloats [4];
 	clearFloats[0] = (float)clearColor.r / 255.0f;
@@ -294,10 +301,9 @@ void RenderContext::ClearScreen( const Rgba8& clearColor )
 	clearFloats[2] = (float)clearColor.b / 255.0f;
 	clearFloats[3] = (float)clearColor.a / 255.0f;
 
-	Texture* backbuffer = m_swapchain->GetBackBuffer();
-	TextureView* backbuffer_rtv = backbuffer->CreateOrGetRenderTargetView();
+	TextureView* texture_rtv = renderTargetToClear->CreateOrGetRenderTargetView();
 
-	ID3D11RenderTargetView* rtv = backbuffer_rtv->GetAsRTV();
+	ID3D11RenderTargetView* rtv = texture_rtv->GetAsRTV();
 	m_context->ClearRenderTargetView( rtv, clearFloats );
 }
 
@@ -350,7 +356,7 @@ void RenderContext::BeginCamera( Camera& camera )
 
 	if( camera.ShouldClearColor() )
 	{
-		ClearScreen( camera.GetClearColor() );
+		ClearScreen( camera.GetClearColor(), camera.GetColorTarget() );
 	}
 
 	if( camera.ShouldClearDepth() && depthStencilTarget != nullptr )
@@ -857,6 +863,12 @@ void RenderContext::ReleaseLoadedAssets()
 		delete m_loadedShaders[ shaderIndex ];
 		m_loadedShaders[ shaderIndex ] = nullptr;
 	}
+
+	for( int renderTargetIndex = 0; renderTargetIndex < m_renderTargetPool.size(); ++renderTargetIndex )
+	{
+		delete m_renderTargetPool[ renderTargetIndex ];
+		m_renderTargetPool[ renderTargetIndex ] = nullptr;
+	}
 }
 
 
@@ -923,6 +935,30 @@ void RenderContext::BindShaderState( ShaderState* shaderState )
 	SetFillMode( shaderState->GetFillMode() );
 	SetDepthTest( shaderState->GetCompareMode(), shaderState->IsWriteOnDepth() );
 	SetFrontFaceWindOrder( shaderState->IsCounterClockwiseWindorder() );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::BindMaterial( Material* material )
+{
+	BindShaderState( material->m_shaderState );
+	BindTexture( material->m_diffuseTexture );
+	BindNormalTexture( material->m_normalTexture );
+	
+	std::vector<Texture*>& texturesToBind = material->m_materialTexturesPerSlot;
+	for( uint textureIndex = 0; textureIndex < texturesToBind.size(); ++ textureIndex )
+	{
+		BindMaterialTexture( 8 + textureIndex, texturesToBind[textureIndex] );
+	}
+
+	std::vector<Sampler*>& samplersToBind = material->m_samplersPerSlot;
+	for( uint samplerIndex = 0; samplerIndex < samplersToBind.size(); ++samplerIndex )
+	{
+		BindSampler( samplersToBind[ samplerIndex ], samplerIndex );
+	}
+
+	material->UpdateUBOIfDirty();
+	BindUniformBuffer( UBO_MATERIAL_SLOT, material->m_ubo );
 }
 
 
@@ -1008,7 +1044,7 @@ void RenderContext::BindUniformBuffer( unsigned int slot, RenderBuffer* ubo )
 
 
 //---------------------------------------------------------------------------------------------------------
-void RenderContext::BindSampler( Sampler* sampler )
+void RenderContext::BindSampler( Sampler* sampler, uint slot )
 {
 	if( sampler == nullptr )
 	{
@@ -1016,7 +1052,7 @@ void RenderContext::BindSampler( Sampler* sampler )
 	}
 
 	ID3D11SamplerState* sampleHandle = sampler->GetHandle();
-	m_context->PSSetSamplers( 0, 1, &sampleHandle);
+	m_context->PSSetSamplers( slot, 1, &sampleHandle);
 }
 
 
@@ -1076,8 +1112,36 @@ Texture* RenderContext::CreateRenderTarget( IntVec2 const& imageTexelDimensions 
 	ID3D11Texture2D* textureHandle = nullptr;
 	m_device->CreateTexture2D( &depthDesc, nullptr, &textureHandle );
 	Texture* newTexture = new Texture( this, textureHandle );
-	m_loadedTextures.push_back( newTexture );
 	return newTexture;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Texture* RenderContext::AcquireRenderTargetMatching( Texture* textureToMatch )
+{
+	IntVec2 textureTexelSize = textureToMatch->GetImageTexelSize();
+
+	for( int renderTargetIndex = 0; renderTargetIndex < m_renderTargetPool.size(); ++renderTargetIndex )
+	{
+		Texture* renderTarget = m_renderTargetPool[ renderTargetIndex ];
+		if( renderTarget->GetImageTexelSize() == textureTexelSize )
+		{
+			m_renderTargetPool[ renderTargetIndex ] = m_renderTargetPool[ m_renderTargetPool.size() - 1 ];
+			m_renderTargetPool.pop_back();
+			return renderTarget;
+		}
+	}
+
+	++m_totalRenderTargetsMade;
+	Texture* newRenderTarget = CreateRenderTarget( textureTexelSize );
+	return newRenderTarget;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::ReleaseRenderTarget( Texture* textureToRelease )
+{
+	m_renderTargetPool.push_back( textureToRelease );
 }
 
 

@@ -109,28 +109,7 @@ public:
 };
 
 
-// void DebugRenderObject::AddVertsAndIndiciesToArray( std::vector<Vertex_PCU>& verticies, std::vector<unsigned int>& indicies )
-// {
-// 	m_hasExpired = m_durationTimer.CheckAndDecrement();
-// 
-// 	Rgba8 newColor = Rgba8Lerp( m_startColor, m_endColor, m_durationTimer.GetFractionComplete() );
-// 
-// 	unsigned int startIndexOffset = static_cast<unsigned int>( verticies.size() );
-// 	for( int objectVertIndex = 0; objectVertIndex < m_objectVerticies.size(); ++objectVertIndex )
-// 	{
-// 		Vertex_PCU newVert = m_objectVerticies[ objectVertIndex ];
-// 		newVert.m_color = newColor;
-// 		newVert.m_position = m_transformMatrix.TransformPosition3D( newVert.m_position );
-// 		verticies.push_back( newVert );
-// 	}
-// 
-// 	for( int objectIndiciesIndex = 0; objectIndiciesIndex < m_objectIndicies.size(); ++objectIndiciesIndex )
-// 	{
-// 		indicies.push_back( m_objectIndicies[ objectIndiciesIndex ] + startIndexOffset );
-// 	}
-// }
-
-
+//---------------------------------------------------------------------------------------------------------
 void DebugRenderObject::Draw()
 {
 	m_hasExpired = m_durationTimer.HasElapsed();
@@ -167,6 +146,7 @@ void DebugRenderObject::Draw()
 }
 
 
+//---------------------------------------------------------------------------------------------------------
 void DebugRenderObject::SetAllVertsColor( const Rgba8& newColor )
 {
 	for (int objectVertIndex = 0; objectVertIndex < m_objectVerticies.size(); ++objectVertIndex)
@@ -176,6 +156,7 @@ void DebugRenderObject::SetAllVertsColor( const Rgba8& newColor )
 }
 
 
+//---------------------------------------------------------------------------------------------------------
 void DebugRenderObject::SetRenderMode()
 {
 	RenderContext* context = s_debugRenderSystem->GetRenderContext();
