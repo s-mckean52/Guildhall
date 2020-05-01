@@ -91,6 +91,7 @@ bool AppendVec2( std::vector<Vec2>& vectorOfVec2, std::string const& string, uns
 //---------------------------------------------------------------------------------------------------------
 bool AppendFace( std::vector<Vertex_PCUTBN>& verticies, std::vector<Vec3> const& positions, std::vector<Vec3> const& normals, std::vector<Vec2> const& uvs, std::string const& string, unsigned int& stringStartIndex )
 {
+	last_indicies_used_t lastIndiciesUsed;
 	std::vector<Vertex_PCUTBN> objFaceVerts;
 	for( ;; )
 	{
@@ -100,7 +101,7 @@ bool AppendFace( std::vector<Vertex_PCUTBN>& verticies, std::vector<Vec3> const&
 			break;
 		}
 
-		objFaceVerts.push_back( CreateObjVertFromString( positions, normals, uvs, newFaceVert ) );
+		objFaceVerts.push_back( CreateObjVertFromString( positions, normals, uvs, newFaceVert, lastIndiciesUsed ) );
 	}
 	GUARANTEE_OR_DIE( objFaceVerts.size() >= 3 && objFaceVerts.size() <= 4, "Loaded too many verts to a face" );
 
@@ -117,12 +118,9 @@ bool AppendFace( std::vector<Vertex_PCUTBN>& verticies, std::vector<Vec3> const&
 
 
 //---------------------------------------------------------------------------------------------------------
-Vertex_PCUTBN CreateObjVertFromString( std::vector<Vec3> const& positions, std::vector<Vec3> const& normals, std::vector<Vec2> const& uvs, std::string const& faceVertAsString )
+Vertex_PCUTBN CreateObjVertFromString( std::vector<Vec3> const& positions, std::vector<Vec3> const& normals, std::vector<Vec2> const& uvs, std::string const& faceVertAsString, last_indicies_used_t& lastIndiciesData )
 {
 	// vertex/texture/normal -> 1/1/1
-	static int	lastVertexIndexUsed	= -1;
-	static int	lastNormalIndexUsed	= -1;
-	static int	lastUVIndexUsed		= -1;
 
 	Strings faceIndiciesAsText = SplitStringOnDelimiter( faceVertAsString, '/' );
 
@@ -142,7 +140,7 @@ Vertex_PCUTBN CreateObjVertFromString( std::vector<Vec3> const& positions, std::
 			positionIndex -= 1;
 		}
 
-		lastVertexIndexUsed = positionIndex;
+		lastIndiciesData.lastVertexIndexUsed = positionIndex;
 		newVertex.m_position = positions[ positionIndex ];
 	} else {
 		ERROR_AND_DIE( "No position given for face vertex" );
@@ -159,10 +157,10 @@ Vertex_PCUTBN CreateObjVertFromString( std::vector<Vec3> const& positions, std::
 			uvIndex -= 1;
 		}
 		newVertex.m_uvTexCoords = uvs[ uvIndex ];
-		lastUVIndexUsed = uvIndex;
+		lastIndiciesData.lastUVIndexUsed = uvIndex;
 	} else {
-		if( lastUVIndexUsed != -1 )
-			newVertex.m_uvTexCoords = uvs[ lastUVIndexUsed ];
+		if( lastIndiciesData.lastUVIndexUsed != -1 )
+			newVertex.m_uvTexCoords = uvs[ lastIndiciesData.lastUVIndexUsed ];
 	}
 
 	if( faceIndiciesAsText[2] != "" ) {
@@ -176,10 +174,10 @@ Vertex_PCUTBN CreateObjVertFromString( std::vector<Vec3> const& positions, std::
 			normalIndex -= 1;
 		}
 		newVertex.m_normal = normals[ normalIndex ];
-		lastNormalIndexUsed = normalIndex;
+		lastIndiciesData.lastNormalIndexUsed = normalIndex;
 	} else {
-		if( lastNormalIndexUsed != -1 )
-			newVertex.m_normal = normals[ lastNormalIndexUsed ];
+		if( lastIndiciesData.lastNormalIndexUsed != -1 )
+			newVertex.m_normal = normals[ lastIndiciesData.lastNormalIndexUsed ];
 	}
 
 	return newVertex;
