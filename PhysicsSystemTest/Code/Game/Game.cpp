@@ -78,7 +78,19 @@ void Game::StartUp()
 		Vec2( groundPolyHalfWidth, -4.f ),
 		Vec2( -groundPolyHalfWidth, -4.f ),
 	};
-	m_gameObjects.push_back( CreatePolygon( groundPolygon ) );
+	GameObject* groundObject = CreatePolygon( groundPolygon );
+	groundObject->GetCollider()->SetLayer( 10 );
+	m_physics2D->ToggleLayerInteraction( 0, 0 );
+
+// 	groundObject->GetCollider()->m_isTrigger = true;
+// 	groundObject->GetCollider()->OnTriggerEnter.Subscribe( GroundOnOverlapStart );
+// 	groundObject->GetCollider()->OnTriggerLeave.SubscribeMethod( this, &Game::GroundOnTriggerLeave );
+// 	groundObject->GetCollider()->OnTriggerStay.SubscribeMethod( this, &Game::GroundOnTriggerStay );
+
+	groundObject->GetCollider()->OnOverlapEnter.Subscribe( GroundOnOverlapStart );
+	groundObject->GetCollider()->OnOverlapStay.SubscribeMethod( this, &Game::GroundOnTriggerStay );
+	groundObject->GetCollider()->OnOverlapLeave.SubscribeMethod( this, &Game::GroundOnTriggerLeave );
+	m_gameObjects.push_back( groundObject );
 }
 
 
@@ -839,6 +851,27 @@ bool Game::IsNextPointValidOnPolygon( const Vec2& point )
 		}
 	}
 	return true;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void GroundOnOverlapStart( Collision2D* collision )
+{
+	g_theConsole->PrintString( Rgba8::RED, "OnCollsionStart - Ground" );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::GroundOnTriggerStay( Collision2D* collision )
+{
+	g_theConsole->PrintString( Rgba8::BLUE, "OnCollisionStay - Ground" );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::GroundOnTriggerLeave( Collision2D* collision )
+{
+	g_theConsole->PrintString( Rgba8::GREEN, "OnCollisionLeave - Ground" );
 }
 
 

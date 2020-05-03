@@ -1,5 +1,7 @@
 #pragma once
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/IntVec2.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
 class	Collider2D;
 struct	Manifold2;
@@ -24,12 +26,14 @@ public:
 struct Collision2D
 {
 public:
+	uint frameIndex = 0;
+	IntVec2 collisionID;
 	Collider2D* thisCollider	= nullptr;
 	Collider2D* otherCollider	= nullptr;
 	Manifold2* collisionData	= nullptr;
 
 public:
-	Collision2D( Collider2D* thisC, Collider2D* otherC, Manifold2* manifold );
+	Collision2D( Collider2D* thisC, Collider2D* otherC, Manifold2* manifold, uint toFrameIndex );
 	~Collision2D();
 
 	Vec2 GetNormal() const				{ return collisionData->collisionNormal; }

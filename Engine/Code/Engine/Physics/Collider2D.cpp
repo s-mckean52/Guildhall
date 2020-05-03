@@ -3,7 +3,6 @@
 #include "Engine/Physics/PolygonCollider2D.hpp"
 #include "Engine/Physics/Collision2D.hpp"
 #include "Engine/Math/MathUtils.hpp"
-#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Physics/PhysicsMaterial.hpp"
 #include "Engine/Physics/Rigidbody2D.hpp"
 #include "Engine/Core/DebugRender.hpp"
@@ -423,6 +422,12 @@ void Collider2D::MarkForDestroy( bool isMarkedForDestroy )
 	m_isMarkedForDestroy = isMarkedForDestroy;
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void Collider2D::SetLayer( uint layer )
+{
+	m_layer = layer;
+}
 
 //---------------------------------------------------------------------------------------------------------
 bool Collider2D::Intersects( Collider2D const* other ) const

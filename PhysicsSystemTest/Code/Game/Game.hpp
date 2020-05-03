@@ -13,6 +13,7 @@ class Physics2D;
 class GameObject;
 class Clock;
 class NamedStrings;
+struct Collision2D;
 
 class Game
 {
@@ -73,6 +74,8 @@ public:
 	void SetDraggedObject();
 	void DestroyGameObjects();
 	bool IsNextPointValidOnPolygon( const Vec2& point );
+	void GroundOnTriggerStay( Collision2D* collision );
+	void GroundOnTriggerLeave( Collision2D* collision );
 
 	void CreatePolygonFromInput();
 	void DrawNewPolygonPoints() const;
@@ -111,3 +114,5 @@ private:
 	std::vector<Vec2> m_newPolygonToDraw;
 	std::vector<GameObject*> m_gameObjects;
 };
+
+void GroundOnOverlapStart( Collision2D* collision );

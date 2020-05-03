@@ -77,6 +77,27 @@ float Maxf( float a, float b )
 
 
 //---------------------------------------------------------------------------------------------------------
+uint Min( uint a, uint b )
+{
+	if( a < b )
+	{
+		return a;
+	}
+	return b;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+uint Max(uint a, uint b)
+{
+	if( a > b )
+	{
+		return a;
+	}
+	return b;
+}
+
+//---------------------------------------------------------------------------------------------------------
 float GetDistance2D( const Vec2& positionA, const Vec2& positionB )
 {
 	float deltaX = positionA.x - positionB.x;

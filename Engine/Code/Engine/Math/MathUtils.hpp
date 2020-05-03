@@ -1,4 +1,5 @@
 #pragma once
+#include "Engine/Core/EngineCommon.hpp"
 #include <vector>
 
 struct	Vec2;
@@ -24,6 +25,8 @@ float		Atan2Degrees			( float y, float x );
 
 float		Minf					( float a, float b );
 float		Maxf					( float a, float b );
+uint		Min						( uint a, uint b );
+uint		Max						( uint a, uint b );
 
 float		GetDistance2D			( const Vec2& positionA, const Vec2& positionB );
 float		GetDistanceSquared2D	( const Vec2& positionA, const Vec2& positionB );

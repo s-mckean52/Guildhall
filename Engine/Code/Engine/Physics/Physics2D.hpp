@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/Timer.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include <vector>
 
 class	Rigidbody2D;
@@ -26,11 +27,19 @@ public:
 	void UpdateFrameStartPositions();
 	void UpdateVerletVelocities();
 	void DetectCollisions();
+	void DetectTriggerCollisons();
+	void CallOnOverlapEvents();
+	void CallOnTriggerEvents();
 	void ResolveCollisions();
 	void ResolveCollision( Collision2D const& collision );
-	void ClearFrameCollisions();
+	void ClearLastFrameCollisions();
 	void EulerStep( float deltaSeconds, Rigidbody2D* rb );
 	void ApplyImpulseOnCollision( Collision2D const& collision );
+
+	void ToggleLayerInteraction( uint layerIndexA, uint layerIndexB );
+	void DisableLayerInteraction( uint layerIndexA, uint layerIndexB );
+	void EnableLayerInteraction( uint layerIndexA, uint layerIndexB );
+	bool DoLayersInteract( uint layerIndexA, uint layerIndexB );
 
 	void ClearFrameData();
 	void AddGravityInDownDirection( float gravityToAdd );
@@ -63,7 +72,12 @@ public:
 
 	Vec2 m_gravityAcceleration = Vec2( 0.0f, -9.81f );
 
+	uint m_currentFrameIndex = 0;
+
+	uint m_layerInteractions[32] = { 32 };
+
 	std::vector< Collision2D* > m_frameCollisions;
+	std::vector< Collision2D* > m_frameTriggerCollisions;
 	std::vector< Rigidbody2D* > m_rigidbodies2D;
 	std::vector< Collider2D* > m_colliders2D;
 };

@@ -401,7 +401,8 @@ void RenderContext::BeginCamera( Camera& camera )
 
 	if( camera.ShouldClearColor() )
 	{
-		ClearScreen( camera.GetClearColor(), camera.GetColorTarget() );
+		
+		ClearScreen( camera.GetClearColor(), colorTarget );
 	}
 
 	if( camera.ShouldClearDepth() && depthStencilTarget != nullptr )

@@ -1,5 +1,7 @@
 #pragma once
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Core/Delegate.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include <vector>
 
 enum Collider2DType
@@ -19,6 +21,7 @@ class	PhysicsMaterial;
 struct	Vec2;
 struct	Rgba8;
 struct	Manifold2;
+struct	Collision2D;
 
 
 typedef bool( *collision_check_cb )( Collider2D const*, Collider2D const* );
@@ -45,13 +48,24 @@ public:
 
 
 	//---------------------------------------------------------------------------------------------------------
+	Delegate<Collision2D*> OnOverlapEnter;
+	Delegate<Collision2D*> OnOverlapLeave;
+	Delegate<Collision2D*> OnOverlapStay;
+
+	Delegate<Collision2D*> OnTriggerEnter;
+	Delegate<Collision2D*> OnTriggerLeave;
+	Delegate<Collision2D*> OnTriggerStay;
+
+
 	Collider2DType	GetType() const				{ return m_type; }
 	AABB2			GetWorldBounds() const		{ return m_worldBounds; }
-	bool			isMarkedForDestroy() const	{ return m_isMarkedForDestroy; }
+	bool			IsMarkedForDestroy() const	{ return m_isMarkedForDestroy; }
+	uint			GetLayer() const			{ return m_layer; }
 	float			GetMass() const;
 	Vec2			GetVelocity() const;
 
 	void			MarkForDestroy( bool isMarkedForDestroy );
+	void			SetLayer( uint layer );
 
 	bool			Intersects( Collider2D const* other ) const;
 	bool			GetManifold( Collider2D const* other, Manifold2* manifold );
@@ -65,12 +79,13 @@ protected:
 	virtual ~Collider2D();
 
 public:
+	uint				m_id = 0;
+	uint				m_layer = 0;
+	bool				m_isTrigger = false;
 	bool				m_isMarkedForDestroy	= false;
 	Collider2DType		m_type;
 	Physics2D*			m_physicsSystem			= nullptr;
 	Rigidbody2D*		m_rigidbody				= nullptr;
 	PhysicsMaterial*	m_physicsMaterial		= nullptr;
 	AABB2				m_worldBounds;
-// 	float				m_worldBoundsRadius		= 0.f;
-// 	Vec2				m_worldBoundsCenter;
 };
