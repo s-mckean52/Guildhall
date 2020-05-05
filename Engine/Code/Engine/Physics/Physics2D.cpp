@@ -299,6 +299,7 @@ void Physics2D::CallOnTriggerEvents()
 			if( thisCollision->collisionID == otherCollision->collisionID )
 			{
 				thisCollider->OnTriggerStay( thisCollision );
+				otherCollider->OnTriggerStay( thisCollision );
 				didStay = true;
 
 				//update this collison to this frame
@@ -313,10 +314,12 @@ void Physics2D::CallOnTriggerEvents()
 		if( thisCollision->frameIndex == m_currentFrameIndex )
 		{
 			thisCollider->OnTriggerEnter( thisCollision );
+			otherCollider->OnTriggerEnter( thisCollision );
 		}
 		else
 		{
 			thisCollider->OnTriggerLeave( thisCollision );
+			otherCollider->OnTriggerLeave( thisCollision );
 		}
 	}
 }

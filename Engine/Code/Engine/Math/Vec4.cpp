@@ -1,6 +1,8 @@
 #include "Engine/Math/Vec4.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Core/EngineCommon.hpp"
+
 
 //---------------------------------------------------------------------------------------------------------
 Vec4::Vec4( float initialX, float initialY, float initialZ, float initialW )
@@ -40,6 +42,14 @@ Vec4::Vec4( const Vec2& toCopyFirst, const Vec2& toCopySecond )
 	z = toCopySecond.x;
 	w = toCopySecond.y;
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string Vec4::ToString( Vec4 const& value )
+{
+	return Stringf( "%f,%f,%f,%f", value.x, value.y, value.z, value.w );
+}
+
 
 //---------------------------------------------------------------------------------------------------------
 bool Vec4::operator==( const Vec4& toCompare ) const

@@ -1,7 +1,7 @@
 <!-- lit Shader State XML -->
 
-<ShaderState Name="lit"
-             Shader       ="Data/Shaders/Lit.hlsl"
+<ShaderState Name="bloom"
+             Shader       ="Data/Shaders/Bloom.hlsl"
              BlendMode    ="Alpha"
              CullMode     ="Back"
              FillMode     ="Solid"

@@ -1,4 +1,5 @@
 #include "Engine/Core/StringUtils.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include <stdarg.h>
 
 
@@ -94,4 +95,171 @@ std::string FindNextWord( std::string const& string, unsigned int& startIndex )
 		startIndex = charIndex + 1;
 	}
 	return foundWord;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string ToString( int value )
+{
+	return Stringf( "%i", value );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string ToString( uint value )
+{
+	return Stringf( "%u", value );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string ToString( float value )
+{
+	return Stringf( "%f", value );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string ToString( char value )
+{
+	return Stringf( "%c", value );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string ToString( double value )
+{
+	return Stringf( "%f", value );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string ToString( bool value )
+{
+	if( value == true )
+	{
+		return "true";
+	}
+	else
+	{
+		return "false";
+	}
+}
+
+//---------------------------------------------------------------------------------------------------------
+std::string ToString( char const* value )
+{
+	return value;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string ToString( std::string const& value )
+{
+	return value;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+int SetFromText( char const* valueAsText, int defaultValue )
+{
+	int value = atoi( valueAsText );
+	if( !IsStringEqual( valueAsText, "0" ) && value == 0 )
+	{
+		value = defaultValue;
+	}
+	return value;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+uint SetFromText( char const* valueAsText, uint defaultValue )
+{
+	uint value = atoi( valueAsText );
+	if( !IsStringEqual( valueAsText, "0" ) && value == 0 )
+	{
+		value = defaultValue;
+	}
+	else if( value < 0 )
+	{
+		value = defaultValue;
+	}
+	return value;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float SetFromText( char const* valueAsText, float defaultValue )
+{
+	float value = static_cast<float>( atof( valueAsText ) );
+	if( !IsStringEqual( valueAsText, "0" ) && value == 0.f )
+	{
+		value = defaultValue;
+	}
+	return value;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+double SetFromText( char const* valueAsText, double defaultValue )
+{
+	double value = atof( valueAsText );
+	if( !IsStringEqual( valueAsText, "0" ) && value == 0.0 )
+	{
+		value = defaultValue;
+	}
+	return value;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+char SetFromText( char const* valueAsText, char defaultValue )
+{
+	char value;
+	int length = sizeof( valueAsText );
+	if( length > 1 || length == 0 )
+	{
+		value = defaultValue;
+	}
+	else
+	{
+		value = valueAsText[0];
+	}
+	return value;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool SetFromText( char const* valueAsText, bool defaultValue )
+{
+	bool value;
+	if( IsStringEqual( valueAsText, "true" ) )
+	{
+		value = true;
+	}
+	else if( IsStringEqual( valueAsText, "false" ) )
+	{
+		value = false;
+	}
+	else
+	{
+		value = defaultValue;
+	}
+	return value;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string SetFromText( char const* valueAsText, char const* defaultValue )
+{
+	UNUSED( defaultValue );
+	return valueAsText;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string SetFromText( char const* valueAsText, std::string const& defaultValue )
+{
+	UNUSED( defaultValue );
+	return valueAsText;
 }

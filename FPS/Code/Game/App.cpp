@@ -1,7 +1,6 @@
 #include "Game/App.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/Game.hpp"
-#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Core/Time.hpp"
@@ -10,7 +9,7 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/DevConsole.hpp"
-#include "Engine/Core/EventSystem.hpp"
+//#include "Engine/Core/EventSystem.hpp"
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/DebugRender.hpp"
@@ -105,7 +104,7 @@ void App::RestartGame()
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC void App::QuitRequested( NamedStrings* args )
+STATIC void App::QuitRequested( EventArgs* args )
 {
 	UNUSED( args );
 	g_theApp->HandleQuitRequested();
@@ -113,7 +112,7 @@ STATIC void App::QuitRequested( NamedStrings* args )
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC void App::HelpCommand( NamedStrings* args )
+STATIC void App::HelpCommand( EventArgs* args )
 {
 	UNUSED( args );
 	Strings registeredCommands = g_theEventSystem->GetEventNames();

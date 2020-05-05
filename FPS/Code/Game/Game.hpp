@@ -2,6 +2,7 @@
 #include "Game/GameCommon.hpp"
 #include "Game/AnimatedLight.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/EventSystem.hpp"
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
@@ -14,7 +15,7 @@ class XboxController;
 class Shader;
 class GPUMesh;
 class Clock;
-class NamedStrings;
+class NamedProperties;
 
 
 struct fresnel_t
@@ -99,10 +100,10 @@ public:
 
 	//Static
 	static Vec3 ParabolaEquation( float x, float y );
-	static void GainFocus( NamedStrings* args );
-	static void LoseFocus( NamedStrings* args );
-	static void light_set_ambient_color( NamedStrings* args );
-	static void light_set_color( NamedStrings* args );
+	static void GainFocus( EventArgs* args );
+	static void LoseFocus( EventArgs* args );
+	static void light_set_ambient_color( EventArgs* args );
+	static void light_set_color( EventArgs* args );
 
 	bool IsQuitting() const { return m_isQuitting; }
 
@@ -172,6 +173,9 @@ private:
 	Camera*	m_worldCamera = nullptr;
 	Camera* m_UICamera = nullptr;
 	bool	m_isQuitting = false;
+
+	bool m_isGrayscale = false;
+	bool m_isBloom = false;
 
 	bool m_isFogEnabled = true;
 	float m_dissolveAmount = 0.f;

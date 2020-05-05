@@ -1,4 +1,7 @@
 #pragma once
+#include "Engine/Core/EngineCommon.hpp"
+#include <string>
+
 
 struct Vec2;
 
@@ -33,7 +36,8 @@ public:
 	const Vec3	GetNormalize() const;
 
 	//Mutators
-	void		SetFromText(const char* text);
+	void				SetFromText( const char* text );
+	static std::string	ToString( Vec3 const& value );
 
 
 	//Operators

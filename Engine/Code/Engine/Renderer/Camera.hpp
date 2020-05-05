@@ -20,6 +20,8 @@ class	RenderBuffer;
 class	RenderContext;
 struct	Texture;
 struct	Vec4;
+struct	IntVec2;
+
 
 class Camera
 {
@@ -28,20 +30,22 @@ public:
 	~Camera();
 
 	Rgba8				GetClearColor() const;
-	Vec2				GetColorTargetSize() const;
+	Vec2				GetColorTargetSize( uint index ) const;
+	IntVec2				GetColorTargetTexelSize( uint index ) const;
 	Vec2				GetCameraDimensions() const;
 	Vec3				GetOrthoBottomLeft() const;
 	Vec3				GetOrthoTopRight() const;
 	Vec3				GetPosition() const;
 	Mat44				GetProjectionMatrix() const;
-	Texture*			GetColorTarget() const;
+	Texture*			GetColorTarget( uint index ) const;
 	RenderBuffer*		GetUBO() const;
 	RenderContext*		GetRenderContext() const		{ return m_renderer; }
 	Transform			GetTransform() const			{ return m_transform; }
 	Texture*			GetDepthStencilTarget() const	{ return m_depthStencilTarget; }
 	float				GetClearDepth() const			{ return m_clearDepth; }
 	CameraClearFlags	GetClearFlags() const			{ return m_clearMode; }
-	unsigned int		GetClearStencil() const			{ return m_clearStencil; }
+	uint				GetClearStencil() const			{ return m_clearStencil; }
+	uint				GetColorTargetCount() const		{ return static_cast<uint>( m_colorTargets.size() ); }
 
 
 	void	SetPosition( const Vec3& position );
@@ -58,8 +62,9 @@ public:
 	Vec3	NDCToWorldCoords( const Vec4& ndcCoords ) const;
 
 	void SetClearMode( CameraClearFlags clearFlags, Rgba8 color, float depth = 1.0f, unsigned int stencil = 0 );
-	void SetColorTarget( Texture* texture );
 	void Translate2D( const Vec2& translation2D );
+	void SetColorTarget( Texture* texture );
+	void SetColorTarget( uint index, Texture* texture );
 
 	void SetDepthStencilTarget( Texture* texture );
 	void SetPitchYawRollRotationDegrees( float pitch, float yaw, float roll );
@@ -82,7 +87,7 @@ private:
 	Transform m_transform;
 
 	RenderContext* m_renderer = nullptr;
-	Texture* m_colorTarget = nullptr;
+	std::vector<Texture*> m_colorTargets = { nullptr };
 	Texture* m_depthStencilTarget = nullptr;
 
 	RenderBuffer* m_uniformBuffer = nullptr;

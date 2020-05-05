@@ -109,6 +109,8 @@ public:
 	static const Mat44 CreateOrthographicProjection( const Vec3& min, const Vec3& max );
 	static const Mat44 CreatePerspectiveProjection( float fieldOfViewDegrees, float aspectRatio, float nearZ, float farZ );
 
+	static std::string ToString( Mat44 const& value );
+
 // public:
 // 	void operator=( const Mat44& copyFrom );
 

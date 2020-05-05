@@ -3,7 +3,6 @@
 #include "Game/Entity.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
-#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/FileUtils.hpp"
@@ -12,7 +11,7 @@
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/Image.hpp"
-#include "Engine/Core/EventSystem.hpp"
+#include "Engine/Core/NamedProperties.hpp"
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
@@ -227,10 +226,13 @@ void Game::ShutDown()
 void Game::Render() const
 {
 	Texture* backbuffer = g_theRenderer->GetBackBuffer();
-	Texture* output = g_theRenderer->AcquireRenderTargetMatching( backbuffer );
+	Texture* colorOutput = g_theRenderer->AcquireRenderTargetMatching( backbuffer );
+	Texture* bloomOutput = g_theRenderer->AcquireRenderTargetMatching( backbuffer );
 
 	//Render worldCamera
-	m_worldCamera->SetColorTarget( output );	
+	m_worldCamera->SetColorTarget( 0, colorOutput );
+	m_worldCamera->SetColorTarget( 1, bloomOutput );
+
 	g_theRenderer->BeginCamera( *m_worldCamera );
 
 	g_theRenderer->BindSampler( nullptr );
@@ -247,7 +249,8 @@ void Game::Render() const
 // 	g_theRenderer->BindShader( m_litShader );
 // 	Material* material = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/dissolve.material" );
 // 	g_theRenderer->BindMaterial( material );
-	g_theRenderer->BindMaterialByPath( "Data/Shaders/dissolve.material" );
+	g_theRenderer->BindMaterialByPath( "Data/Shaders/Bloom.material" );
+	g_theRenderer->BindTexture( g_theRenderer->CreateOrGetTextureFromFile("Data/Models/scifi_fighter/diffuse.png") );
 	g_theRenderer->SetModelMatrix( m_quadTransform->ToMatrix() );
 	g_theRenderer->DrawMesh( m_objMesh );
 	//RenderWorld();
@@ -256,13 +259,36 @@ void Game::Render() const
 
 	DebugRenderWorldToCamera( m_worldCamera );
 
-	Texture* temp = g_theRenderer->AcquireRenderTargetMatching( output );
-	g_theRenderer->CopyTexture( backbuffer, output );
+	if( m_isGrayscale )
+	{
+		Material* grayscaleMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Grayscale.material" );
+		g_theRenderer->ApplyFullscreenEffect( colorOutput, backbuffer, grayscaleMaterial );
+		g_theRenderer->CopyTexture( colorOutput, backbuffer );
+	}
 
-	g_theRenderer->ReleaseRenderTarget( temp );
-	g_theRenderer->ReleaseRenderTarget( output );
+	if( m_isBloom )
+	{
+		Texture* blurredBloom = g_theRenderer->AcquireRenderTargetMatching( bloomOutput );
+		Material* blurMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Blur.material" );
+		g_theRenderer->ApplyFullscreenEffect( bloomOutput, blurredBloom, blurMaterial );
 
-	//DebugAddScreenText( Vec4( 1.f, 0.f, 0.f, 0.f ), ALIGN_BOTTOM_RIGHT, 20.f, Rgba8::BLUE, Rgba8::BLUE, 0.f, Stringf( "Pool size: %i / %i free", g_theRenderer->GetFreeRenderTargetCount(), g_theRenderer->GetTotalRenderTargetCount() ).c_str() );
+		Material* addEffectMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/AddEffect.material" );
+		addEffectMaterial->AddMaterialTexture( 0, blurredBloom );
+		g_theRenderer->ApplyFullscreenEffect( colorOutput, backbuffer, addEffectMaterial );
+		g_theRenderer->ReleaseRenderTarget( blurredBloom );
+		//g_theRenderer->CopyTexture( backbuffer, blurredBloom );
+	}
+
+	if( !m_isGrayscale && !m_isBloom )
+	{
+		g_theRenderer->CopyTexture( backbuffer, colorOutput );
+	}
+
+	g_theRenderer->ReleaseRenderTarget( colorOutput );
+	g_theRenderer->ReleaseRenderTarget( bloomOutput );
+	DebugAddScreenText( Vec4( 1.f, 0.f, 0.f, 0.f ), ALIGN_BOTTOM_RIGHT, 20.f, Rgba8::BLUE, Rgba8::BLUE, 0.f, 
+						Stringf( "Pool size: %i / %i free", g_theRenderer->GetFreeRenderTargetCount(), g_theRenderer->GetTotalRenderTargetCount() ).c_str() );
+
 	//Render UI
 	g_theRenderer->BeginCamera( *m_UICamera );
 	RenderUI();
@@ -415,10 +441,10 @@ void Game::RenderUI() const
 	strings.push_back( Stringf( "[0,9] - Ambient Intensity: %.2f"			, m_ambientIntensity ) );
 	strings.push_back( Stringf( "[-,+] - Point Light Intensity: %.2f"		, currentLight.intensity ) );
 	strings.push_back( Stringf( "[T]   - Attenuation: (%.2f, %.2f, %.2f)"	, currentLight.attenuation.x, currentLight.attenuation.y, currentLight.attenuation.z ) );
-	strings.push_back( Stringf( "[{,}] - Specular Factor: %.2f"				, m_specularFactor ) );
-	strings.push_back( Stringf( "[;,'] - Specular Power: %.2f"				, m_specularPower ) );
-/*	strings.push_back( Stringf( "[<,>] - Shader Mode: %s"					, m_shaderNames[ m_currentShaderIndex ].c_str() ) );*/
-	strings.push_back( Stringf( "[N,M] - Parallax Depth: %.2f"				, m_parallaxDepth ) );
+// 	strings.push_back( Stringf( "[{,}] - Specular Factor: %.2f"				, m_specularFactor ) );
+// 	strings.push_back( Stringf( "[;,'] - Specular Power: %.2f"				, m_specularPower ) );
+// 	strings.push_back( Stringf( "[<,>] - Shader Mode: %s"					, m_shaderNames[ m_currentShaderIndex ].c_str() ) );
+// 	strings.push_back( Stringf( "[N,M] - Parallax Depth: %.2f"				, m_parallaxDepth ) );
 
 	Vec2 textStartPos = Vec2( paddingFromLeft, m_UICamera->GetCameraDimensions().y - paddingFromTop - textHeight );
 	for( int stringIndex = 0; stringIndex < strings.size(); ++stringIndex )
@@ -661,6 +687,16 @@ void Game::UpdateFromInput( float deltaSeconds )
 	if( g_theInput->WasKeyJustPressed( 'F' ) )
 	{
 		ToggleFog();
+	}
+
+	if( g_theInput->WasKeyJustPressed( 'B' ) )
+	{
+		m_isBloom = !m_isBloom;
+	}
+
+	if( g_theInput->WasKeyJustPressed( 'V' ) )
+	{
+		m_isGrayscale = !m_isGrayscale;
 	}
 
 	if (g_theInput->IsKeyPressed( 'N' ) )
@@ -1021,7 +1057,7 @@ STATIC Vec3 Game::ParabolaEquation( float x, float y )
 }
 
 //---------------------------------------------------------------------------------------------------------
-STATIC void Game::GainFocus( NamedStrings* args )
+STATIC void Game::GainFocus( EventArgs* args )
 {
 	UNUSED( args );
 	g_theInput->SetCursorMode( MOUSE_MODE_RELATIVE );
@@ -1029,7 +1065,7 @@ STATIC void Game::GainFocus( NamedStrings* args )
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC void Game::LoseFocus( NamedStrings* args )
+STATIC void Game::LoseFocus( EventArgs* args )
 {
 	UNUSED( args );
 	g_theInput->SetCursorMode( MOUSE_MODE_ABSOLUTE );
@@ -1037,7 +1073,7 @@ STATIC void Game::LoseFocus( NamedStrings* args )
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC void Game::light_set_ambient_color( NamedStrings* args )
+STATIC void Game::light_set_ambient_color( EventArgs* args )
 {
 	Vec3 defaultAmbientColor = Vec3::UNIT;
 	Vec3 ambientColor = args->GetValue( "color", defaultAmbientColor );
@@ -1048,7 +1084,7 @@ STATIC void Game::light_set_ambient_color( NamedStrings* args )
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC void Game::light_set_color( NamedStrings* args )
+STATIC void Game::light_set_color( EventArgs* args )
 {
 	int defaultLightIndex = 0;
 	Vec3 defaultPointLightColor = Vec3::UNIT;

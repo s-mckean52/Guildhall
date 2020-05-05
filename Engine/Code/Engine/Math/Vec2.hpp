@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+
 
 //-----------------------------------------------------------------------------------------------
 struct Vec2
@@ -15,6 +17,7 @@ public:
 	explicit Vec2( float initialX, float initialY );		// explicit constructor (from x, y)
 
 	//static methods
+	static std::string ToString( Vec2 const& value );
 	static Vec2 MakeFromPolarDegrees( float directionDegrees, float length = 1.f );
 	static Vec2 MakeFromPolarRadians( float directionRadians, float length = 1.f );
 

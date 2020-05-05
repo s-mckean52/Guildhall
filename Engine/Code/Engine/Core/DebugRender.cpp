@@ -1,8 +1,7 @@
-#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/DebugRender.hpp"
 #include "Engine/Core/Timer.hpp"
 #include "Engine/Core/DevConsole.hpp"
-#include "Engine/Core/EventSystem.hpp"
+#include "Engine/Core/NamedProperties.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Vec4.hpp"
@@ -237,7 +236,7 @@ eDebugRenderMode GetDebugRenderModeFromString( std::string renderModeAsString )
 
 
 //---------------------------------------------------------------------------------------------------------
-eDebugRenderMode GetRenderModeFromArgs( NamedStrings* args )
+eDebugRenderMode GetRenderModeFromArgs( EventArgs* args )
 {
 	std::string defaultModeAsString = "depth";
 	std::string modeAsString = args->GetValue( "mode", defaultModeAsString );
@@ -247,7 +246,7 @@ eDebugRenderMode GetRenderModeFromArgs( NamedStrings* args )
 
 
 //---------------------------------------------------------------------------------------------------------
-static void debug_render( NamedStrings* args )
+static void debug_render( EventArgs* args )
 {
 	bool defaultEnabled = true;
 	bool enabled = args->GetValue( "enabled", defaultEnabled );
@@ -262,7 +261,7 @@ static void debug_render( NamedStrings* args )
 
 
 //---------------------------------------------------------------------------------------------------------
-static void debug_add_world_point( NamedStrings* args )
+static void debug_add_world_point( EventArgs* args )
 {
 	Vec3 defaultPosition = Vec3::ZERO;
 	float defaultDurationSeconds = 0.0f;
@@ -281,7 +280,7 @@ static void debug_add_world_point( NamedStrings* args )
 
 
 //---------------------------------------------------------------------------------------------------------
-static void debug_add_world_wire_sphere( NamedStrings* args )
+static void debug_add_world_wire_sphere( EventArgs* args )
 {
 	Vec3 defaultPosition = Vec3::ZERO;
 	float defaultRadius = 1.f;
@@ -302,7 +301,7 @@ static void debug_add_world_wire_sphere( NamedStrings* args )
 
 
 //---------------------------------------------------------------------------------------------------------
-static void debug_add_world_wire_bounds(NamedStrings* args)
+static void debug_add_world_wire_bounds( EventArgs* args )
 {
 	Vec3 defaultMinPosition = Vec3::ZERO;
 	Vec3 defaultMaxPosition = Vec3::UNIT;
@@ -326,7 +325,7 @@ static void debug_add_world_wire_bounds(NamedStrings* args)
 
 
 //---------------------------------------------------------------------------------------------------------
-static void debug_add_world_billboard_text( NamedStrings* args )
+static void debug_add_world_billboard_text( EventArgs* args )
 {
 	Vec3 defaultPosition = Vec3::ZERO;
 	Vec2 defaultPivot = Vec2::ZERO;
@@ -351,7 +350,7 @@ static void debug_add_world_billboard_text( NamedStrings* args )
 
 
 //---------------------------------------------------------------------------------------------------------
-static void debug_add_screen_point( NamedStrings* args )
+static void debug_add_screen_point( EventArgs* args )
 {
 	Vec2 defaultPosition = Vec2::UNIT * 12.5f;
 	float defaultDurationSeconds = 0.0f;
@@ -369,7 +368,7 @@ static void debug_add_screen_point( NamedStrings* args )
 
 
 //---------------------------------------------------------------------------------------------------------
-static void debug_add_screen_quad( NamedStrings* args )
+static void debug_add_screen_quad( EventArgs* args )
 {
 	Vec2 defaultMin = Vec2::ZERO;
 	Vec2 defaultMax = Vec2::UNIT * 50.f;
@@ -390,7 +389,7 @@ static void debug_add_screen_quad( NamedStrings* args )
 
 
 //---------------------------------------------------------------------------------------------------------
-static void debug_add_screen_text( NamedStrings* args )
+static void debug_add_screen_text( EventArgs* args )
 {
 	Vec2 defaultPosition = Vec2::ZERO;
 	Vec2 defaultPivot = Vec2::ZERO;
@@ -506,7 +505,7 @@ void DebugRenderWorldToCamera( Camera* cam )
 	}
 
 	debugCamera->SetTransform( cam->GetTransform() );
-	debugCamera->SetColorTarget( cam->GetColorTarget() );
+	debugCamera->SetColorTarget( cam->GetColorTarget( 0 ) );
 	debugCamera->SetDepthStencilTarget( cam->GetDepthStencilTarget() );
 	debugCamera->SetProjectionMatrix( cam->GetProjectionMatrix() );
 	debugCamera->SetViewMatrix( cam->GetViewMatrix() );

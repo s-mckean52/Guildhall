@@ -757,6 +757,15 @@ const Mat44 Mat44::CreatePerspectiveProjection( float fieldOfViewDegrees, float 
 
 
 //---------------------------------------------------------------------------------------------------------
+std::string Mat44::ToString( Mat44 const& value )
+{
+	return Stringf("%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f",	value.Ix, value.Jx, value.Kx, value.Tx,
+																		value.Iy, value.Jy, value.Ky, value.Ty,
+																		value.Iz, value.Jz, value.Kz, value.Tz,
+																		value.Iw, value.Jw, value.Kw, value.Tw );
+}
+
+//---------------------------------------------------------------------------------------------------------
 // void Mat44::operator=( const Mat44& copyFrom )
 // {
 // 	Ix = copyFrom.Ix;

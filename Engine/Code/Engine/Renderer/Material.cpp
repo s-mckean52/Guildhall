@@ -1,7 +1,6 @@
 #include "Engine/Renderer/Material.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Renderer/RenderBuffer.hpp"
-#include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Math/Vec3.hpp"
 
 // struct Rgba8;
@@ -63,6 +62,18 @@ void Material::AddMaterialTexture( Texture* texture )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Material::AddMaterialTexture( uint index, Texture* texture )
+{
+	uint newMaterialTexturesSize = index + 1;
+	if( newMaterialTexturesSize > m_materialTexturesPerSlot.size() )
+	{
+		m_materialTexturesPerSlot.resize( newMaterialTexturesSize );
+	}
+	m_materialTexturesPerSlot[ index ] = texture;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Material::AddSampler( Sampler* sampler )
 {
 	m_samplersPerSlot.push_back( sampler );
@@ -70,9 +81,21 @@ void Material::AddSampler( Sampler* sampler )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Material::AddSampler( uint index, Sampler* sampler )
+{
+	uint newSamplersSize = index + 1;
+	if( newSamplersSize > m_samplersPerSlot.size() )
+	{
+		m_samplersPerSlot.resize( newSamplersSize );
+	}
+	m_samplersPerSlot[ index ] = sampler;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Material::UpdateUBOIfDirty()
 {
-	if( !m_isUBODirty ) return;
+	if( !m_isUBODirty || m_uboCPUData.size() == 0 ) return;
 
 	m_ubo->Update( &m_uboCPUData[0], m_uboCPUData.size(), m_uboCPUData.size() );
 }
@@ -117,6 +140,15 @@ void Material::SetFromXML( XmlElement const& element )
 
 		nextElement = nextElement->NextSiblingElement();
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Material::SetData( void const* data, size_t dataSize )
+{
+	m_uboCPUData.resize( dataSize );
+	memcpy( &m_uboCPUData[0], data, dataSize );
+	m_isUBODirty = true;
 }
 
 

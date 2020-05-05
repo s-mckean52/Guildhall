@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/XmlUtils.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include <vector>
 #include <string>
 
@@ -25,20 +26,18 @@ public:
 	void SetDiffuseTexture( Texture* texture );
 	void SetNormalTexture( Texture* texture );
 	void AddMaterialTexture( Texture* texture );
+	void AddMaterialTexture( uint index, Texture* texture );
 	void AddSampler( Sampler* sampler );
+	void AddSampler( uint index, Sampler* sampler );
 	void UpdateUBOIfDirty();
 
 	void SetFromXML( XmlElement const& element );
 	
 public:
-	//Templates
-	void SetData( void const* data, size_t dataSize )
-	{
-		m_uboCPUData.resize(dataSize);
-		memcpy(&m_uboCPUData[0], data, dataSize);
-		m_isUBODirty = true;
-	}
+	void SetData( void const* data, size_t dataSize );
 
+
+	//Templates
 	template<typename UBO_STRUCT_TYPE>
 	void SetData( UBO_STRUCT_TYPE const& data );
 

@@ -1,5 +1,7 @@
 #pragma once
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Core/EventSystem.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
 struct Vec3;
 struct Vec2;

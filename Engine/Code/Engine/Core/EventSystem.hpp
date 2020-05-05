@@ -1,5 +1,6 @@
 #pragma once
-#include "Engine/Core/NamedStrings.hpp"
+#include "Engine/Core/EventSubscription.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 #include <string>
 #include <vector>
 
@@ -7,7 +8,6 @@ struct EventSubscription;
 
 typedef unsigned int EntityID;
 typedef std::vector< std::string > Strings;
-typedef void( *EventCallbackFunctionPtrType )( NamedStrings* args );
 
 class EventSystem
 {

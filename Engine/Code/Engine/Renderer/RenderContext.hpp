@@ -34,6 +34,8 @@ struct IDXGIDebug;
 struct ID3D11DepthStencilState;
 struct ID3D11RasterizerState;
 struct ID3D11InputLayout;
+struct ID3D11RenderTargetView;
+
 
 enum class BlendMode
 {
@@ -129,7 +131,7 @@ public:
 	void SetGameClock( Clock* clock );
 	void SetBlendMode( BlendMode blendMode );
 	void SetDepthTest( CompareFunc compareFunc, bool writeDepthOnPass );
-	void ClearScreen( const Rgba8& clearColor, Texture* renderTargetToClear );
+	void ClearRenderTargets( const Rgba8& clearColor, std::vector<ID3D11RenderTargetView*>& renderTargetToClear );
 	void ClearDepth( Texture* depthStencilTexture, float depth );
 	void BeginCamera( Camera& camera );
 	void EndCamera( const Camera& camera );
@@ -192,7 +194,9 @@ public:
 	ShaderState*	GetOrCreateShaderStateFromFile( char const* filepath );
 	Material*		GetOrCreateMaterialFromFile( char const* filepath );
 
-
+	void ApplyFullscreenEffect( Texture* source, Texture* destination, Material* fullscreenMaterial );
+	void BeginFullscreenEffect( Texture* source, Texture* destination, Shader* fullscreenShader );
+	void EndFullscreenEffect();
 
 	//Light Methods
 	void UpdateLightUBO();
@@ -226,6 +230,7 @@ private:
 
 private:
 	Clock* m_gameClock = nullptr;
+	Camera* m_effectCamera = nullptr;
 
 	float m_gamma = 2.f;
 	float m_inverseGamma = 1 / m_gamma;

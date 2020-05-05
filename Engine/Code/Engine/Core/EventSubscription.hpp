@@ -1,6 +1,10 @@
 #pragma once
-#include "Engine/Core/EventSystem.hpp"
 #include <string>
+
+class NamedProperties;
+
+typedef NamedProperties EventArgs;
+typedef void( *EventCallbackFunctionPtrType )( EventArgs* args );
 
 struct EventSubscription
 {

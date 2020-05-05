@@ -22,6 +22,13 @@ Vec2::Vec2( float initialX, float initialY )
 
 
 //---------------------------------------------------------------------------------------------------------
+std::string Vec2::ToString( Vec2 const& value )
+{
+	return Stringf( "%f,%f", value.x, value.y );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 Vec2 Vec2::MakeFromPolarDegrees( float degrees, float r )
 {
 	return Vec2( r * CosDegrees( degrees ), r * SinDegrees( degrees ) );

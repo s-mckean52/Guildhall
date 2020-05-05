@@ -1,8 +1,8 @@
 #pragma once
-#include <string>
-#include "ThirdParty/TinyXML2/tinyxml2.h"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/Rgba8.hpp"
+#include "ThirdParty/TinyXML2/tinyxml2.h"
+#include <string>
 
 typedef tinyxml2::XMLElement	XmlElement;
 typedef tinyxml2::XMLAttribute	XmlAttribute;

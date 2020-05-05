@@ -1,6 +1,7 @@
 #pragma once
+#include "Engine/Core/EventSystem.hpp"
+#include "Engine/Core/EngineCommon.hpp"
 
-class NamedStrings;
 class Camera;
 
 class App
@@ -17,8 +18,8 @@ public:
 	void RunFrame();
 	void RestartGame();
 
-	static void HelpCommand( NamedStrings* args );
-	static void QuitRequested( NamedStrings* args );
+	static void HelpCommand( EventArgs* args );
+	static void QuitRequested( EventArgs* args );
 	bool HandleQuitRequested();
 
 	const bool IsQuitting() const { return m_isQuitting; }

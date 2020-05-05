@@ -1,6 +1,5 @@
 #include "Engine/Core/EventSystem.hpp"
-#include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/EventSubscription.hpp"
+#include "Engine/Core/NamedProperties.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -86,12 +85,15 @@ void EventSystem::FireEvent( std::string eventToFire, std::string eventArguments
 
 		if( currentEventSub->m_eventName == eventToFire )
 		{
-			NamedStrings* args = new NamedStrings;
+			EventArgs* args = new EventArgs;
 			if( eventArguments != "" )
 			{
 				args->PopulateFromString( eventArguments );
 			}
 			currentEventSub->m_callbackFunction( args );
+			
+			delete args;
+			args = nullptr;
 		}
 	}
 }

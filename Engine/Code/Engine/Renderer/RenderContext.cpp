@@ -83,6 +83,9 @@ void RenderContext::StartUp( Window* theWindow )
 
 	m_swapchain = new SwapChain( this, swapchain );
 
+	m_effectCamera = new Camera( this );
+	m_effectCamera->SetClearMode( CLEAR_NONE, Rgba8::BLACK );
+
 	Texture* backBufferTexture = m_swapchain->GetBackBuffer();
 	m_defaultDepthStencil = CreateDepthStencilBuffer( backBufferTexture->GetImageTexelSize() );
 
@@ -126,6 +129,9 @@ void RenderContext::ShutDown()
 {
 	ReleaseLoadedAssets();
 	ReleaseBlendStates();
+
+	delete m_effectCamera;
+	m_effectCamera = nullptr;
 
 	delete m_frameUBO;
 	m_frameUBO = nullptr;
@@ -251,6 +257,36 @@ Material* RenderContext::GetOrCreateMaterialFromFile( char const* filepath )
 
 
 //---------------------------------------------------------------------------------------------------------
+void RenderContext::ApplyFullscreenEffect( Texture* source, Texture* destination, Material* fullscreenMaterial )
+{
+	Shader* fullscreenShader = fullscreenMaterial->m_shaderState->GetShader();
+	BeginFullscreenEffect( source, destination, fullscreenShader );
+	BindMaterial( fullscreenMaterial );
+	EndFullscreenEffect();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::BeginFullscreenEffect( Texture* source, Texture* destination, Shader* fullscreenShader )
+{
+	m_effectCamera->SetColorTarget( destination );
+
+	BeginCamera( *m_effectCamera );
+	BindShader( fullscreenShader );
+	BindTexture( source );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::EndFullscreenEffect()
+{
+	m_context->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+	m_context->Draw( 3, 0 );
+	EndCamera( *m_effectCamera );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void RenderContext::UpdateLightUBO()
 {
 	light_data_t lightData;
@@ -338,7 +374,7 @@ void RenderContext::SetDepthTest( CompareFunc compareFunc, bool writeDepthOnPass
 
 
 //---------------------------------------------------------------------------------------------------------
-void RenderContext::ClearScreen( const Rgba8& clearColor, Texture* renderTargetToClear )
+void RenderContext::ClearRenderTargets( const Rgba8& clearColor, std::vector<ID3D11RenderTargetView*>& renderTargetsToClear )
 {
 	float clearFloats [4];
 	clearFloats[0] = (float)clearColor.r / 255.0f;
@@ -346,10 +382,11 @@ void RenderContext::ClearScreen( const Rgba8& clearColor, Texture* renderTargetT
 	clearFloats[2] = (float)clearColor.b / 255.0f;
 	clearFloats[3] = (float)clearColor.a / 255.0f;
 
-	TextureView* texture_rtv = renderTargetToClear->CreateOrGetRenderTargetView();
-
-	ID3D11RenderTargetView* rtv = texture_rtv->GetAsRTV();
-	m_context->ClearRenderTargetView( rtv, clearFloats );
+	for( uint rtvIndex = 0; rtvIndex < renderTargetsToClear.size(); ++rtvIndex )
+	{
+		ID3D11RenderTargetView* rtvToClear = renderTargetsToClear[ rtvIndex ];
+		m_context->ClearRenderTargetView( rtvToClear, clearFloats );
+	}
 }
 
 
@@ -369,16 +406,28 @@ void RenderContext::BeginCamera( Camera& camera )
 	
 	SetBlendMode( BlendMode::ALPHA );
 	m_currentVertexLayout = nullptr;
+	
+	std::vector<ID3D11RenderTargetView*> rtvs;
+	uint rtvCount = camera.GetColorTargetCount();
+	rtvs.resize( rtvCount );
 
-	Texture* colorTarget = camera.GetColorTarget();
-	if( colorTarget == nullptr )
+	for( uint colorTargetIndex = 0; colorTargetIndex < rtvCount; ++colorTargetIndex )
 	{
-		colorTarget = m_swapchain->GetBackBuffer();
+		rtvs[colorTargetIndex] = nullptr;
+
+		Texture* colorTarget = camera.GetColorTarget( colorTargetIndex );
+		if( colorTargetIndex == 0 && colorTarget == nullptr )
+		{
+			colorTarget = m_swapchain->GetBackBuffer();
+		}
+
+		if( colorTarget != nullptr )
+		{
+			TextureView* view = colorTarget->CreateOrGetRenderTargetView();
+			rtvs[colorTargetIndex] = view->GetAsRTV();
+		}
 	}
 
-	TextureView* view = colorTarget->CreateOrGetRenderTargetView();
-	ID3D11RenderTargetView* rtv = view->GetAsRTV();
-	
 	ID3D11DepthStencilView* dsv = nullptr;
 	Texture* depthStencilTarget = camera.GetDepthStencilTarget();
 	if( depthStencilTarget != nullptr )
@@ -386,9 +435,9 @@ void RenderContext::BeginCamera( Camera& camera )
 		TextureView* depthStencilView = depthStencilTarget->GetOrCreateDepthStencilView();
 		dsv = depthStencilView->GetAsDSV();
 	}
-	m_context->OMSetRenderTargets( 1, &rtv, dsv );
+	m_context->OMSetRenderTargets( rtvCount, rtvs.data(), dsv );
 
-	IntVec2 outputSize = colorTarget->GetImageTexelSize();
+	IntVec2 outputSize = camera.GetColorTargetTexelSize( 0 );
 
 	D3D11_VIEWPORT viewport;
 	viewport.TopLeftX = 0;
@@ -401,8 +450,7 @@ void RenderContext::BeginCamera( Camera& camera )
 
 	if( camera.ShouldClearColor() )
 	{
-		
-		ClearScreen( camera.GetClearColor(), colorTarget );
+		ClearRenderTargets( camera.GetClearColor(), rtvs );
 	}
 
 	if( camera.ShouldClearDepth() && depthStencilTarget != nullptr )

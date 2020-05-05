@@ -1,0 +1,14 @@
+<Material   name="bloom">
+    <ShaderState        filepath="Data/Shaders/Bloom.shaderstate"/>
+    <Tint               value="255,255,255"/>
+    <SpecularFactor     value="1.0"/>
+    <SpecularPower      value="32.0"/>
+    <MaterialSampler    type="linear"/>
+
+    <!--Material Data-->
+    <!--   UNUSED    -->
+    <float  name="amount"           value="0.5"/>
+    <float  name="edgeRange"        value="0.1"/>
+    <Vec3   name="edgeStartColor"   value="1.0,1.0,0.0"/>
+    <Vec3   name="edgeEndColor"     value="1.0,0.0,0.0"/>
+</Material>

@@ -1,7 +1,6 @@
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
-#include "Engine/Core/EngineCommon.hpp"
 #include <math.h>
 
 
@@ -149,11 +148,18 @@ const Vec3 Vec3::GetNormalize() const
 
 
 //---------------------------------------------------------------------------------------------------------
-void Vec3::SetFromText(const char* text)
+std::string Vec3::ToString( Vec3 const& value )
+{
+	return Stringf( "%f,%f,%f", value.x, value.y, value.z );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Vec3::SetFromText( const char* text )
 {
 	Strings splitText = SplitStringOnDelimiter( text, ',' );
 
-	GUARANTEE_OR_DIE( splitText.size() == 3, Stringf( "Invalid Format for Vec2, %i values in string", splitText.size() ) );
+	GUARANTEE_OR_DIE( splitText.size() == 3, Stringf( "Invalid Format for Vec3, %i values in string", splitText.size() ) );
 
 	x = static_cast<float>( atof(splitText[ 0 ].c_str() ) );
 	y = static_cast<float>( atof(splitText[ 1 ].c_str() ) );

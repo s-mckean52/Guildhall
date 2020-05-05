@@ -5,6 +5,7 @@
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Math/MatrixUtils.hpp"
 #include "Engine/Math/Vec4.hpp"
+#include "Engine/Math/IntVec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/Vec3.hpp"
 
@@ -53,15 +54,31 @@ Rgba8 Camera::GetClearColor() const
 
 
 //---------------------------------------------------------------------------------------------------------
-Vec2 Camera::GetColorTargetSize() const
+Vec2 Camera::GetColorTargetSize( uint index ) const
 {
-	if( m_colorTarget != nullptr )
+	Texture* colorTarget = m_colorTargets[index];
+	if( colorTarget != nullptr )
 	{
-		return m_colorTarget->GetSize();
+		return colorTarget->GetSize();
 	}
 	else
 	{
 		return m_renderer->GetBackBuffer()->GetSize();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+IntVec2 Camera::GetColorTargetTexelSize( uint index ) const
+{
+	Texture* colorTarget = m_colorTargets[index];
+	if( colorTarget != nullptr )
+	{
+		return colorTarget->GetImageTexelSize();
+	}
+	else
+	{
+		return m_renderer->GetBackBuffer()->GetImageTexelSize();
 	}
 }
 
@@ -179,9 +196,9 @@ bool Camera::ShouldClearDepth() const
 
 
 //---------------------------------------------------------------------------------------------------------
-Texture* Camera::GetColorTarget() const
+Texture* Camera::GetColorTarget( uint index ) const
 {
-	return m_colorTarget;
+	return m_colorTargets[ index ];
 }
 
 
@@ -205,7 +222,7 @@ void Camera::SetClearMode( CameraClearFlags clearFlags, Rgba8 color, float depth
 //---------------------------------------------------------------------------------------------------------
 float Camera::GetAspectRatio() const
 {
-	Vec2 outSize = GetColorTargetSize();
+	Vec2 outSize = GetColorTargetSize( 0 );
 	return outSize.x / outSize.y;
 }
 
@@ -213,7 +230,19 @@ float Camera::GetAspectRatio() const
 //---------------------------------------------------------------------------------------------------------
 void Camera::SetColorTarget( Texture* texture )
 {
-	m_colorTarget = texture;
+	SetColorTarget( 0, texture );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::SetColorTarget( uint index, Texture* texture )
+{
+	uint newColorTargetsSize = index + 1;
+	if( newColorTargetsSize > m_colorTargets.size() )
+	{
+		m_colorTargets.resize( newColorTargetsSize );
+	}
+	m_colorTargets[ index ] = texture;
 }
 
 
