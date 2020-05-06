@@ -691,6 +691,7 @@ DiscCollider2D* Physics2D::CreateDiscCollider2D( Vec2 localPosition, float radiu
 	newDiscCollider->m_physicsSystem = this;
 	newDiscCollider->m_physicsMaterial = new PhysicsMaterial();
 	newDiscCollider->m_id = static_cast<uint>( m_colliders2D.size() );
+	newDiscCollider->m_userData.SetValue( "name", Stringf( "%s-%i", newDiscCollider->GetColliderTypeAsString().c_str(), newDiscCollider->m_id ) );
 	return (DiscCollider2D*)AddColliderToVector( newDiscCollider );
 }
 
@@ -701,6 +702,7 @@ PolygonCollider2D* Physics2D::CreatePolygonCollider2D( std::vector<Vec2> polygon
 	PolygonCollider2D* newPolygonCollider = new PolygonCollider2D();
 	newPolygonCollider->SetMembers( this, &polygonVerts[ 0 ], static_cast<unsigned int>( polygonVerts.size() ), localPosition );
 	newPolygonCollider->m_id = static_cast<uint>( m_colliders2D.size() );
+	newPolygonCollider->m_userData.SetValue( "name", Stringf( "%s-%i", newPolygonCollider->GetColliderTypeAsString().c_str(), newPolygonCollider->m_id ) );
 	return (PolygonCollider2D*)AddColliderToVector( newPolygonCollider );
 }
 

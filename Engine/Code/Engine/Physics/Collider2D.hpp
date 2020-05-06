@@ -2,7 +2,9 @@
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Core/Delegate.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/NamedProperties.hpp"
 #include <vector>
+#include <string>
 
 enum Collider2DType
 {
@@ -63,6 +65,7 @@ public:
 	uint			GetLayer() const			{ return m_layer; }
 	float			GetMass() const;
 	Vec2			GetVelocity() const;
+	std::string		GetColliderTypeAsString() const;
 
 	void			MarkForDestroy( bool isMarkedForDestroy );
 	void			SetLayer( uint layer );
@@ -79,6 +82,7 @@ protected:
 	virtual ~Collider2D();
 
 public:
+	NamedProperties		m_userData;
 	uint				m_id = 0;
 	uint				m_layer = 0;
 	bool				m_isTrigger = false;

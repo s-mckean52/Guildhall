@@ -104,7 +104,7 @@ void App::RestartGame()
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC void App::QuitRequested( NamedStrings* args )
+STATIC void App::QuitRequested( EventArgs* args )
 {
 	UNUSED( args );
 	g_theApp->HandleQuitRequested();
@@ -112,7 +112,7 @@ STATIC void App::QuitRequested( NamedStrings* args )
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC void App::HelpCommand( NamedStrings* args )
+STATIC void App::HelpCommand( EventArgs* args )
 {
 	UNUSED( args );
 	Strings registeredCommands = g_theEventSystem->GetEventNames();

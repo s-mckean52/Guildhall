@@ -22,6 +22,7 @@
 #include "Engine/Physics/Collider2D.hpp"
 #include "Engine/Physics/DiscCollider2D.hpp"
 #include "Engine/Physics/PolygonCollider2D.hpp"
+#include "Engine/Physics/Collision2D.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/DebugRender.hpp"
@@ -81,16 +82,29 @@ void Game::StartUp()
 	GameObject* groundObject = CreatePolygon( groundPolygon );
 	groundObject->GetCollider()->SetLayer( 10 );
 	m_physics2D->ToggleLayerInteraction( 0, 0 );
-
-// 	groundObject->GetCollider()->m_isTrigger = true;
-// 	groundObject->GetCollider()->OnTriggerEnter.Subscribe( GroundOnOverlapStart );
-// 	groundObject->GetCollider()->OnTriggerLeave.SubscribeMethod( this, &Game::GroundOnTriggerLeave );
-// 	groundObject->GetCollider()->OnTriggerStay.SubscribeMethod( this, &Game::GroundOnTriggerStay );
-
 	groundObject->GetCollider()->OnOverlapEnter.Subscribe( GroundOnOverlapStart );
-	groundObject->GetCollider()->OnOverlapStay.SubscribeMethod( this, &Game::GroundOnTriggerStay );
-	groundObject->GetCollider()->OnOverlapLeave.SubscribeMethod( this, &Game::GroundOnTriggerLeave );
+	groundObject->GetCollider()->OnOverlapStay.SubscribeMethod( this, &Game::GroundOnOverlapStay );
+	groundObject->GetCollider()->OnOverlapLeave.SubscribeMethod( this, &Game::GroundOnOverlapLeave );
 	m_gameObjects.push_back( groundObject );
+
+	Vec2 triggerCubeStartPosition = Vec2( 6.f, -2.f );
+	Vec2 triggerCubeHalfDimensions = Vec2( 2.f, 2.f );
+	std::vector<Vec2> triggerCube = {
+		Vec2( triggerCubeStartPosition.x - triggerCubeHalfDimensions.x, triggerCubeStartPosition.y - triggerCubeHalfDimensions.y ),
+		Vec2( triggerCubeStartPosition.x + triggerCubeHalfDimensions.x, triggerCubeStartPosition.y - triggerCubeHalfDimensions.y ),
+		Vec2( triggerCubeStartPosition.x + triggerCubeHalfDimensions.x, triggerCubeStartPosition.y + triggerCubeHalfDimensions.y ),
+		Vec2( triggerCubeStartPosition.x - triggerCubeHalfDimensions.x, triggerCubeStartPosition.y + triggerCubeHalfDimensions.y )
+	};
+	GameObject* triggerObject = CreatePolygon( triggerCube );
+	triggerObject->GetCollider()->SetLayer( 2 );
+	m_physics2D->ToggleLayerInteraction( 10, 2 );
+	triggerObject->GetCollider()->m_isTrigger = true;
+	triggerObject->GetCollider()->OnTriggerEnter.SubscribeMethod( this, &Game::OnTriggerStart );
+	triggerObject->GetCollider()->OnTriggerLeave.SubscribeMethod( this, &Game::OnTriggerLeave );
+	triggerObject->GetCollider()->OnTriggerStay.SubscribeMethod( this, &Game::OnTriggerStay );
+	triggerObject->m_startFillColor = Rgba8::CYAN;
+	triggerObject->m_currentFillColor = Rgba8::CYAN;
+	m_gameObjects.push_back( triggerObject );
 }
 
 
@@ -174,6 +188,18 @@ void Game::RenderUI() const
 	g_theRenderer->BindTexture( g_testFont->GetTexture() );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 	g_theRenderer->DrawVertexArray( physicsClockStateVerts );
+
+
+	// Draw NonInteracting Layers
+	std::vector<Vertex_PCU> layerVerts;
+	std::string layerAsString = Stringf( "Layers %i and %i do not interact", 2, 10 );
+
+	Vec3 positionToDrawLayer = m_uiCamera->ClientToWorldPosition( Vec2( 0.01f, 0.92f ) );
+
+	g_testFont->AddVertsForText2D(layerVerts, Vec2(positionToDrawLayer.x, positionToDrawLayer.y), 0.1f, layerAsString );
+	g_theRenderer->BindTexture( g_testFont->GetTexture() );
+	g_theRenderer->BindShader( (Shader*)nullptr );
+	g_theRenderer->DrawVertexArray( layerVerts );
 }
 
 
@@ -235,6 +261,7 @@ void Game::UpdateGameStatesFromInput( float deltaSeconds )
 		ModifyFrictionOfDraggedObject( deltaSeconds );
 		ModifyDraggedObjectRotation( deltaSeconds );
 		ModifyDraggedObjectRotationalVelocity( deltaSeconds );
+		ModifyDraggedObjectLayer( deltaSeconds );
 		DeleteDraggedObject( deltaSeconds );
 	}
 
@@ -584,6 +611,37 @@ void Game::ModifyDraggedObjectRotationalVelocity( float deltaSeconds )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Game::ModifyDraggedObjectLayer( float deltaSeconds )
+{
+	UNUSED( deltaSeconds );
+
+	if( m_draggedObject == nullptr ) return;
+
+	Collider2D* draggedObjectCollider = m_draggedObject->GetCollider();
+	int currentLayer = static_cast<int>( draggedObjectCollider->m_layer );
+
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_UP_ARROW ) )
+	{
+		++currentLayer;
+	}
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_DOWN_ARROW ) )
+	{
+		--currentLayer;
+	}
+
+	if( currentLayer >= 32 )
+	{
+		currentLayer = 0;
+	}
+	else if( currentLayer < 0 )
+	{
+		currentLayer = 31;
+	}
+
+	draggedObjectCollider->m_layer = static_cast<uint>( currentLayer );
+}
+
+//---------------------------------------------------------------------------------------------------------
 GameObject* Game::CreateDisc()
 {
 	GameObject* gameObject = new GameObject();
@@ -857,21 +915,78 @@ bool Game::IsNextPointValidOnPolygon( const Vec2& point )
 //---------------------------------------------------------------------------------------------------------
 void GroundOnOverlapStart( Collision2D* collision )
 {
-	g_theConsole->PrintString( Rgba8::RED, "OnCollsionStart - Ground" );
+	Collider2D* thisCollider = collision->thisCollider;
+	Collider2D* otherCollider = collision->otherCollider;
+
+	std::string thisColliderName = thisCollider->m_userData.GetValue( "name", "default" );
+	std::string otherColliderName = otherCollider->m_userData.GetValue( "name", "default" );
+	
+	g_theConsole->PrintString( Rgba8::RED, Stringf( "%s started a collision with %s", otherColliderName.c_str(), thisColliderName.c_str() ) );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::GroundOnTriggerStay( Collision2D* collision )
+void Game::GroundOnOverlapStay( Collision2D* collision )
 {
-	g_theConsole->PrintString( Rgba8::BLUE, "OnCollisionStay - Ground" );
+	Collider2D* thisCollider = collision->thisCollider;
+	Collider2D* otherCollider = collision->otherCollider;
+
+	std::string thisColliderName = thisCollider->m_userData.GetValue("name", "default");
+	std::string otherColliderName = otherCollider->m_userData.GetValue("name", "default");
+
+	g_theConsole->PrintString( Rgba8::BLUE, Stringf( "%s is still colliding with %s", otherColliderName.c_str(), thisColliderName.c_str() ) );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::GroundOnTriggerLeave( Collision2D* collision )
+void Game::GroundOnOverlapLeave( Collision2D* collision )
 {
-	g_theConsole->PrintString( Rgba8::GREEN, "OnCollisionLeave - Ground" );
+	Collider2D* thisCollider = collision->thisCollider;
+	Collider2D* otherCollider = collision->otherCollider;
+
+	std::string thisColliderName = thisCollider->m_userData.GetValue("name", "default");
+	std::string otherColliderName = otherCollider->m_userData.GetValue("name", "default");
+
+	g_theConsole->PrintString( Rgba8::GREEN, Stringf( "%s finished a collision with %s", otherColliderName.c_str(), thisColliderName.c_str() ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::OnTriggerStart(Collision2D* collision)
+{
+	Collider2D* thisCollider = collision->thisCollider;
+	Collider2D* otherCollider = collision->otherCollider;
+
+	std::string thisColliderName = thisCollider->m_userData.GetValue( "name", "default" );
+	std::string otherColliderName = otherCollider->m_userData.GetValue( "name", "default" );
+
+	g_theConsole->PrintString( Rgba8::RED, Stringf( "%s started triggering %s", otherColliderName.c_str(), thisColliderName.c_str() ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::OnTriggerStay(Collision2D* collision)
+{
+	Collider2D* thisCollider = collision->thisCollider;
+	Collider2D* otherCollider = collision->otherCollider;
+
+	std::string thisColliderName = thisCollider->m_userData.GetValue( "name", "default" );
+	std::string otherColliderName = otherCollider->m_userData.GetValue( "name", "default" );
+
+	g_theConsole->PrintString( Rgba8::BLUE, Stringf( "%s is still triggering %s", otherColliderName.c_str(), thisColliderName.c_str() ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::OnTriggerLeave(Collision2D* collision)
+{
+	Collider2D* thisCollider = collision->thisCollider;
+	Collider2D* otherCollider = collision->otherCollider;
+
+	std::string thisColliderName = thisCollider->m_userData.GetValue( "name", "default" );
+	std::string otherColliderName = otherCollider->m_userData.GetValue( "name", "default" );
+
+	g_theConsole->PrintString( Rgba8::GREEN, Stringf( "%s is no longer triggering %s", otherColliderName.c_str(), thisColliderName.c_str() ) );
 }
 
 
@@ -950,7 +1065,7 @@ void Game::AddGameObject( GameObject* gameObject )
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC void Game::SetPhysicsUpdate( NamedStrings* args )
+STATIC void Game::SetPhysicsUpdate( EventArgs* args )
 {
 	double defaultHz = 120;
 	double hz = args->GetValue( "hz", defaultHz );

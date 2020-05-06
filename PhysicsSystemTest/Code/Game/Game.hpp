@@ -12,8 +12,9 @@ class XboxController;
 class Physics2D;
 class GameObject;
 class Clock;
-class NamedStrings;
 struct Collision2D;
+class NamedProperties;
+typedef NamedProperties EventArgs;
 
 class Game
 {
@@ -55,6 +56,7 @@ public:
 	void UpdatePhysicsInput();
 	void ModifyDraggedObjectRotation( float deltaSeconds );
 	void ModifyDraggedObjectRotationalVelocity( float deltaSeconds );
+	void ModifyDraggedObjectLayer( float deltaSeconds );
 	//---------------------------------------------------------------------------------------------------------
 	
 	bool IsQuitting() const { return m_isQuitting; }
@@ -74,8 +76,11 @@ public:
 	void SetDraggedObject();
 	void DestroyGameObjects();
 	bool IsNextPointValidOnPolygon( const Vec2& point );
-	void GroundOnTriggerStay( Collision2D* collision );
-	void GroundOnTriggerLeave( Collision2D* collision );
+	void GroundOnOverlapStay( Collision2D* collision );
+	void GroundOnOverlapLeave( Collision2D* collision );
+	void OnTriggerStart( Collision2D* collision );
+	void OnTriggerStay( Collision2D* collision );
+	void OnTriggerLeave( Collision2D* collision );
 
 	void CreatePolygonFromInput();
 	void DrawNewPolygonPoints() const;
@@ -84,7 +89,7 @@ public:
 	Physics2D* GetPhysicsSystem() { return m_physics2D; }
 
 	//---------------------------------------------------------------------------------------------------------
-	static void SetPhysicsUpdate( NamedStrings* args );
+	static void SetPhysicsUpdate( EventArgs* args );
 
 private:
 	Clock* m_gameClock = nullptr;

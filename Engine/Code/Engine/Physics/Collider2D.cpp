@@ -417,6 +417,19 @@ Vec2 Collider2D::GetVelocity() const
 
 
 //---------------------------------------------------------------------------------------------------------
+std::string Collider2D::GetColliderTypeAsString() const
+{
+	switch (m_type)
+	{
+	case COLLIDER_TYPE_DISC2D:		return "Disc2D";	break;
+	case COLLIDER_TYPE_POLYGON2D:	return "Polygon2D"; break;
+	default:
+		return "Bad Collider Type";
+		break;
+	}
+}
+
+//---------------------------------------------------------------------------------------------------------
 void Collider2D::MarkForDestroy( bool isMarkedForDestroy )
 {
 	m_isMarkedForDestroy = isMarkedForDestroy;

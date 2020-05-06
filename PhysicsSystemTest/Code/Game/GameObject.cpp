@@ -126,6 +126,7 @@ void GameObject::DrawTooltip( Vec2 const& mousePos ) const
 	std::string momentString			= Stringf( "Moment of Inertia: %f", m_rigidbody->GetMoment() );
 	std::string rotationDegreesString	= Stringf( "Rotation Degrees: %f", m_rigidbody->GetRotationDegrees() );
 	std::string angularVelocityString	= Stringf( "Angular Velocity: %f", m_rigidbody->GetAngularVelocity() );
+	std::string layerString				= Stringf( "Layer: %i", m_rigidbody->m_collider->m_layer );
 
 	AABB2 tooltipBox;
 	std::vector<Vertex_PCU> tooltipBoxVerts;
@@ -155,6 +156,7 @@ void GameObject::DrawTooltip( Vec2 const& mousePos ) const
 	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 0.1f, momentString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.7f ) );
 	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 0.1f, rotationDegreesString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.8f ) );
 	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 0.1f, angularVelocityString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 0.9f ) );
+	g_testFont->AddVertsForTextInBox2D( tooltipVerts, tooltipBox, 0.1f, layerString, Rgba8::GREEN, 1.f, ALIGN_TOP_LEFT - Vec2( 0.f, 1.0f ) );
 
 	g_theRenderer->BindTexture( g_testFont->GetTexture() );
 	g_theRenderer->BindShader( (Shader*)nullptr );

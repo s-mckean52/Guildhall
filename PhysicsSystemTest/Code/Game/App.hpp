@@ -1,7 +1,8 @@
 #pragma once
 
-class NamedStrings;
 class Camera;
+class NamedProperties;
+typedef NamedProperties EventArgs;
 
 class App
 {
@@ -17,8 +18,8 @@ public:
 	void RunFrame();
 	void RestartGame();
 
-	static void HelpCommand( NamedStrings* args );
-	static void QuitRequested( NamedStrings* args );
+	static void HelpCommand( EventArgs* args );
+	static void QuitRequested( EventArgs* args );
 	bool HandleQuitRequested();
 
 	void OpenDevConsole();
