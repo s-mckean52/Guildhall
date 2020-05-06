@@ -69,22 +69,28 @@ VertexToFragment_t VertexFunction(vs_input_t input)
 // target.
 float4 FragmentFunction(VertexToFragment_t input) : SV_Target0 // semeantic of what I'm returning
 {
-	const float blur_size = 0.004f;
-	const int iterations = 10;
-	const float step_size = blur_size / iterations;
+	const int iterations = 5;
+	const int iteration_start = -( iterations / 2 );
+
+	float2 texture_dimensions;
+	tDiffuse.GetDimensions( texture_dimensions.x, texture_dimensions.y );
+	float2 pixel_distance = float2( 1.f, 1.f ) / texture_dimensions;
+	
+	float2 blur_size = float2( 10.f, 10.f );
+	float2 step_size = ( blur_size * pixel_distance ) / iterations;
 
 	float4 color = float4( 0.f.xxxx );
 	for( int u = 0; u < iterations; ++u )
 	{
-		float u_value = input.uv.x + ( ( step_size * u ) - ( blur_size * 0.5f ) );
+		float u_value = input.uv.x + ( step_size.x * ( iteration_start + u ) );
 		for( int v = 0; v < iterations; ++v )
 		{
-			float v_value = input.uv.y + ( ( step_size * v ) - ( blur_size * 0.5f ) );
+			float v_value = input.uv.y + ( step_size.y * ( iteration_start + v ) );
 			float2 uv = float2( u_value , v_value );
 			color += tDiffuse.Sample( sSampler, uv );
 		}
 	}
 
-	float4 final_color = color / iterations;
+	float4 final_color = color / ( iterations * iterations );
 	return final_color;
 }

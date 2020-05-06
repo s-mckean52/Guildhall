@@ -52,6 +52,20 @@ std::string Vec4::ToString( Vec4 const& value )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Vec4::SetFromText( const char* text )
+{
+	Strings splitText = SplitStringOnDelimiter( text, ',' );
+
+	GUARANTEE_OR_DIE( splitText.size() == 4, Stringf( "Invalid Format for Vec4, %i values in string", splitText.size() ) );
+
+	x = static_cast<float>( atof( splitText[ 0 ].c_str() ) );
+	y = static_cast<float>( atof( splitText[ 1 ].c_str() ) );
+	z = static_cast<float>( atof( splitText[ 2 ].c_str() ) );
+	w = static_cast<float>( atof( splitText[ 3 ].c_str() ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 bool Vec4::operator==( const Vec4& toCompare ) const
 {
 	if( x == toCompare.x && y == toCompare.y && z == toCompare.z && w == toCompare.w )

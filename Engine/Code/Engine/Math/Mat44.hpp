@@ -27,7 +27,8 @@ public:
 	float Tz = 0.f;
 	float Tw = 1.f;
 
-	const static Mat44 IDENTITY;
+	static const Mat44 IDENTITY;
+	static const Mat44 GrayScaleTransform;
 
 public:
 	//Constructors
@@ -102,6 +103,9 @@ public:
 	static const Mat44 CreateTranslationXYZ( const Vec3& translationXYZ );
 	static const Mat44 CreateUniformScaleXYZ( float uniformScaleXYZ );
 	static const Mat44 CreateNonUniformScaleXYZ( const Vec3& scalesXYZ );
+
+	static const Mat44 CreateToneMapTint( Rgba8 const& color );
+	static const Mat44 LerpComponents( Mat44 const& beginValues, Mat44 const& EndValues, float fractionOfValues );
 
 	static const Mat44 LookAt( const Vec3& positionToLookFrom, const Vec3& positionToLookAt, const Vec3& worldUp = Vec3::UP );
 

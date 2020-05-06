@@ -51,6 +51,12 @@ struct parallax_t
 };
 
 
+struct color_transform_t
+{
+	Mat44 colorTransform;
+};
+
+
 class Game
 {
 public:
@@ -96,9 +102,11 @@ public:
 	void CycleAttenuationMode();
 	void ChangeShader( int direction );
 	void AddShader( std::string shaderName, Shader* shader );
-
+	color_transform_t CreateColorTransform( float strength, Rgba8 const& fadeColor, float fadeStrength, Mat44 colorTransform ) const;
 
 	//Static
+	void TestMessageMethod( EventArgs* args );
+	void TestMessageMethod1( EventArgs* args );
 	static Vec3 ParabolaEquation( float x, float y );
 	static void GainFocus( EventArgs* args );
 	static void LoseFocus( EventArgs* args );
@@ -182,3 +190,6 @@ private:
 	float m_projectionIntensity = 0.1f;
 	float m_parallaxDepth = 0.01f;
 };
+
+void TestMessage( EventArgs* args );
+

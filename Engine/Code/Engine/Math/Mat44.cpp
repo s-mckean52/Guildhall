@@ -373,6 +373,35 @@ void Mat44::SetBasisVectors4D( const Vec4& iBasis4D, const Vec4& jBasis4D, const
 
 
 //---------------------------------------------------------------------------------------------------------
+STATIC const Mat44 Mat44::LerpComponents( Mat44 const& beginValues, Mat44 const& EndValues, float fractionOfValues )
+{
+	Mat44 toReturn;
+
+	toReturn.Ix = Lerp( beginValues.Ix, EndValues.Ix, fractionOfValues );
+	toReturn.Iy = Lerp( beginValues.Iy, EndValues.Iy, fractionOfValues );
+	toReturn.Iz = Lerp( beginValues.Iz, EndValues.Iz, fractionOfValues );
+	toReturn.Iw = Lerp( beginValues.Iw, EndValues.Iw, fractionOfValues );
+
+	toReturn.Jx = Lerp( beginValues.Jx, EndValues.Jx, fractionOfValues );
+	toReturn.Jy = Lerp( beginValues.Jy, EndValues.Jy, fractionOfValues );
+	toReturn.Jz = Lerp( beginValues.Jz, EndValues.Jz, fractionOfValues );
+	toReturn.Jw = Lerp( beginValues.Jw, EndValues.Jw, fractionOfValues );
+	
+	toReturn.Kx = Lerp( beginValues.Kx, EndValues.Kx, fractionOfValues );
+	toReturn.Ky = Lerp( beginValues.Ky, EndValues.Ky, fractionOfValues );
+	toReturn.Kz = Lerp( beginValues.Kz, EndValues.Kz, fractionOfValues );
+	toReturn.Kw = Lerp( beginValues.Kw, EndValues.Kw, fractionOfValues ); 
+	
+	toReturn.Tx = Lerp( beginValues.Tx, EndValues.Tx, fractionOfValues );
+	toReturn.Ty = Lerp( beginValues.Ty, EndValues.Ty, fractionOfValues );
+	toReturn.Tz = Lerp( beginValues.Tz, EndValues.Tz, fractionOfValues );
+	toReturn.Tw = Lerp( beginValues.Tw, EndValues.Tw, fractionOfValues );
+
+	return toReturn;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Mat44::RotateXDegrees( float degreesAboutX )
 {
 	float cosTheta = CosDegrees( degreesAboutX );
@@ -685,6 +714,22 @@ const Mat44 Mat44::CreateNonUniformScaleXYZ( const Vec3& scalesXYZ )
 
 
 //---------------------------------------------------------------------------------------------------------
+STATIC const Mat44 Mat44::CreateToneMapTint( Rgba8 const& color )
+{
+	Vec4 colorAsFractions = color.GetValuesAsFractions();
+
+	Mat44 toReturn = Mat44::IDENTITY;
+
+	toReturn.Ix = colorAsFractions.x;
+	toReturn.Jy = colorAsFractions.y;
+	toReturn.Kz = colorAsFractions.z;
+	toReturn.Tw = colorAsFractions.w;
+
+	return toReturn;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 STATIC const Mat44 Mat44::LookAt( const Vec3& positionToLookFrom, const Vec3& positionToLookAt, const Vec3& worldUp )
 {
 	Vec3 forwardNormal = positionToLookFrom - positionToLookAt;
@@ -765,26 +810,10 @@ std::string Mat44::ToString( Mat44 const& value )
 																		value.Iw, value.Jw, value.Kw, value.Tw );
 }
 
+
 //---------------------------------------------------------------------------------------------------------
-// void Mat44::operator=( const Mat44& copyFrom )
-// {
-// 	Ix = copyFrom.Ix;
-// 	Iy = copyFrom.Iy;
-// 	Iz = copyFrom.Iz;
-// 	Iw = copyFrom.Iw;
-// 
-// 	Jx = copyFrom.Jx;
-// 	Jy = copyFrom.Jy;
-// 	Jz = copyFrom.Jz;
-// 	Jw = copyFrom.Jw;
-// 	
-// 	Kx = copyFrom.Kx;
-// 	Ky = copyFrom.Ky;
-// 	Kz = copyFrom.Kz;
-// 	Kw = copyFrom.Kw;
-// 
-// 	Tx = copyFrom.Tx;
-// 	Ty = copyFrom.Ty;
-// 	Tz = copyFrom.Tz;
-// 	Tw = copyFrom.Tw;
-// }
+static float grayscaleMat[] = { 0.299f, 0.587f, 0.114f, 0.f,
+		 	  				    0.299f, 0.587f, 0.114f, 0.f,
+			  				    0.299f, 0.587f, 0.114f, 0.f,
+			  				    0.f,    0.f,    0.f,    1.f };
+STATIC const Mat44 Mat44::GrayScaleTransform = Mat44( grayscaleMat );

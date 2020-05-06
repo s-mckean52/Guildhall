@@ -20,7 +20,8 @@ public:
 	Vec4( const Vec2& toCopyFirst, const Vec2& toCopySecond );
 	explicit Vec4( float initialX, float initialY, float initialZ, float initialW );
 
-	static std::string ToString( Vec4 const& value );
+	static std::string	ToString( Vec4 const& value );
+	void				SetFromText( const char* text );
 
 	bool		operator==( const Vec4& toCompare ) const;
 	bool		operator!=( const Vec4& toCompare ) const;

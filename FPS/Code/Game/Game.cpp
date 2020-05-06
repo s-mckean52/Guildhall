@@ -54,12 +54,12 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
-	Material* dissolve = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/dissolve.material" );
-	dissolve_t* dissolveData = dissolve->GetDataAs<dissolve_t>();
-	dissolveData->amount = 0.3f;
-	dissolveData->edgeRange = 0.1f;
-	dissolveData->edgeEndColor = Vec3(1.f, 0.f, 0.f);
-	dissolveData->edgeStartColor = Vec3(1.f, 1.f, 0.f);
+// 	Material* dissolve = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/dissolve.material" );
+// 	dissolve_t* dissolveData = dissolve->GetDataAs<dissolve_t>();
+// 	dissolveData->amount = 0.3f;
+// 	dissolveData->edgeRange = 0.1f;
+// 	dissolveData->edgeEndColor = Vec3(1.f, 0.f, 0.f);
+// 	dissolveData->edgeStartColor = Vec3(1.f, 1.f, 0.f);
 
 	mesh_import_options_t scifi_fighter_options;
 	scifi_fighter_options.generateNormals = false;
@@ -172,6 +172,20 @@ void Game::StartUp()
 	AddShader( "Vertex Tangents", m_tangentsShader );
 	AddShader( "Vertex Bitangents", m_bitangentsShader );
 	AddShader( "Surface Normals", m_surfaceNormalsShader );
+
+	g_theEventSystem->SubscribeEventCallbackFunction( "TestMessage", TestMessage );
+	g_theEventSystem->SubscribeEventCallbackFunction( "TestMessage", TestMessage );
+	g_theEventSystem->SubscribeEventCallbackMethod( "TestMessage", this, &Game::TestMessageMethod );
+	g_theEventSystem->SubscribeEventCallbackMethod( "TestMessage", this, &Game::TestMessageMethod );
+	g_theEventSystem->SubscribeEventCallbackMethod( "TestMessage", this, &Game::TestMessageMethod );
+	g_theEventSystem->SubscribeEventCallbackMethod( "TestMessage", this, &Game::TestMessageMethod1 );
+	g_theEventSystem->FireEvent( "TestMessage", "color=1,0,0,1" );
+	g_theEventSystem->UnsubscribeEventCallbackFunction( "TestMessage", TestMessage );
+	g_theEventSystem->UnsubscribeEventCallbackMethod( "TestMessage", this, &Game::TestMessageMethod );
+	g_theEventSystem->FireEvent( "TestMessage", "color=0,1,0,1" );
+	g_theEventSystem->UnsubscribeObjectFromEvents( this );
+	g_theEventSystem->FireEvent( "TestMessage", "color=0,1,1,1" );
+
 }
 
 
@@ -247,8 +261,7 @@ void Game::Render() const
 // 	g_theRenderer->BindNormalTexture( g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/SF_Fighter/SF_Fighter-Normal.png" ) );
 // 	g_theRenderer->BindSampler( g_theRenderer->m_samplerLinear );
 // 	g_theRenderer->BindShader( m_litShader );
-// 	Material* material = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/dissolve.material" );
-// 	g_theRenderer->BindMaterial( material );
+/*	Material* material = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/dissolve.material" );*/
 	g_theRenderer->BindMaterialByPath( "Data/Shaders/Bloom.material" );
 	g_theRenderer->BindTexture( g_theRenderer->CreateOrGetTextureFromFile("Data/Models/scifi_fighter/diffuse.png") );
 	g_theRenderer->SetModelMatrix( m_quadTransform->ToMatrix() );
@@ -262,6 +275,9 @@ void Game::Render() const
 	if( m_isGrayscale )
 	{
 		Material* grayscaleMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Grayscale.material" );
+		color_transform_t colorTransformData = CreateColorTransform( 1.f, Rgba8::WHITE, 1.0f, Mat44::GrayScaleTransform );
+		grayscaleMaterial->SetData( colorTransformData );
+
 		g_theRenderer->ApplyFullscreenEffect( colorOutput, backbuffer, grayscaleMaterial );
 		g_theRenderer->CopyTexture( colorOutput, backbuffer );
 	}
@@ -445,6 +461,8 @@ void Game::RenderUI() const
 // 	strings.push_back( Stringf( "[;,'] - Specular Power: %.2f"				, m_specularPower ) );
 // 	strings.push_back( Stringf( "[<,>] - Shader Mode: %s"					, m_shaderNames[ m_currentShaderIndex ].c_str() ) );
 // 	strings.push_back( Stringf( "[N,M] - Parallax Depth: %.2f"				, m_parallaxDepth ) );
+	strings.push_back( Stringf( "[V]   - Grayscale: %s"						, ( m_isGrayscale ? "On" : "Off" ) ) );
+	strings.push_back( Stringf( "[B]   - Bloom - Blur: %s"					, ( m_isBloom ? "On" : "Off" ) ) );
 
 	Vec2 textStartPos = Vec2( paddingFromLeft, m_UICamera->GetCameraDimensions().y - paddingFromTop - textHeight );
 	for( int stringIndex = 0; stringIndex < strings.size(); ++stringIndex )
@@ -1048,6 +1066,39 @@ void Game::AddShader( std::string shaderName, Shader* shader )
 
 
 //---------------------------------------------------------------------------------------------------------
+color_transform_t Game::CreateColorTransform( float strength, Rgba8 const& fadeColor, float fadeStrength, Mat44 colorTransform ) const
+{
+	Mat44 fadeMatrix = Mat44::CreateToneMapTint( fadeColor );
+	Mat44 finalTint = Mat44::LerpComponents( Mat44::IDENTITY, fadeMatrix, fadeStrength );
+	finalTint.TransformBy( colorTransform );
+	
+	color_transform_t data;
+	data.colorTransform = Mat44::LerpComponents( Mat44::IDENTITY, finalTint, strength );
+	return data;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::TestMessageMethod( EventArgs* args )
+{
+	Vec4 colorAsFraction = args->GetValue( "color", Vec4( 1.f, 1.f, 1.f, 1.f ) );
+	Rgba8 textColor = Rgba8::MakeFromVec4( colorAsFraction );
+
+	g_theConsole->PrintString( textColor, "Game::TestMessage" );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::TestMessageMethod1( EventArgs* args )
+{
+	Vec4 colorAsFraction = args->GetValue("color", Vec4(1.f, 1.f, 1.f, 1.f));
+	Rgba8 textColor = Rgba8::MakeFromVec4(colorAsFraction);
+
+	g_theConsole->PrintString(textColor, "Game::TestMessage1");
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 STATIC Vec3 Game::ParabolaEquation( float x, float y )
 {
 	UNUSED( y );
@@ -1095,4 +1146,14 @@ STATIC void Game::light_set_color( EventArgs* args )
 	Clamp( lightIndex, 0, MAX_LIGHTS - 1 );
 
 	g_theGame->m_animatedLights[lightIndex].light.color = pointLightColor;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void TestMessage( EventArgs* args )
+{
+	Vec4 colorAsFraction = args->GetValue( "color", Vec4( 1.f, 1.f, 1.f, 1.f ) );
+	Rgba8 textColor = Rgba8::MakeFromVec4( colorAsFraction );
+
+	g_theConsole->PrintString( textColor, "Test Message" );
 }

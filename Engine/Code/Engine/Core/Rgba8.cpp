@@ -46,6 +46,13 @@ STATIC Rgba8 Rgba8::MakeFromFloats( float red, float green, float blue, float al
 
 
 //---------------------------------------------------------------------------------------------------------
+STATIC Rgba8 Rgba8::MakeFromVec4( Vec4 const& colorAsFractions )
+{
+	return MakeFromFloats( colorAsFractions.x, colorAsFractions.y, colorAsFractions.z, colorAsFractions.w );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 Vec4 Rgba8::GetValuesAsFractions() const
 {
 	Vec4 colorAsFloats;

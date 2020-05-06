@@ -27,6 +27,8 @@ public:
 	void SubscribeMethod( OBJ_TYPE* obj, void( OBJ_TYPE::*methodCallback )( ARGS... ) );
 	template<typename OBJ_TYPE>
 	void UnsubscribeMethod( OBJ_TYPE* obj, void( OBJ_TYPE::*methodCallback )( ARGS... ) );
+	template<typename OBJ_TYPE>
+	void UnsubscribeObject( OBJ_TYPE* obj );
 
 	void Invoke( ARGS const& ...args );
 
@@ -40,6 +42,22 @@ public:
 	void operator() ( ARGS const& ...args ) { Invoke( args... ); }
 };
 
+
+//---------------------------------------------------------------------------------------------------------
+template<typename ...ARGS>
+template<typename OBJ_TYPE>
+void Delegate<ARGS...>::UnsubscribeObject( OBJ_TYPE* obj )
+{
+	for( int subIndex = 0; subIndex < m_subscribers.size(); )
+	{
+		if( m_subscribers[subIndex].objectID == obj )
+		{
+			m_subscribers.erase( m_subscribers.begin() + subIndex );
+			continue;
+		}
+		++subIndex;
+	}
+}
 
 template<typename ...ARGS>
 template<typename OBJ_TYPE>

@@ -1,3 +1,8 @@
+cbuffer time_constants : register(b5)
+{
+	float4x4 COLOR_TRANSFORM;
+};
+
 // input to the vertex shader - for now, a special input that is the index of the vertex we're drawing
 struct vs_input_t
 {
@@ -69,24 +74,7 @@ VertexToFragment_t VertexFunction(vs_input_t input)
 // target.
 float4 FragmentFunction(VertexToFragment_t input) : SV_Target0 // semeantic of what I'm returning
 {
-	const float3 tint		= float3( 1.f, 1.f, 1.f );
-	const float tint_power	= 1.0f;
-	const float strength	= 1.0f;
-	float4 gray_scale = float4( 0.3f, 0.59f, 0.11f, 0.f );
-	float4x4 color_transform = float4x4( gray_scale,
-										 gray_scale,
-										 gray_scale,
-										 float4( 0.f, 0.f, 0.f, 1.f ) );
-
    float4 start_color = tDiffuse.Sample(sSampler, input.uv);
-
-   float4 grayscale_color = float4( start_color.xyz, start_color.w );
-   grayscale_color = mul( color_transform, grayscale_color );
-
-   float3 end_color = grayscale_color.xyz * tint;
-   float3 final_color = lerp( start_color.xyz, end_color, tint_power );
-   final_color = lerp( start_color.xyz, final_color, strength );
-
-   float4 return_color = float4( final_color, 1.f );
-   return return_color;
+   float4 grayscale_color = mul( COLOR_TRANSFORM, start_color );
+   return float4( grayscale_color.xyz, 1.f );
 }

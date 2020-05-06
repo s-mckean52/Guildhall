@@ -20,6 +20,8 @@ public:
 	Vec4 GetValuesAsFractions() const;
 	void SetFromText( const char* text );
 	static Rgba8 MakeFromFloats( float red, float green, float blue, float alpha = 1.f );
+	static Rgba8 MakeFromVec4( Vec4 const& colorAsFractions );
+
 
 // 	const Rgba8 operator-( const Rgba8& colorToSubtract ) const;
 // 	const Rgba8 operator+( const Rgba8& colorToAdd ) const;
