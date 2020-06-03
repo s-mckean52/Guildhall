@@ -1,4 +1,4 @@
-cbuffer time_constants : register(b5)
+cbuffer material_constants : register(b5)
 {
 	float4x4 COLOR_TRANSFORM;
 };

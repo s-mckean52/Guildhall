@@ -15,12 +15,6 @@ Camera::~Camera()
 {
 	delete m_uniformBuffer;
 	m_uniformBuffer = nullptr;
-
-// 	delete m_colorTarget;
-// 	m_colorTarget = nullptr;
-// 
-// 	delete m_depthStencilTarget;
-// 	m_depthStencilTarget = nullptr;
 }
 
 
@@ -120,6 +114,34 @@ Vec3 Camera::GetOrthoTopRight() const
 Vec3 Camera::GetPosition() const
 {
 	return m_transform.GetPosition();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float Camera::GetPitchDegrees() const
+{
+	return m_transform.GetRotationPitchYawRollDegrees().x;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float Camera::GetYawDegrees() const
+{
+	return m_transform.GetRotationPitchYawRollDegrees().y;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float Camera::GetRollDegrees() const
+{
+	return m_transform.GetRotationPitchYawRollDegrees().z;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec3 Camera::GetScale() const
+{
+	return m_transform.GetScale();
 }
 
 
@@ -262,8 +284,6 @@ void Camera::SetDepthStencilTarget( Texture* texture )
 //---------------------------------------------------------------------------------------------------------
 void Camera::SetPitchYawRollRotationDegrees( float pitch, float yaw, float roll )
 {
-	Clamp( pitch, -95.f, 85.f );
-
 	m_transform.SetRotationFromPitchYawRollDegrees( pitch, yaw, roll );
 }
 
@@ -318,8 +338,6 @@ void Camera::UpdateCameraUBO()
 	cameraData.projection = m_projection;
 	cameraData.model = m_transform.ToMatrix();
 	cameraData.position = GetPosition();
-	
-	UpdateViewMatrix();
 	cameraData.view = m_view;
 
 	m_uniformBuffer->Update( &cameraData, sizeof( cameraData ), sizeof( cameraData ) );

@@ -495,7 +495,7 @@ void AddBoxToIndexedVertexArray( std::vector<Vertex_Master>& verts, std::vector<
 	Vec3 frontTopLeft = Vec3( box.mins.x, box.maxes.y, box.mins.z );
 	Vec3 frontTopRight = Vec3( box.maxes.x, box.maxes.y, box.mins.z );
 
-	//looking At Back
+	//Looking At Back
 	Vec3 backBottomLeft = Vec3( box.maxes.x, box.mins.y, box.maxes.z );
 	Vec3 backBottomRight = Vec3( box.mins.x, box.mins.y, box.maxes.z );
 	Vec3 backTopLeft = Vec3( box.maxes.x, box.maxes.y, box.maxes.z );
@@ -544,7 +544,7 @@ void AddBoxToIndexedVertexArray( std::vector<Vertex_Master>& verts, std::vector<
 	};
 
 	std::vector<unsigned int> boxIndicies = {
-		//front
+		//Front
 		0, 1, 3,
 		0, 3, 2,
 
@@ -592,7 +592,7 @@ void AddBoxToIndexedVertexArray( std::vector<Vertex_PCU>& verts, std::vector<uns
 
 
 //---------------------------------------------------------------------------------------------------------
-void AddBoxToIndexedVertexArray(std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indices, AABB3 const& box, Rgba8 const& color)
+void AddBoxToIndexedVertexArray( std::vector<Vertex_PCUTBN>& verts, std::vector<unsigned int>& indices, AABB3 const& box, Rgba8 const& color )
 {
 	std::vector<Vertex_Master> masterVerts;
 	AddBoxToIndexedVertexArray( masterVerts, indices, box, color );

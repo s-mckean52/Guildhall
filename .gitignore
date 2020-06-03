@@ -3,6 +3,7 @@
 *.lo
 *.o
 # *.obj
+*.mp4
 
 # Precompiled Headers
 *.gch

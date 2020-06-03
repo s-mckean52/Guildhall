@@ -35,7 +35,13 @@ public:
 	Vec2				GetCameraDimensions() const;
 	Vec3				GetOrthoBottomLeft() const;
 	Vec3				GetOrthoTopRight() const;
+	
 	Vec3				GetPosition() const;
+	float				GetPitchDegrees() const;
+	float				GetYawDegrees() const;
+	float				GetRollDegrees() const;
+	Vec3				GetScale() const;
+
 	Mat44				GetProjectionMatrix() const;
 	Texture*			GetColorTarget( uint index ) const;
 	RenderBuffer*		GetUBO() const;

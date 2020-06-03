@@ -4,11 +4,13 @@
 #define UNUSED(x) (void)(x);
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
-#include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/NamedStrings.hpp"
+#include "Engine/Math/Vec2.hpp"
+
 
 typedef unsigned int uint;
 
+struct Mat44;
 class DevConsole;
 class EventSystem;
 
@@ -36,9 +38,11 @@ enum MouseButtons
 	NUM_MOUSE_BUTTONS
 };
 
+
 extern DevConsole* g_theConsole;
 extern EventSystem* g_theEventSystem;
 extern NamedStrings g_gameConfigBlackboard;
+
 
 //Key Codes
 extern const unsigned char KEY_CODE_ESC;

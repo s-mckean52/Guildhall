@@ -151,6 +151,7 @@ void Game::Render() const
 	DrawNewPolygonPoints();
 	DrawGameObjects();
 	DrawWorldBounds();
+
 	g_theRenderer->EndCamera( *m_worldCamera );
 
 
@@ -983,10 +984,17 @@ void Game::OnTriggerLeave(Collision2D* collision)
 	Collider2D* thisCollider = collision->thisCollider;
 	Collider2D* otherCollider = collision->otherCollider;
 
-	std::string thisColliderName = thisCollider->m_userData.GetValue( "name", "default" );
-	std::string otherColliderName = otherCollider->m_userData.GetValue( "name", "default" );
+	if( thisCollider && otherCollider )
+	{
+		std::string thisColliderName = thisCollider->m_userData.GetValue( "name", "default" );
+		std::string otherColliderName = otherCollider->m_userData.GetValue( "name", "default" );
 
-	g_theConsole->PrintString( Rgba8::GREEN, Stringf( "%s is no longer triggering %s", otherColliderName.c_str(), thisColliderName.c_str() ) );
+		g_theConsole->PrintString( Rgba8::GREEN, Stringf( "%s is no longer triggering %s", otherColliderName.c_str(), thisColliderName.c_str() ) );
+	}
+	else
+	{
+		g_theConsole->PrintString( Rgba8::GREEN, Stringf( "Trigger Leave On Deleted Object" ) );
+	}
 }
 
 

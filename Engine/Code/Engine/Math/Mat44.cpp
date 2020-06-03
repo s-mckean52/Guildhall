@@ -791,10 +791,10 @@ const Mat44 Mat44::CreatePerspectiveProjection( float fieldOfViewDegrees, float 
 	float inverseZRange = 1.0f / zRange;
 
 	float mat[] = {
-	height / aspectRatio,			0,								0,									0,
-						0,		height,								0,									0,
-						0,			0,			-farZ * inverseZRange,		nearZ * farZ * inverseZRange,
-						0,			0,								-1,									0
+	height / aspectRatio,			 0,								0,									0,
+					   0,		height,								0,									0,
+					   0,			 0,			-farZ * inverseZRange,		 nearZ * farZ * inverseZRange,
+					   0,			 0, 						   -1,		 							0
 	};
 
 	return Mat44( mat );

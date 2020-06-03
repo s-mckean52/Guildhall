@@ -26,7 +26,7 @@ void Transform::SetRotationFromPitchYawRollDegrees( float pitchDegrees, float ya
 	float halfRollRange = 180.f;
 	float halfYawRange = 180.f;
 
-	Clamp( pitchDegrees, -halfPitchRange, halfPitchRange );
+	//Clamp( pitchDegrees, -halfPitchRange, halfPitchRange );
 
 	while( yawDegrees < -halfYawRange || yawDegrees > halfYawRange )
 	{
@@ -75,11 +75,8 @@ void Transform::Translate( Vec3 const& translation )
 Mat44 Transform::ToMatrix() const
 {
 	Mat44 transformationMatrix = Mat44::CreateTranslationXYZ( m_position );
-
 	RotateMatrixPitchYawRollDegrees( transformationMatrix, m_rotationPitchYawRollDegrees );
-
 	transformationMatrix.ScaleNonUniform3D( m_scale );
 	
 	return transformationMatrix;
 }
-

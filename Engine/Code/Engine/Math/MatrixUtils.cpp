@@ -23,14 +23,7 @@ Mat44 MakePerspectiveProjectionMatrixD3D( float fieldOfViewDegrees, float aspect
 //---------------------------------------------------------------------------------------------------------
 void RotateMatrixPitchYawRollDegrees( Mat44& matrixToRotate, float pitchDegrees, float yawDegrees, float rollDegrees )
 {
-// 	Mat44 xRotation = Mat44::CreateXRotationDegrees( pitchDegrees );
-// 	Mat44 yRotation = Mat44::CreateYRotationDegrees( yawDegrees );
-// 	Mat44 zRotation = Mat44::CreateZRotationDegrees( rollDegrees );
-// 
-// 	matrixToRotate.TransformBy( yRotation );
-// 	matrixToRotate.TransformBy( xRotation );
-// 	matrixToRotate.TransformBy( zRotation );
-
+	//matrixToRotate.TransformBy( Engine::GetGameToEngineTransform() );
 	matrixToRotate.RotateYDegrees( yawDegrees );
 	matrixToRotate.RotateXDegrees( pitchDegrees );
 	matrixToRotate.RotateZDegrees( rollDegrees );
