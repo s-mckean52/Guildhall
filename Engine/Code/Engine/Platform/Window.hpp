@@ -1,9 +1,9 @@
 #pragma once
-
 #include <string.h>
 
 class InputSystem;
 class EventSystem;
+struct AABB2;
 
 class Window
 {
@@ -25,6 +25,7 @@ public:
 	unsigned int	GetClientWidth()	const { return m_width; }
 	unsigned int	GetClientHeight()	const { return m_height; }
 	Vec2			GetClientCenter()	const;
+	AABB2			GetBoundsAsAABB2()	const;
 
 public:
 	void* m_hwnd;

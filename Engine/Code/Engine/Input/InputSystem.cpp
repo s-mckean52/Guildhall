@@ -121,6 +121,7 @@ void InputSystem::UpdateMouse()
 		UpdateRelativeMode();
 		break;
 	default:
+		ERROR_AND_DIE("Unsupported Mouse Mode Used");
 		break;
 	}
 }
@@ -159,7 +160,7 @@ void InputSystem::ShowSystemCursor( bool isShown )
 	}
 	else
 	{
-		while( ::ShowCursor( isShown ) > 0 ) {}
+		while( ::ShowCursor( isShown ) >= 0 ) {}
 		return;
 	}
 }
@@ -249,6 +250,7 @@ void InputSystem::SetCursorMode( MousePositionMode mode )
 		break;
 	}
 	default:
+		ERROR_AND_DIE("Unsupported Mouse Mode Used");
 		break;
 	}
 }

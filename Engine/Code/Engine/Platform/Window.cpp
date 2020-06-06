@@ -255,6 +255,8 @@ void Window::Close()
 void Window::SetInputSystem( InputSystem* input )
 {
 	m_theInput = input;
+	AABB2 windowBounds = GetBoundsAsAABB2();
+	input->ClipSystemCursor( &windowBounds );
 }
 
 
@@ -285,6 +287,26 @@ Vec2 Window::GetClientCenter() const
 	float verticalCenter = clientRect.bottom + ( height * 0.5f );
 
 	return Vec2( horizontalCenter, verticalCenter );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+AABB2 Window::GetBoundsAsAABB2() const
+{
+	HWND hwnd = (HWND)m_hwnd;
+	if( hwnd == NULL )
+	{
+		ERROR_AND_DIE( "Tried to get bounds of a nonexistent window" );
+	}
+
+	RECT windowRect;
+	::GetWindowRect( hwnd, &windowRect );
+	AABB2 windowDimensions = AABB2(	static_cast<float>( windowRect.left ),
+									static_cast<float>( windowRect.bottom ), 
+									static_cast<float>( windowRect.right ),
+									static_cast<float>( windowRect.top ) );
+
+	return windowDimensions;
 }
 
 

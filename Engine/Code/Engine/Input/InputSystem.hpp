@@ -55,8 +55,8 @@ public:
 
 	void	AddMouseWheelScrollAmount( float scrollAmount );
 	float	GetScrollAmount() const;
-	void PushToCharacterQueue( char c );
-	bool PopFromCharacterQueue( char* c );
+	void	PushToCharacterQueue( char c );
+	bool	PopFromCharacterQueue( char* c );
 
 	void		AddStringToClipboard( std::string stringToAdd );
 	std::string	GetStringFromClipboard();
