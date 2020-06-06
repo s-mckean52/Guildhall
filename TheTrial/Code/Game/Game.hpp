@@ -15,6 +15,7 @@ class XboxController;
 class Shader;
 class GPUMesh;
 class Clock;
+class PlayerEntity;
 class NamedProperties;
 struct Vertex_PCUTBN;
 struct AABB3;
@@ -50,6 +51,10 @@ public:
 	void RenderUI() const;
 	void EnableLightsForRendering() const;
 
+	//Accessors
+	Vec2	GetCursorPosition() const	{ return m_cursorPosition; }
+	Clock*	GetGameClock() const		{ return m_gameClock; }
+
 	//Static
 	static void GainFocus( EventArgs* args );
 	static void LoseFocus( EventArgs* args );
@@ -60,6 +65,7 @@ private:
 	Clock* m_gameClock = nullptr;
 
 	Vec2 m_cursorPosition;
+	PlayerEntity* m_player;
 
 	Texture*	m_test			= nullptr;
 	Shader*		m_testShader	= nullptr;

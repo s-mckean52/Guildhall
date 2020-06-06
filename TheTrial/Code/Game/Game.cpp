@@ -1,5 +1,6 @@
 #include "Game/Game.hpp"
 #include "Game/GameCommon.hpp"
+#include "Game/PlayerEntity.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -77,6 +78,8 @@ void Game::StartUp()
 	m_test				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
 	m_testShader		= g_theRenderer->GetOrCreateShader( "Data/Shaders/WorldOpaque.hlsl" );
 	m_testSound			= g_theAudio->CreateOrGetSound( "Data/Audio/TestSound.mp3" );
+
+	m_player = new PlayerEntity( this );
 }
 
 
@@ -130,17 +133,21 @@ void Game::Render()
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderWorld() const
 {
-	g_theRenderer->BindTexture( m_test );
+	m_player->Render();
+
+	g_theRenderer->BindTexture( nullptr );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 
 	DrawCircleAtPoint( Vec2::ZERO, 1.f, Rgba8::GREEN, 0.1f );
-	DrawCircleAtPoint( m_cursorPosition, 1.f, Rgba8::CYAN, 0.1f );
+	DrawCircleAtPoint( m_cursorPosition, 0.1f, Rgba8::CYAN, 0.1f );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderUI() const
 {
+	m_player->RenderAbilities();
+
 	const float textHeight = 0.15f;
 	const float paddingFromLeft = 0.015f;
 	const float paddingFromTop = 0.05f;
@@ -245,13 +252,14 @@ void Game::Update()
 void Game::UpdateFromInput( float deltaSeconds )
 {
 	UpdateCursorPosition( *m_worldCamera );
-
 	MoveWorldCamera( deltaSeconds );
 
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
 	{
 		m_isQuitting = true;
 	}
+
+	m_player->Update( deltaSeconds );
 }
 
 

@@ -1110,51 +1110,69 @@ void RenderContext::BindMaterialTexture( unsigned int slot, const Texture* const
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::BindShaderState( ShaderState* shaderState )
 {
-	GUARANTEE_OR_DIE( shaderState != nullptr, "Tried to bind nullptr to ShaderState" );
+	if( shaderState != nullptr )
+	{
+		BindShader( shaderState->GetShader() );
+		SetBlendMode( shaderState->GetBlendMode() );
+		SetCullMode( shaderState->GetCullMode() );
+		SetFillMode( shaderState->GetFillMode() );
+		SetDepthTest( shaderState->GetCompareMode(), shaderState->IsWriteOnDepth() );
+		SetFrontFaceWindOrder( shaderState->IsCounterClockwiseWindorder() );
+	}
 
-	BindShader( shaderState->GetShader() );
-	SetBlendMode( shaderState->GetBlendMode() );
-	SetCullMode( shaderState->GetCullMode() );
-	SetFillMode( shaderState->GetFillMode() );
-	SetDepthTest( shaderState->GetCompareMode(), shaderState->IsWriteOnDepth() );
-	SetFrontFaceWindOrder( shaderState->IsCounterClockwiseWindorder() );
+	BindShader( (Shader*)nullptr );
+	SetBlendMode( BlendMode::ADDITIVE );
+	SetCullMode( CULL_MODE_NONE );
+	SetFillMode( FILL_MODE_SOLID );
+	SetDepthTest( COMPARE_FUNC_LEQUAL, true );
+	SetFrontFaceWindOrder( true );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::BindMaterial( Material* material )
 {
-	GUARANTEE_OR_DIE( material != nullptr, "Tried to bind nullptr to ShaderState" );
-
-	SetModelTint( material->m_tint );
-	SetSpecularFactor( material->m_specularFactor );
-	SetSpecularPower( material->m_specularPower );
-
-	BindShaderState( material->m_shaderState );
-	if( material->m_diffuseTexture != nullptr )
+	if( material != nullptr )
 	{
-		BindTexture( material->m_diffuseTexture );
+		SetModelTint( material->m_tint );
+		SetSpecularFactor( material->m_specularFactor );
+		SetSpecularPower( material->m_specularPower );
+
+		BindShaderState( material->m_shaderState );
+		if( material->m_diffuseTexture != nullptr )
+		{
+			BindTexture( material->m_diffuseTexture );
+		}
+
+		if( material->m_normalTexture != nullptr )
+		{
+			BindNormalTexture( material->m_normalTexture );
+		}
+		
+		std::vector<Texture*>& texturesToBind = material->m_materialTexturesPerSlot;
+		for( uint textureIndex = 0; textureIndex < texturesToBind.size(); ++ textureIndex )
+		{
+			BindMaterialTexture( 8 + textureIndex, texturesToBind[textureIndex] );
+		}
+
+		std::vector<Sampler*>& samplersToBind = material->m_samplersPerSlot;
+		for( uint samplerIndex = 0; samplerIndex < samplersToBind.size(); ++samplerIndex )
+		{
+			BindSampler( samplersToBind[ samplerIndex ], samplerIndex );
+		}
+
+		material->UpdateUBOIfDirty();
+		BindUniformBuffer( UBO_MATERIAL_SLOT, material->m_ubo );
+		return;
 	}
 
-	if (material->m_diffuseTexture != nullptr)
-	{
-		BindNormalTexture( material->m_normalTexture );
-	}
-	
-	std::vector<Texture*>& texturesToBind = material->m_materialTexturesPerSlot;
-	for( uint textureIndex = 0; textureIndex < texturesToBind.size(); ++ textureIndex )
-	{
-		BindMaterialTexture( 8 + textureIndex, texturesToBind[textureIndex] );
-	}
+	SetModelTint( Rgba8::WHITE );
+	SetSpecularFactor( 0.f );
+	SetSpecularPower( 32.f );
 
-	std::vector<Sampler*>& samplersToBind = material->m_samplersPerSlot;
-	for( uint samplerIndex = 0; samplerIndex < samplersToBind.size(); ++samplerIndex )
-	{
-		BindSampler( samplersToBind[ samplerIndex ], samplerIndex );
-	}
-
-	material->UpdateUBOIfDirty();
-	BindUniformBuffer( UBO_MATERIAL_SLOT, material->m_ubo );
+	BindShaderState( nullptr );
+	BindTexture( nullptr );
+	BindSampler( m_samplerPoint );
 }
 
 

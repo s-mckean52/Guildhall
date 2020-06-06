@@ -33,6 +33,18 @@
     <ClCompile Include="Main_Windows.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
+    <ClCompile Include="Entity.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerEntity.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Ability.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Ability_Blink.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -45,6 +57,18 @@
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="GameCommon.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerEntity.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Ability.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Ability_Blink.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>
