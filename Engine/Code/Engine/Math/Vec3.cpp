@@ -293,9 +293,9 @@ const Vec3 operator*( float uniformScale, const Vec3& vecToMultiply )
 
 
 //---------------------------------------------------------------------------------------------------------
-STATIC const Vec3 Vec3::ZERO	( 0.0f, 0.0f, 0.0f );
-STATIC const Vec3 Vec3::RIGHT	( 1.0f, 0.0f, 0.0f );
-STATIC const Vec3 Vec3::UP		( 0.0f, 1.0f, 0.0f );
-STATIC const Vec3 Vec3::INTO	( 0.0f, 0.0f, 1.0f );
-STATIC const Vec3 Vec3::FORWARD	( 0.0f, 0.0f, -1.0f );
-STATIC const Vec3 Vec3::UNIT	( 1.0f, 1.0f, 1.0f );
+STATIC const Vec3 Vec3::ZERO			( 0.0f, 0.0f, 0.0f );
+STATIC const Vec3 Vec3::UNIT_POSITIVE_X	( 1.0f, 0.0f, 0.0f );
+STATIC const Vec3 Vec3::UNIT_POSITIVE_Y	( 0.0f, 1.0f, 0.0f );
+STATIC const Vec3 Vec3::UNIT_POSITIVE_Z	( 0.0f, 0.0f, 1.0f );
+STATIC const Vec3 Vec3::UNIT_NEGATIVE_Z	( 0.0f, 0.0f, -1.0f );
+STATIC const Vec3 Vec3::ONES			( 1.0f, 1.0f, 1.0f );

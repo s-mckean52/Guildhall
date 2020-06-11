@@ -1118,6 +1118,7 @@ void RenderContext::BindShaderState( ShaderState* shaderState )
 		SetFillMode( shaderState->GetFillMode() );
 		SetDepthTest( shaderState->GetCompareMode(), shaderState->IsWriteOnDepth() );
 		SetFrontFaceWindOrder( shaderState->IsCounterClockwiseWindorder() );
+		return;
 	}
 
 	BindShader( (Shader*)nullptr );
@@ -1173,6 +1174,14 @@ void RenderContext::BindMaterial( Material* material )
 	BindShaderState( nullptr );
 	BindTexture( nullptr );
 	BindSampler( m_samplerPoint );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::BindTextureByPath( char const* filepath )
+{
+	Texture* textureToBind = CreateOrGetTextureFromFile( filepath );
+	BindTexture( textureToBind );
 }
 
 
@@ -1284,12 +1293,13 @@ void RenderContext::BindUniformBuffer( unsigned int slot, RenderBuffer* ubo )
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::BindSampler( Sampler* sampler, uint slot )
 {
-	if( sampler == nullptr )
+	Sampler* samplerToUse = sampler;
+	if( samplerToUse == nullptr )
 	{
-		sampler = m_samplerPoint;
+		samplerToUse = m_samplerPoint;
 	}
 
-	ID3D11SamplerState* sampleHandle = sampler->GetHandle();
+	ID3D11SamplerState* sampleHandle = samplerToUse->GetHandle();
 	m_context->PSSetSamplers( slot, 1, &sampleHandle);
 }
 

@@ -122,11 +122,11 @@ public:
 	void EndFrame();
 	void ShutDown();
 
-	void UpdateFrameUBO();
-	float GetGamma() const			{ return m_gamma; }
-	void UpdateGamma( float gamma );
-	void DisableFog();
-	void EnableFog( float fogNear, float fogFar, Rgba8 const& fogNearColor, Rgba8 const& fogFarColor );
+	void	UpdateFrameUBO();
+	float	GetGamma() const			{ return m_gamma; }
+	void	UpdateGamma( float gamma );
+	void	DisableFog();
+	void	EnableFog( float fogNear, float fogFar, Rgba8 const& fogNearColor, Rgba8 const& fogFarColor );
 	
 	void SetGameClock( Clock* clock );
 	void SetBlendMode( BlendMode blendMode );
@@ -136,9 +136,9 @@ public:
 	void BeginCamera( Camera& camera );
 	void EndCamera( const Camera& camera );
 
-	bool DoesDepthStateMatch( CompareFunc compareFunc, bool writeDepthOnPass );
-	bool IsDrawing() const { return m_isDrawing; }
-	Texture* GetBackBuffer() const;
+	bool		DoesDepthStateMatch( CompareFunc compareFunc, bool writeDepthOnPass );
+	bool		IsDrawing() const { return m_isDrawing; }
+	Texture*	GetBackBuffer() const;
 	
 	void Draw( int numVertices, int vertexOffset = 0 );
 	void DrawIndexed( int numIndicies, int indexOffset = 0, int vertexOffset = 0 );
@@ -171,6 +171,7 @@ public:
 	void		BindShaderState( ShaderState* shaderState );
 	void		BindMaterial( Material* material );
 
+	void		BindTextureByPath( char const* filepath );
 	void		BindShaderByPath( const char* filepath );
 	void		BindShaderStateByPath( const char* filepath );
 	void		BindMaterialByPath( const char* filepath );
@@ -259,7 +260,7 @@ private:
 	std::vector<Sampler*>		m_loadedSamplers;
 	std::vector<Shader*>		m_loadedShaders;
 	std::vector<ShaderState*>	m_loadedShaderStates;
-	std::vector<Material*>	m_loadedMaterials;
+	std::vector<Material*>		m_loadedMaterials;
 
 public:
 	void*						m_debugModule				= nullptr;

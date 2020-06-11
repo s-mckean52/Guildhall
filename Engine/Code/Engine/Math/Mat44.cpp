@@ -738,10 +738,10 @@ STATIC const Mat44 Mat44::LookAt( const Vec3& positionToLookFrom, const Vec3& po
 	Vec3 rightNormal = CrossProduct3D( forwardNormal, worldUp );
 	if( ApproximatelyEqual( rightNormal.GetLength(), 0.f ) )
 	{
-		rightNormal = CrossProduct3D( forwardNormal, Vec3::UP );
+		rightNormal = CrossProduct3D( forwardNormal, Vec3::UNIT_POSITIVE_Y );
 		if( ApproximatelyEqual( rightNormal.GetLength(), 0.f ) )
 		{
-			rightNormal = Vec3::RIGHT;
+			rightNormal = Vec3::UNIT_POSITIVE_X;
 		}
 	}
 	rightNormal.Normalize();

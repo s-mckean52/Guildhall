@@ -10,10 +10,10 @@ public:
 	Vec3 position;
 	float intensity = 0.f;
 	
-	Vec3 direction = Vec3::FORWARD;
+	Vec3 direction = Vec3::UNIT_NEGATIVE_Z;
 	float cosInnerHalfAngle = -1.f;
 	
-	Vec3 color = Vec3::UNIT;
+	Vec3 color = Vec3::ONES;
 	float cosOutterHalfAngle = -1.f;
 	
 	Vec3 attenuation = Vec3( 0.f, 1.f, 0.f );

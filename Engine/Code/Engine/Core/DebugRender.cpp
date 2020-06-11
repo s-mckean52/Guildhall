@@ -304,7 +304,7 @@ static void debug_add_world_wire_sphere( EventArgs* args )
 static void debug_add_world_wire_bounds( EventArgs* args )
 {
 	Vec3 defaultMinPosition = Vec3::ZERO;
-	Vec3 defaultMaxPosition = Vec3::UNIT;
+	Vec3 defaultMaxPosition = Vec3::ONES;
 	float defaultDuration = 0.f;
 
 	Vec3 minPosition = args->GetValue( "min", defaultMinPosition );

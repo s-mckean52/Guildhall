@@ -33,7 +33,7 @@ Light::Light(	Vec3 const& toPosition,
 //---------------------------------------------------------------------------------------------------------
 STATIC const Light Light::POINT = Light(
 	/*position*/				Vec3::ZERO,
-	/*Direction*/				Vec3::FORWARD,
+	/*Direction*/				Vec3::UNIT_NEGATIVE_Z,
 	/*Attenuation*/				Vec3( 0.f, 1.f, 0.f ),
 	/*Specular Attenuation*/	Vec3( 0.f, 1.f, 0.f ),
 	/*Color*/					Rgba8::WHITE,
@@ -46,7 +46,7 @@ STATIC const Light Light::POINT = Light(
 
 STATIC const Light Light::DIRECTIONAL = Light(
 	/*position*/				Vec3::ZERO,
-	/*Direction*/				Vec3::FORWARD,
+	/*Direction*/				Vec3::UNIT_NEGATIVE_Z,
 	/*Attenuation*/				Vec3( 1.f, 0.f, 0.f ),
 	/*Specular Attenuation*/	Vec3( 1.f, 0.f, 0.f ),
 	/*Color*/					Rgba8::WHITE,
@@ -59,7 +59,7 @@ STATIC const Light Light::DIRECTIONAL = Light(
 
 STATIC const Light Light::SPOTLIGHT = Light(
 	/*position*/				Vec3::ZERO,
-	/*Direction*/				Vec3::FORWARD,
+	/*Direction*/				Vec3::UNIT_NEGATIVE_Z,
 	/*Attenuation*/				Vec3( 0.f, 1.f, 0.f ),
 	/*Specular Attenuation*/	Vec3( 0.f, 1.f, 0.f ),
 	/*Color*/					Rgba8::WHITE,

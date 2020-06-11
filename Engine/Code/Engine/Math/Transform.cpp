@@ -22,10 +22,10 @@ void Transform::SetPosition( Vec3 const& position )
 //---------------------------------------------------------------------------------------------------------
 void Transform::SetRotationFromPitchYawRollDegrees( float pitchDegrees, float yawDegrees, float rollDegrees )
 {
-	float halfPitchRange = 90.f;
 	float halfRollRange = 180.f;
 	float halfYawRange = 180.f;
 
+	//float halfPitchRange = 90.f;
 	//Clamp( pitchDegrees, -halfPitchRange, halfPitchRange );
 
 	while( yawDegrees < -halfYawRange || yawDegrees > halfYawRange )

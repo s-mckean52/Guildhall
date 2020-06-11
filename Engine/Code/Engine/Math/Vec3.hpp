@@ -63,9 +63,9 @@ public:
 
 	//---------------------------------------------------------------------------------------------------------
 	static const Vec3 ZERO;
-	static const Vec3 RIGHT;
-	static const Vec3 UP;
-	static const Vec3 INTO;
-	static const Vec3 FORWARD;
-	static const Vec3 UNIT;
+	static const Vec3 UNIT_POSITIVE_X;
+	static const Vec3 UNIT_POSITIVE_Y;
+	static const Vec3 UNIT_POSITIVE_Z;
+	static const Vec3 UNIT_NEGATIVE_Z;
+	static const Vec3 ONES;
 };

@@ -68,7 +68,7 @@ const Vec3 OBB3::GetIBasisNormal() const
 	Vec3 iBasis = m_transformMatrix.GetIBasis3D();
 	if( iBasis == Vec3::ZERO )
 	{
-		return Vec3::RIGHT;
+		return Vec3::UNIT_POSITIVE_X;
 	}
 	return iBasis.GetNormalize();
 }
@@ -80,7 +80,7 @@ const Vec3 OBB3::GetJBasisNormal() const
 	Vec3 jBasis = m_transformMatrix.GetJBasis3D();
 	if( jBasis == Vec3::ZERO )
 	{
-		return Vec3::UP;
+		return Vec3::UNIT_POSITIVE_Y;
 	}
 	return jBasis.GetNormalize();
 }
@@ -92,7 +92,7 @@ const Vec3 OBB3::GetKBasisNormal() const
 	Vec3 kBasis = m_transformMatrix.GetKBasis3D();
 	if( kBasis == Vec3::ZERO )
 	{
-		return -Vec3::FORWARD;
+		return Vec3::UNIT_POSITIVE_Z;
 	}
 	return kBasis.GetNormalize();
 }

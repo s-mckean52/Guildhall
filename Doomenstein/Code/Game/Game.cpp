@@ -1,5 +1,6 @@
 #include "Game/Game.hpp"
 #include "Game/GameCommon.hpp"
+#include "Game/World.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -79,26 +80,20 @@ void Game::StartUp()
 	m_UICamera = new Camera( g_theRenderer );
 	m_UICamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
-	std::vector<Vertex_PCUTBN> litCubeVerticies;
-	std::vector<uint> litCubeIndicies;
-	AddTestCubeToIndexVertexArray( litCubeVerticies, litCubeIndicies, AABB3( 0.f, 0.f, 0.f, 1.f, 1.f, 1.f ), Rgba8::WHITE );
-	m_meshCube = new GPUMesh( g_theRenderer, litCubeVerticies, litCubeIndicies );
+	LoadTextures();
+	LoadShaders();
+	LoadAudio();
 
-	m_cubeTransform = new Transform();
-	m_cubeTransform->SetPosition( Vec3( 2.f, 0.f, 0.f ) );
-
-	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
-	m_test				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
-
-	m_testShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/WorldOpaque.hlsl" );
-
-	m_testSound = g_theAudio->CreateOrGetSound( "Data/Audio/TestSound.mp3" );
+	m_world = new World( this );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Game::ShutDown()
 {
+	delete m_world;
+	m_world = nullptr;
+
 	delete g_RNG;
 	g_RNG = nullptr;
 
@@ -107,12 +102,6 @@ void Game::ShutDown()
 
 	delete m_UICamera;
 	m_UICamera = nullptr;
-
-	delete m_meshCube;
-	m_meshCube = nullptr;
-
-	delete m_cubeTransform;
-	m_cubeTransform = nullptr;
 
 	delete m_gameClock;
 	m_gameClock = nullptr;
@@ -152,13 +141,35 @@ void Game::Render()
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderWorld() const
 {
+	m_world->Render();
+	
+	if( g_isDebugDraw )
+	{
+		RenderWorldDebug();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::RenderUI() const
+{
+	if( g_isDebugDraw )
+	{
+		RenderUIDebug();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::RenderWorldDebug() const
+{
 	DebugAddWorldBasis( Mat44::IDENTITY, 0.f, DEBUG_RENDER_ALWAYS );
 
 	Mat44 cameraTransformMatrix = Mat44::CreateTranslationXYZ( m_worldCamera->GetPosition() );
 	cameraTransformMatrix.RotateZDegrees( m_worldCamera->GetYawDegrees() );
 	cameraTransformMatrix.RotateYDegrees( m_worldCamera->GetPitchDegrees() );
 	cameraTransformMatrix.RotateXDegrees( m_worldCamera->GetRollDegrees() );
-	cameraTransformMatrix.ScaleNonUniform3D( m_worldCamera->GetScale() );
+	cameraTransformMatrix.ScaleNonUniform3D(m_worldCamera->GetScale());
 
 	Vec3 compasStartPosition = m_worldCamera->GetPosition();
 	compasStartPosition += cameraTransformMatrix.TransformVector3D( Vec3( 0.1f, 0.f, 0.f ) );
@@ -166,29 +177,11 @@ void Game::RenderWorld() const
 	Mat44 cameraBasisMatrix = Mat44::CreateUniformScaleXYZ( 0.01f );
 	cameraBasisMatrix.SetTranslation3D( compasStartPosition );
 	DebugAddWorldBasis( cameraBasisMatrix, 0.f, DEBUG_RENDER_ALWAYS );
-// 	DebugAddWorldArrow( cameraBasisStartPosition, cameraBasisStartPosition + Vec3( 0.f, 0.f, 0.f ), Rgba8::RED, 0.f, DEBUG_RENDER_ALWAYS );
-// 	DebugAddWorldArrow( cameraBasisStartPosition, cameraBasisStartPosition + Vec3( 0.f, 1.f, 0.f ), Rgba8::GREEN, 0.f, DEBUG_RENDER_ALWAYS );
-// 	DebugAddWorldArrow( cameraBasisStartPosition, cameraBasisStartPosition + Vec3( 0.f, 0.f, 1.f ), Rgba8::BLUE, 0.f, DEBUG_RENDER_ALWAYS );
-
-	g_theRenderer->BindTexture( m_test );
-	g_theRenderer->BindShader( m_testShader );
-
-	m_cubeTransform->SetPosition( Vec3( 2.f, 0.f, 0.f ) );
-	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix() );
-	g_theRenderer->DrawMesh( m_meshCube );
-
-	m_cubeTransform->SetPosition( Vec3( 2.f, 2.f, 0.f ) );
-	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix() );
-	g_theRenderer->DrawMesh( m_meshCube );
-
-	m_cubeTransform->SetPosition( Vec3( 0.f, 2.f, 0.f ) );
-	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix() );
-	g_theRenderer->DrawMesh( m_meshCube );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::RenderUI() const
+void Game::RenderUIDebug() const
 {
 	const float textHeight = 0.15f;
 	const float paddingFromLeft = 0.015f;
@@ -293,43 +286,6 @@ void Game::AddTestCubeToIndexVertexArray( std::vector<Vertex_PCUTBN>& vertexArra
 		Vertex_PCUTBN( frontBottomLeft,		color,	frontTangent,	frontNormal,		-frontBitangent,	Vec2( 0.f, 1.f ) ),
 		Vertex_PCUTBN( frontBottomRight,	color,	frontTangent,	frontNormal,		-frontBitangent,	Vec2( 1.f, 1.f ) ),
 	};
-
-	std::vector<unsigned int> boxIndicies = {
-		//Front
-		0, 1, 3,
-		0, 3, 2,
-
-		//Right
-		4, 5, 7,
-		4, 7, 6,
-
-		//Back
-		8, 9, 11,
-		8, 11, 10,
-
-		//Right
-		12, 13, 15,
-		12, 15, 14,
-
-		//Top
-		16, 17, 19,
-		16, 19, 18,
-
-		//Bottom
-		20, 21, 23,
-		20, 23, 22,
-	};
-
-	unsigned int indexOffset = static_cast<unsigned int>( vertexArray.size() );
-	for( int vertexIndex = 0; vertexIndex < boxVerticies.size(); ++vertexIndex )
-	{
-		vertexArray.push_back( boxVerticies[ vertexIndex ] );
-	}
-
-	for( int indexIndex = 0; indexIndex < boxIndicies.size(); ++indexIndex )
-	{
-		indexArray.push_back( indexOffset + boxIndicies[ indexIndex ] );
-	}
 }
 
 
@@ -395,10 +351,32 @@ void Game::Update()
 
 	if( !g_theConsole->IsOpen() )
 	{
+		m_world->Update();
 		UpdateFromInput( deltaSeconds );
 	}
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void Game::LoadTextures()
+{
+	g_devConsoleFont = g_theRenderer->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont");
+	m_test = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Test_StbiFlippedAndOpenGL.png");
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::LoadShaders()
+{
+	m_testShader = g_theRenderer->GetOrCreateShader("Data/Shaders/WorldOpaque.hlsl");
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::LoadAudio()
+{
+	m_testSound = g_theAudio->CreateOrGetSound("Data/Audio/TestSound.mp3");
+}
 
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateFromInput( float deltaSeconds )
@@ -420,7 +398,7 @@ void Game::UpdateFromInput( float deltaSeconds )
 
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F1 ) )
 	{
-		PlayTestSound();
+		g_isDebugDraw = !g_isDebugDraw;
 	}
 
 	if( g_theInput->WasKeyJustPressed( 'I' ) )

@@ -19,5 +19,5 @@ public:
 
 public:
 	Vec3 mins	= Vec3::ZERO;
-	Vec3 maxes	= Vec3::UNIT;
+	Vec3 maxes	= Vec3::ONES;
 };

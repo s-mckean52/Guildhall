@@ -107,7 +107,7 @@ public:
 	static const Mat44 CreateToneMapTint( Rgba8 const& color );
 	static const Mat44 LerpComponents( Mat44 const& beginValues, Mat44 const& EndValues, float fractionOfValues );
 
-	static const Mat44 LookAt( const Vec3& positionToLookFrom, const Vec3& positionToLookAt, const Vec3& worldUp = Vec3::UP );
+	static const Mat44 LookAt( const Vec3& positionToLookFrom, const Vec3& positionToLookAt, const Vec3& worldUp = Vec3::UNIT_POSITIVE_Y );
 
 	//Projection
 	static const Mat44 CreateOrthographicProjection( const Vec3& min, const Vec3& max );

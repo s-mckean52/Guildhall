@@ -12,7 +12,6 @@ struct Texture
 public:
 	~Texture();
 	Texture() {};
-	explicit Texture( const char* imageFilePath, int textureID, IntVec2 imageTexelSize, int m_numComponents );
 	explicit Texture( RenderContext* owner, ID3D11Texture2D* handle );
 	explicit Texture( const char* filePath, RenderContext* owner, ID3D11Texture2D* handle );
 

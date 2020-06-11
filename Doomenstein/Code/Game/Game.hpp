@@ -15,6 +15,7 @@ class XboxController;
 class Shader;
 class GPUMesh;
 class Clock;
+class World;
 class NamedProperties;
 struct Vertex_PCUTBN;
 struct AABB3;
@@ -38,6 +39,16 @@ public:
 	void Render();
 	void Update();
 
+	//---------------------------------------------------------------------------------------------------------
+	// START UP
+	//---------------------------------------------------------------------------------------------------------
+	//Load Assets
+	void LoadTextures();
+	void LoadShaders();
+	void LoadAudio();
+
+	//---------------------------------------------------------------------------------------------------------
+
 	//Input
 	void UpdateFromInput( float deltaSeconds );
 	void MoveWorldCamera( float deltaSeconds );
@@ -48,6 +59,8 @@ public:
 	void UpdateCameraView( Camera* camera, CameraViewOrientation viewOrientation = RIGHT_HAND_X_FORWARD_Y_LEFT );
 	void RenderWorld() const;
 	void RenderUI() const;
+	void RenderWorldDebug() const;
+	void RenderUIDebug() const;
 	void EnableLightsForRendering() const;
 	
 	//Other
@@ -58,22 +71,22 @@ public:
 	static void LoseFocus( EventArgs* args );
 
 	bool IsQuitting() const { return m_isQuitting; }
+	void PlayTestSound();
 
 private:
-	Clock* m_gameClock = nullptr;
+	World* m_world = nullptr;
 
-	GPUMesh*	m_meshCube		= nullptr;
-	Transform*	m_cubeTransform	= nullptr;
-	Texture*	m_test			= nullptr;
+	Clock* m_gameClock = nullptr;
 
 	Rgba8 m_ambientColor = Rgba8::WHITE;
 	float m_ambientIntensity = 1.f;
 
 	float m_distanceFromCamera = -1.f;;
 
-	Shader* m_testShader	= nullptr;
 
-	SoundID m_testSound;
+	Texture*	m_test			= nullptr;
+	Shader*		m_testShader	= nullptr;
+	SoundID		m_testSound;
 
 	float m_specularFactor = 0.f;
 	float m_specularPower = 32.f;
@@ -85,5 +98,4 @@ private:
 	bool	m_isQuitting = false;
 
 	bool m_isFogEnabled = true;
-	void PlayTestSound();
 };

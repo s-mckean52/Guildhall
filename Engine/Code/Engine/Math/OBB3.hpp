@@ -14,7 +14,7 @@ struct OBB3
 	~OBB3() = default;
 	OBB3( const OBB3& copyFrom );
 	explicit OBB3( const Vec3& fullDimensions, const Mat44& transformMatrix = Mat44::IDENTITY );
-	explicit OBB3( const Vec3& center, const Vec3& fullDimensions, const Vec3& iBasisNormal = Vec3::RIGHT, const Vec3& jBasisNormal = Vec3::UP, const Vec3& kBasisNormal = -Vec3::FORWARD );
+	explicit OBB3( const Vec3& center, const Vec3& fullDimensions, const Vec3& iBasisNormal = Vec3::UNIT_POSITIVE_X, const Vec3& jBasisNormal = Vec3::UNIT_POSITIVE_Y, const Vec3& kBasisNormal = Vec3::UNIT_POSITIVE_Z );
 	explicit OBB3( const Vec3& center, const Vec3& fullDimensions, const Vec3& pitchYawRollDegrees );
 	explicit OBB3( const AABB3& asAxisAlignedBox, const Vec3& pitchYawRollDegrees = Vec3::ZERO );
 
