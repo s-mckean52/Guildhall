@@ -5,6 +5,7 @@
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include <vector>
+#include <io.h>
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -43,6 +44,42 @@ char const* FileReadToString( std::string const& filepath )
 {
 	size_t fileSize = 0;
 	return (char const*)FileReadToNewBuffer( filepath, &fileSize );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Strings GetFileNamesInFolder( std::string const& folderpath, const char* filePattern )
+{
+	Strings fileNamesInFolder;
+
+#ifdef _WIN32
+	std::string fileNamePattern = filePattern ? filePattern : "*";
+	std::string filePath = folderpath + "/" + fileNamePattern;
+	_finddata_t fileInfo;
+	intptr_t searchHandle = _findfirst( filePath.c_str(), &fileInfo );
+	while( searchHandle != -1 )
+	{
+		fileNamesInFolder.push_back( fileInfo.name );
+		int errorCode = _findnext( searchHandle, &fileInfo );
+		if( errorCode != 0 )
+			break;
+	}
+#else
+	ERROR_AND_DIE( Stringf( "Not yet implemented for platform!" ) );
+#endif
+
+	return fileNamesInFolder;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string GetFileNameWithoutExtension( std::string const& filepath )
+{
+	size_t nameStartPos = filepath.find_last_of( '/' ) + 1;
+	size_t extensionStartPos = filepath.find( '.', nameStartPos );
+	size_t fileNameLength = extensionStartPos - nameStartPos;
+	std::string filename = filepath.substr( nameStartPos, fileNameLength );
+	return filename;
 }
 
 

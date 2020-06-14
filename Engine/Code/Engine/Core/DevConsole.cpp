@@ -9,6 +9,7 @@
 #include "Engine/Renderer/MeshUtils.hpp"
 #include "Engine/Math/AABB2.hpp"
 #include "Engine/Core/Clock.hpp"
+#include <stdarg.h>
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -74,6 +75,43 @@ void DevConsole::PrintString( const Rgba8& textColor, const std::string& devCons
 {
 	ColorString newString( textColor, devConsolePrintString );
 	m_colorStrings.push_back( newString );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::PrintString( const Rgba8& textColor, const char* messageFormat, ... )
+{
+	const uint textMaxLength = 2048;
+
+	char textLiteral[ textMaxLength ];
+	va_list variableArgumentList;
+	
+	va_start( variableArgumentList, messageFormat );
+	vsnprintf_s( textLiteral, textMaxLength, _TRUNCATE, messageFormat, variableArgumentList );	
+	va_end( variableArgumentList );
+	
+	textLiteral[ textMaxLength - 1 ] = '\0';
+	
+	std::string textLiteralAsString = textLiteral;
+	PrintString( textColor, textLiteralAsString );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::ErrorString( const char* errorMessageFormat, ... )
+{
+	const uint textMaxLength = 2048;
+
+	char textLiteral[ textMaxLength ];
+	va_list variableArgumentList;
+	
+	va_start( variableArgumentList, errorMessageFormat );
+	vsnprintf_s( textLiteral, textMaxLength, _TRUNCATE, errorMessageFormat, variableArgumentList );	
+	va_end( variableArgumentList );
+	
+	textLiteral[ textMaxLength - 1 ] = '\0';
+	PrintString( Rgba8::RED, textLiteral );
+	m_isOpen = true;
 }
 
 

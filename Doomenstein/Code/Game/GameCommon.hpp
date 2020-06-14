@@ -56,9 +56,12 @@ constexpr float PLAYER_DEATH_SCREEN_SHAKE_INTENSITY = 1.f;
 
 constexpr float DEV_CONSOLE_LINE_HEIGHT				= 0.15f;
 
+constexpr float PLAYER_HEIGHT						= 0.7f;
 
 
 // Game Specific Colors
+const Rgba8 DEV_CONSOLE_INFO_COLOR		( 255, 255, 255 );
+const Rgba8 DEV_CONSOLE_HELP_COLOR		( 255, 255, 0 );
 const Rgba8 RGBA8_BALI_HAI				( 132, 156, 169 ); //Teal Grey
 const Rgba8 RGBA8_DARK_GREY				( 50, 50, 50 );
 const Rgba8 RGBA8_MEDIUM_DARK_GREY		( 100, 100, 100 );

@@ -1,40 +1,27 @@
 #pragma once
-#include "Engine/Math/IntVec2.hpp"
-#include "Engine/Core/Vertex_PCUTBN.hpp"
 
 class Game;
 class World;
 class GPUMesh;
-class Transform;
-class Tile;
-struct Vec2;
+class PlayerStart;
+class Camera;
+
 
 class Map
 {
 public:
 	Map( Game* theGame, World* theWorld );
-	~Map();
+	virtual ~Map();
 
-	void Update();
-	void Render() const;
+	virtual void Update()			= 0;
+	virtual void Render() const		= 0;
 
-	bool IsTileSolid( Tile* tile ) const;
-	IntVec2 GetTileXYCoordsForTileIndex( int tileIndex ) const;
-	Vec3	GetTilePositionForTileIndex( int tileIndex ) const;
+	virtual void SpawnPlayer( Camera* playerCamera );
 
-	void CreateMapVerts();
-	void AppendVertsForTile( int tileIndex );
-	void AppendVertsForOpenTile( int tileIndex );
-	void AppendVertsForSolidTile( int tileIndex );
+protected:
+	Game*		m_game		= nullptr;
+	World*		m_world		= nullptr;
+	GPUMesh*	m_mapMesh	= nullptr;
 
-
-private:
-	Game* m_game = nullptr;
-	World* m_world = nullptr;
-
-	IntVec2 m_dimensions = IntVec2( 10, 13 );
-
-	GPUMesh* m_mapMesh = nullptr;
-	std::vector<Tile*> m_tiles;
-	std::vector<Vertex_PCUTBN> m_mapVerts;
+	PlayerStart* m_playerStart = nullptr;
 };

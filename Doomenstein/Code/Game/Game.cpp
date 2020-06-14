@@ -1,6 +1,8 @@
 #include "Game/Game.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/World.hpp"
+#include "Game/MapMaterial.hpp"
+#include "Game/MapRegion.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -13,7 +15,6 @@
 #include "Engine/Core/Image.hpp"
 #include "Engine/Core/NamedProperties.hpp"
 #include "Engine/Core/ColorString.hpp"
-//#include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/MeshUtils.hpp"
@@ -21,6 +22,8 @@
 #include "Engine/Renderer/Camera.hpp"
 #include "Engine/Renderer/GPUMesh.hpp"
 #include "Engine/Renderer/Sampler.hpp"
+#include "Engine/Renderer/SpriteSheet.hpp"
+#include "Engine/Renderer/SpriteDefinition.hpp"
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Math/AABB3.hpp"
@@ -55,8 +58,8 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
-	float configAspect = g_gameConfigBlackboard.GetValue( "windowAspect", 0.f );
-	g_theConsole->PrintString( Rgba8::MAGENTA, Stringf( "Game Config File Aspect: %.3f", configAspect ) );
+	MapMaterial::CreateMapMaterialsFromXML( "Data/Definitions/MapMaterialTypes.xml" );
+	MapRegion::CreateMapRegionsFromXML( "Data/Definitions/MapRegionTypes.xml" );
 
 	g_RNG = new RandomNumberGenerator();
 
@@ -67,6 +70,7 @@ void Game::StartUp()
 
 	g_theEventSystem->SubscribeEventCallbackFunction( "GainFocus", GainFocus );
 	g_theEventSystem->SubscribeEventCallbackFunction( "LoseFocus", LoseFocus );
+	g_theEventSystem->SubscribeEventCallbackMethod( "Map", this, &Game::set_current_map );
 
 	g_theInput->SetCursorMode( MOUSE_MODE_RELATIVE );
 
@@ -105,6 +109,9 @@ void Game::ShutDown()
 
 	delete m_gameClock;
 	m_gameClock = nullptr;
+
+	delete m_viewModelsSpriteSheet;
+	m_viewModelsSpriteSheet = nullptr;
 }
 
 
@@ -157,6 +164,56 @@ void Game::RenderUI() const
 	{
 		RenderUIDebug();
 	}
+	RenderHUD();
+	RenderFPSCounter();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::RenderHUD() const
+{
+	Vec2 uiCameraHalfDimensions = m_UICamera->GetCameraDimensions() * 0.5f;
+	Vec3 uiCameraBottomLeft = m_UICamera->GetOrthoBottomLeft();
+	Vec2 uiCameraBottomLeftXY = Vec2( uiCameraBottomLeft.x, uiCameraBottomLeft.y );
+	Vec2 uiCameraCenter = uiCameraBottomLeftXY + uiCameraHalfDimensions;
+
+	//Render HUD Base
+	float hudBaseWidth = CAMERA_SIZE_X;
+	float hudBaseHeight = hudBaseWidth / m_HUDBase->GetAspect();
+	Vec2 hudBaseMin = uiCameraBottomLeftXY;
+	Vec2 hudBaseMax = hudBaseMin + Vec2( hudBaseWidth, hudBaseHeight );
+	AABB2 hudBaseRect = AABB2( hudBaseMin, hudBaseMax );
+
+	std::vector<Vertex_PCU> hudBaseVerts;
+	AppendVertsForAABB2D( hudBaseVerts, hudBaseRect, Rgba8::WHITE );
+
+	g_theRenderer->BindShader( (Shader*)nullptr );
+	g_theRenderer->BindTexture( m_HUDBase );
+	g_theRenderer->SetModelUBO( Mat44::IDENTITY );
+	g_theRenderer->DrawVertexArray( hudBaseVerts );
+
+
+	//Render Gun Hand
+	Vec2 gundHandMinUVs;
+	Vec2 gundHandMaxUVs;
+	SpriteDefinition const& gundHandSprite = m_viewModelsSpriteSheet->GetSpriteDefinition( 0 );
+	gundHandSprite.GetUVs( gundHandMinUVs, gundHandMaxUVs );
+
+	float gundHandHeight = CAMERA_SIZE_Y * 1.25f;
+	float gundHandWidth = gundHandHeight * gundHandSprite.GetAspect();
+	Vec2 gunHandMins = uiCameraCenter - Vec2( gundHandWidth * 0.5f, HALF_SCREEN_Y );
+	gunHandMins.y += hudBaseHeight;
+	Vec2 gunHandMaxes = gunHandMins + Vec2( gundHandWidth, gundHandHeight );
+	AABB2 gundHandRect = AABB2( gunHandMins, gunHandMaxes );
+
+	std::vector<Vertex_PCU> gunHandVerts;
+	AppendVertsForAABB2D( gunHandVerts, gundHandRect, Rgba8::WHITE, gundHandMinUVs, gundHandMaxUVs );
+	//AppendVertsForAABB2OutlineAtPoint( gunHandVerts, AABB2( gunHandMins, Vec2( 0.f, 0.f ) ), Rgba8::CYAN, 0.1f );
+
+	g_theRenderer->BindShader( (Shader*)nullptr );
+	g_theRenderer->BindTexture( &gundHandSprite.GetTexture() );
+	g_theRenderer->SetModelUBO( Mat44::IDENTITY );
+	g_theRenderer->DrawVertexArray( gunHandVerts );
 }
 
 
@@ -219,73 +276,39 @@ void Game::RenderUIDebug() const
 
 
 //---------------------------------------------------------------------------------------------------------
+void Game::RenderFPSCounter() const
+{
+	const float textHeight = 0.15f;
+	const float paddingFromRight = 0.015f;
+	const float paddingFromTop = 0.05f;
+
+	double deltaSeconds = m_gameClock->GetLastDeltaSeconds();
+	double frameTimeMS = deltaSeconds * 1000.0;
+	double fps = 1.0 / deltaSeconds;
+	std::string frameTimeString = Stringf( "ms/frame: %.f (%.f FPS)", frameTimeMS, fps );
+	
+	Vec3 orthoTopRight = m_UICamera->GetOrthoTopRight();
+	Vec2 cameraTopRight = Vec2( orthoTopRight.x, orthoTopRight.y );
+	Vec2 textDimensions = g_devConsoleFont->GetDimensionsForText2D( textHeight, frameTimeString );
+	Vec2 textStartPos = cameraTopRight + Vec2( -paddingFromRight - textDimensions.x, -paddingFromTop - textDimensions.y );
+
+	std::vector<Vertex_PCU> textVerts;
+	g_devConsoleFont->AddVertsForText2D( textVerts, textStartPos, textHeight, frameTimeString, Rgba8::MakeFromFloats( 0.2f, 0.2f, 0.5f, 1.0f ) );
+
+	g_theRenderer->BindShader( (Shader*)nullptr );
+	g_theRenderer->BindTexture( g_devConsoleFont->GetTexture() );
+	g_theRenderer->SetModelUBO( Mat44::IDENTITY );
+	g_theRenderer->DrawVertexArray( textVerts );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::EnableLightsForRendering() const
 {
 // 	for( unsigned int lightIndex = 0; lightIndex < MAX_LIGHTS; ++lightIndex )
 // 	{
 // 		g_theRenderer->EnableLight( lightIndex, m_animatedLights[lightIndex].light );
 // 	}
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::AddTestCubeToIndexVertexArray( std::vector<Vertex_PCUTBN>& vertexArray, std::vector<uint>& indexArray, AABB3 const& box, Rgba8 const& color )
-{
-// 	Vec3 boxDimensions = box.GetDimensions();
-// 	Vec3 boxAdjustedMaxes = Vec3( box.mins.x + boxDimensions.x, box.mins.y + boxDimensions.y, box.mins.z + boxDimensions.z );
-
-	Vec3 frontBottomLeft =	box.mins;
-	Vec3 frontBottomRight =	Vec3( box.maxes.x,	box.mins.y,		box.mins.z );
-	Vec3 frontTopLeft =		Vec3( box.mins.x,	box.mins.y,		box.maxes.z );
-	Vec3 frontTopRight =	Vec3( box.maxes.x,	box.mins.y,		box.maxes.z );
-
-	//looking At Back
-	Vec3 backBottomLeft =	Vec3( box.maxes.x,	box.maxes.y,	box.mins.z );
-	Vec3 backBottomRight =	Vec3( box.mins.x,	box.maxes.y,	box.mins.z );
-	Vec3 backTopLeft =		Vec3( box.maxes.x,	box.maxes.y,	box.maxes.z );
-	Vec3 backTopRight =		Vec3( box.mins.x,	box.maxes.y,	box.maxes.z );
-
-	Vec3 frontTangent = ( frontBottomRight - frontBottomLeft ).GetNormalize();
-	Vec3 frontBitangent = ( frontTopLeft - frontBottomLeft ).GetNormalize();
-	Vec3 frontNormal = CrossProduct3D( frontTangent, frontBitangent );
-
-	std::vector<Vertex_PCUTBN> boxVerticies = {
-		//Front
-		Vertex_PCUTBN( frontBottomLeft,		color,	frontTangent,	frontBitangent,		frontNormal,		Vec2( 0.f, 0.f ) ),
-		Vertex_PCUTBN( frontBottomRight,	color,	frontTangent,	frontBitangent,		frontNormal,		Vec2( 1.f, 0.f ) ),
-		Vertex_PCUTBN( frontTopLeft,		color,	frontTangent,	frontBitangent,		frontNormal,		Vec2( 0.f, 1.f ) ),
-		Vertex_PCUTBN( frontTopRight,		color,	frontTangent,	frontBitangent,		frontNormal,		Vec2( 1.f, 1.f ) ),
-
-		//Right
-		Vertex_PCUTBN( frontBottomRight,	color,	-frontNormal,	frontBitangent,		frontTangent,		Vec2( 0.f, 0.f ) ),
-		Vertex_PCUTBN( backBottomLeft,		color,	-frontNormal,	frontBitangent,		frontTangent,		Vec2( 1.f, 0.f ) ),
-		Vertex_PCUTBN( frontTopRight,		color,	-frontNormal,	frontBitangent,		frontTangent,		Vec2( 0.f, 1.f ) ),
-		Vertex_PCUTBN( backTopLeft,			color,	-frontNormal,	frontBitangent,		frontTangent,		Vec2( 1.f, 1.f ) ),
-																												 		    
-		//Back																									 		    
-		Vertex_PCUTBN( backBottomLeft,		color,	-frontTangent,	frontBitangent,		-frontNormal,		Vec2( 0.f, 0.f ) ),
-		Vertex_PCUTBN( backBottomRight,		color,	-frontTangent,	frontBitangent,		-frontNormal,		Vec2( 1.f, 0.f ) ),
-		Vertex_PCUTBN( backTopLeft,			color,	-frontTangent,	frontBitangent,		-frontNormal,		Vec2( 0.f, 1.f ) ),
-		Vertex_PCUTBN( backTopRight,		color,	-frontTangent,	frontBitangent,		-frontNormal,		Vec2( 1.f, 1.f ) ),
-																												 		    
-		//Left																									 		    
-		Vertex_PCUTBN( backBottomRight,		color,	frontNormal,	frontBitangent,		-frontTangent,		Vec2( 0.f, 0.f ) ),
-		Vertex_PCUTBN( frontBottomLeft,		color,	frontNormal,	frontBitangent,		-frontTangent,		Vec2( 1.f, 0.f ) ),
-		Vertex_PCUTBN( backTopRight,		color,	frontNormal,	frontBitangent,		-frontTangent,		Vec2( 0.f, 1.f ) ),
-		Vertex_PCUTBN( frontTopLeft,		color,	frontNormal,	frontBitangent,		-frontTangent,		Vec2( 1.f, 1.f ) ),
-																												 		    
-		//Top																									 		    
-		Vertex_PCUTBN( frontTopLeft,		color,	frontTangent,	-frontNormal,		frontBitangent,		Vec2( 0.f, 0.f ) ),
-		Vertex_PCUTBN( frontTopRight,		color,	frontTangent,	-frontNormal,		frontBitangent,		Vec2( 1.f, 0.f ) ),
-		Vertex_PCUTBN( backTopRight,		color,	frontTangent,	-frontNormal,		frontBitangent,		Vec2( 0.f, 1.f ) ),
-		Vertex_PCUTBN( backTopLeft, 		color,	frontTangent,	-frontNormal,		frontBitangent,		Vec2( 1.f, 1.f ) ),
-
-		//Bottom
-		Vertex_PCUTBN( backBottomRight,		color,	frontTangent,	frontNormal,		-frontBitangent,	Vec2( 0.f, 0.f ) ),
-		Vertex_PCUTBN( backBottomLeft,		color,	frontTangent,	frontNormal,		-frontBitangent,	Vec2( 1.f, 0.f ) ),
-		Vertex_PCUTBN( frontBottomLeft,		color,	frontTangent,	frontNormal,		-frontBitangent,	Vec2( 0.f, 1.f ) ),
-		Vertex_PCUTBN( frontBottomRight,	color,	frontTangent,	frontNormal,		-frontBitangent,	Vec2( 1.f, 1.f ) ),
-	};
 }
 
 
@@ -349,9 +372,9 @@ void Game::Update()
 {
 	float deltaSeconds = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
 
+	m_world->Update();
 	if( !g_theConsole->IsOpen() )
 	{
-		m_world->Update();
 		UpdateFromInput( deltaSeconds );
 	}
 }
@@ -360,8 +383,12 @@ void Game::Update()
 //---------------------------------------------------------------------------------------------------------
 void Game::LoadTextures()
 {
-	g_devConsoleFont = g_theRenderer->CreateOrGetBitmapFontFromFile("Data/Fonts/SquirrelFixedFont");
-	m_test = g_theRenderer->CreateOrGetTextureFromFile("Data/Images/Test_StbiFlippedAndOpenGL.png");
+	g_devConsoleFont = g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
+	m_test = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
+	m_HUDBase = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Hud_base.png" );
+
+	Texture* modelSpriteSheet = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/ViewModelsSpriteSheet_8x8.png" );
+	m_viewModelsSpriteSheet = new SpriteSheet( *modelSpriteSheet, IntVec2( 8, 8 ) );
 }
 
 
@@ -375,7 +402,7 @@ void Game::LoadShaders()
 //---------------------------------------------------------------------------------------------------------
 void Game::LoadAudio()
 {
-	m_testSound = g_theAudio->CreateOrGetSound("Data/Audio/TestSound.mp3");
+	m_spawnSound = g_theAudio->CreateOrGetSound( "Data/Audio/Teleporter.wav" );
 }
 
 //---------------------------------------------------------------------------------------------------------
@@ -472,10 +499,25 @@ STATIC void Game::LoseFocus( EventArgs* args )
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::PlayTestSound()
+void Game::PlaySpawnSound()
 {
-	float volume	= g_RNG->RollRandomFloatInRange(  0.5f,  1.0f );
-	float balance	= g_RNG->RollRandomFloatInRange( -1.0f,  1.0f );
-	float speed		= g_RNG->RollRandomFloatInRange(  0.5f,  2.0f );
-	g_theAudio->PlaySound( m_testSound, false, volume, balance, speed );
+	float volume	= 0.75f;
+	float balance	= 0.f;
+	float speed		= 1.f;
+	g_theAudio->PlaySound( m_spawnSound, false, volume, balance, speed );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::set_current_map( EventArgs* args )
+{
+	std::string mapNameToLoad = args->GetValue( "map", "MISSING" );
+	if( mapNameToLoad != "MISSING" )
+	{
+		m_world->SetCurrentMapByName( mapNameToLoad );
+	}
+	else
+	{
+		m_world->PrintLoadedMapsToDevConsole();
+	}
 }

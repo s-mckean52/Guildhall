@@ -32,6 +32,8 @@ public:
 	void UpdateCursorBlinkTime( float deltaSeconds );
 
 	void PrintString( const Rgba8& textColor, const std::string& devConsolePrintString );
+	void PrintString( const Rgba8& textColor, const char* messageFormat, ... );
+	void ErrorString( const char* errorMessageFormat, ... );
 
 	void Render( RenderContext& renderer, Camera& camera, float lineHeight, BitmapFont* font ) const;
 	void RenderBackground( RenderContext& renderer, const Camera& camera ) const;

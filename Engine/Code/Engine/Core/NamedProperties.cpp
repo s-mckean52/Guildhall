@@ -1,5 +1,6 @@
 #include "Engine/Core/NamedProperties.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Engine/Core/DevConsole.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -23,7 +24,13 @@ void NamedProperties::PopulateFromString( std::string arguments )
 		std::string keyValueString = splitString[argIndex];
 		Strings keyValuePair = SplitStringOnDelimiter( keyValueString, '=' );
 
-		GUARANTEE_OR_DIE(keyValuePair.size() == 2, "Named populate from string format not 'key=value'");
+		//GUARANTEE_OR_DIE( keyValuePair.size() == 2, "Named Properties populate from string format not 'key=value'" );
+		if( keyValuePair.size() != 2 )
+		{
+			g_theConsole->ErrorString( "Named Properties must be read in the format 'key=value'" );
+			return;
+		}
+
 
 		std::string keyName = keyValuePair[0];
 		std::string keyValue = keyValuePair[1];

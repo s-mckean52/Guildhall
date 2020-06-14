@@ -14,9 +14,11 @@ class Entity;
 class XboxController;
 class Shader;
 class GPUMesh;
+class GPUMesh;
 class Clock;
 class World;
 class NamedProperties;
+class SpriteSheet;
 struct Vertex_PCUTBN;
 struct AABB3;
 
@@ -58,20 +60,25 @@ public:
 	void UpdateCameraProjection( Camera* camera );
 	void UpdateCameraView( Camera* camera, CameraViewOrientation viewOrientation = RIGHT_HAND_X_FORWARD_Y_LEFT );
 	void RenderWorld() const;
-	void RenderUI() const;
 	void RenderWorldDebug() const;
+	void RenderUI() const;
+	void RenderHUD() const;
 	void RenderUIDebug() const;
+	void RenderFPSCounter() const;
 	void EnableLightsForRendering() const;
-	
-	//Other
-	void AddTestCubeToIndexVertexArray( std::vector<Vertex_PCUTBN>& vertexArray, std::vector<uint>& indexArray, AABB3 const& box, Rgba8 const& color );
 
+	//Other
+	Camera* GetPlayerCamera() const		{ return m_worldCamera; }
+	bool	IsQuitting() const			{ return m_isQuitting; }
+	void	PlaySpawnSound();
+	
 	//Static
 	static void GainFocus( EventArgs* args );
 	static void LoseFocus( EventArgs* args );
 
-	bool IsQuitting() const { return m_isQuitting; }
-	void PlayTestSound();
+
+public:
+	void set_current_map( EventArgs* args );
 
 private:
 	World* m_world = nullptr;
@@ -83,10 +90,11 @@ private:
 
 	float m_distanceFromCamera = -1.f;;
 
-
-	Texture*	m_test			= nullptr;
-	Shader*		m_testShader	= nullptr;
-	SoundID		m_testSound;
+	SpriteSheet*	m_viewModelsSpriteSheet	= nullptr;
+	Texture*		m_test					= nullptr;
+	Texture*		m_HUDBase				= nullptr;
+	Shader*			m_testShader			= nullptr;
+	SoundID			m_spawnSound;
 
 	float m_specularFactor = 0.f;
 	float m_specularPower = 32.f;

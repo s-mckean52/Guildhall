@@ -16,6 +16,7 @@ public:
 	const Texture&				GetTexture() const						{ return m_texture; }
 	int							GetNumSprite() const					{ return static_cast<int>( m_spriteDefs.size() ); }
 	const SpriteDefinition&		GetSpriteDefinition( int index ) const;
+	const SpriteDefinition&		GetSpriteDefinitionByPosition( IntVec2 spritePosition );
 	void						GetSpriteUVs( Vec2& out_uvAtMins, Vec2& out_uvAtMaxes, int spriteIndex ) const;
 	void						GetSpriteUVs( Vec2& out_uvAtMins, Vec2& out_uvAtMaxes, IntVec2 spritePosition ) const;
 	int							GetSpriteIndexFromPosition( IntVec2 spritePosition ) const;

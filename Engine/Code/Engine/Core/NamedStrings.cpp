@@ -29,7 +29,11 @@ void NamedStrings::PopulateFromString( std::string const& arguments )
 		std::string keyValueString = splitString[ argIndex ];
 		Strings keyValuePair = SplitStringOnDelimiter( keyValueString, '=' );
 
-		GUARANTEE_OR_DIE( keyValuePair.size() == 2, "NamedStrings populate from string format not 'key=value'" );
+		//GUARANTEE_OR_DIE( keyValuePair.size() == 2, "NamedStrings populate from string format not 'key=value'" );
+		if( keyValuePair.size() != 2 )
+		{
+			return;
+		}
 
 		std::string keyName = keyValuePair[ 0 ];
 		std::string keyValue = keyValuePair[ 1 ];

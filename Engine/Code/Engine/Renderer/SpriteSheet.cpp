@@ -33,6 +33,14 @@ const SpriteDefinition& SpriteSheet::GetSpriteDefinition( int index ) const
 
 
 //---------------------------------------------------------------------------------------------------------
+const SpriteDefinition& SpriteSheet::GetSpriteDefinitionByPosition( IntVec2 spritePosition )
+{
+	int spriteIndex = GetSpriteIndexFromPosition( spritePosition );
+	return GetSpriteDefinition( spriteIndex );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void SpriteSheet::GetSpriteUVs( Vec2& out_uvAtMins, Vec2& out_uvAtMaxes, int spriteIndex ) const
 {
 	SpriteDefinition currentSpriteDefinition = m_spriteDefs[ spriteIndex ];

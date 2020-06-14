@@ -1,7 +1,5 @@
 ﻿<GameConfig
-	
-	startLevel="WizardTower3"
+	startMap="TestRoom"
 	windowAspect="1.777"
 	isFullscreen="false"
-	
 />

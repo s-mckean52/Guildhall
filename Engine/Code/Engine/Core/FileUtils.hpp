@@ -1,4 +1,5 @@
 #pragma once
+#include "Engine/Core/StringUtils.hpp"
 #include <string>
 #include <vector>
 
@@ -17,8 +18,10 @@ struct last_indicies_used_t
 
 //---------------------------------------------------------------------------------------------------------
 //Generic File Methods
-void* FileReadToNewBuffer( std::string const& filepath, size_t* out_size );
-char const* FileReadToString( std::string const& filepath );
+void*		FileReadToNewBuffer( std::string const& filepath, size_t* out_size );
+char const*	FileReadToString( std::string const& filepath );
+Strings		GetFileNamesInFolder( std::string const& folderpath, const char* filePattern );
+std::string	GetFileNameWithoutExtension( std::string const& filepath );
 
 //---------------------------------------------------------------------------------------------------------
 //.obj File Methods

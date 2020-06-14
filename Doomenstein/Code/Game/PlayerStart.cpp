@@ -1,34 +1,25 @@
-#include "Game/Map.hpp"
-#include "Game/Game.hpp"
-#include "Game/World.hpp"
 #include "Game/PlayerStart.hpp"
 #include "Game/GameCommon.hpp"
-#include "Engine/Renderer/GPUMesh.hpp"
 #include "Engine/Renderer/Camera.hpp"
 
-
 //---------------------------------------------------------------------------------------------------------
-Map::Map( Game* theGame, World* theWorld )
+PlayerStart::PlayerStart( Game* theGame, World* theWorld, Map* theMap, Vec2 const& position, float yaw )
+	: Entity( theGame, theWorld, theMap )
 {
-	m_game = theGame;
-	m_world = theWorld;
+	m_position = position;
+	m_yaw = yaw;
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-Map::~Map()
+PlayerStart::~PlayerStart()
 {
-	delete m_mapMesh;
-	m_mapMesh = nullptr;
-
-	delete m_playerStart;
-	m_playerStart = nullptr;
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Map::SpawnPlayer( Camera* playerCamera )
+void PlayerStart::StartPlayer( Camera* playerCamera )
 {
-	m_playerStart->StartPlayer( playerCamera );
-	g_theGame->PlaySpawnSound();
+	playerCamera->SetPosition( Vec3( m_position, PLAYER_HEIGHT ) );
+	playerCamera->SetPitchYawRollRotationDegrees( 0.f, m_yaw, 0.f );
 }
