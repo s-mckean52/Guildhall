@@ -56,7 +56,9 @@ constexpr float PLAYER_DEATH_SCREEN_SHAKE_INTENSITY = 1.f;
 
 constexpr float DEV_CONSOLE_LINE_HEIGHT				= 0.15f;
 
-
+constexpr int MAX_ABILITY_COUNT = 4;
+constexpr float ABILITY_UI_WIDTH = 1.f;
+constexpr float ABILITY_UI_HEIGHT = 1.f;
 
 // Game Specific Colors
 const Rgba8 RGBA8_BALI_HAI				( 132, 156, 169 ); //Teal Grey

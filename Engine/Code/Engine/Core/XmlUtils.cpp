@@ -205,3 +205,16 @@ Vec3 ParseXmlAttribute( const XmlElement& element, const char* attributeName, co
 	}
 	return value;
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+double ParseXmlAttribute( const XmlElement& element, const char* attributeName, double defaultValue )
+{
+	const char* attributeValueText = element.Attribute( attributeName );
+	double value = defaultValue;
+	if( attributeValueText )
+	{
+		value = atof( attributeValueText );
+	}
+	return value;
+}

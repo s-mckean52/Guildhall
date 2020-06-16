@@ -14,6 +14,9 @@
     <Filter Include="Data\Shaders">
       <UniqueIdentifier>{5a50d78a-11aa-415a-8cfc-a7c3db6b57b0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Framework\Abilities">
+      <UniqueIdentifier>{1c7db57b-fcfa-4d14-b750-e65a322ff757}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\..\Run\Data\GameConfig.xml">
@@ -36,13 +39,25 @@
     <ClCompile Include="Entity.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
-    <ClCompile Include="PlayerEntity.cpp">
+    <ClCompile Include="Actor.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
     <ClCompile Include="Ability.cpp">
+      <Filter>Framework\Abilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Blink.cpp">
+      <Filter>Framework\Abilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Buff.cpp">
+      <Filter>Framework\Abilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Enemy.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
-    <ClCompile Include="Ability_Blink.cpp">
+    <ClCompile Include="Projectile.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
   </ItemGroup>
@@ -62,13 +77,25 @@
     <ClInclude Include="Entity.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
-    <ClInclude Include="PlayerEntity.hpp">
+    <ClInclude Include="Actor.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="Ability.hpp">
+      <Filter>Framework\Abilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Blink.hpp">
+      <Filter>Framework\Abilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Buff.hpp">
+      <Filter>Framework\Abilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Enemy.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
-    <ClInclude Include="Ability_Blink.hpp">
+    <ClInclude Include="Projectile.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>

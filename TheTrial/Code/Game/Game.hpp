@@ -15,7 +15,8 @@ class XboxController;
 class Shader;
 class GPUMesh;
 class Clock;
-class PlayerEntity;
+class Player;
+class Enemy;
 class NamedProperties;
 struct Vertex_PCUTBN;
 struct AABB3;
@@ -54,18 +55,22 @@ public:
 	//Accessors
 	Vec2	GetCursorPosition() const	{ return m_cursorPosition; }
 	Clock*	GetGameClock() const		{ return m_gameClock; }
+	bool	IsQuitting() const			{ return m_isQuitting; }
+
+	///Stuff
+	void AddEntityToList( Entity* entityToAdd );
 
 	//Static
 	static void GainFocus( EventArgs* args );
 	static void LoseFocus( EventArgs* args );
 
-	bool IsQuitting() const { return m_isQuitting; }
 
 private:
 	Clock* m_gameClock = nullptr;
 
 	Vec2 m_cursorPosition;
-	PlayerEntity* m_player;
+	Player* m_player;
+	Enemy* m_hoveredEnemy = nullptr;
 
 	Texture*	m_test			= nullptr;
 	Shader*		m_testShader	= nullptr;
@@ -79,4 +84,6 @@ private:
 	Camera*	m_worldCamera = nullptr;
 	Camera* m_UICamera = nullptr;
 	bool	m_isQuitting = false;
+
+	std::vector<Entity*> m_entities;
 };

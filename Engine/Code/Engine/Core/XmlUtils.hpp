@@ -22,6 +22,7 @@ int ParseXmlAttribute( const XmlElement& element, const char* attributeName, int
 char ParseXmlAttribute( const XmlElement& element, const char* attributeName, char defaultValue );
 bool ParseXmlAttribute( const XmlElement& element, const char* attributeName, bool defaultValue );
 float ParseXmlAttribute( const XmlElement& element, const char* attributeName, float defaultValue );
+double ParseXmlAttribute( const XmlElement& element, const char* attributeName, double defaultValue );
 Rgba8 ParseXmlAttribute( const XmlElement& element, const char* attributeName, const Rgba8& defaultValue );
 Vec2 ParseXmlAttribute( const XmlElement& element, const char* attributeName, const Vec2& defaultValue );
 Vec3 ParseXmlAttribute( const XmlElement& element, const char* attributeName, const Vec3& defaultValue );

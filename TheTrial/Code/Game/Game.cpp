@@ -1,6 +1,8 @@
 #include "Game/Game.hpp"
 #include "Game/GameCommon.hpp"
-#include "Game/PlayerEntity.hpp"
+#include "Game/Player.hpp"
+#include "Game/Enemy.hpp"
+#include "Game/Ability.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -79,7 +81,14 @@ void Game::StartUp()
 	m_testShader		= g_theRenderer->GetOrCreateShader( "Data/Shaders/WorldOpaque.hlsl" );
 	m_testSound			= g_theAudio->CreateOrGetSound( "Data/Audio/TestSound.mp3" );
 
-	m_player = new PlayerEntity( this );
+	Ability::CreateAbilitiesFromXML( "Data/Definitions/AbilityDefinitions.xml" );
+
+	m_player = new Player( this );
+	m_entities.push_back( m_player );
+	m_entities.push_back( new Enemy( this, Vec2( 2.f, 2.f ) ) );
+	m_entities.push_back( new Enemy( this, Vec2( -2.f, 2.f ) ) );
+	m_entities.push_back( new Enemy( this, Vec2( -2.f, -2.f ) ) );
+	m_entities.push_back( new Enemy( this, Vec2( 2.f, -2.f ) ) );
 }
 
 
@@ -133,20 +142,36 @@ void Game::Render()
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderWorld() const
 {
-	m_player->Render();
+	for( int i = 0; i < m_entities.size(); ++i )
+	{
+		m_entities[i]->Render();
+	}
 
 	g_theRenderer->BindTexture( nullptr );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 
-	DrawCircleAtPoint( Vec2::ZERO, 1.f, Rgba8::GREEN, 0.1f );
-	DrawCircleAtPoint( m_cursorPosition, 0.1f, Rgba8::CYAN, 0.1f );
+	//DrawCircleAtPoint( Vec2::ZERO, 1.f, Rgba8::GREEN, 0.1f );
+	Rgba8 cursorColor = Rgba8::CYAN;
+	if( m_hoveredEnemy != nullptr )
+	{
+		cursorColor = Rgba8::RED;
+	}
+
+	DrawCircleAtPoint( m_cursorPosition, 0.1f, cursorColor, 0.1f );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderUI() const
 {
-	m_player->RenderAbilities();
+	Vec3 uiBottomLeft = m_UICamera->GetOrthoBottomLeft();
+	Vec3 uiTopRight = m_UICamera->GetOrthoTopRight();
+	AABB2 uiCameraRect = AABB2( uiBottomLeft.x, uiBottomLeft.y, uiTopRight.x, uiTopRight.y );
+
+	float distanceBetweenAbilities = uiCameraRect.GetDimensions().x * 0.05f;
+	Vec2 abilityUIStartUV = Vec2( 0.4f, 0.f );
+	Vec2 abilityUIStartPos = uiCameraRect.GetPointAtUV( abilityUIStartUV );
+	m_player->RenderAbilities( abilityUIStartPos, distanceBetweenAbilities );
 
 	const float textHeight = 0.15f;
 	const float paddingFromLeft = 0.015f;
@@ -154,18 +179,21 @@ void Game::RenderUI() const
 
 	std::vector<ColorString> strings;
 	std::vector<Vertex_PCU> textVerts;
+	
+	int		attackDamage			= m_player->GetAttackDamage();
+	int		critDamage				= m_player->GetCritDamage();
+	float	critChancePercent		= m_player->GetCritChanceFraction() * 100.f;
+	float	critMultiplierPercent	= m_player->GetCritMultiplier() * 100.f;
+	float	movementSpeed			= m_player->GetMoveSpeed();
+	float	attackSpeed				= m_player->GetAttackSpeed();
 
-	Transform cameraTransform = m_worldCamera->GetTransform();
-	Vec3 cameraPosition = cameraTransform.GetPosition();
-	Vec3 cameraRotationPitchYawRollDegrees = cameraTransform.GetRotationPitchYawRollDegrees();
-	Mat44 cameraView = m_worldCamera->GetViewMatrix();
-	MatrixInvertOrthoNormal( cameraView );
-
-// 	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "Camera - Rotation (Pitch, Yaw, Roll): (%.2f, %.2f, %.2f)", cameraRotationPitchYawRollDegrees.x, cameraRotationPitchYawRollDegrees.y, cameraRotationPitchYawRollDegrees.z ) ) );
-// 	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "       - Position (x, y, z):          (%.2f, %.2f, %.2f)", cameraPosition.x, cameraPosition.y, cameraPosition.z ) ) );
-// 	strings.push_back( ColorString( Rgba8::RED,		Stringf( "iBasis (forward, +x world-east when identity): (%.2f, %.2f, %.2f)", cameraView.Ix, cameraView.Iy, cameraView.Iz ) ) );
-// 	strings.push_back( ColorString( Rgba8::GREEN,	Stringf( "jBasis (left, +y world-north when identity  ): (%.2f, %.2f, %.2f)", cameraView.Jx, cameraView.Jy, cameraView.Jz ) ) );
-// 	strings.push_back( ColorString( Rgba8::BLUE,	Stringf( "kBasis (up, +z world-up when identity       ): (%.2f, %.2f, %.2f)", cameraView.Kx, cameraView.Ky, cameraView.Kz ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Player Stats:"													) ) );			
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Attack Damage:   %i",					attackDamage			) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Crit Damage:     %i",					critDamage				) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Crit Chance:     %.f%%",				critChancePercent		) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Crit Multiplier: %.f%%",				critMultiplierPercent	) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Movement Speed:  %.2f units/sec",		movementSpeed			) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Attack Speed:    %.2f attacks/sec",		attackSpeed				) ) );
 
 	Vec2 cameraTopLeft = Vec2( m_UICamera->GetOrthoBottomLeft().x, m_UICamera->GetOrthoTopRight().y );
 	Vec2 textStartPos = cameraTopLeft + Vec2( paddingFromLeft, -paddingFromTop - textHeight );
@@ -176,10 +204,10 @@ void Game::RenderUI() const
 		textStartPos -= Vec2( 0.f, textHeight + paddingFromTop );
 	}
 
-// 	g_theRenderer->BindShader( (Shader*)nullptr );
-// 	g_theRenderer->BindTexture( g_devConsoleFont->GetTexture() );
-// 	g_theRenderer->SetModelUBO( Mat44::IDENTITY );
-// 	g_theRenderer->DrawVertexArray( textVerts );
+	g_theRenderer->BindShader( (Shader*)nullptr );
+	g_theRenderer->BindTexture( g_devConsoleFont->GetTexture() );
+	g_theRenderer->SetModelUBO( Mat44::IDENTITY );
+	g_theRenderer->DrawVertexArray( textVerts );
 }
 
 
@@ -245,6 +273,10 @@ void Game::Update()
 	{
 		UpdateFromInput( deltaSeconds );
 	}
+	for( int i = 0; i < m_entities.size(); ++i )
+	{
+		m_entities[i]->Update( deltaSeconds );
+	}
 }
 
 
@@ -258,8 +290,6 @@ void Game::UpdateFromInput( float deltaSeconds )
 	{
 		m_isQuitting = true;
 	}
-
-	m_player->Update( deltaSeconds );
 }
 
 
@@ -274,20 +304,20 @@ void Game::MoveWorldCamera( float deltaSeconds )
 		moveSpeed *= 2.f;
 	}
 
-	if( g_theInput->IsKeyPressed( 'W' ) )
+	if( g_theInput->IsKeyPressed( KEY_CODE_UP_ARROW ) )
 	{
 		upMoveAmount += moveSpeed;
 	}	
-	if( g_theInput->IsKeyPressed( 'S' ) )
+	if( g_theInput->IsKeyPressed( KEY_CODE_DOWN_ARROW ) )
 	{
 		upMoveAmount -= moveSpeed;
 	}	
 
-	if( g_theInput->IsKeyPressed( 'A' ) )
+	if( g_theInput->IsKeyPressed( KEY_CODE_LEFT_ARROW ) )
 	{
 		rightMoveAmount -= moveSpeed;
 	}	
-	if( g_theInput->IsKeyPressed( 'D' ) )
+	if( g_theInput->IsKeyPressed( KEY_CODE_RIGHT_ARROW ) )
 	{
 		rightMoveAmount += moveSpeed;
 	}
@@ -304,6 +334,35 @@ void Game::UpdateCursorPosition( Camera const& camera )
 	Vec2 mouseNormalizedPos = g_theInput->GetMouseNormalizedClientPosition();
 	Vec3 newMousePos = camera.ClientToWorldPosition( mouseNormalizedPos );
 	m_cursorPosition = Vec2( newMousePos.x, newMousePos.y );
+
+	m_hoveredEnemy = nullptr;
+	for( int i = 0; i < m_entities.size(); ++i )
+	{
+		Enemy* enemy = dynamic_cast<Enemy*>( m_entities[i] );
+		if( enemy != nullptr && !enemy->IsDead() && DoDiscsOverlap( m_cursorPosition, 0.1f, enemy->GetCurrentPosition(), enemy->GetPhysicsRadius() ) )
+		{
+			m_hoveredEnemy = enemy;
+			break;
+		}
+	}
+
+	if( m_hoveredEnemy != nullptr && g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_RIGHT ) )
+	{
+		m_player->AttackEnemy( m_hoveredEnemy );
+	}
+	else if( g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_RIGHT ) )
+	{
+		m_player->SetIsMoving( true );
+		m_player->SetMovePosition( m_cursorPosition );
+	}
+
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddEntityToList( Entity* entityToAdd )
+{
+	m_entities.push_back( entityToAdd );
 }
 
 

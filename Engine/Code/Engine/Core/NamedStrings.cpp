@@ -205,3 +205,17 @@ Vec3 NamedStrings::GetValue( const std::string& keyName, const Vec3& defaultValu
 	}
 	return value;
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+char NamedStrings::GetValue( const std::string& keyName, char defaultValue ) const
+{
+	char value = defaultValue;
+	MapConstIterator mapIterator = m_keyValuePairs.find( keyName );
+	if( mapIterator != m_keyValuePairs.cend() )
+	{
+		std::string valueText = mapIterator->second;
+		SetFromText( valueText.c_str(), value );
+	}
+	return value;
+}

@@ -21,6 +21,7 @@ public:
 	int				GetValue( const std::string& keyName, int defaultValue ) const;
 	float			GetValue( const std::string& keyName, float defaultValue ) const;
 	double			GetValue( const std::string& keyName, double defaultValue ) const;
+	char			GetValue( const std::string& keyName, char defaultValue ) const;
 	std::string		GetValue( const std::string& keyName, std::string defaultValue ) const;
 	std::string		GetValue( const std::string& keyName, const char* defaultValue ) const;
 	Rgba8			GetValue( const std::string& keyName, const Rgba8& defaultValue ) const;
