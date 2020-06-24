@@ -58,8 +58,6 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
-	MapMaterial::CreateMapMaterialsFromXML( "Data/Definitions/MapMaterialTypes.xml" );
-	MapRegion::CreateMapRegionsFromXML( "Data/Definitions/MapRegionTypes.xml" );
 
 	g_RNG = new RandomNumberGenerator();
 
@@ -84,10 +82,13 @@ void Game::StartUp()
 	m_UICamera = new Camera( g_theRenderer );
 	m_UICamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
+
+	//Loading
 	LoadTextures();
 	LoadShaders();
 	LoadAudio();
-
+	MapMaterial::CreateMapMaterialsFromXML( "Data/Definitions/MapMaterialTypes.xml" );
+	MapRegion::CreateMapRegionsFromXML( "Data/Definitions/MapRegionTypes.xml" );
 	m_world = new World( this );
 }
 
@@ -518,6 +519,7 @@ void Game::set_current_map( EventArgs* args )
 	}
 	else
 	{
+		g_theConsole->PrintString( DEV_CONSOLE_HELP_COLOR, "Correct usage: Map map=<mapToLoad>" );
 		m_world->PrintLoadedMapsToDevConsole();
 	}
 }

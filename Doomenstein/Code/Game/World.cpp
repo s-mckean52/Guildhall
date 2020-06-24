@@ -12,15 +12,21 @@
 World::World( Game* theGame )
 {
 	m_game = theGame;
+
 	std::string folderPath = "Data/Maps";
 	g_theConsole->PrintString( DEV_CONSOLE_INFO_COLOR, Stringf( "Loading maps form %s...", folderPath.c_str() ) );
 
 	Strings mapPaths = GetFileNamesInFolder( folderPath, "*.xml" );
+	if( mapPaths.size() == 0 )
+	{
+		g_theConsole->ErrorString( "No maps found in the folder %s with extension 'xml'", folderPath.c_str() );
+	}
 	for( int mapPathIndex = 0; mapPathIndex < mapPaths.size(); ++mapPathIndex )
 	{
 		std::string mapFile = mapPaths[ mapPathIndex ];
 		std::string mapPathToLoad = folderPath + "/" + mapFile;
 		g_theConsole->PrintString( DEV_CONSOLE_INFO_COLOR, Stringf( "  Loading %s...", mapFile.c_str() ) );
+
 		CreateMapFromFilepath( mapPathToLoad.c_str() );
 	}
 
@@ -94,33 +100,39 @@ void World::PrintLoadedMapsToDevConsole() const
 //---------------------------------------------------------------------------------------------------------
 void World::CreateMapFromFilepath( char const* filepath )
 {
+	const std::string mapFileRootNodeName = "MapDefinition";
+
 	XmlDocument mapFile = new XmlDocument();
 	mapFile.LoadFile( filepath );
 	if( mapFile.ErrorID() != tinyxml2::XML_SUCCESS )
 	{
 		g_theConsole->ErrorString( "Failed to load %s as XML",	filepath );
-		g_theConsole->ErrorString( "  Error: %s",				mapFile.ErrorName() );
+		g_theConsole->ErrorString( "  Error: %s",				mapFile.ErrorName());
 		g_theConsole->ErrorString( "  Error Line #%i",			mapFile.ErrorLineNum() );
 		return;
 	}
 
 	XmlElement const* rootElement = mapFile.RootElement();
-	std::string mapType = ParseXmlAttribute( *rootElement, "type", "MISSING" );
-
-	Map* newMap = nullptr;
-	if( mapType == "TileMap" )
+	if( !IsStringEqual( rootElement->Name(), mapFileRootNodeName.c_str() ) )
 	{
-		newMap = new TileMap( m_game, this, *rootElement );
+		g_theConsole->ErrorString( "Map file root node name was %s - should be %s", rootElement->Name(), mapFileRootNodeName.c_str() );
+		return;
 	}
+
+	std::string mapType = ParseXmlAttribute( *rootElement, "type", "MISSING" );
+	//TODO: Separate out into function
+	Map* newMap = nullptr;
+	if( mapType == "TileMap" ) { newMap = new TileMap( m_game, this, *rootElement ); }
 	else
 	{
-		g_theConsole->ErrorString( "Tried to load invalid map type %s from %s", mapType.c_str(), filepath );
+		g_theConsole->ErrorString(							"Tried to load unsupported map type %s", mapType.c_str(), filepath );
+		g_theConsole->PrintString( DEV_CONSOLE_INFO_COLOR,	"Supported Map Types:" );
+		g_theConsole->PrintString( DEV_CONSOLE_INFO_COLOR,	"  TileMap" );
 		return;
 	}
 
 	std::string mapName = GetFileNameWithoutExtension( filepath );
 	m_namedMaps.insert( { mapName, newMap } );
-	//g_theConsole->PrintString( DEV_CONSOLE_INFO_COLOR, Stringf( "Map %s Was Generated", mapName.c_str() ) );
 }
 
 

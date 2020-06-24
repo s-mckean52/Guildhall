@@ -20,9 +20,11 @@ public:
 public:
 	static void CreateMapRegionsFromXML( char const* filepath );
 	static MapRegion* GetRegionByName( std::string regionTypeName );
+	static MapRegion* GetDefaultRegion();
 
 public:
-	static std::map<std::string, MapRegion*> s_mapRegions;
+	static std::string							s_defaultMapRegionName;
+	static std::map<std::string, MapRegion*>	s_mapRegions;
 
 private:
 	std::string		m_name				= "";

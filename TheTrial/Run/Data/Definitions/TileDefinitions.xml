@@ -1,0 +1,87 @@
+<TileDefinitions default="TestMaterial">
+
+	<SpriteSheet name="TestTerrain" layout="8,8">
+		<Diffuse image="Data/Images/Terrain_8x8.png"/>
+	</SpriteSheet>
+
+  <SpriteSheet name="RPGTerrain" layout="12,43">
+    <Diffuse image="Data/Images/RPG_Tileset_12x43.png"/>
+  </SpriteSheet>
+
+	<!-- ToDo: we'll add multiple terrain sprite sheet sets here later -->
+
+	<TileDefinition
+		name="TestMaterial"
+		sheet="TestTerrain"
+		spriteCoords="0,0"
+    texelColorForSet="255,255,255,0"
+    tint="255,255,255"
+    isSolid="true"
+		/>
+
+  <TileDefinition
+    name="Water"
+    sheet="RPGTerrain"
+    spriteCoords="6,12"
+    texelColorForSet="0,0,255"
+    tint="255,255,255"
+    isSolid="true"
+		/>
+  
+  <TileDefinition
+    name="Wall"
+    sheet="RPGTerrain"
+    spriteCoords="6,16"
+    texelColorForSet="0,0,0"
+    tint="255,255,255"
+    isSolid="true"
+		/>
+  
+  <TileDefinition
+    name="HighGround"
+    sheet="RPGTerrain"
+    spriteCoords="7,2"
+    texelColorForSet="255,255,0"
+    tint="255,255,255"
+    isSolid="false"
+		/>
+  
+  <TileDefinition
+    name="HeightWall"
+    sheet="RPGTerrain"
+    spriteCoords="6,25"
+    texelColorForSet="160,65,12"
+    tint="255,255,255"
+    isSolid="true"
+		/>
+  
+  <TileDefinition
+    name="Grass"
+    sheet="RPGTerrain"
+    spriteCoords="10,2"
+    texelColorForSet="0,255,0"
+    tint="255,255,255"
+    isSolid="false"
+		/>
+  
+  <TileDefinition
+    name="Bridge"
+    sheet="RPGTerrain"
+    spriteCoords="11,31"
+    texelColorForSet="255,0,255"
+    tint="255,255,255"
+    isSolid="false"
+		/>
+  
+  <TileDefinition
+    name="Plain"
+    sheet="RPGTerrain"
+    spriteCoords="1,4"
+    texelColorForSet="255,245,104"
+    tint="255,255,255"
+    isSolid="false"
+		/>
+
+</TileDefinitions>
+
+

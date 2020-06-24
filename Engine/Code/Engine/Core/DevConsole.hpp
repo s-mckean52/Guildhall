@@ -58,6 +58,7 @@ public:
 	bool HandleBackspace();
 	bool HandleDelete();
 	void SubmitCommand();
+	void ScrollConsoleOutput( float scrollAmount );
 	void ResetInput();
 
 	void HandleCut();
@@ -73,6 +74,7 @@ public:
 private:
 	Clock* m_clock = nullptr;
 
+	int m_lastLineToShow = 0;
 	int m_cursorPosition = 0;
 	int m_selectionOffset = 0;
 

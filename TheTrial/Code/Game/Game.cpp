@@ -3,6 +3,8 @@
 #include "Game/Player.hpp"
 #include "Game/Enemy.hpp"
 #include "Game/Ability.hpp"
+#include "Game/World.hpp"
+#include "Game/TileDefinition.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -81,14 +83,17 @@ void Game::StartUp()
 	m_testShader		= g_theRenderer->GetOrCreateShader( "Data/Shaders/WorldOpaque.hlsl" );
 	m_testSound			= g_theAudio->CreateOrGetSound( "Data/Audio/TestSound.mp3" );
 
+	TileDefinition::InitializeTileDefinitions();
 	Ability::CreateAbilitiesFromXML( "Data/Definitions/AbilityDefinitions.xml" );
 
 	m_player = new Player( this );
 	m_entities.push_back( m_player );
-	m_entities.push_back( new Enemy( this, Vec2( 2.f, 2.f ) ) );
-	m_entities.push_back( new Enemy( this, Vec2( -2.f, 2.f ) ) );
-	m_entities.push_back( new Enemy( this, Vec2( -2.f, -2.f ) ) );
-	m_entities.push_back( new Enemy( this, Vec2( 2.f, -2.f ) ) );
+// 	m_entities.push_back( new Enemy( this, Vec2( 2.f, 2.f ) ) );
+// 	m_entities.push_back( new Enemy( this, Vec2( -2.f, 2.f ) ) );
+// 	m_entities.push_back( new Enemy( this, Vec2( -2.f, -2.f ) ) );
+// 	m_entities.push_back( new Enemy( this, Vec2( 2.f, -2.f ) ) );
+
+	m_world = new World( this );
 }
 
 
@@ -142,6 +147,8 @@ void Game::Render()
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderWorld() const
 {
+	m_world->Render();
+
 	for( int i = 0; i < m_entities.size(); ++i )
 	{
 		m_entities[i]->Render();
@@ -173,41 +180,45 @@ void Game::RenderUI() const
 	Vec2 abilityUIStartPos = uiCameraRect.GetPointAtUV( abilityUIStartUV );
 	m_player->RenderAbilities( abilityUIStartPos, distanceBetweenAbilities );
 
-	const float textHeight = 0.15f;
-	const float paddingFromLeft = 0.015f;
-	const float paddingFromTop = 0.05f;
 
-	std::vector<ColorString> strings;
-	std::vector<Vertex_PCU> textVerts;
-	
-	int		attackDamage			= m_player->GetAttackDamage();
-	int		critDamage				= m_player->GetCritDamage();
-	float	critChancePercent		= m_player->GetCritChanceFraction() * 100.f;
-	float	critMultiplierPercent	= m_player->GetCritMultiplier() * 100.f;
-	float	movementSpeed			= m_player->GetMoveSpeed();
-	float	attackSpeed				= m_player->GetAttackSpeed();
-
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Player Stats:"													) ) );			
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Attack Damage:   %i",					attackDamage			) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Crit Damage:     %i",					critDamage				) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Crit Chance:     %.f%%",				critChancePercent		) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Crit Multiplier: %.f%%",				critMultiplierPercent	) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Movement Speed:  %.2f units/sec",		movementSpeed			) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Attack Speed:    %.2f attacks/sec",		attackSpeed				) ) );
-
-	Vec2 cameraTopLeft = Vec2( m_UICamera->GetOrthoBottomLeft().x, m_UICamera->GetOrthoTopRight().y );
-	Vec2 textStartPos = cameraTopLeft + Vec2( paddingFromLeft, -paddingFromTop - textHeight );
-	for( int stringIndex = 0; stringIndex < strings.size(); ++stringIndex )
+	if( g_isDebugDraw )
 	{
-		ColorString& coloredString = strings[ stringIndex ];
-		g_devConsoleFont->AddVertsForText2D( textVerts, textStartPos, textHeight, coloredString.m_text, coloredString.m_color );
-		textStartPos -= Vec2( 0.f, textHeight + paddingFromTop );
-	}
+		const float textHeight = 0.15f;
+		const float paddingFromLeft = 0.015f;
+		const float paddingFromTop = 0.05f;
 
-	g_theRenderer->BindShader( (Shader*)nullptr );
-	g_theRenderer->BindTexture( g_devConsoleFont->GetTexture() );
-	g_theRenderer->SetModelUBO( Mat44::IDENTITY );
-	g_theRenderer->DrawVertexArray( textVerts );
+		std::vector<ColorString> strings;
+		std::vector<Vertex_PCU> textVerts;
+		
+		int		attackDamage			= m_player->GetAttackDamage();
+		int		critDamage				= m_player->GetCritDamage();
+		float	critChancePercent		= m_player->GetCritChanceFraction() * 100.f;
+		float	critMultiplierPercent	= m_player->GetCritMultiplier() * 100.f;
+		float	movementSpeed			= m_player->GetMoveSpeed();
+		float	attackSpeed				= m_player->GetAttackSpeed();
+
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Player Stats:"													) ) );			
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Attack Damage:   %i",					attackDamage			) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Crit Damage:     %i",					critDamage				) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Crit Chance:     %.f%%",				critChancePercent		) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Crit Multiplier: %.f%%",				critMultiplierPercent	) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Movement Speed:  %.2f units/sec",		movementSpeed			) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "  Attack Speed:    %.2f attacks/sec",		attackSpeed				) ) );
+
+		Vec2 cameraTopLeft = Vec2( m_UICamera->GetOrthoBottomLeft().x, m_UICamera->GetOrthoTopRight().y );
+		Vec2 textStartPos = cameraTopLeft + Vec2( paddingFromLeft, -paddingFromTop - textHeight );
+		for( int stringIndex = 0; stringIndex < strings.size(); ++stringIndex )
+		{
+			ColorString& coloredString = strings[ stringIndex ];
+			g_devConsoleFont->AddVertsForText2D( textVerts, textStartPos, textHeight, coloredString.m_text, coloredString.m_color );
+			textStartPos -= Vec2( 0.f, textHeight + paddingFromTop );
+		}
+
+		g_theRenderer->BindShader( (Shader*)nullptr );
+		g_theRenderer->BindTexture( g_devConsoleFont->GetTexture() );
+		g_theRenderer->SetModelUBO( Mat44::IDENTITY );
+		g_theRenderer->DrawVertexArray( textVerts );
+	}
 }
 
 
@@ -273,6 +284,7 @@ void Game::Update()
 	{
 		UpdateFromInput( deltaSeconds );
 	}
+	m_world->Update( deltaSeconds );
 	for( int i = 0; i < m_entities.size(); ++i )
 	{
 		m_entities[i]->Update( deltaSeconds );

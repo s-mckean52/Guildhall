@@ -1,11 +1,11 @@
 #pragma once
+#include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 
 #define UNUSED(x) (void)(x);
 
-struct Vec2;
 class App;
 class Game;
 class RenderContext;
@@ -46,7 +46,7 @@ constexpr float HALF_SCREEN_Y			= CAMERA_SIZE_Y * 0.5f;
 constexpr int	MAX_NUM_PLAYERS			= 1;
 constexpr float RAYCAST_STEP_PER_UNIT	= 100.f;
 constexpr float RAYCAST_STEP_DISTANCE	= 1.f / RAYCAST_STEP_PER_UNIT;
-constexpr float DEBUG_THICKNESS			= 0.02f;
+constexpr float DEBUG_THICKNESS			= 0.05f;
 
 constexpr float TRIGGER_ACTIVATION_FRACTION	= 0.6f;
 
@@ -56,9 +56,11 @@ constexpr float PLAYER_DEATH_SCREEN_SHAKE_INTENSITY = 1.f;
 
 constexpr float DEV_CONSOLE_LINE_HEIGHT				= 0.15f;
 
-constexpr int MAX_ABILITY_COUNT = 4;
-constexpr float ABILITY_UI_WIDTH = 1.f;
-constexpr float ABILITY_UI_HEIGHT = 1.f;
+constexpr int MAX_ABILITY_COUNT		= 4;
+constexpr float ABILITY_UI_WIDTH	= 1.f;
+constexpr float ABILITY_UI_HEIGHT	= 1.f;
+
+const Vec2 TILE_DIMENSIONS( 1.f, 1.f );
 
 // Game Specific Colors
 const Rgba8 RGBA8_BALI_HAI				( 132, 156, 169 ); //Teal Grey
@@ -69,6 +71,9 @@ const Rgba8 RGBA8_TRANSPARENT_RED		( 255, 0, 0, 0 );
 const Rgba8 RGBA8_DARK_GREEN			( 0, 150, 0 );
 const Rgba8 RGBA8_DARK_YELLOW			( 200, 170, 0 );
 const Rgba8 RGBA8_HALF_TRANSPARENT_GRAY	( 127, 127, 127, 127 );
+
+const Rgba8 PHYSICS_RADIUS_COLOR		( 0, 255, 255 );
+const Rgba8 RENDER_BOUNDS_COLOR			( 255, 255, 0 );
 
 
 // Common Game Functions

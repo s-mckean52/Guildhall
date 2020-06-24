@@ -17,6 +17,7 @@ class GPUMesh;
 class Clock;
 class Player;
 class Enemy;
+class World;
 class NamedProperties;
 struct Vertex_PCUTBN;
 struct AABB3;
@@ -69,8 +70,9 @@ private:
 	Clock* m_gameClock = nullptr;
 
 	Vec2 m_cursorPosition;
-	Player* m_player;
-	Enemy* m_hoveredEnemy = nullptr;
+	Player* m_player		= nullptr;
+	Enemy* m_hoveredEnemy	= nullptr;
+	World* m_world			= nullptr;
 
 	Texture*	m_test			= nullptr;
 	Shader*		m_testShader	= nullptr;

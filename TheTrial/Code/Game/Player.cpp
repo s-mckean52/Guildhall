@@ -116,7 +116,6 @@ void Player::Render() const
 {
 	g_theRenderer->BindMaterial( nullptr );
 	DrawCircleAtPoint( m_currentPosition, m_physicsRadius, Rgba8::MAGENTA, 0.1f );
-	DrawCircleAtPoint( m_currentPosition, m_attackRange, Rgba8::CYAN, 0.1f );
 
 	RenderHealthBar( Rgba8::GREEN );
 
@@ -124,6 +123,20 @@ void Player::Render() const
 	{
 		DrawCircleAtPoint( m_positionToMoveTo, 0.1f, Rgba8::YELLOW, 0.1f );
 	}
+
+	if( g_isDebugDraw )
+	{
+		DebugRender();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Player::DebugRender() const
+{
+	Entity::DebugRender();
+
+	DrawCircleAtPoint( m_currentPosition, m_attackRange, Rgba8::CYAN, DEBUG_THICKNESS );
 }
 
 

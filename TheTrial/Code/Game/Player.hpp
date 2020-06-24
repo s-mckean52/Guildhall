@@ -16,6 +16,7 @@ public:
 
 	void Update( float deltaSeconds )				override;
 	void Render() const								override;
+	void DebugRender() const						override;
 	void SetCurrentPosition( Vec2 const& position )	override;
 
 	void RenderAbilities( Vec2 const& abilityMinStartPos, float distanceBetweenAbilities ) const;

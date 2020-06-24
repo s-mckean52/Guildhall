@@ -511,6 +511,19 @@ int RoundDownToInt( float valueToRound )
 
 
 //---------------------------------------------------------------------------------------------------------
+int RoundToInt( float valueToRound )
+{
+	int valueRoundedDown = RoundDownToInt( valueToRound );
+	float decimalValue = valueToRound - static_cast<float>( valueRoundedDown );
+	if( decimalValue >= 0.5f )
+	{
+		return valueRoundedDown + 1;
+	}
+	return valueRoundedDown;
+	
+}
+
+//---------------------------------------------------------------------------------------------------------
 bool DoAABB2sOverlap( const AABB2& boxA, const AABB2& boxB )
 {
 	if( boxA.maxes.x < boxB.mins.x )

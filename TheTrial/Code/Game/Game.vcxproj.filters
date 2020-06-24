@@ -60,6 +60,18 @@
     <ClCompile Include="Projectile.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
+    <ClCompile Include="World.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Map.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Tile.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="TileDefinition.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -96,6 +108,18 @@
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="Projectile.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Tile.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="World.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Map.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="TileDefinition.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>

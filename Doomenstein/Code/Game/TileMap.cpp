@@ -92,6 +92,10 @@ void TileMap::CreateLegendFromXML( XmlElement const& xmlElement )
 		{
 			AddGlyphToLegend( *nextChildElement );
 		}
+		else
+		{
+			g_theConsole->ErrorString( "Unsupported element type %s in Legend", elementName.c_str() );
+		}
 		nextChildElement = nextChildElement->NextSiblingElement();
 	}
 }
@@ -108,7 +112,30 @@ void TileMap::CreateTilesFromXML( XmlElement const& xmlElement )
 		if( nextChildElement == nullptr )
 			break;
 
+		if( yPos < 0 )
+		{
+			g_theConsole->ErrorString( "The rows in 'MapRows' are greater than the specified dimension of %i", m_dimensions.y );
+			return;
+		}
+
+		if( !IsStringEqual( nextChildElement->Name(), "MapRow" ) )
+		{
+			g_theConsole->ErrorString( "Unsupported 'MapRows' Element: %s",  nextChildElement->Name() );
+			return;
+		}
+
 		std::string mapRow = ParseXmlAttribute( *nextChildElement, "tiles", "MISSING" );
+		if( mapRow == "MISSING" )
+		{
+			g_theConsole->ErrorString( "Failed to parse 'MapRow' attribute: 'tiles' at line #%i", nextChildElement->GetLineNum() );
+			return;
+		}
+		else if( mapRow.length() != m_dimensions.x )
+		{
+			g_theConsole->ErrorString( "'MapRow' at line %i of length %i does not match specified dimension of %i", nextChildElement->GetLineNum(), mapRow.length(), m_dimensions.x );
+			return;
+		}
+
 		for( int glyphIndex = 0; glyphIndex < mapRow.length(); ++glyphIndex )
 		{
 			char glyph = mapRow[ glyphIndex ];
@@ -116,6 +143,12 @@ void TileMap::CreateTilesFromXML( XmlElement const& xmlElement )
 		}
 		nextChildElement = nextChildElement->NextSiblingElement();
 		--yPos;
+	}
+
+	if( yPos > 0 )
+	{
+		g_theConsole->ErrorString( "The rows in 'MapRows' are less than the specified dimension of %i", m_dimensions.y );
+		return;
 	}
 }
 
@@ -154,8 +187,25 @@ void TileMap::CreateEntitiesFromXML( XmlElement const& xmlElement )
 //---------------------------------------------------------------------------------------------------------
 void TileMap::AddGlyphToLegend( XmlElement const& xmlElement )
 {
-	char tileGlyph				= ParseXmlAttribute( xmlElement, "glyph", '`' );
-	std::string regionTypeName	= ParseXmlAttribute( xmlElement, "regionType", "MISSING" );
+	char tileGlyph = ParseXmlAttribute( xmlElement, "glyph", '`' );
+	if( tileGlyph == '`' )
+	{
+		g_theConsole->ErrorString( "Failed to parse Legend element attribute: 'glyph' at line #%i", xmlElement.GetLineNum() );
+		return;
+	}
+	
+	std::string regionTypeName = ParseXmlAttribute( xmlElement, "regionType", "MISSING" );
+	if( regionTypeName == "MISSING" )
+	{
+		g_theConsole->ErrorString( "Failed to parse Legend element attribute: 'regionType' at line #%i", xmlElement.GetLineNum() );
+		return;
+	}
+
+	if( m_legend[ tileGlyph ] != "" )
+	{
+		g_theConsole->ErrorString( "The glyph '%c' cannot be used twice - will use %s", tileGlyph, m_legend[ tileGlyph ].c_str() );
+		return;
+	}
 	
 	m_legend[ tileGlyph ] = regionTypeName;
 }
@@ -165,7 +215,23 @@ void TileMap::AddGlyphToLegend( XmlElement const& xmlElement )
 void TileMap::AddTileByLegendGlyph( char glyph, int xPosition, int yPosition )
 {
 	std::string regionTypeName = m_legend[ glyph ];
+	if( regionTypeName == "" )
+	{
+		g_theConsole->ErrorString( "Did not find specified Map Region Type for '%c'", glyph );
+	}
+
 	MapRegion* regionType = MapRegion::GetRegionByName( regionTypeName );
+	if( regionType == nullptr && regionTypeName != "" )
+	{
+		g_theConsole->ErrorString( "Did not find Map Region '%s' using glyph '%c'", regionTypeName.c_str(), glyph );
+	}
+
+	if( regionType == nullptr || regionTypeName == "" )
+	{
+		g_theConsole->ErrorString( "Using default material at (%i, %i)", xPosition, yPosition );
+		regionType = MapRegion::GetDefaultRegion();
+	}
+
 	int tileIndex = ( yPosition * m_dimensions.x ) + xPosition;
 	m_tiles[ tileIndex ] = new Tile( regionType, IntVec2( xPosition, yPosition ) );
 }
@@ -225,10 +291,14 @@ void TileMap::CreateMapVerts()
 
 	for( uint tileIndex = 0; tileIndex < numTiles; ++tileIndex )
 	{
-		AppendVertsForTile( tileIndex );
+		if( m_tiles[ tileIndex ] != nullptr )
+			AppendVertsForTile( tileIndex );
  	}
 
-	m_mapMesh->UpdateVerticies( static_cast<uint>( m_mapVerts.size() ), &m_mapVerts[0] );
+	if( m_mapVerts.size() > 0 )
+	{
+		m_mapMesh->UpdateVerticies( static_cast<uint>( m_mapVerts.size() ), &m_mapVerts[0] );
+	}
 }
 
 
@@ -269,17 +339,24 @@ void TileMap::AppendVertsForOpenTile( int tileIndex )
 	Vec3 topNormal		= Vec3::UNIT_NEGATIVE_Z;
 	Vec3 bottomNormal	= Vec3::UNIT_POSITIVE_Z;
 
-	MapRegion* tileRegionType = m_tiles[ tileIndex ]->GetRegionType();
+	AABB2		ceilingUVBox	= AABB2( 0.f, 0.f, 1.f, 1.f );
+	AABB2		floorUVBox		= AABB2( 0.f, 0.f, 1.f, 1.f );
+	MapRegion*	tileRegionType	= m_tiles[ tileIndex ]->GetRegionType();
 
-	MapMaterial* ceilingMaterial = tileRegionType->GetCeilingMaterial();
-	AABB2 ceilingUVBox = ceilingMaterial->GetUVBox();
-	Vec2 ceilingTopLeftUV		= Vec2( ceilingUVBox.mins.x, ceilingUVBox.maxes.y );
-	Vec2 ceilingBottomRightUV	= Vec2( ceilingUVBox.maxes.x, ceilingUVBox.mins.y );
-	
-	MapMaterial* floorMaterial = tileRegionType->GetFloorMaterial();
-	AABB2 floorUVBox = floorMaterial->GetUVBox();
-	Vec2 floorTopLeftUV		= Vec2( floorUVBox.mins.x, floorUVBox.maxes.y );
-	Vec2 floorBottomRightUV	= Vec2( floorUVBox.maxes.x, floorUVBox.mins.y );
+	if( tileRegionType != nullptr )
+	{
+		MapMaterial* ceilingMaterial	= tileRegionType->GetCeilingMaterial();
+		MapMaterial* floorMaterial		= tileRegionType->GetFloorMaterial();
+		
+		if( ceilingMaterial )
+			ceilingUVBox = ceilingMaterial->GetUVBox();
+		if( floorMaterial )
+			floorUVBox = floorMaterial->GetUVBox();
+	}
+	Vec2 ceilingTopLeftUV			= Vec2( ceilingUVBox.mins.x, ceilingUVBox.maxes.y );
+	Vec2 ceilingBottomRightUV		= Vec2( ceilingUVBox.maxes.x, ceilingUVBox.mins.y );
+	Vec2 floorTopLeftUV				= Vec2( floorUVBox.mins.x, floorUVBox.maxes.y );
+	Vec2 floorBottomRightUV			= Vec2( floorUVBox.maxes.x, floorUVBox.mins.y );
 
 	//Top																									 		      
 	m_mapVerts.push_back(	Vertex_PCUTBN( frontTopRight,		color,	tangent,	bitangent,		topNormal,		ceilingUVBox.mins		) );
@@ -322,11 +399,15 @@ void TileMap::AppendVertsForSolidTile( int tileIndex )
 	Vec3 frontBitangent = ( frontTopLeft - frontBottomLeft ).GetNormalize();
 	Vec3 frontNormal	= CrossProduct3D( frontTangent, frontBitangent );
 
-	MapRegion* tileRegionType	= m_tiles[tileIndex]->GetRegionType();
-	MapMaterial* sideMaterial	= tileRegionType->GetSideMaterial();
-	AABB2 sideUVBox				= sideMaterial->GetUVBox();
-	Vec2 sideTopLeftUV			= Vec2( sideUVBox.mins.x, sideUVBox.maxes.y);
-	Vec2 sideBottomRightUV		= Vec2( sideUVBox.maxes.x, sideUVBox.mins.y);
+	AABB2		sideUVBox		= AABB2( 0.f, 0.f, 1.f, 1.f );
+	MapRegion*	tileRegionType	= m_tiles[tileIndex]->GetRegionType();
+	if( tileRegionType != nullptr )
+	{
+		MapMaterial* sideMaterial = tileRegionType->GetSideMaterial();
+		sideUVBox = sideMaterial->GetUVBox();
+	}
+	Vec2 sideTopLeftUV		= Vec2( sideUVBox.mins.x, sideUVBox.maxes.y);
+	Vec2 sideBottomRightUV	= Vec2( sideUVBox.maxes.x, sideUVBox.mins.y);
 
 	Tile* northTile = GetTileInDirectionFromTileIndex( tileIndex, 0, 1 ); 
 	Tile* eastTile = GetTileInDirectionFromTileIndex( tileIndex, 1, 0 );
@@ -393,12 +474,23 @@ void TileMap::SpawnEntity( EntityType entityType )
 //---------------------------------------------------------------------------------------------------------
 void TileMap::CreateFromXML( XmlElement const& xmlElement )
 {
-	bool wasLegendRead		= false;
-	bool wasMapRead			= false;
-	bool wasEntitiesRead	= false;
+	bool	wasLegendRead		= false;
+	bool	wasMapRead			= false;
+	bool	wasEntitiesRead		= false;
+	
+	m_dimensions = ParseXmlAttribute( xmlElement, "dimensions", m_dimensions );
+	if( m_dimensions == IntVec2( -1, -1 ) )
+	{
+		g_theConsole->ErrorString( "Could not parse attribute: 'dimensions' at line #%i", xmlElement.GetLineNum() );
+		return;
+	}
 
-	m_dimensions	= ParseXmlAttribute( xmlElement, "dimensions", m_dimensions );
-	int version		= ParseXmlAttribute( xmlElement, "version", 0 );
+	int version	= ParseXmlAttribute( xmlElement, "version", 0 );
+	if( version == 0 )
+	{
+		g_theConsole->ErrorString( "Could not parse attribute: 'version' at line #%i", xmlElement.GetLineNum() );
+		return;
+	}
 
 	size_t mapSize = static_cast<size_t>( m_dimensions.x * m_dimensions.y );
 	m_tiles.resize( mapSize );
@@ -412,22 +504,63 @@ void TileMap::CreateFromXML( XmlElement const& xmlElement )
 		std::string elementName = nextChildElement->Name();
 		if( elementName == "Legend" )
 		{
-			CreateLegendFromXML( *nextChildElement );
+			if( !wasLegendRead )
+			{
+				CreateLegendFromXML( *nextChildElement );
+				wasLegendRead = true;
+			}
+			else
+			{
+				g_theConsole->ErrorString( "Only one 'Legend' is allowed per TileMap" );
+			}
 		}
 		else if( elementName == "MapRows" )
 		{
-			CreateTilesFromXML( *nextChildElement );
+			if( !wasMapRead )
+			{
+				CreateTilesFromXML( *nextChildElement );
+				wasMapRead = true;
+			}
+			else
+			{
+				g_theConsole->ErrorString( "Only one 'MapRows' element is allowed per TileMap" );
+			}
 		}
 		else if( elementName == "Entities" )
 		{
-			CreateEntitiesFromXML( *nextChildElement );
+			if (!wasEntitiesRead)
+			{
+				CreateEntitiesFromXML( *nextChildElement );
+				wasEntitiesRead = true;
+			}
+			else
+			{
+				g_theConsole->ErrorString( "Only one 'Entities' element is allowed per TileMap" );
+			}
 		}
 		else
 		{
-			g_theConsole->ErrorString( "Invalid Element Name Found: %s", elementName.c_str() );
+			g_theConsole->ErrorString(							"Unsupported Element Name Found: %s at line #%i", elementName.c_str(), nextChildElement->GetLineNum() );
+			g_theConsole->PrintString( DEV_CONSOLE_HELP_COLOR,	"Supported Element Types:" );
+			g_theConsole->PrintString( DEV_CONSOLE_HELP_COLOR,	"  Legend" );
+			g_theConsole->PrintString( DEV_CONSOLE_HELP_COLOR,	"  MapRows" );
+			g_theConsole->PrintString( DEV_CONSOLE_HELP_COLOR,	"  Entities" );
 		}
 
 		nextChildElement = nextChildElement->NextSiblingElement();
+	}
+
+	if( !wasLegendRead )
+	{
+		g_theConsole->ErrorString( "A TileMap must have an 'Legend' element" );
+	}
+	if( !wasMapRead )
+	{
+		g_theConsole->ErrorString( "A TileMap must have an 'MapRows' element" );
+	}
+	if( !wasEntitiesRead )
+	{
+		g_theConsole->ErrorString( "A TileMap must have an 'Entities' element" );
 	}
 }
 
@@ -435,7 +568,7 @@ void TileMap::CreateFromXML( XmlElement const& xmlElement )
 //---------------------------------------------------------------------------------------------------------
 bool TileMap::IsTileSolid( Tile* tile ) const
 {
-	if( tile == nullptr )
+	if( tile == nullptr || tile->GetRegionType() == nullptr )
 	{
 		return true;
 	}

@@ -111,7 +111,7 @@ void DevConsole::ErrorString( const char* errorMessageFormat, ... )
 	
 	textLiteral[ textMaxLength - 1 ] = '\0';
 	PrintString( Rgba8::RED, textLiteral );
-	m_isOpen = true;
+	SetIsOpen( true );
 }
 
 
@@ -162,10 +162,13 @@ void DevConsole::RenderOutput( RenderContext& renderer, const Camera& camera, fl
 	int colorStringLength = static_cast<int>( m_colorStrings.size() );
 
 	int numberOfLinesToPrint = maxNumberOfLines > colorStringLength ? colorStringLength : maxNumberOfLines;
+	numberOfLinesToPrint += m_lastLineToShow;
+	Clamp( numberOfLinesToPrint, 0, colorStringLength );
+
 	Vec3 textMins = camera.GetOrthoBottomLeft();
 	textMins.y += lineHeight;
 
-	for( int consoleStringIndexFromLast = 0; consoleStringIndexFromLast < numberOfLinesToPrint; ++consoleStringIndexFromLast )
+	for( int consoleStringIndexFromLast = m_lastLineToShow; consoleStringIndexFromLast < numberOfLinesToPrint; ++consoleStringIndexFromLast )
 	{
 		int consoleStringIndex = colorStringLength - consoleStringIndexFromLast - 1;
 
@@ -448,6 +451,11 @@ bool DevConsole::HandleKeyPresses()
 		m_cursorPosition = static_cast<int>( m_currentInput.length() );
 	}
 
+	float scrollAmount = m_theInput->GetScrollAmount();
+	if( scrollAmount != 0.f )
+	{
+		ScrollConsoleOutput( scrollAmount );
+	}
 	return false;
 }
 
@@ -508,6 +516,17 @@ void DevConsole::SubmitCommand()
 	std::string invalidCommandString = inputCommand + " is not a supported command";
 	PrintString( Rgba8::RED, invalidCommandString );
 	ResetInput();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void DevConsole::ScrollConsoleOutput( float scrollAmount )
+{
+	int linesToScroll = RoundToInt( scrollAmount );
+	m_lastLineToShow += linesToScroll;
+
+	int maxLineCount = static_cast<int>( m_colorStrings.size() );
+	Clamp( m_lastLineToShow, 0, maxLineCount );
 }
 
 

@@ -155,7 +155,7 @@ void InputSystem::ShowSystemCursor( bool isShown )
 {
 	if( isShown )
 	{
-		while( ::ShowCursor( isShown ) < 0 ) {}
+		while( ::ShowCursor( isShown ) <= 0 ) {}
 		return;
 	}
 	else

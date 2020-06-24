@@ -165,6 +165,11 @@ void App::Update()
 		HandleQuitRequested();
 	}
 
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_F1 ) )
+	{
+		g_isDebugDraw = !g_isDebugDraw;
+	}
+
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F8 ) )
 	{
 		RestartGame();

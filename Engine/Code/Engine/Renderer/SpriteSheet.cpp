@@ -15,8 +15,8 @@ SpriteSheet::SpriteSheet( const Texture& texture, const IntVec2& simpleGridLayou
 	for( int spriteIndex = 0; spriteIndex < numSprites; ++spriteIndex )
 	{
 		float currentMinU = spriteSheetXStep * static_cast<float>( spriteIndex % simpleGridLayout.x );
-		float currenMinV = 1.f - ( spriteSheetYStep * static_cast<float>( 1 + ( spriteIndex / simpleGridLayout.y ) ) );
-		Vec2 currentUVAtMins = Vec2( currentMinU, currenMinV );
+		float currentMinV = 1.f - ( spriteSheetYStep * static_cast<float>( 1 + ( spriteIndex / simpleGridLayout.x ) ) );
+		Vec2 currentUVAtMins = Vec2( currentMinU, currentMinV );
 
 		Vec2 currenUVAtMaxes = Vec2( currentUVAtMins.x + spriteSheetXStep, currentUVAtMins.y + spriteSheetYStep );
 
