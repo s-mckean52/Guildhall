@@ -1,5 +1,5 @@
 ﻿<GameConfig
-	startMap="TestRoom"
+	startMap="TestRoomV2"
 	windowAspect="1.777"
 	isFullscreen="false"
 />

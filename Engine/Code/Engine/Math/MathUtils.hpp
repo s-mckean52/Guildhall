@@ -13,8 +13,8 @@ struct	FloatRange;
 struct	Rgba8;
 class	Polygon2D;
 
-constexpr float radiansToDegreesRatio = 180.f / 3.14159265f;
-constexpr float degreesToRadiansRatio = 3.14159265f / 180.f;
+constexpr	float radiansToDegreesRatio	= 180.f / 3.14159265f;
+constexpr	float degreesToRadiansRatio	= 3.14159265f / 180.f;
 
 float		ConvertDegreesToRadians	( float degrees );
 float		ConvertRadiansToDegrees	( float radians );
@@ -124,6 +124,7 @@ bool		IsPointInsideOBB2D( const Vec2& point, const OBB2& box );
 bool		IsPointInsidePolygon2D( const Vec2& point, const Polygon2D& polygon );
 bool		IsPointInForwardSector2D( const Vec2& pointToCheck, const Vec2& startPosition, float maxDistance, const Vec2& fwdDir, float aperatureDegrees );
 bool		IsPointInForwardSector2D( const Vec2& pointToCheck, const Vec2& startPosition, float fwdDirOrientationDegrees, float aperatureDegrees, float maxDistance );
+bool		IsPointInForwardSector3D( const Vec3& pointToCheck, const Vec3& startPosition, float maxDistance, const Vec3& fwdDir, float aperatureDegrees );
 
 
 //---------------------------------------------------------------------------------------------------------

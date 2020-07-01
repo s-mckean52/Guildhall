@@ -53,7 +53,7 @@ const SpriteDefinition& SpriteAnimDefinition::GetSpriteDefAtTimeForPlaybackTypeL
 	float secondsPerFrame = m_durationSeconds / static_cast<float>( numFrames );
 	int frameNum =  RoundDownToInt( seconds / secondsPerFrame);
 
-	int currentFrame = PositiveMod( frameNum, numFrames );
+	int currentFrame = m_startSpriteIndex + PositiveMod( frameNum, numFrames );
 	return m_spriteSheet.GetSpriteDefinition( currentFrame );
 }
 

@@ -26,6 +26,18 @@ AABB2 Tile::GetWorldBounds() const
 
 
 //---------------------------------------------------------------------------------------------------------
+Vec2 Tile::GetCenterPosition() const
+{
+	Vec2 worldPos;
+	Vec2 halfTileDimensions = TILE_DIMENSIONS * 0.5f;
+	worldPos.x = static_cast<float>( m_tileCoords.x );
+	worldPos.y = static_cast<float>( m_tileCoords.y );
+
+	return worldPos + halfTileDimensions;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Tile::SetTileDefinition( TileDefinition* tileDef )
 {
 	m_tileDef = tileDef;

@@ -1,7 +1,6 @@
 ﻿<GameConfig
-	
-	startLevel="WizardTower3"
-	windowAspect="1.777"
-	isFullscreen="false"
-	
+  ability0Key="Q"
+  ability1Key="W"
+  ability2Key="E"
+  ability3Key="R"	
 />

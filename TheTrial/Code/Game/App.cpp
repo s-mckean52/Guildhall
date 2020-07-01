@@ -157,6 +157,11 @@ void App::BeginFrame()
 //---------------------------------------------------------------------------------------------------------
 void App::Update()
 {
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_F8 ) )
+	{
+		RestartGame();
+	}
+
 	g_theGame->Update();
 	g_theConsole->Update();
 
@@ -170,10 +175,6 @@ void App::Update()
 		g_isDebugDraw = !g_isDebugDraw;
 	}
 
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_F8 ) )
-	{
-		RestartGame();
-	}
 
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F9 ) )
 	{

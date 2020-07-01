@@ -281,6 +281,13 @@ void Camera::SetDepthStencilTarget( Texture* texture )
 	m_depthStencilTarget = texture;
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void Camera::SetYawDegrees( float yaw )
+{
+	m_transform.SetYawDegrees( yaw );
+}
+
 //---------------------------------------------------------------------------------------------------------
 void Camera::SetPitchYawRollRotationDegrees( float pitch, float yaw, float roll )
 {

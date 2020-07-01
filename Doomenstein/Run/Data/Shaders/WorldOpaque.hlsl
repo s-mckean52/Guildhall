@@ -59,14 +59,6 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float4 color = tDiffuse.Sample(sSampler, input.uv);
 	float4 final_color = color * input.color;
 
-	return float4( final_color.x, final_color.y, final_color.z, 1.f );
-
-	float compare_to_u = 0.5f * sin( SYSTEM_TIME_SECONDS ) + 0.5f;
-	if( input.uv.x <= compare_to_u + 0.01f && input.uv.x >= compare_to_u - 0.01f )
-	{
-		final_color = float4( 0.2f, 0.f, 0.f, 1.0f );
-	}
-
 	if( final_color.a == 0.0f )
 	{
 		discard;

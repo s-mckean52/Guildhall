@@ -1,5 +1,6 @@
 #include "Game/World.hpp"
 #include "Game/Map.hpp"
+#include "Game/Cursor.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/Game.hpp"
 
@@ -44,5 +45,19 @@ void World::DebugRender() const
 void World::Update( float deltaSeconds )
 {
 	m_currentMap->Update( deltaSeconds );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void World::AddPlayerToCurrentMap( Player* player )
+{
+	m_currentMap->AddPlayerToMap( player );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Enemy* World::GetCursorOverlapEnemyOnCurrentMap( Cursor* cursor )
+{
+	return m_currentMap->GetCursorOverlapEntity( cursor );
 }
 

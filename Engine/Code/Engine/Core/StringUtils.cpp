@@ -216,7 +216,7 @@ double SetFromText( char const* valueAsText, double defaultValue )
 char SetFromText( char const* valueAsText, char defaultValue )
 {
 	char value;
-	int length = sizeof( valueAsText );
+	size_t length = strlen( valueAsText );
 	if( length > 1 || length == 0 )
 	{
 		value = defaultValue;

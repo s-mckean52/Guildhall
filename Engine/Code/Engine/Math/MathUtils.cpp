@@ -13,6 +13,10 @@
 
 
 //---------------------------------------------------------------------------------------------------------
+float SQRT_2_OVER_2 = sqrtf( 2.f ) / 2.f;
+
+
+//---------------------------------------------------------------------------------------------------------
 float ConvertDegreesToRadians( float degrees )
 {
 	return degrees * degreesToRadiansRatio;
@@ -1226,6 +1230,29 @@ bool IsPointInForwardSector2D( const Vec2& pointToCheck, const Vec2& startPositi
 {
 	Vec2 fwdDir = Vec2::MakeFromPolarDegrees( fwdDirOrientationDegrees );
 	return IsPointInForwardSector2D( pointToCheck, startPosition, maxDistance, fwdDir, aperatureDegrees);
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool IsPointInForwardSector3D( const Vec3& pointToCheck, const Vec3& startPosition, float maxDistance, const Vec3& fwdDirNormalized, float aperatureDegrees )
+{
+	Vec3 displacementToPoint = pointToCheck - startPosition;
+	float distanceToPoint = DotProduct3D( fwdDirNormalized, displacementToPoint );
+
+	if( distanceToPoint < maxDistance )
+	{
+		Vec2 forwardDirXY = Vec2( fwdDirNormalized.x, fwdDirNormalized.y );
+		Vec2 forwardDirXYNormalized = forwardDirXY.GetNormalized();
+		Vec2 displacementXY = Vec2( displacementToPoint.x, displacementToPoint.y );
+		Vec2 displacementXYNormalized = displacementXY.GetNormalized();
+
+		float cosBetweenNormals = DotProduct2D( displacementXYNormalized, forwardDirXYNormalized );
+		if( cosBetweenNormals >= CosDegrees( aperatureDegrees * 0.5f ) )
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 

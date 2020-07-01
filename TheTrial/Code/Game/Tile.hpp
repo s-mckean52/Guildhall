@@ -21,6 +21,7 @@ public:
 	IntVec2				GetCoords() const				{ return m_tileCoords; }
 	TileDefinition*		GetTileDefinition() const		{ return m_tileDef; }
 	AABB2				GetWorldBounds() const;
+	Vec2				GetCenterPosition() const;
 
 	//Mutators
 	void				SetTileDefinition( TileDefinition* tileDef );

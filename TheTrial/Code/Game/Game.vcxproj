@@ -201,6 +201,7 @@
     <ClCompile Include="Actor.cpp" />
     <ClCompile Include="App.cpp" />
     <ClCompile Include="Buff.cpp" />
+    <ClCompile Include="Cursor.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Game.cpp" />
@@ -219,6 +220,7 @@
     <ClInclude Include="Actor.hpp" />
     <ClInclude Include="App.hpp" />
     <ClInclude Include="Buff.hpp" />
+    <ClInclude Include="Cursor.hpp" />
     <ClInclude Include="Enemy.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />
     <ClInclude Include="Entity.hpp" />

@@ -38,11 +38,10 @@ enum MouseButtons
 	NUM_MOUSE_BUTTONS
 };
 
-
-extern DevConsole* g_theConsole;
+extern float		SQRT_2_OVER_2;
+extern DevConsole*	g_theConsole;
 extern EventSystem* g_theEventSystem;
 extern NamedStrings g_gameConfigBlackboard;
-
 
 //Key Codes
 extern const unsigned char KEY_CODE_ESC;

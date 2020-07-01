@@ -215,7 +215,7 @@ char NamedStrings::GetValue( const std::string& keyName, char defaultValue ) con
 	if( mapIterator != m_keyValuePairs.cend() )
 	{
 		std::string valueText = mapIterator->second;
-		SetFromText( valueText.c_str(), value );
+		value = SetFromText( valueText.c_str(), value );
 	}
 	return value;
 }

@@ -20,6 +20,12 @@ void Transform::SetPosition( Vec3 const& position )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Transform::SetYawDegrees( float yawDegrees )
+{
+	m_rotationPitchYawRollDegrees.y = yawDegrees;
+}
+
+//---------------------------------------------------------------------------------------------------------
 void Transform::SetRotationFromPitchYawRollDegrees( float pitchDegrees, float yawDegrees, float rollDegrees )
 {
 	float halfRollRange = 180.f;

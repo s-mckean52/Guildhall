@@ -13,8 +13,5 @@ Controls:
 		'~' - Open the dev console
 		'I' - Set Yaw, Pitch, and Roll to 0
 		'O' - Set Position and Rotations to 0
-
-Notes:
-	When parsing XML files I check for nodes that are present but unsupported.
-	For attribute parsing, however, I parse them by name and only error if that
-	element was unable to be parsed.
+	   'F1' - Debug Draw
+	   'F3' - Toggle Possession of Entity

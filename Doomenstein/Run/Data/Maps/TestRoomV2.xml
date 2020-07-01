@@ -1,0 +1,38 @@
+<MapDefinition type="TileMap" version="1" dimensions="16,8">
+
+	<Legend>
+		<Tile glyph="C" regionType="CobblestoneWall"/>
+		<Tile glyph="W" regionType="WoodWall"/>
+		<Tile glyph="." regionType="StoneFloor"/>
+		<Tile glyph="," regionType="GrassFloor"/>
+	</Legend>
+	<MapRows>
+		<MapRow tiles="CCCCCCCCCCCCCCCC"/>
+		<MapRow tiles="C..............C"/>
+		<MapRow tiles="C.WWW..........C"/>
+		<MapRow tiles="C.W,W..........C"/>
+		<MapRow tiles="C.,,,..........C"/>
+		<MapRow tiles="CCC..W.........C"/>
+		<MapRow tiles="C..............C"/>
+		<MapRow tiles="CCCCCCCCCCCCCCCC"/>
+	</MapRows>
+	<Entities>
+		<PlayerStart pos="6.5,1.5" yaw="150"/>
+    <Actor name="Pinky" pos="7.5,3.5" yaw="210"/>
+    <Actor name="Pinky" pos="7.6,3.5" yaw="20"/>
+    <Actor name="Pinky" pos="7.08,3.94" yaw="0"/>
+    <Actor name="Pinky" pos="9.5,5.5" yaw="45"/>
+    <Actor name="Pinky" pos="3.5,5.5" yaw="60"/>
+    <Actor name="Pinky" pos="10.2,2.1" yaw="180"/>
+    <Actor name="Pinky" pos="9.5,2.1" yaw="0"/>
+    
+    <Actor name="Pinky" pos="14,4" yaw="0"/>
+    <Actor name="Pinky" pos="13,5" yaw="90"/>
+    <Actor name="Pinky" pos="12,4" yaw="180"/>
+    <Actor name="Pinky" pos="13,3" yaw="270"/>
+    <Actor name="Marine" pos="13,4" yaw="225"/>
+	</Entities>
+
+</MapDefinition>
+
+

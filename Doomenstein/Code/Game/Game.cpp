@@ -1,8 +1,11 @@
 #include "Game/Game.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/World.hpp"
+#include "Game/Entity.hpp"
+#include "Game/Map.hpp"
 #include "Game/MapMaterial.hpp"
 #include "Game/MapRegion.hpp"
+#include "Game/EntityDef.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
@@ -89,6 +92,7 @@ void Game::StartUp()
 	LoadAudio();
 	MapMaterial::CreateMapMaterialsFromXML( "Data/Definitions/MapMaterialTypes.xml" );
 	MapRegion::CreateMapRegionsFromXML( "Data/Definitions/MapRegionTypes.xml" );
+	EntityDef::CreateEntityDefsFromXML( "Data/Definitions/EntityTypes.xml" );
 	m_world = new World( this );
 }
 
@@ -371,12 +375,32 @@ void Game::UpdateCameraView( Camera* camera, CameraViewOrientation cameraOrienta
 //---------------------------------------------------------------------------------------------------------
 void Game::Update()
 {
-	float deltaSeconds = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
+	float deltaSeconds = GetDeltaSeconds();
 
-	m_world->Update();
 	if( !g_theConsole->IsOpen() )
 	{
 		UpdateFromInput( deltaSeconds );
+	}
+
+	m_world->Update();
+
+	if( m_possessedEntity != nullptr )
+	{
+		MoveCameraToEntityEye( m_possessedEntity );
+		if( g_isDebugDraw )
+		{
+			Mat44 cameraView = m_worldCamera->GetViewMatrix();
+			MatrixInvertOrthoNormal( cameraView );
+
+			Vec3 raycastFwdDir = cameraView.TransformVector3D( Vec3::UNIT_POSITIVE_X );
+			raycastFwdDir.Normalize();
+
+			Vec3 raycastStartPos = m_possessedEntity->GetPosition() + Vec3( 0.f, 0.f, m_possessedEntity->GetEyeHeight() );
+			raycastStartPos += raycastFwdDir * ( m_possessedEntity->GetPhysicsRadius() * 1.5f );
+			float raycastMaxDistance = 5.f;
+
+			DebugRaycast( raycastStartPos, raycastFwdDir, raycastMaxDistance );
+		}
 	}
 }
 
@@ -406,6 +430,14 @@ void Game::LoadAudio()
 	m_spawnSound = g_theAudio->CreateOrGetSound( "Data/Audio/Teleporter.wav" );
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+float Game::GetDeltaSeconds() const
+{
+	return static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
+}
+
+
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateFromInput( float deltaSeconds )
 {
@@ -429,6 +461,16 @@ void Game::UpdateFromInput( float deltaSeconds )
 		g_isDebugDraw = !g_isDebugDraw;
 	}
 
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_F3 ) )
+	{
+		TogglePossessEntity();
+	}
+
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_F4 ) )
+	{
+		DebugRaycast( Vec3( 1.1f, 1.1f, 0.5f ), Vec3( 1.f, 0.f, 0.f ), 10.f, 10.f );
+	}
+
 	if( g_theInput->WasKeyJustPressed( 'I' ) )
 	{
 		m_worldCamera->SetPitchYawRollRotationDegrees( 0.f, 0.f, 0.f );
@@ -442,10 +484,15 @@ void Game::MoveWorldCamera( float deltaSeconds )
 	float forwardMoveAmount = 0.f;
 	float leftMoveAmount = 0.f;
 	float upMoveAmount = 0.f;
-	float moveSpeed = 5.f * deltaSeconds;
+	float moveSpeed = 2.f * deltaSeconds;
 	if( g_theInput->IsKeyPressed( KEY_CODE_SHIFT ) )
 	{
 		moveSpeed *= 2.f;
+	}
+
+	if( m_possessedEntity != nullptr )
+	{
+		moveSpeed = m_possessedEntity->GetSpeed() * deltaSeconds;
 	}
 
 	if( g_theInput->IsKeyPressed( 'W' ) )
@@ -479,7 +526,15 @@ void Game::MoveWorldCamera( float deltaSeconds )
 	Vec3 cameraLeftXY0 = Vec3( -SinDegrees( m_worldCamera->GetYawDegrees() ), CosDegrees( m_worldCamera->GetYawDegrees() ), 0.f );
 	Vec3 cameraTranslation = ( cameraForwardXY0 * forwardMoveAmount ) + ( cameraLeftXY0 * leftMoveAmount );
 	cameraTranslation.z = upMoveAmount;
-	m_worldCamera->Translate( cameraTranslation );
+
+	if( m_possessedEntity == nullptr )
+	{
+		m_worldCamera->Translate( cameraTranslation );
+	}
+	else
+	{
+		m_possessedEntity->Translate( cameraTranslation );
+	}
 }
 
 
@@ -506,6 +561,58 @@ void Game::PlaySpawnSound()
 	float balance	= 0.f;
 	float speed		= 1.f;
 	g_theAudio->PlaySound( m_spawnSound, false, volume, balance, speed );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::TogglePossessEntity()
+{
+	if( m_possessedEntity != nullptr )
+	{
+		m_possessedEntity->SetIsPossessed( false );
+		m_possessedEntity = nullptr;
+		return;
+	}
+
+	Vec3 cameraPosition = m_worldCamera->GetPosition();
+	Mat44 cameraView = m_worldCamera->GetViewMatrix();
+	MatrixInvertOrthoNormal( cameraView );
+	Vec3 cameraForward = cameraView.TransformVector3D( Vec3::UNIT_POSITIVE_X );
+
+	m_possessedEntity = m_world->GetClostestEntityInForwardSector( cameraPosition, 2.f, cameraForward, 90.f );
+	if( m_possessedEntity != nullptr )
+	{
+		m_possessedEntity->SetIsPossessed( true );
+		m_worldCamera->SetYawDegrees( m_possessedEntity->GetYaw() );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::MoveCameraToEntityEye( Entity* entity )
+{
+	float possessedEntityEyeHeight = entity->GetEyeHeight();
+	Vec3 possessedEntityEyePosition = entity->GetPosition();
+	possessedEntityEyePosition.z += possessedEntityEyeHeight;
+
+	m_worldCamera->SetPosition( possessedEntityEyePosition );
+	entity->SetYaw( m_worldCamera->GetYawDegrees() );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::DebugRaycast( Vec3 const& startPosition, Vec3 const& forwardDir, float maxDistance, float duration )
+{
+	Map* currentMap = m_world->GetCurrentMap();
+	RaycastResult newRaycastResult = currentMap->Raycast( startPosition, forwardDir, maxDistance );
+
+	Vec3 maxPosition			= newRaycastResult.startPosition + ( newRaycastResult.forwardNormal * newRaycastResult.maxDistance );
+	Vec3 impactNormalAtImpact	= newRaycastResult.impactPosition + ( newRaycastResult.impactNormal * 0.5f );
+	//DebugAddWorldArrow( newRaycastResult.startPosition, newRaycastResult.impactPosition, Rgba8::CYAN, duration );
+	//DebugAddWorldArrow( newRaycastResult.impactPosition, maxPosition, Rgba8::MAGENTA, duration );
+	DebugAddWorldArrow( newRaycastResult.impactPosition, impactNormalAtImpact, Rgba8::GREEN, duration );
+
+	DebugAddWorldPoint( newRaycastResult.impactPosition, newRaycastResult.didImpact ? Rgba8::GREEN : Rgba8::RED, duration );
 }
 
 

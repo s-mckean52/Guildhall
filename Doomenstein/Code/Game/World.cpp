@@ -168,3 +168,10 @@ void World::DeleteAllMaps()
 		++mapIterator;
 	}
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+Entity* World::GetClostestEntityInForwardSector( Vec3 const& sectorStartPosition, float maxDistanceToCheck, Vec3 const& forwardDirNormalized, float aperatureDegrees )
+{
+	return m_currentMap->GetClosestEntityInForwardSector( sectorStartPosition, maxDistanceToCheck, forwardDirNormalized, aperatureDegrees );
+}

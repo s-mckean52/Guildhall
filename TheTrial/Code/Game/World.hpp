@@ -3,6 +3,9 @@
 
 class Map;
 class Game;
+class Enemy;
+class Cursor;
+class Player;
 
 class World
 {
@@ -14,6 +17,9 @@ public:
 	void DebugRender() const;
 
 	void Update( float deltaSeconds );
+
+	void AddPlayerToCurrentMap( Player* player );
+	Enemy* GetCursorOverlapEnemyOnCurrentMap( Cursor* cursor );
 
 private:
 	Game* m_theGame		= nullptr;

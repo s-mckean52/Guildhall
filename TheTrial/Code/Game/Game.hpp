@@ -18,6 +18,7 @@ class Clock;
 class Player;
 class Enemy;
 class World;
+class Cursor;
 class NamedProperties;
 struct Vertex_PCUTBN;
 struct AABB3;
@@ -26,6 +27,15 @@ enum CameraViewOrientation
 {
 	RIGHT_HAND_X_RIGHT_Y_UP,
 	RIGHT_HAND_X_FORWARD_Y_LEFT,
+};
+
+enum GameState
+{
+	GAME_STATE_LOADING,
+	GAME_STATE_MENU,
+	GAME_STATE_PLAYING,
+	GAME_STATE_PAUSED,
+	GAME_STATE_DEAD,
 };
 
 
@@ -44,7 +54,8 @@ public:
 	//Input
 	void UpdateFromInput( float deltaSeconds );
 	void MoveWorldCamera( float deltaSeconds );
-	void UpdateCursorPosition( Camera const& camera );
+	void UpdateCursor();
+	void UpdateCameras();
 
 	//Rendering
 	void UpdateCameraProjection( Camera* camera );
@@ -54,12 +65,11 @@ public:
 	void EnableLightsForRendering() const;
 
 	//Accessors
-	Vec2	GetCursorPosition() const	{ return m_cursorPosition; }
+	Vec2	GetCursorPosition() const;
+	Camera*	GetPlayerCamera() const		{ return m_worldCamera; }
+	Camera*	GetUICamera() const			{ return m_UICamera; }
 	Clock*	GetGameClock() const		{ return m_gameClock; }
 	bool	IsQuitting() const			{ return m_isQuitting; }
-
-	///Stuff
-	void AddEntityToList( Entity* entityToAdd );
 
 	//Static
 	static void GainFocus( EventArgs* args );
@@ -69,9 +79,9 @@ public:
 private:
 	Clock* m_gameClock = nullptr;
 
-	Vec2 m_cursorPosition;
-	Player* m_player		= nullptr;
 	Enemy* m_hoveredEnemy	= nullptr;
+	Cursor* m_cursor		= nullptr;
+	Player* m_player		= nullptr;
 	World* m_world			= nullptr;
 
 	Texture*	m_test			= nullptr;
@@ -86,6 +96,4 @@ private:
 	Camera*	m_worldCamera = nullptr;
 	Camera* m_UICamera = nullptr;
 	bool	m_isQuitting = false;
-
-	std::vector<Entity*> m_entities;
 };

@@ -679,11 +679,12 @@ void DebugAddWorldArrow( Vec3 p0, Vec3 p1, Rgba8 start_color, Rgba8 end_color, f
 	object->m_renderMode = mode;
 
 	Vec3 displacement = p1 - p0;
-	float coneSize = displacement.GetLength() * 0.1f;
-	Vec3 coneStartPosition = displacement - displacement.GetNormalize() * ( coneSize * 1.5f );
+	float bodyRadius = GetClamp( displacement.GetLength() * 0.05f, 0.f, 0.01f );
+	float coneRadius = bodyRadius * 2.f;
+	Vec3 coneStartPosition = displacement - displacement.GetNormalize() * ( coneRadius * 1.5f );
 
-	AddCylinderToIndexedVertexArray( object->m_objectVerticies, object->m_objectIndicies, Vec3::ZERO, coneSize * 0.5f, coneStartPosition, coneSize * 0.5f, start_color, 32 );
-	AddConeToIndexedVertexArray( object->m_objectVerticies, object->m_objectIndicies, coneStartPosition, coneSize, displacement, start_color, 32 );
+	AddCylinderToIndexedVertexArray( object->m_objectVerticies, object->m_objectIndicies, Vec3::ZERO, bodyRadius, coneStartPosition, bodyRadius, start_color, 32 );
+	AddConeToIndexedVertexArray( object->m_objectVerticies, object->m_objectIndicies, coneStartPosition, coneRadius, displacement, start_color, 32 );
 
 	AppendDebugRenderObjectToVector( s_debugRenderWorldObjects, object );
 }

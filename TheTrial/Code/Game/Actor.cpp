@@ -59,10 +59,12 @@ Actor::~Actor()
 void Actor::RenderHealthBar( Rgba8 const& healthBarColor ) const
 {
 	const float healthBarHeight = 0.1f;
+	const float healthBarBackGroundPadding = 0.05f;
 	float healthBarWidth = m_physicsRadius * 2.f;
 	Vec2 healthBarMin = m_currentPosition + Vec2( -healthBarWidth * 0.5f, m_renderBounds.GetDimensions().y * 0.5f + healthBarHeight );
 	Vec2 healthBarMax = healthBarMin + Vec2( healthBarWidth, healthBarHeight );
 	AABB2 healthBarBackGround = AABB2( healthBarMin, healthBarMax );
+	healthBarBackGround.SetDimensions( Vec2( healthBarWidth + healthBarBackGroundPadding, healthBarHeight + healthBarBackGroundPadding ) );
 
 	float currentHealthFraction = static_cast<float>( m_currentHealth ) / static_cast<float>( m_maxHealth );
 	float currentHealthLength = healthBarWidth * currentHealthFraction;

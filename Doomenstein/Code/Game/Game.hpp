@@ -51,6 +51,9 @@ public:
 
 	//---------------------------------------------------------------------------------------------------------
 
+	//Accessors
+	float GetDeltaSeconds() const;
+
 	//Input
 	void UpdateFromInput( float deltaSeconds );
 	void MoveWorldCamera( float deltaSeconds );
@@ -71,7 +74,10 @@ public:
 	Camera* GetPlayerCamera() const		{ return m_worldCamera; }
 	bool	IsQuitting() const			{ return m_isQuitting; }
 	void	PlaySpawnSound();
-	
+	void	TogglePossessEntity();
+	void	MoveCameraToEntityEye( Entity* entity );
+	void	DebugRaycast( Vec3 const& startPosition, Vec3 const& forwardDir, float maxDistance, float duration = 0.f );
+
 	//Static
 	static void GainFocus( EventArgs* args );
 	static void LoseFocus( EventArgs* args );
@@ -101,6 +107,8 @@ private:
 
 	Rgba8	m_clearColor = Rgba8::BLACK;
 	
+	Entity* m_possessedEntity = nullptr;
+
 	Camera*	m_worldCamera = nullptr;
 	Camera* m_UICamera = nullptr;
 	bool	m_isQuitting = false;

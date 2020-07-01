@@ -84,7 +84,7 @@ void Ability::Render( Vec2 const& minPosition ) const
 	
 	std::vector<Vertex_PCU> abilityTextVerts;
 	g_devConsoleFont->AddVertsForTextInBox2D( abilityTextVerts, abilityRect, 0.1f, abilityStatusString, Rgba8::BLUE );
-	g_devConsoleFont->AddVertsForTextInBox2D( abilityTextVerts, abilityRect, 0.1f, m_name, Rgba8::BLUE, 1.f, ALIGN_TOP_CENTERED );
+	g_devConsoleFont->AddVertsForTextInBox2D( abilityTextVerts, abilityRect, 0.1f, m_name, Rgba8::BLUE, 1.f, Vec2( 0.5f, 0.95f ) );
 	g_theRenderer->BindTexture( g_devConsoleFont->GetTexture() );
 	g_theRenderer->DrawVertexArray( abilityTextVerts );
 }

@@ -54,7 +54,19 @@
     <ClCompile Include="Entity.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
-    <ClCompile Include="PlayerStart.cpp">
+    <ClCompile Include="EntityDef.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Actor.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Portal.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Projectile.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="RaycastResult.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
   </ItemGroup>
@@ -92,7 +104,19 @@
     <ClInclude Include="Entity.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
-    <ClInclude Include="PlayerStart.hpp">
+    <ClInclude Include="EntityDef.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Actor.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Portal.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Projectile.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="RaycastResult.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>

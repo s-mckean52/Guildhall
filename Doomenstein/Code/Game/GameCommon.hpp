@@ -2,6 +2,8 @@
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include "Engine/Renderer/Camera.hpp"
+#include <vector>
 
 #define UNUSED(x) (void)(x);
 
@@ -17,6 +19,7 @@ class SpriteSheet;
 class EventSystem;
 class Window;
 struct AABB2;
+struct Mat44;
 
 
 extern EventSystem* g_theEventSystem;
@@ -34,6 +37,18 @@ extern SpriteSheet* g_actorSpriteSheet;
 
 extern bool g_isDebugDraw;
 extern bool g_isDebugCamera;
+
+//---------------------------------------------------------------------------------------------------------
+enum class BillboardType
+{
+	CAMERA_FACING_XY,
+	CAMERA_OPPOSING_XY,
+	CAMERA_FACING_XYZ,
+	CAMERA_OPPOSING_XYZ,
+
+	INVALID_BILLBOARD_TYPE,
+};
+
 
 //---------------------------------------------------------------------------------------------------------
 // Global Game-specific Constants
@@ -58,7 +73,6 @@ constexpr float DEV_CONSOLE_LINE_HEIGHT				= 0.15f;
 
 constexpr float PLAYER_HEIGHT						= 0.7f;
 
-
 // Game Specific Colors
 const Rgba8 DEV_CONSOLE_INFO_COLOR		( 255, 255, 255 );
 const Rgba8 DEV_CONSOLE_HELP_COLOR		( 255, 255, 0 );
@@ -72,7 +86,19 @@ const Rgba8 RGBA8_DARK_YELLOW			( 200, 170, 0 );
 const Rgba8 RGBA8_HALF_TRANSPARENT_GRAY	( 127, 127, 127, 127 );
 
 
+//---------------------------------------------------------------------------------------------------------
 // Common Game Functions
+//---------------------------------------------------------------------------------------------------------
+
+//Billboarding
+Mat44			GetBillboardTransformMatrix( Camera const& cameraToLookAt, Vec3 const& positionToLookFrom, BillboardType billboardType );
+Mat44			BillboardFacingXY( Camera const& cameraToLookAt, Vec3 const& positionToLookFrom );
+Mat44			BillboardOpposingXY( Camera const& cameraToLookAt, Vec3 const& positionToLookFrom );
+Mat44			BillboardFacingXYZ( Camera const& cameraToLookAt, Vec3 const& positionToLookFrom );
+Mat44			BillboardOpposingXYZ( Camera const& cameraToLookAt, Vec3 const& positionToLookFrom );
+BillboardType	GetBillboardTypeFromString( char const* billboardTypeAsString );
+
+//Drawing
 void DrawLineBetweenPoints( const Vec2& startPosition, const Vec2& endPosition, const Rgba8& color, float thickness );
 void DrawCircleAtPoint( const Vec2& position, float radius, const Rgba8& color, float thickness );
 void DrawAABB2AtPoint( const Vec2& position, const AABB2& box, const Rgba8& color, float thickness );

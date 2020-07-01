@@ -357,7 +357,7 @@ void Physics2D::ResolveCollision( Collision2D const& collision )
 		pushOnMe = 1.f;
 		pushOnThem = 0.f;
 	}
-	else if (myMode == SIMULATION_MODE_STATIC && theirMode == SIMULATION_MODE_KINEMATIC)
+	else if( myMode == SIMULATION_MODE_STATIC && theirMode == SIMULATION_MODE_KINEMATIC )
 	{
 		pushOnMe = 0.f;
 		pushOnThem = 1.f;

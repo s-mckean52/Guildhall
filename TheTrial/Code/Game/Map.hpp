@@ -6,6 +6,9 @@
 class Game;
 class World;
 class Entity;
+class Cursor;
+class Enemy;
+class Player;
 struct Tile;
 
 class Map
@@ -22,14 +25,19 @@ public:
 	void DebugRender() const;
 
 	void CreateTilesFromImage( char const* filepath );
+	void AddPlayerToMap( Player* player );
+	void AddEntityToList( Entity* entity );
+	Enemy* GetCursorOverlapEntity( Cursor* cursor );
 
 private:
 	Game*	m_theGame	= nullptr;
 	World*	m_theWorld	= nullptr;
 
+	Vec2 m_playerSpawnPosition;
 	IntVec2 m_dimensions = IntVec2( 8, 8 );
 
+	Player* m_player = nullptr;
 	std::vector<Vertex_PCU> m_verts;
 	std::vector<Tile*> m_tiles;
-	std::vector<Entity*> m_entites;
+	std::vector<Entity*> m_entities;
 };

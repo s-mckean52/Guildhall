@@ -4,6 +4,7 @@
 #include "Game/Enemy.hpp"
 #include "Game/Ability.hpp"
 #include "Game/World.hpp"
+#include "Game/Cursor.hpp"
 #include "Game/TileDefinition.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
@@ -83,17 +84,15 @@ void Game::StartUp()
 	m_testShader		= g_theRenderer->GetOrCreateShader( "Data/Shaders/WorldOpaque.hlsl" );
 	m_testSound			= g_theAudio->CreateOrGetSound( "Data/Audio/TestSound.mp3" );
 
+	m_cursor = new Cursor();
+
 	TileDefinition::InitializeTileDefinitions();
 	Ability::CreateAbilitiesFromXML( "Data/Definitions/AbilityDefinitions.xml" );
 
 	m_player = new Player( this );
-	m_entities.push_back( m_player );
-// 	m_entities.push_back( new Enemy( this, Vec2( 2.f, 2.f ) ) );
-// 	m_entities.push_back( new Enemy( this, Vec2( -2.f, 2.f ) ) );
-// 	m_entities.push_back( new Enemy( this, Vec2( -2.f, -2.f ) ) );
-// 	m_entities.push_back( new Enemy( this, Vec2( 2.f, -2.f ) ) );
-
 	m_world = new World( this );
+
+	m_world->AddPlayerToCurrentMap( m_player );
 }
 
 
@@ -148,23 +147,7 @@ void Game::Render()
 void Game::RenderWorld() const
 {
 	m_world->Render();
-
-	for( int i = 0; i < m_entities.size(); ++i )
-	{
-		m_entities[i]->Render();
-	}
-
-	g_theRenderer->BindTexture( nullptr );
-	g_theRenderer->BindShader( (Shader*)nullptr );
-
-	//DrawCircleAtPoint( Vec2::ZERO, 1.f, Rgba8::GREEN, 0.1f );
-	Rgba8 cursorColor = Rgba8::CYAN;
-	if( m_hoveredEnemy != nullptr )
-	{
-		cursorColor = Rgba8::RED;
-	}
-
-	DrawCircleAtPoint( m_cursorPosition, 0.1f, cursorColor, 0.1f );
+	//m_cursor->Render();
 }
 
 
@@ -176,10 +159,11 @@ void Game::RenderUI() const
 	AABB2 uiCameraRect = AABB2( uiBottomLeft.x, uiBottomLeft.y, uiTopRight.x, uiTopRight.y );
 
 	float distanceBetweenAbilities = uiCameraRect.GetDimensions().x * 0.05f;
-	Vec2 abilityUIStartUV = Vec2( 0.4f, 0.f );
+	Vec2 abilityUIStartUV = Vec2( 0.3f, 0.f );
 	Vec2 abilityUIStartPos = uiCameraRect.GetPointAtUV( abilityUIStartUV );
 	m_player->RenderAbilities( abilityUIStartPos, distanceBetweenAbilities );
 
+	m_cursor->Render();
 
 	if( g_isDebugDraw )
 	{
@@ -229,6 +213,14 @@ void Game::EnableLightsForRendering() const
 // 	{
 // 		g_theRenderer->EnableLight( lightIndex, m_animatedLights[lightIndex].light );
 // 	}
+}
+
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec2 Game::GetCursorPosition() const
+{
+	return m_cursor->GetWorldPosition();
 }
 
 
@@ -285,17 +277,15 @@ void Game::Update()
 		UpdateFromInput( deltaSeconds );
 	}
 	m_world->Update( deltaSeconds );
-	for( int i = 0; i < m_entities.size(); ++i )
-	{
-		m_entities[i]->Update( deltaSeconds );
-	}
+
+	UpdateCameras();
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateFromInput( float deltaSeconds )
 {
-	UpdateCursorPosition( *m_worldCamera );
+	UpdateCursor();
 	MoveWorldCamera( deltaSeconds );
 
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
@@ -341,22 +331,10 @@ void Game::MoveWorldCamera( float deltaSeconds )
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::UpdateCursorPosition( Camera const& camera )
+void Game::UpdateCursor()
 {
-	Vec2 mouseNormalizedPos = g_theInput->GetMouseNormalizedClientPosition();
-	Vec3 newMousePos = camera.ClientToWorldPosition( mouseNormalizedPos );
-	m_cursorPosition = Vec2( newMousePos.x, newMousePos.y );
-
-	m_hoveredEnemy = nullptr;
-	for( int i = 0; i < m_entities.size(); ++i )
-	{
-		Enemy* enemy = dynamic_cast<Enemy*>( m_entities[i] );
-		if( enemy != nullptr && !enemy->IsDead() && DoDiscsOverlap( m_cursorPosition, 0.1f, enemy->GetCurrentPosition(), enemy->GetPhysicsRadius() ) )
-		{
-			m_hoveredEnemy = enemy;
-			break;
-		}
-	}
+	m_cursor->Update();
+	m_hoveredEnemy = m_world->GetCursorOverlapEnemyOnCurrentMap( m_cursor );
 
 	if( m_hoveredEnemy != nullptr && g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_RIGHT ) )
 	{
@@ -365,16 +343,17 @@ void Game::UpdateCursorPosition( Camera const& camera )
 	else if( g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_RIGHT ) )
 	{
 		m_player->SetIsMoving( true );
-		m_player->SetMovePosition( m_cursorPosition );
+		m_player->SetMovePosition( GetCursorPosition() );
 	}
-
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::AddEntityToList( Entity* entityToAdd )
+void Game::UpdateCameras()
 {
-	m_entities.push_back( entityToAdd );
+	Vec3 currentCameraPosition = m_worldCamera->GetPosition();
+	Vec3 newCameraPosition = Vec3( m_player->GetCurrentPosition(), currentCameraPosition.z );
+	m_worldCamera->SetPosition( newCameraPosition );
 }
 
 

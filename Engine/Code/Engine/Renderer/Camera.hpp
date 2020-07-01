@@ -73,6 +73,7 @@ public:
 	void SetColorTarget( uint index, Texture* texture );
 
 	void SetDepthStencilTarget( Texture* texture );
+	void SetYawDegrees( float yaw );
 	void SetPitchYawRollRotationDegrees( float pitch, float yaw, float roll );
 	void AddPitchYawRollRotationDegrees( float pitch, float yaw, float roll );
 

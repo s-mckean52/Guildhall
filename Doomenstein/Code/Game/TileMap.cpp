@@ -3,7 +3,9 @@
 #include "Game/MapRegion.hpp"
 #include "Game/MapMaterial.hpp"
 #include "Game/Tile.hpp"
-#include "Game/PlayerStart.hpp"
+#include "Game/EntityDef.hpp"
+#include "Game/Entity.hpp"
+#include "Game/Game.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Core/Vertex_PCUTBN.hpp"
@@ -30,18 +32,303 @@ TileMap::~TileMap()
 
 
 //---------------------------------------------------------------------------------------------------------
-void TileMap::Update()
+RaycastResult TileMap::Raycast( Vec3 const& startPosition, Vec3 const& fwdDir, float maxDistance )
 {
-	CreateMapVerts();
+	std::vector<RaycastResult> results;
+	results.push_back( RaycastAgainstCeilingAndFloor( startPosition, fwdDir, maxDistance ) );
+	results.push_back( RaycastAgainstWalls( startPosition, fwdDir, maxDistance ) );
+	results.push_back( RaycastAgainstEntities( startPosition, fwdDir, maxDistance ) );
+	return GetBestRaycast( results );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+RaycastResult TileMap::RaycastAgainstCeilingAndFloor( Vec3 const& startPosition, Vec3 const& fwdDir, float maxDistance )
+{
+	const float floorHeight = 0.f;
+	const float ceilingHeight = 1.f;
+
+	Vec3 endPosition = startPosition + ( fwdDir * maxDistance );
+	if( endPosition.z < ceilingHeight && endPosition.z > floorHeight )
+		return RaycastResult( startPosition, fwdDir, maxDistance, endPosition, false, maxDistance );
+
+	Vec3 hitNormal = Vec3::ZERO;
+	float hitDistance = maxDistance;
+	if( fwdDir.z > 0.f )
+	{
+		float fractionToCeiling = ( ceilingHeight - startPosition.z ) / ( endPosition.z - startPosition.z );
+		hitDistance = maxDistance * fractionToCeiling;
+		hitNormal = Vec3::UNIT_NEGATIVE_Z;
+	}
+	else if( fwdDir.z < 0.f )
+	{
+		float fractionToFloor = ( floorHeight - startPosition.z ) / ( endPosition.z - startPosition.z );
+		hitDistance = maxDistance * fractionToFloor;
+		hitNormal = Vec3::UNIT_POSITIVE_Z;
+	}
+
+	Vec3 hitPosition = startPosition + ( fwdDir * hitDistance );
+	return RaycastResult( startPosition, fwdDir, maxDistance, hitPosition, true, hitDistance, hitNormal );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+RaycastResult TileMap::RaycastAgainstWalls( Vec3 const& startPosition, Vec3 const& fwdDir, float maxDistance )
+{
+	IntVec2 currentTileCoords;
+	currentTileCoords.x = RoundDownToInt( startPosition.x );
+	currentTileCoords.y = RoundDownToInt( startPosition.y );
+
+	Tile* tile = GetTileByCoords( currentTileCoords );
+	if( IsTileSolid( tile ) )
+	{
+		return RaycastResult( startPosition, fwdDir, maxDistance, startPosition, true, 0.f, -fwdDir );
+	}
+
+	Vec3 rayDisplacement = fwdDir * maxDistance;
+	int xStepSign = static_cast<int>( Signf( rayDisplacement.x ) );
+	int yStepSign = static_cast<int>( Signf( rayDisplacement.y ) );
+
+	float xStep = 1.f / abs( rayDisplacement.x );
+	float yStep = 1.f / abs( rayDisplacement.y );
+	
+	int offsetToLeadingEdgeX = ( xStepSign + 1 ) / 2;
+	int offsetToLeadingEdgeY = ( yStepSign + 1 ) / 2;
+	
+	float firstIntersectionX = static_cast<float>( currentTileCoords.x + offsetToLeadingEdgeX );
+	float firstIntersectionY = static_cast<float>( currentTileCoords.y + offsetToLeadingEdgeY );
+	
+	float nextCrossingX = abs( firstIntersectionX - startPosition.x ) * xStep;
+	float nextCrossingY = abs( firstIntersectionY - startPosition.y ) * yStep;
+
+	for( ;; )
+	{
+		if( nextCrossingX <= nextCrossingY )
+		{
+			if( nextCrossingX > 1.f )
+				return RaycastResult( startPosition, fwdDir, maxDistance, startPosition + rayDisplacement, false, maxDistance );
+
+			currentTileCoords.x += xStepSign;
+			tile = GetTileByCoords( currentTileCoords );
+			if( IsTileSolid( tile ) )
+			{
+				Vec3 impactPosition = startPosition + ( fwdDir * ( maxDistance * nextCrossingX ) );
+				return RaycastResult( startPosition, fwdDir, maxDistance, impactPosition, true, maxDistance * nextCrossingX, Vec3( (float)(-xStepSign), 0.f, 0.f ) );
+			}
+			nextCrossingX += xStep;
+		}
+		else if( nextCrossingY < nextCrossingX )
+		{
+			if( nextCrossingY > 1.f )
+				return RaycastResult( startPosition, fwdDir, maxDistance, startPosition + rayDisplacement, false, maxDistance );
+
+			currentTileCoords.y += yStepSign;
+			tile = GetTileByCoords( currentTileCoords );
+			if( IsTileSolid( tile ) )
+			{
+				Vec3 impactPosition = startPosition + ( fwdDir * ( maxDistance * nextCrossingY ) );
+				return RaycastResult( startPosition, fwdDir, maxDistance, impactPosition, true, maxDistance * nextCrossingY, Vec3( 0.f, (float)(-yStepSign), 0.f ) );
+			}
+			nextCrossingY += yStep;
+		}
+	}
 }
 
 //---------------------------------------------------------------------------------------------------------
+RaycastResult TileMap::RaycastAgainstEntities( Vec3 const& startPosition, Vec3 const& fwdDir, float maxDistance )
+{
+	Entity* impactedEntity = nullptr;
+	Vec3 closestOverallImpact;
+	float closestOverallDistance = 0.f;
+
+	for( uint entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
+	{
+		std::vector<Vec3> potentialHitPoints;
+		//xy overlap check
+		Entity* currentEntity = m_entities[ entityIndex ];
+		if( currentEntity == nullptr || currentEntity->IsPossessed() )
+			continue;
+
+		Vec3 entityPosition = currentEntity->GetPosition();
+		float entityRadius = currentEntity->GetPhysicsRadius();
+		
+		Vec2 startPositionXY = Vec2( startPosition.x, startPosition.y );
+		Vec2 entityPositionXY = Vec2( entityPosition.x, entityPosition.y );
+		if( !DoDiscsOverlap( startPositionXY, maxDistance, entityPositionXY, entityRadius ) )
+			continue;
+
+		Vec2 fwdDirIBasis = Vec2( fwdDir.x, fwdDir.y ).GetNormalized();
+		Vec2 fwdDirJBasis = fwdDirIBasis.GetRotated90Degrees();
+
+		Vec2 displacementToEntity = entityPositionXY - startPositionXY;
+
+		float projectedIDistance = DotProduct2D( displacementToEntity, fwdDirIBasis );
+		float distanceToRay = -DotProduct2D( displacementToEntity, fwdDirJBasis );
+
+		float entityRadiusSquared = entityRadius * entityRadius;
+		float distanceToRaySquared = distanceToRay * distanceToRay;
+		float underRadicalValue = entityRadiusSquared - distanceToRaySquared;
+		float plusMinusDistance = sqrtf( underRadicalValue );
+		if( underRadicalValue > 0.f )
+		{
+			float distance1 = projectedIDistance - plusMinusDistance;
+			float distance2 = projectedIDistance + plusMinusDistance;
+			potentialHitPoints.push_back( startPosition + ( fwdDir * distance1 ) );
+			potentialHitPoints.push_back( startPosition + ( fwdDir * distance2 ) );
+		}
+		else if( underRadicalValue == 0.f )
+		{
+			float distance = projectedIDistance;
+			potentialHitPoints.push_back( startPosition + ( fwdDir * distance ) );
+		}
+		else
+		{
+			continue;
+		}
+
+		std::vector<Vec3> impactPoints = GetRayImpactPointsSideView( currentEntity, potentialHitPoints );
+		if( impactPoints.size() > 0 )
+		{
+			Vec3 closestImpact = GetClosestPointFromList( startPosition, impactPoints );
+			float distanceToImpact = GetDistance3D( startPosition, closestImpact );
+			if( impactedEntity == nullptr || distanceToImpact < closestOverallDistance )
+			{
+				impactedEntity = currentEntity;
+				closestOverallImpact = closestImpact;
+				closestOverallDistance = distanceToImpact;
+			}
+		}
+	}
+
+	if( impactedEntity != nullptr )
+	{
+		Vec2 fwdDirXY = Vec2( fwdDir.x, fwdDir.y );
+		Vec2 impactNormalXY = fwdDirXY.GetRotatedMinus90Degrees();
+		Vec3 impactNormal = Vec3( impactNormalXY, 0.f );
+		return RaycastResult( startPosition, fwdDir, maxDistance, closestOverallImpact, true, closestOverallDistance, impactNormal, impactedEntity );
+	}
+	return RaycastResult( startPosition, fwdDir, maxDistance, startPosition + ( fwdDir * maxDistance ), false, maxDistance );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+RaycastResult TileMap::GetBestRaycast( std::vector<RaycastResult> const& results )
+{
+	RaycastResult bestRaycast;
+	float bestRaycastResultImpactDistance = (float)0xffffffff;
+	for( uint resultsIndex = 0; resultsIndex < results.size(); ++resultsIndex )
+	{
+		RaycastResult result = results[ resultsIndex ];
+		if( result.impactDistance < bestRaycastResultImpactDistance )
+		{
+			bestRaycastResultImpactDistance = result.impactDistance;
+			bestRaycast = result;
+		}
+	}
+	return bestRaycast;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::vector<Vec3> TileMap::GetRayImpactPointsSideView( Entity* entity, std::vector<Vec3> const& potentialHits )
+{
+	std::vector<Vec3> impactPoints;
+
+	float entityRadius = entity->GetPhysicsRadius();
+	float entityHeight = entity->GetHeight();
+	Vec3 entityPosition = entity->GetPosition();
+
+	Vec2 XZBoundsMins = Vec2( entityPosition.x - entityRadius, entityPosition.z );
+	Vec2 XZBoundsMaxes = Vec2( entityPosition.x + entityRadius, entityPosition.z + entityHeight );
+	AABB2 entityXZBounds = AABB2( XZBoundsMins, XZBoundsMaxes );
+	
+	for( uint potentialHitIndex = 0; potentialHitIndex < potentialHits.size(); ++potentialHitIndex )
+	{
+		Vec3 hitPoint = potentialHits[ potentialHitIndex ];
+		Vec2 hitPointXZ = Vec2( hitPoint.x, hitPoint.z );
+
+		if( IsPointInsideAABB2D( hitPointXZ, entityXZBounds ) )
+		{
+			impactPoints.push_back( hitPoint );
+		}
+	}
+	return impactPoints;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec3 TileMap::GetClosestPointFromList( Vec3 const& point, std::vector<Vec3> const& pointsToCheck )
+{
+	Vec3 closestPoint;
+	//int 
+	float closestDistanceSquaredToPoint = (float)0xffffffff;
+	for( uint pointIndex = 0; pointIndex < pointsToCheck.size(); ++pointIndex )
+	{
+		Vec3 currentPoint = pointsToCheck[ pointIndex ];
+		float distanceSquared = GetDistanceSquared3D( point, currentPoint );
+		if( distanceSquared < closestDistanceSquaredToPoint )
+		{
+			closestDistanceSquaredToPoint = distanceSquared;
+			closestPoint = currentPoint;
+		}
+	}
+	return closestPoint;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void TileMap::Update()
+{
+	CreateMapVerts();
+	UpdateEntities();
+	HandleEntityVEntityCollisions();
+	HandleEntitiesVWallCollisions();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void TileMap::UpdateEntities()
+{
+	for( uint entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
+	{
+		Entity* currentEntity = m_entities[ entityIndex ];
+		if( currentEntity != nullptr )
+		{
+			currentEntity->Update();
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void TileMap::Render() const
+{
+	RenderMap();
+	RenderEntities();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void TileMap::RenderMap() const
 {
 	g_theRenderer->BindTextureByPath( "Data/Images/Terrain_8x8.png" );
 	g_theRenderer->BindShader( (Shader*)nullptr );
 
 	g_theRenderer->DrawMesh( m_mapMesh );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void TileMap::RenderEntities() const
+{
+	for( uint entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
+	{
+		Entity* currentEntity = m_entities[ entityIndex ];
+		if( currentEntity != nullptr )
+		{
+			currentEntity->Render();
+		}
+	}
 }
 
 
@@ -163,19 +450,25 @@ void TileMap::CreateEntitiesFromXML( XmlElement const& xmlElement )
 			break;
 
 		std::string entityTypeAsString = nextChildElement->Name();
-		EntityType entityTypeToSpawn = Entity::GetEntityTypeFromString( entityTypeAsString );
+		EntityType entityTypeToSpawn = EntityDef::GetEntityTypeFromString( entityTypeAsString );
 		
 		switch( entityTypeToSpawn )
 		{
-		case ENTITY_PLAYER_START:
-			CreatePlayerStart( *nextChildElement );
-			break;
-		case INVALID_ENTITY_TYPE:
-			g_theConsole->ErrorString( "%s is an unsupported entity type", entityTypeAsString.c_str() );
+		case ENTITY_TYPE_ENTITY:
+		case ENTITY_TYPE_ACTOR:
+		case ENTITY_TYPE_PORTAL:
+		case ENTITY_TYPE_PROJECTILE:
+			SpawnNewEntityOnMap( *nextChildElement );
 			break;
 		default:
-			g_theConsole->ErrorString( "Entity Spawning is currently unsupported" );
-			//TODO: SpawnEntity( entityTypeToSpawn );
+			if( entityTypeAsString == "PlayerStart" )
+			{
+				CreatePlayerStart( *nextChildElement );
+			}
+			else
+			{
+				g_theConsole->ErrorString( "%s is an unsupported entity type", entityTypeAsString.c_str() );
+			}
 			break;
 		}
 
@@ -183,6 +476,55 @@ void TileMap::CreateEntitiesFromXML( XmlElement const& xmlElement )
 	}
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void TileMap::HandleEntitiesVWallCollisions()
+{
+	for( uint entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
+	{
+		Entity* currentEntity = m_entities[ entityIndex ];
+		HandleEntityVWallCollisions( currentEntity );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void TileMap::HandleEntityVWallCollisions( Entity* entity )
+{
+	PushEntityOutOfWall( entity,  0,  0 ); // Current
+	PushEntityOutOfWall( entity,  1,  0 ); // East
+	PushEntityOutOfWall( entity,  1,  1 ); // North-East
+	PushEntityOutOfWall( entity,  0,  1 ); // North
+	PushEntityOutOfWall( entity, -1,  1 ); // North-West
+	PushEntityOutOfWall( entity, -1,  0 ); // West
+	PushEntityOutOfWall( entity, -1, -1 ); // South-West
+	PushEntityOutOfWall( entity,  0, -1 ); // South
+	PushEntityOutOfWall( entity,  1, -1 ); // South-East
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void TileMap::PushEntityOutOfWall( Entity* entity, int xDir, int yDir )
+{
+	float entityRadius = entity->GetPhysicsRadius();
+	Vec3 entityPosition = entity->GetPosition();
+	Vec2 entityPositionXY = Vec2( entityPosition.x, entityPosition.y );
+
+	IntVec2 currentTileCoords;
+	currentTileCoords.x = RoundDownToInt( entityPositionXY.x );
+	currentTileCoords.y = RoundDownToInt( entityPositionXY.y );
+
+	IntVec2 tileToCheckCoords = currentTileCoords + IntVec2( xDir, yDir );
+	Tile* tileToCheck = GetTileByCoords( tileToCheckCoords );
+	
+	AABB2 tileXYBounds = GetTileXYBounds( tileToCheck );
+
+	if( IsTileSolid( tileToCheck ) && DoDiscAndAABB2Overlap( tileXYBounds, entityPositionXY, entityRadius ) )
+	{
+		PushDiscOutOfAABB2( entityPositionXY, entityRadius, tileXYBounds );
+		entity->SetPosition( Vec3( entityPositionXY, entityPosition.z ) );
+	}
+}
 
 //---------------------------------------------------------------------------------------------------------
 void TileMap::AddGlyphToLegend( XmlElement const& xmlElement )
@@ -259,6 +601,21 @@ Tile* TileMap::GetTileInDirectionFromTileIndex( int tileIndex, int relativeXDist
 
 
 //---------------------------------------------------------------------------------------------------------
+AABB2 TileMap::GetTileXYBounds( Tile* tile ) const
+{
+	IntVec2 tileCoords = tile->GetTileCoords();
+	
+	Vec2 tilePosition;
+	tilePosition.x = static_cast<float>( tileCoords.x );
+	tilePosition.y = static_cast<float>( tileCoords.y );
+
+	Vec2 tileMaxesXY = tilePosition + Vec2( 1.f, 1.f );
+	
+	return AABB2( tilePosition, tileMaxesXY );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void TileMap::CreatePlayerStart( XmlElement const& xmlElement )
 {
 	Vec2 invalidPlayerStartPosition = Vec2( -1.f, -1.f );
@@ -275,7 +632,8 @@ void TileMap::CreatePlayerStart( XmlElement const& xmlElement )
 		playerStartYawDegrees = 0.f;
 		g_theConsole->ErrorString( "Could not find yaw for Player Start - Yaw set to 0 Degrees" );
 	}
-	m_playerStart = new PlayerStart( m_game, m_world, this, playerStartPositionXY, playerStartYawDegrees );
+	m_playerStartPositionXY = playerStartPositionXY;
+	m_playerStartYaw = playerStartYawDegrees;
 }
 
 
@@ -461,13 +819,6 @@ void TileMap::AppendVertsForSolidTile( int tileIndex )
 		m_mapVerts.push_back(	Vertex_PCUTBN( frontTopLeft,		color,	frontNormal,	frontBitangent,		-frontTangent,		sideUVBox.maxes ) );																									 		      
 		m_mapVerts.push_back(	Vertex_PCUTBN( backTopLeft,			color,	frontNormal,	frontBitangent,		-frontTangent,		sideTopLeftUV ) );
 	}
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void TileMap::SpawnEntity( EntityType entityType )
-{
-	UNUSED( entityType );
 }
 
 
