@@ -21,10 +21,12 @@ public:
 	//Accessors
 	Vec2	GetCurrentPosition() const		{ return m_currentPosition; }
 	float	GetPhysicsRadius() const		{ return m_physicsRadius; }
+	bool	IsDead() const					{ return m_isDead; }
 
 protected:
 	//Misc. - For now
 	Vec2			m_currentPosition;
+	bool			m_isDead			= false;
 	Game*			m_theGame			= nullptr;
 	float			m_physicsRadius		= 0.5f;
 	AABB2			m_renderBounds		= AABB2( -0.5f, -0.5f, 0.5f, 0.5f );

@@ -1,18 +1,23 @@
 #pragma once
 #include "Game/Ability.hpp"
+#include "Game/Item.hpp"
 
 
-class Blink : public Ability
+class Target : public Ability
 {
 public:
-	Blink() = default;
-	Blink( XmlElement const& xmlElement );
-	Blink( Game* theGame, Actor* owner, float range );
-	Blink( Blink const& copyFrom );
-	~Blink();
+	Target() = default;
+	Target( XmlElement const& xmlElement );
+	Target( Target const& copyFrom );
+	~Target();
 
 	virtual void Use() override;
 
 private:
+	float m_duration = 0.f;
+	int m_numTicks = 1;
+	float m_damagePerTick = 0.f;
 	float m_range = 0.f;
+
+	std::vector<StatMod> m_statMods;
 };

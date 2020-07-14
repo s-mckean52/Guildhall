@@ -160,7 +160,6 @@ public:
 	void		SetFrontFaceWindOrder( bool isCounterClockwise );
 	
 	void		BindShader( Shader* shader );
-	void		BindShader( const char* filepath );
 	void		BindVertexInput( VertexBuffer* vbo );
 	void		BindIndexBuffer( IndexBuffer* ibo );
 	void		BindUniformBuffer( unsigned int slot, RenderBuffer* ubo );

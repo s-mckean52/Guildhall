@@ -10,7 +10,8 @@ enum CursorState
 {
 	CURSOR_STATE_DEFAULT		= 0,
 	CURSOR_STATE_ENEMY_HOVERED	= 1,
-	CURSOR_STATE_ATTACK_MOVE	= 2,
+	CURSOR_STATE_MENU			= 2,
+	CURSOR_STATE_ATTACK_MOVE	= 3,
 };
 
 class Cursor
@@ -22,9 +23,12 @@ public:
 	void Update();
 	void Render() const;
 
-	Vec2 const& GetWorldPosition() const { return m_worldPosition; }
+	Vec2 const& GetWorldPosition() const	{ return m_worldPosition; }
+	float		GetRadius() const			{ return m_radius; }
+	CursorState GetState() const			{ return m_state; }
 
 	void SetState( CursorState cursorState );
+	void SetPosition( Vec2 const& position );
 
 	bool IsOverlappingEntity( Entity* entity );
 

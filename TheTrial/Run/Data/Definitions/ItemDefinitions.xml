@@ -1,0 +1,39 @@
+<AbilityDefinitions>
+
+  <!-- Sprite Sheets -->
+  
+  <SpriteSheet name="Arifacts" layout="10,10">
+    <Diffuse image="Data/Images/Items/Artifacts_10x10.png"/>
+  </SpriteSheet>
+
+  <SpriteSheet name="Books" layout="10,4">
+    <Diffuse image="Data/Images/Items/Books_10x4.png"/>
+  </SpriteSheet>
+
+  <SpriteSheet name="Boots" layout="10,4">
+    <Diffuse image="Data/Images/Items/Boots_10x4.png"/>
+  </SpriteSheet>
+
+  <SpriteSheet name="Capes" layout="10,4">
+    <Diffuse image="Data/Images/Items/Capes_10x4.png"/>
+  </SpriteSheet>
+
+  <SpriteSheet name="Gauntlets" layout="10,5">
+    <Diffuse image="Data/Images/Items/Gauntlets_10x5.png"/>
+  </SpriteSheet>
+  
+  <!-- Item Definitions -->
+  
+  <Item name="RobeOfDamage" sheet="Capes" spriteIndex="0" tint="255,255,255">
+    <StatMod stat="CritChance" amount=".1"/>
+    <StatMod stat="AttackDamage" amount="10"/>
+  </Item>
+
+  <Item name="BootsOfSpeed" sheet="Boots" spriteIndex="0" tint="255,255,255">
+    <StatMod stat="MoveSpeed" amount="1"/>
+  </Item>
+  
+
+</AbilityDefinitions>
+
+

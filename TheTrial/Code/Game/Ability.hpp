@@ -33,7 +33,7 @@ public:
 	virtual ~Ability();
 
 	virtual void Update();
-	virtual void Render( Vec2 const& minPosition ) const;
+	virtual void Render( Vec2 const& minPosition, char abilityKey ) const;
 	virtual void Use();
 
 	bool IsOnCooldown() const;
@@ -46,6 +46,8 @@ public:
 	static AbilityType	GetAbilityTypeFromString( std::string const& abilityTypeAsString );
 	static std::string	GetAbilityTypeAsString( AbilityType abilityType );
 	static Ability*		GetNewAbilityByName( std::string const& abilityName );
+	static Strings		GetAbilityList( int startIndex, int endIndex );
+	static int			GetNumAbilities();
 
 private:
 	static std::map<std::string, Ability*> s_abilities;

@@ -58,13 +58,14 @@ float BitmapFont::GetGlyphAspect( int glyphUnicode ) const
 
 
 //---------------------------------------------------------------------------------------------------------
-void BitmapFont::AddVertsForTextInBox2D( std::vector<Vertex_PCU>& vertexArray, const AABB2& box, float cellHeight, const std::string& text, const Rgba8& tint, float cellAspect, const Vec2& alignment )
+void BitmapFont::AddVertsForTextInBox2D( std::vector<Vertex_PCU>& vertexArray, const AABB2& box, float cellHeight, const std::string& text, const Rgba8& tint, float cellAspect, const Vec2& alignment, const Vec2& offset )
 {
 	Vec2 textDimensions = GetDimensionsForText2D( cellHeight, text, cellAspect );
 	Vec2 boxDimensions	= box.GetDimensions();
 
 	Vec2 textMins	= box.mins;
 	textMins		+= ( boxDimensions - textDimensions ) * alignment;
+	textMins		+= offset;
 
 	AddVertsForText2D( vertexArray, textMins, cellHeight, text, tint, cellAspect );
 }

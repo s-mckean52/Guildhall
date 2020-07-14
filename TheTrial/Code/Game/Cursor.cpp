@@ -31,7 +31,11 @@ Cursor::~Cursor()
 //---------------------------------------------------------------------------------------------------------
 void Cursor::Update()
 {
-	m_state = CURSOR_STATE_DEFAULT;
+	if( m_state != CURSOR_STATE_ATTACK_MOVE )
+	{
+		SetState( CURSOR_STATE_DEFAULT );
+	}
+
 	Vec2 mouseNormalizedPos = g_theInput->GetMouseNormalizedClientPosition();
 	
 	Camera* playerCamera = g_theGame->GetPlayerCamera();
@@ -57,7 +61,7 @@ void Cursor::Render() const
 	
 	TransformVertexArray( verts, 1.f, 0.f, m_uiPosition );
 	g_theRenderer->BindTexture( &m_sheet->GetTexture() );
-	g_theRenderer->BindShader( (Shader*)nullptr );
+	g_theRenderer->BindShader( nullptr );
 	g_theRenderer->DrawVertexArray( verts );
 
 	if( g_isDebugDraw )
@@ -71,6 +75,14 @@ void Cursor::Render() const
 void Cursor::SetState( CursorState cursorState )
 {
 	m_state = cursorState;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Cursor::SetPosition( Vec2 const& position )
+{
+	m_worldPosition = position;
+	m_uiPosition = position;
 }
 
 

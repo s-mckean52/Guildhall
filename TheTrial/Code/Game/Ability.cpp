@@ -1,6 +1,8 @@
 #include "Game/Ability.hpp"
 #include "Game/Blink.hpp"
 #include "Game/Buff.hpp"
+#include "Game/SkillShot.hpp"
+#include "Game/Target.hpp"
 #include "Game/Game.hpp"
 #include "Game/GameCommon.hpp"
 #include "Engine/Renderer/MeshUtils.hpp"
@@ -63,8 +65,10 @@ void Ability::Update()
 
 
 //---------------------------------------------------------------------------------------------------------
-void Ability::Render( Vec2 const& minPosition ) const
+void Ability::Render( Vec2 const& minPosition, char abilityKey ) const
 {
+	const float textHeight = 0.1f;
+
 	Vec2 abilityRectDimensions = Vec2( ABILITY_UI_WIDTH, ABILITY_UI_HEIGHT );
 	Vec2 abilityRectMaxPos = minPosition + abilityRectDimensions;
 	AABB2 abilityRect = AABB2( minPosition, abilityRectMaxPos );
@@ -82,9 +86,13 @@ void Ability::Render( Vec2 const& minPosition ) const
 		abilityStatusString = Stringf( "%.1f", elapsedTime );
 	}
 	
+	std::string abilityKeyAsString = "";
+	abilityKeyAsString += abilityKey;
+
 	std::vector<Vertex_PCU> abilityTextVerts;
-	g_devConsoleFont->AddVertsForTextInBox2D( abilityTextVerts, abilityRect, 0.1f, abilityStatusString, Rgba8::BLUE );
-	g_devConsoleFont->AddVertsForTextInBox2D( abilityTextVerts, abilityRect, 0.1f, m_name, Rgba8::BLUE, 1.f, Vec2( 0.5f, 0.95f ) );
+	g_devConsoleFont->AddVertsForTextInBox2D( abilityTextVerts, abilityRect, textHeight * 1.5f,		abilityKeyAsString,		Rgba8::BLUE, 1.f, Vec2( 0.05f, 0.95f ) );
+	g_devConsoleFont->AddVertsForTextInBox2D( abilityTextVerts, abilityRect, textHeight,			m_name,					Rgba8::BLUE, 1.f, ALIGN_CENTERED );
+	g_devConsoleFont->AddVertsForTextInBox2D( abilityTextVerts, abilityRect, textHeight * 0.75f,	abilityStatusString,	Rgba8::BLUE, 1.f, ALIGN_CENTERED, Vec2( 0.f, -textHeight - 0.05f ) );
 	g_theRenderer->BindTexture( g_devConsoleFont->GetTexture() );
 	g_theRenderer->DrawVertexArray( abilityTextVerts );
 }
@@ -141,8 +149,8 @@ STATIC void Ability::CreateAbilitiesFromXML( char const* filepath )
 		{
 		case ABILITY_TYPE_BLINK:		newAbility = new Blink( *nextChildElement ); break;
 		case ABILITY_TYPE_BUFF:			newAbility = new Buff( *nextChildElement ); break;
-		case ABILITY_TYPE_SKILLSHOT:	
-		case ABILITY_TYPE_TARGET:
+		case ABILITY_TYPE_SKILLSHOT:	newAbility = new SkillShot( *nextChildElement ); break;
+		case ABILITY_TYPE_TARGET:		newAbility = new Target( *nextChildElement ); break;
 		case INVALID_ABILITY_TYPE:
 		default:
 			g_theConsole->ErrorString( "Unsupported ability type: %s", abilityTypeAsString.c_str() );
@@ -163,7 +171,7 @@ STATIC void Ability::CreateAbilitiesFromXML( char const* filepath )
 AbilityType Ability::GetAbilityTypeFromString( std::string const& abilityTypeAsString )
 {
 	if		( abilityTypeAsString == "Blink" )		{ return ABILITY_TYPE_BLINK; }
-	else if	( abilityTypeAsString == "Projectile" )	{ return ABILITY_TYPE_SKILLSHOT; }
+	else if	( abilityTypeAsString == "SkillShot" )	{ return ABILITY_TYPE_SKILLSHOT; }
 	else if	( abilityTypeAsString == "Target" )		{ return ABILITY_TYPE_TARGET; }
 	else if	( abilityTypeAsString == "Buff" )		{ return ABILITY_TYPE_BUFF; }
 	else											{ return INVALID_ABILITY_TYPE; };
@@ -176,7 +184,7 @@ STATIC std::string Ability::GetAbilityTypeAsString( AbilityType abilityType )
 	switch( abilityType )
 	{
 	case ABILITY_TYPE_BLINK:		return "Blink";			break;
-	case ABILITY_TYPE_SKILLSHOT:	return "Projectile";	break;
+	case ABILITY_TYPE_SKILLSHOT:	return "SkillShot";		break;
 	case ABILITY_TYPE_TARGET:		return "Target";		break;
 	case ABILITY_TYPE_BUFF:			return "Buff";			break;
 
@@ -198,12 +206,36 @@ STATIC Ability* Ability::GetNewAbilityByName( std::string const& abilityName )
 		{
 		case ABILITY_TYPE_BLINK:		return new Blink( *(Blink*)abilityDefinition ); break;
 		case ABILITY_TYPE_BUFF:			return new Buff( *(Buff*)abilityDefinition ); break;
-		case ABILITY_TYPE_SKILLSHOT:	
-		case ABILITY_TYPE_TARGET:
+		case ABILITY_TYPE_SKILLSHOT:	return new SkillShot( *(SkillShot*)abilityDefinition ); break;
+		case ABILITY_TYPE_TARGET:		return new Target( *(Target*)abilityDefinition ); break;
 		default:
 			break;
 		}
 
 	}
 	return nullptr;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Strings Ability::GetAbilityList( int startIndex, int length )
+{
+	Strings abilityNames;
+
+	int endIndex = GetClamp( startIndex + length, 0, static_cast<int>( s_abilities.size() ) );
+	for( int index = startIndex; index < endIndex; ++index )
+	{
+		auto abilityIter = s_abilities.begin();
+		std::advance( abilityIter, index );
+		abilityNames.push_back( abilityIter->first );
+	}
+
+	return abilityNames;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+int Ability::GetNumAbilities()
+{
+	return static_cast<int>( s_abilities.size() );
 }

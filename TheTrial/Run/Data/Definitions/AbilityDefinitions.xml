@@ -9,14 +9,14 @@
   <SkillShot name="Shot" cooldown="3.f">
     <image name="xxxx"/>
     <sound name="xxxx"/>
-    <values range="1.f" speed="2.f" number="1" baseDamage="10.f">
-      <Damage type="magic" addFraction="0.5f"/>
+    <values range="4.f" speed="2.f" numProjectiles="5" baseDamage="10" aperture="180">
+      <Damage type="AttackDamage" fraction="1.5f"/>
     </values>
   </SkillShot>
 
-  <Target name="Bleed" cooldown="10.f">
+  <Target name="Slow" cooldown="10.f">
     <values range="10.f" duration="3.f" numTicks="3" damagePerTick="10.f">
-      <Modify stat="speed" amount="-1.f" isOnTarget="true"/>
+      <Modify stat="MoveSpeed" amount="-1.f"/>
     </values>
   </Target>
   

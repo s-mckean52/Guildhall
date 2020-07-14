@@ -1,6 +1,6 @@
 #include "Game/Buff.hpp"
 #include "Game/Game.hpp"
-#include "Game/Actor.hpp"
+#include "Game/Item.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
 
@@ -22,7 +22,7 @@ Buff::Buff( XmlElement const& xmlElement )
 		{
 			std::string statToModAsString = ParseXmlAttribute( *nextValueChild, "stat", "INVALID" );
 			float amountToMod = ParseXmlAttribute( *nextValueChild, "amount", 0.f );
-			m_statMods.emplace_back( Actor::GetStatTypeFromString( statToModAsString ), amountToMod );
+			m_statMods.emplace_back( Item::GetStatTypeFromString( statToModAsString ), amountToMod );
 		}
 		nextValueChild = nextValueChild->NextSiblingElement();
 	}

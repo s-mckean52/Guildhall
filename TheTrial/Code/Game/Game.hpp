@@ -18,8 +18,10 @@ class Clock;
 class Player;
 class Enemy;
 class World;
+class Map;
 class Cursor;
 class NamedProperties;
+class UIButton;
 struct Vertex_PCUTBN;
 struct AABB3;
 
@@ -38,6 +40,13 @@ enum GameState
 	GAME_STATE_DEAD,
 };
 
+enum MenuState
+{
+	MENU_STATE_MAIN,
+	MENU_STATE_ABILITY_SELECT,
+	MENU_STATE_OPTIONS,
+};
+
 
 class Game
 {
@@ -52,31 +61,60 @@ public:
 	void Update();
 
 	//Input
-	void UpdateFromInput( float deltaSeconds );
-	void MoveWorldCamera( float deltaSeconds );
+	void UpdateFromInput();
+	void MoveWorldCamera();
 	void UpdateCursor();
 	void UpdateCameras();
 
 	//Rendering
 	void UpdateCameraProjection( Camera* camera );
 	void UpdateCameraView( Camera* camera, CameraViewOrientation viewOrientation = RIGHT_HAND_X_RIGHT_Y_UP );
-	void RenderWorld() const;
+	void RenderBasedOnState() const;
 	void RenderUI() const;
 	void EnableLightsForRendering() const;
 
 	//Accessors
 	Vec2	GetCursorPosition() const;
+	Map*	GetCurrentMap() const;
+	Player* GetPlayer() const			{ return m_player; }
 	Camera*	GetPlayerCamera() const		{ return m_worldCamera; }
 	Camera*	GetUICamera() const			{ return m_UICamera; }
 	Clock*	GetGameClock() const		{ return m_gameClock; }
 	bool	IsQuitting() const			{ return m_isQuitting; }
+	Enemy*	GetHoveredEnemy() const		{ return m_hoveredEnemy; }
 
 	//Static
 	static void GainFocus( EventArgs* args );
 	static void LoseFocus( EventArgs* args );
 
 
+	void UpdateStateBasedOnGameState();
+	void LoadGame();
+	void LoadAssets();
+	void RenderLoading() const;
+	
+	void UpdateMenuFromInput();
+	void UpdateMainMenu();
+	void UpdateAbilitySelect();
+	void CreateMenuButtons();
+	void RenderMenu() const;
+	void NewGameOnClick();
+	void BackOnClick();
+	void ReturnToMenuOnClick();
+	void StartGameOnClick();
+	void ResumeGameOnClick();
+	void QuitOnClick();
+
+	void UpdatePauseFromInput();
+	void RenderPause() const;
+
+	void UpdateDeadFromInput();
+	void RenderDead() const;
+
 private:
+	GameState m_gameState = GAME_STATE_LOADING;
+	MenuState m_menuState = MENU_STATE_MAIN;
+
 	Clock* m_gameClock = nullptr;
 
 	Enemy* m_hoveredEnemy	= nullptr;
@@ -96,4 +134,15 @@ private:
 	Camera*	m_worldCamera = nullptr;
 	Camera* m_UICamera = nullptr;
 	bool	m_isQuitting = false;
+
+	std::vector<UIButton*> m_mainMenuButtons;
+	std::vector<UIButton*> m_abilityMenuButtons;
+	std::vector<UIButton*> m_pauseMenuButtons;
+	std::vector<UIButton*> m_deadMenuButtons;
+
+	int m_selectedAbilitySlot = 0;
+	int m_selectedAbilityButton = 0;
+	int m_firstAbilityToDisplay = 0;
+	Strings m_selectedAbilities = { "Blink", "Blink", "Blink", "Blink" };
+	Strings m_shownAbilities;
 };

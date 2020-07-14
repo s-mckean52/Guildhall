@@ -75,6 +75,21 @@
     <ClCompile Include="Cursor.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
+    <ClCompile Include="Item.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="UIButton.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="SkillShot.cpp">
+      <Filter>Framework\Abilities</Filter>
+    </ClCompile>
+    <ClCompile Include="RaycastResult.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Target.cpp">
+      <Filter>Framework\Abilities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -127,6 +142,21 @@
     </ClInclude>
     <ClInclude Include="Cursor.hpp">
       <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Item.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="UIButton.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="SkillShot.hpp">
+      <Filter>Framework\Abilities</Filter>
+    </ClInclude>
+    <ClInclude Include="RaycastResult.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Target.hpp">
+      <Filter>Framework\Abilities</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

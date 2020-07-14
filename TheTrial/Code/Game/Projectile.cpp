@@ -10,8 +10,21 @@ Projectile::Projectile( Game* theGame, int damage, float movementSpeed, Actor* t
 {
 	m_damage = damage;
 	m_movementSpeed = movementSpeed;
-	m_targetEntity = target;
 	m_physicsRadius = 0.05f;
+	m_targetEntity = target;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Projectile::Projectile( Game* theGame, int damage, float movementSpeed, Vec2 const& direction, float range )
+	: Entity( theGame )
+{
+	m_damage = damage;
+	m_movementSpeed = movementSpeed;
+	m_physicsRadius = 0.05f;
+
+	m_rangeRemaining = range;
+	m_direction = direction.GetNormalized();
 }
 
 
@@ -24,29 +37,35 @@ Projectile::~Projectile()
 //---------------------------------------------------------------------------------------------------------
 void Projectile::Update( float deltaSeconds )
 {
-	if( m_hasHitTarget )
+	if( m_isDead )
 		return;
 
-	if( DoDiscsOverlap( m_currentPosition, m_physicsRadius, m_targetEntity->GetCurrentPosition(), m_targetEntity->GetPhysicsRadius() ) )
+	if( m_targetEntity != nullptr && DoDiscsOverlap( m_currentPosition, m_physicsRadius, m_targetEntity->GetCurrentPosition(), m_targetEntity->GetPhysicsRadius() ) )
 	{
-		m_hasHitTarget = true;
-		m_targetEntity->TakeDamage( m_damage );
-		return;
-	}
-
-	if( m_targetEntity == nullptr )
-	{
-		//TODO: behavior for untargeted
+		DealDamageToActor( m_targetEntity );
 		return;
 	}
 	
-	Vec2 positionToMoveTo = m_targetEntity->GetCurrentPosition();
-	Vec2 displacementToDestination = positionToMoveTo - m_currentPosition;
-	Vec2 directionTowardsDestination = displacementToDestination.GetNormalized();
-	Vec2 movementVector = directionTowardsDestination * m_movementSpeed * deltaSeconds;
+	Vec2 displacementToDestination;
+	float displacementProjectedDistance = 1000.f;
+	if( m_targetEntity != nullptr )
+	{
+		Vec2 positionToMoveTo = m_targetEntity->GetCurrentPosition();
+		displacementToDestination = positionToMoveTo - m_currentPosition;
+		m_direction = displacementToDestination.GetNormalized();
+		displacementProjectedDistance = GetProjectedLength2D( displacementToDestination, m_direction );
+	}
+	else
+	{
+		m_rangeRemaining -= m_movementSpeed * deltaSeconds;
+		if( m_rangeRemaining <= 0.f )
+		{
+			m_isDead = true;
+		}
+	}
 	
-	float displacementProjectedDistance = GetProjectedLength2D( displacementToDestination, directionTowardsDestination);
-	float movementProjectedDistance = GetProjectedLength2D( movementVector, directionTowardsDestination );
+	Vec2 movementVector = m_direction * m_movementSpeed * deltaSeconds;
+	float movementProjectedDistance = GetProjectedLength2D( movementVector, m_direction );
 	
 	if( displacementProjectedDistance < movementProjectedDistance )
 	{
@@ -59,8 +78,23 @@ void Projectile::Update( float deltaSeconds )
 //---------------------------------------------------------------------------------------------------------
 void Projectile::Render() const
 {
-	if( m_hasHitTarget )
+	if( m_isDead )
 		return;
 
 	DrawCircleAtPoint( m_currentPosition, m_physicsRadius, Rgba8::ORANGE, 0.1f );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool Projectile::HasTarget() const
+{
+	return m_targetEntity != nullptr;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Projectile::DealDamageToActor( Actor* actorToDealDamageTo )
+{
+	m_isDead = true;
+	actorToDealDamageTo->TakeDamage( m_damage );
 }

@@ -1241,20 +1241,6 @@ void RenderContext::BindShader( Shader* shader )
 
 
 //---------------------------------------------------------------------------------------------------------
-void RenderContext::BindShader( const char* filepath )
-{
-	m_currentShader = GetOrCreateShader( filepath );
-
-	if( m_currentShader == nullptr )
-	{
-		m_currentShader = m_defaultShader;
-	}
-
-	BindShader( m_currentShader );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
 void RenderContext::BindVertexInput( VertexBuffer* vbo )
 {
 	ID3D11Buffer* vboHandle = vbo->m_handle;
