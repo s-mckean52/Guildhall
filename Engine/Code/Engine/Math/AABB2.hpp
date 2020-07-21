@@ -26,6 +26,7 @@ public:
 
 	void		SetCenter( const Vec2& newCenterPoint );
 	void		SetDimensions( const Vec2& newDimensions );
+	void		AddDimensions( const Vec2& addedDimensions );
 
 	void		Translate( const Vec2& displacementVector );
 	void		StretchToIncludePoint( const Vec2& pointToInclude );

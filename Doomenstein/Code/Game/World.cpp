@@ -38,6 +38,7 @@ World::World( Game* theGame )
 	else
 	{
 		SetCurrentMapByName( startMapName );
+		m_currentMap->SpawnPlayer( theGame->GetPlayerCamera() );
 	}
 }
 
@@ -98,6 +99,18 @@ void World::PrintLoadedMapsToDevConsole() const
 
 
 //---------------------------------------------------------------------------------------------------------
+Map* World::GetLoadedMapByName( std::string const& mapName )
+{
+	auto mapIter = m_namedMaps.find( mapName );
+	if( mapIter != m_namedMaps.end() )
+	{
+		return mapIter->second;
+	}
+	return nullptr;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void World::CreateMapFromFilepath( char const* filepath )
 {
 	const std::string mapFileRootNodeName = "MapDefinition";
@@ -137,14 +150,21 @@ void World::CreateMapFromFilepath( char const* filepath )
 
 
 //---------------------------------------------------------------------------------------------------------
+void World::SetCurrentMap( Map* map )
+{
+	m_currentMap = map;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void World::SetCurrentMapByName( std::string mapName )
 {
 	auto mapIterator = m_namedMaps.find( mapName );
 	if( mapIterator != m_namedMaps.end() )
 	{
 		g_theConsole->PrintString( DEV_CONSOLE_INFO_COLOR, Stringf( "Setting current map to: %s...", mapIterator->first.c_str() ) );
-		m_currentMap = mapIterator->second;
-		m_currentMap->SpawnPlayer( m_game->GetPlayerCamera() );
+		SetCurrentMap( mapIterator->second );
+		//m_currentMap->SpawnPlayer( m_game->GetPlayerCamera() );
 	}
 	else
 	{

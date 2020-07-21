@@ -24,13 +24,17 @@
   
   <!-- Item Definitions -->
   
-  <Item name="RobeOfDamage" sheet="Capes" spriteIndex="0" tint="255,255,255">
-    <StatMod stat="CritChance" amount=".1"/>
-    <StatMod stat="AttackDamage" amount="10"/>
+  <Item name="RobeOfDamage" sheet="Capes" spriteIndex="1" tint="255,255,255">
+    <StatMod stat="CritChance" amount=".05"/>
+    <StatMod stat="AttackDamage" amount="15"/>
   </Item>
 
   <Item name="BootsOfSpeed" sheet="Boots" spriteIndex="0" tint="255,255,255">
-    <StatMod stat="MoveSpeed" amount="1"/>
+    <StatMod stat="MoveSpeed" amount="0.3"/>
+  </Item>
+
+  <Item name="QuickHandedGuantlets" sheet="Gauntlets" spriteIndex="26" tint="255,255,255">
+    <StatMod stat="AttackSpeed" amount="0.5"/>
   </Item>
   
 

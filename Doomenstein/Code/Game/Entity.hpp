@@ -10,13 +10,14 @@ class Map;
 class Entity
 {
 public:
-	explicit Entity( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef );
+	explicit Entity( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef, XmlElement const& element );
 	virtual ~Entity();
 
 	//---------------------------------------------------------------------------------------------------------
 	virtual void Update();
 	virtual void Render() const;
 	virtual void DebugRender() const;
+	virtual void SetValuesFromXML( XmlElement const& element );
 
 	//---------------------------------------------------------------------------------------------------------
 	EntityType	GetEntityType() const;
@@ -38,8 +39,10 @@ public:
 	//---------------------------------------------------------------------------------------------------------
 	void SetPosition( Vec3 const& position );
 	void SetYaw( float yaw );
+	void AddYaw( float yawToAdd );
 	void Translate( Vec3 const& translation );
 	void SetIsPossessed( bool isPossesed );
+	void SetMap( Map* map );
 
 protected:
 	Game*	m_theGame	= nullptr;

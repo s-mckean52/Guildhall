@@ -143,6 +143,8 @@ void Enemy::AttackActor( Actor* actor )
 	if( !m_attackTimer.HasElapsed() )
 		return;
 
+	SoundID enemyAttackSound = g_theAudio->CreateOrGetSound( "Data/Audio/enemyAttack.wav" );
+	g_theAudio->PlaySound( enemyAttackSound, false, m_theGame->GetSFXVolume() );
 	actor->TakeDamage( GetDamageToDeal() );
 
 	float attackCooldownSeconds = 1.f / GetAttackSpeed();

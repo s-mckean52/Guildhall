@@ -31,6 +31,9 @@
     <Actor name="Pinky" pos="12,4" yaw="180"/>
     <Actor name="Pinky" pos="13,3" yaw="270"/>
     <Actor name="Marine" pos="13,4" yaw="225"/>
+
+    <Portal name="Energy Teleporter" pos="5.5,1.5" yaw="90" destMap="EmptyRoom" destPos="5,2" destYawOffset="0"/>
+    <Portal name="Energy Teleporter" pos="1.5,1.5" yaw="90" destMap="" destPos="10,5" destYawOffset="180"/>
 	</Entities>
 
 </MapDefinition>

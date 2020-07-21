@@ -50,16 +50,52 @@
     name="HeightWall"
     sheet="RPGTerrain"
     spriteCoords="6,25"
-    texelColorForSet="160,65,12"
+    texelColorForSet="160,65,13"
     tint="255,255,255"
     isSolid="true"
 		/>
   
   <TileDefinition
-    name="Grass"
+    name="Bush"
     sheet="RPGTerrain"
     spriteCoords="10,2"
     texelColorForSet="0,255,0"
+    tint="255,255,255"
+    isSolid="false"
+		/>
+  
+  <TileDefinition
+    name="Grass"
+    sheet="RPGTerrain"
+    spriteCoords="7,1"
+    texelColorForSet="0,200,0"
+    tint="255,255,255"
+    isSolid="false"
+		/>
+  
+  <TileDefinition
+    name="GrassLeft"
+    sheet="RPGTerrain"
+    spriteCoords="6,1"
+    texelColorForSet="150,150,0"
+    tint="255,255,255"
+    isSolid="false"
+		/>
+  
+  <TileDefinition
+    name="GrassRight"
+    sheet="RPGTerrain"
+    spriteCoords="8,1"
+    texelColorForSet="225,225,0"
+    tint="255,255,255"
+    isSolid="false"
+		/>
+  
+    <TileDefinition
+    name="GrassTop"
+    sheet="RPGTerrain"
+    spriteCoords="7,0"
+    texelColorForSet="175,175b,0"
     tint="255,255,255"
     isSolid="false"
 		/>
@@ -77,11 +113,38 @@
     name="Plain"
     sheet="RPGTerrain"
     spriteCoords="1,4"
-    texelColorForSet="255,245,104"
+    texelColorForSet="255,244,104"
     tint="255,255,255"
     isSolid="false"
 		/>
+  
+  <TileDefinition
+    name="Lava"
+    sheet="RPGTerrain"
+    spriteCoords="1,12"
+    texelColorForSet="255,0,0"
+    tint="255,255,255"
+    isSolid="true"
+		/>
 
+  <TileDefinition
+    name="Ice"
+    sheet="RPGTerrain"
+    spriteCoords="4,4"
+    texelColorForSet="0,255,255"
+    tint="255,255,255"
+    isSolid="false"
+		/>
+  
+  <TileDefinition
+    name="IceHeight"
+    sheet="RPGTerrain"
+    spriteCoords="1,2"
+    texelColorForSet="0,200,200"
+    tint="255,255,255"
+    isSolid="false"
+		/>
+  
 </TileDefinitions>
 
 

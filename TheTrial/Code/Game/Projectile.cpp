@@ -93,6 +93,20 @@ bool Projectile::HasTarget() const
 
 
 //---------------------------------------------------------------------------------------------------------
+void Projectile::ValidateTarget()
+{
+	if( m_targetEntity != nullptr && m_targetEntity->IsDead() )
+	{
+		m_direction = m_targetEntity->GetCurrentPosition() - m_currentPosition;
+		//m_rangeRemaining = m_direction.GetLength();
+		m_direction.Normalize();
+
+		m_targetEntity = nullptr;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Projectile::DealDamageToActor( Actor* actorToDealDamageTo )
 {
 	m_isDead = true;

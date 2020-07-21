@@ -7,6 +7,7 @@
 #include "Game/MapRegion.hpp"
 #include "Game/EntityDef.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Core/JobSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/StringUtils.hpp"
@@ -46,6 +47,50 @@ BitmapFont*				g_devConsoleFont = nullptr;
 bool					g_isDebugDraw = false;
 bool					g_isDebugCamera = false;
 
+//---------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------
+class TestJob : public Job
+{
+public:
+	TestJob( int index );
+	~TestJob() {}
+
+	void Execute() override;
+	void OnCompleteCallback() override;
+
+private:
+	float m_index = 0;
+	float m_value = 0;
+};
+
+
+//---------------------------------------------------------------------------------------------------------
+TestJob::TestJob( int index )
+	: Job()
+{
+	m_index = static_cast<float>( index );
+}
+
+//---------------------------------------------------------------------------------------------------------
+void TestJob::Execute()
+{
+	const int NUM = 10000;
+	for( int index = 0; index < NUM; ++index )
+	{
+		m_value = CosDegrees( static_cast<float>( index ) ) * CosDegrees( static_cast<float>( index ) );
+		m_value = SinDegrees( static_cast<float>( index ) ) * CosDegrees( static_cast<float>( index ) );
+		m_value = CosDegrees( static_cast<float>( index ) ) * CosDegrees( static_cast<float>( index ) );
+	}
+}
+
+//---------------------------------------------------------------------------------------------------------
+void TestJob::OnCompleteCallback()
+{
+	g_theConsole->PrintString( Rgba8::MAGENTA, "Job %i completed with a value of %f", m_jobID, m_value );
+}
+
+//---------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------------------------------------
 Game::~Game()
@@ -57,10 +102,17 @@ Game::Game()
 {
 }
 
-
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
+	constexpr int NUM_JOBS = 50000;
+	//TestJob* jobs[ NUM_JOBS ];
+	for( int i = 0; i < NUM_JOBS; ++i )
+	{
+		g_theJobSystem->PostJob( new TestJob( i + 1 ) );
+	}
+	g_theJobSystem->CreateWorkerThreads( 20 );
+
 
 	g_RNG = new RandomNumberGenerator();
 
@@ -325,7 +377,15 @@ void Game::UpdateBasedOnMouseMovement()
 	float newYaw = m_worldCamera->GetYawDegrees() + relativeMovement.x;
 	Clamp( newPitch, -89.9f, 89.9f );
 
-	m_worldCamera->SetPitchYawRollRotationDegrees( newPitch, newYaw, 0.f );
+	if( m_possessedEntity == nullptr )
+	{
+		m_worldCamera->SetPitchYawRollRotationDegrees( newPitch, newYaw, 0.f );
+	}
+	else
+	{
+		m_worldCamera->SetPitchYawRollRotationDegrees( newPitch, m_worldCamera->GetYawDegrees(), 0.f );
+		m_possessedEntity->SetYaw( newYaw );
+	}
 }
 
 
@@ -375,6 +435,8 @@ void Game::UpdateCameraView( Camera* camera, CameraViewOrientation cameraOrienta
 //---------------------------------------------------------------------------------------------------------
 void Game::Update()
 {
+	g_theJobSystem->ClaimAndDeleteAllCompletedJobs();
+
 	float deltaSeconds = GetDeltaSeconds();
 
 	if( !g_theConsole->IsOpen() )
@@ -579,8 +641,27 @@ void Game::TogglePossessEntity()
 	MatrixInvertOrthoNormal( cameraView );
 	Vec3 cameraForward = cameraView.TransformVector3D( Vec3::UNIT_POSITIVE_X );
 
-	m_possessedEntity = m_world->GetClostestEntityInForwardSector( cameraPosition, 2.f, cameraForward, 90.f );
+	Entity* entityToPossess = m_world->GetClostestEntityInForwardSector( cameraPosition, 2.f, cameraForward, 90.f );
+	SetPossessedEntity( entityToPossess );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::SetPossessedEntity( Entity* entityToPosses )
+{
 	if( m_possessedEntity != nullptr )
+	{
+		Entity* previouslyPossessedEntity = m_possessedEntity;
+		m_possessedEntity = entityToPosses;
+
+		previouslyPossessedEntity->SetIsPossessed( false );
+	}
+	else if( m_possessedEntity == nullptr )
+	{
+		m_possessedEntity = entityToPosses;
+	}
+
+	if( entityToPosses != nullptr )
 	{
 		m_possessedEntity->SetIsPossessed( true );
 		m_worldCamera->SetYawDegrees( m_possessedEntity->GetYaw() );
@@ -596,7 +677,8 @@ void Game::MoveCameraToEntityEye( Entity* entity )
 	possessedEntityEyePosition.z += possessedEntityEyeHeight;
 
 	m_worldCamera->SetPosition( possessedEntityEyePosition );
-	entity->SetYaw( m_worldCamera->GetYawDegrees() );
+	m_worldCamera->SetYawDegrees( entity->GetYaw() );
+	//entity->SetYaw( m_worldCamera->GetYawDegrees() );
 }
 
 
@@ -622,7 +704,9 @@ void Game::set_current_map( EventArgs* args )
 	std::string mapNameToLoad = args->GetValue( "map", "MISSING" );
 	if( mapNameToLoad != "MISSING" )
 	{
+		SetPossessedEntity( nullptr );
 		m_world->SetCurrentMapByName( mapNameToLoad );
+		m_world->GetCurrentMap()->SpawnPlayer( m_worldCamera );
 	}
 	else
 	{

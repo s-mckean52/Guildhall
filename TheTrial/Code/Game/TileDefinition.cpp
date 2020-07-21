@@ -88,12 +88,16 @@ TileDefinition* TileDefinition::GetTileDefByName( std::string const& tileDefName
 //---------------------------------------------------------------------------------------------------------
 TileDefinition* TileDefinition::GetTileDefWithSetColor( const Rgba8& texelColor )
 {
+	const unsigned char colorTolerance = 1;
+
 	auto tileDefIterator = s_tileDefinitions.begin();
 	while( tileDefIterator != s_tileDefinitions.end() )
 	{
 		TileDefinition* currentTileDef = tileDefIterator->second;
 		Rgba8 tileColorToSet = currentTileDef->GetTexelColorForSet();
-		if( tileColorToSet.r == texelColor.r && tileColorToSet.g == texelColor.g && tileColorToSet.b == texelColor.b )
+		if( ( tileColorToSet.r >= texelColor.r - colorTolerance && tileColorToSet.r <= texelColor.r + colorTolerance ) && 
+			( tileColorToSet.g >= texelColor.g - colorTolerance && tileColorToSet.g <= texelColor.g + colorTolerance ) &&
+			( tileColorToSet.b >= texelColor.b - colorTolerance && tileColorToSet.b <= texelColor.b + colorTolerance ) )
 		{
 			return currentTileDef;
 		}

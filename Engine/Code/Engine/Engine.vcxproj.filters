@@ -38,6 +38,15 @@
     <Filter Include="ThirdParty\mikkt">
       <UniqueIdentifier>{1bc1bf67-e3e4-4f98-ad91-90b631ed6b7d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core\JobSystem">
+      <UniqueIdentifier>{e69ee994-991c-4eff-bc6d-7f0cfe56d31d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Time">
+      <UniqueIdentifier>{cc9f7509-fc6d-432b-bc35-d0c299f86220}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Vertex">
+      <UniqueIdentifier>{c08762f8-2256-4268-9be3-aa0e59147247}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Vec2.cpp">
@@ -50,9 +59,6 @@
       <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Core\Rgba8.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Vertex_PCU.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Math\Vec3.cpp">
@@ -68,9 +74,6 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\StringUtils.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Time.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Input\AnalogJoystick.cpp">
@@ -223,12 +226,6 @@
     <ClCompile Include="Renderer\GPUMesh.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Clock.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Timer.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Core\DebugRender.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -240,12 +237,6 @@
     </ClCompile>
     <ClCompile Include="Math\Plane2D.cpp">
       <Filter>Math</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Vertex_Master.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\Vertex_PCUTBN.cpp">
-      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Renderer\Light.cpp">
       <Filter>Renderer</Filter>
@@ -274,6 +265,27 @@
     <ClCompile Include="Renderer\SpriteAnimSet.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
+    <ClCompile Include="Core\Time.cpp">
+      <Filter>Core\Time</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Timer.cpp">
+      <Filter>Core\Time</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Clock.cpp">
+      <Filter>Core\Time</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Vertex_Master.cpp">
+      <Filter>Core\Vertex</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Vertex_PCU.cpp">
+      <Filter>Core\Vertex</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Vertex_PCUTBN.cpp">
+      <Filter>Core\Vertex</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\JobSystem.cpp">
+      <Filter>Core\JobSystem</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -286,9 +298,6 @@
       <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Core\Rgba8.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Vertex_PCU.hpp">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Math\Vec3.hpp">
@@ -307,9 +316,6 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\StringUtils.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Time.hpp">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Input\InputSystem.hpp">
@@ -486,12 +492,6 @@
     <ClInclude Include="Renderer\IndexBuffer.hpp">
       <Filter>Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Clock.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Timer.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Core\DebugRender.hpp">
       <Filter>Core</Filter>
     </ClInclude>
@@ -503,12 +503,6 @@
     </ClInclude>
     <ClInclude Include="Math\Plane2D.hpp">
       <Filter>Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Vertex_Master.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\Vertex_PCUTBN.hpp">
-      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Renderer\Light.hpp">
       <Filter>Renderer</Filter>
@@ -536,6 +530,27 @@
     </ClInclude>
     <ClInclude Include="Renderer\SpriteAnimSet.hpp">
       <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Time.hpp">
+      <Filter>Core\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Timer.hpp">
+      <Filter>Core\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Clock.hpp">
+      <Filter>Core\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Vertex_PCUTBN.hpp">
+      <Filter>Core\Vertex</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Vertex_Master.hpp">
+      <Filter>Core\Vertex</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Vertex_PCU.hpp">
+      <Filter>Core\Vertex</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\JobSystem.hpp">
+      <Filter>Core\JobSystem</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

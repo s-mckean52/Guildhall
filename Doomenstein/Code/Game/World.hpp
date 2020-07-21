@@ -22,7 +22,9 @@ public:
 	Strings GetLoadedMapNames() const;
 	void PrintLoadedMapsToDevConsole() const;
 
+	Map* GetLoadedMapByName( std::string const& mapName );
 	void CreateMapFromFilepath( char const* filepath );
+	void SetCurrentMap( Map* map );
 	void SetCurrentMapByName( std::string mapName );
 	void DeleteAllMaps();
 

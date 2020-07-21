@@ -59,5 +59,6 @@ void Blink::Use()
 	Vec2 positionToBlinkTo = directionTowardCursor * distanceToMove;
 	positionToBlinkTo += ownerCurrentPosition;
 	m_owner->SetCurrentPosition( positionToBlinkTo );
+	m_owner->SetIsMoving( false );
 }
 

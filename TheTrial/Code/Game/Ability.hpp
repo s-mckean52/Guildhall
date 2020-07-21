@@ -1,5 +1,6 @@
 #pragma once
 #include "Game/Actor.hpp"
+#include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/XmlUtils.hpp"
 #include "Engine/Core/Timer.hpp"
 #include <string>
@@ -55,6 +56,9 @@ private:
 protected:
 	Game* m_theGame = nullptr;
 	Actor* m_owner = nullptr;
+
+	SoundID m_castSound;
+	float m_castVolume = 1.f;
 
 	AbilityType	m_type					= INVALID_ABILITY_TYPE;
 	std::string	m_name					= "Default Name";

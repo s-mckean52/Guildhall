@@ -5,6 +5,7 @@
 #include "Game/Ability.hpp"
 #include "Game/Item.hpp"
 #include "Game/World.hpp"
+#include "Game/Map.hpp"
 #include "Game/Cursor.hpp"
 #include "Game/UIButton.hpp"
 #include "Game/TileDefinition.hpp"
@@ -22,6 +23,7 @@
 #include "Engine/Core/NamedProperties.hpp"
 #include "Engine/Core/ColorString.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
+#include "Engine/Renderer/SpriteAnimDefinition.hpp"
 #include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/MeshUtils.hpp"
 #include "Engine/Renderer/Shader.hpp"
@@ -324,6 +326,7 @@ void Game::UpdateFromInput()
 		{
 			m_gameState = GAME_STATE_PAUSED;
 			m_gameClock->Pause();
+			m_player->IsWalkSoundPaused( true );
 		}
 
 		UpdateCursor();
@@ -371,7 +374,6 @@ void Game::MoveWorldCamera()
 	{
 		rightMoveAmount += moveSpeed;
 	}
-
 
 	Vec3 cameraTranslation = Vec3( rightMoveAmount, upMoveAmount, 0.f );
 	m_worldCamera->Translate( cameraTranslation );
@@ -423,6 +425,45 @@ void Game::UpdateCameras()
 	Vec3 currentCameraPosition = m_worldCamera->GetPosition();
 	Vec3 newCameraPosition = Vec3( m_player->GetCurrentPosition(), currentCameraPosition.z );
 	m_worldCamera->SetPosition( newCameraPosition );
+
+	
+	Vec2 translationIntoMap;
+	IntVec2 mapDimensions = m_world->GetCurrentMap()->GetDimensions();
+	Vec2 mapDimensionsF = Vec2( static_cast<float>( mapDimensions.x ), static_cast<float>( mapDimensions.y ) );
+
+	Vec3 orthoBottomLeft = m_worldCamera->GetOrthoBottomLeft();
+	Vec3 orthoTopRight = m_worldCamera->GetOrthoTopRight();
+	if( orthoBottomLeft.x < 0.f )
+	{
+		translationIntoMap.x = -orthoBottomLeft.x;
+	}
+	else if( orthoTopRight.x > mapDimensionsF.x )
+	{
+		translationIntoMap.x = mapDimensionsF.x - orthoTopRight.x;
+	}
+	if( orthoBottomLeft.y < 0.f )
+	{
+		translationIntoMap.y = -orthoBottomLeft.y;
+	}
+	else if( orthoTopRight.y > mapDimensionsF.y )
+	{
+		translationIntoMap.y = mapDimensionsF.y - orthoTopRight.y;
+	}
+	m_worldCamera->Translate( Vec3( translationIntoMap, 0.f ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float Game::GetBackgroundVolumeFraction() const
+{
+	return m_masterVolume * m_backgroundVolume;
+}
+
+
+//---------------------------------------------------------------------------------------------------------	
+float Game::GetSFXVolume() const
+{
+	return m_masterVolume * m_sfxVolume;
 }
 
 
@@ -447,8 +488,16 @@ STATIC void Game::LoseFocus( EventArgs* args )
 //---------------------------------------------------------------------------------------------------------
 void Game::LoadAssets()
 {
-	m_testShader		= g_theRenderer->GetOrCreateShader( "Data/Shaders/WorldOpaque.hlsl" );
-	m_testSound			= g_theAudio->CreateOrGetSound( "Data/Audio/TestSound.mp3" );
+	m_testShader				= g_theRenderer->GetOrCreateShader( "Data/Shaders/WorldOpaque.hlsl" );
+	m_bgmSound					= g_theAudio->CreateOrGetSound( "Data/Audio/background.wav" );
+	SoundID teleporterSound		= g_theAudio->CreateOrGetSound( "Data/Audio/portalOpen.wav" );
+	SoundID teleportSound		= g_theAudio->CreateOrGetSound( "Data/Audio/teleport.wav" );
+	SoundID enemyAttackSound	= g_theAudio->CreateOrGetSound( "Data/Audio/enemyAttack.wav" );
+	SoundID playerAttackSound	= g_theAudio->CreateOrGetSound( "Data/Audio/playerAttack.wav" );
+	SoundID deathSound			= g_theAudio->CreateOrGetSound( "Data/Audio/death.flac" );
+	SoundID itemPickUp			= g_theAudio->CreateOrGetSound( "Data/Audio/itemCollect.wav" );
+	SoundID walkSound			= g_theAudio->CreateOrGetSound( "Data/Audio/walking.wav" );
+
 
 	m_cursor = new Cursor();
 
@@ -456,13 +505,16 @@ void Game::LoadAssets()
 	Ability::CreateAbilitiesFromXML( "Data/Definitions/AbilityDefinitions.xml" );
 	Item::CreateItemsFromXML( "Data/Definitions/ItemDefinitions.xml" );
 
-	m_player = new Player( this );
+	m_player = new Player( this, m_charTypeSelected );
 	m_world = new World( this );
 
 	CreateMenuButtons();
 
 	m_world->AddPlayerToCurrentMap( m_player );
 	m_shownAbilities = Ability::GetAbilityList( m_firstAbilityToDisplay, 6 );
+
+	m_masterVolume	= g_gameConfigBlackboard.GetValue( "masterVolume", m_masterVolume );
+	m_bgmPlayback = g_theAudio->PlaySound( m_bgmSound, true, 0.75f * GetBackgroundVolumeFraction(), 0.f, 1.f );
 }
 
 
@@ -496,8 +548,26 @@ void Game::CreateMenuButtons()
 	backButton->SetTextSize(0.2f);
 	backButton->SetOnClick(this, &Game::BackOnClick);
 
-	m_abilityMenuButtons.push_back(startButton);
-	m_abilityMenuButtons.push_back(backButton);
+	UIButton* scrollUp = new UIButton( "up", Vec2( 0.85f, 0.4f ), Vec2( 0.5f, 0.4f ) );
+	scrollUp->SetTextSize( 0.2f );
+	NamedProperties* scrollUpParams = new NamedProperties();
+	scrollUpParams->SetValue( "scroll", 4 );
+	scrollUp->SetOnClick( this, &Game::ScrollUp, scrollUpParams );
+
+	UIButton* scrollDown = new UIButton( "down", Vec2( 0.85f, 0.4f ), Vec2( 0.5f, 0.05f ) );
+	scrollDown->SetTextSize( 0.2f );
+	NamedProperties* scrollDownParams = new NamedProperties();
+	scrollDownParams->SetValue( "scroll", 4 );
+	scrollDown->SetOnClick( this, &Game::ScrollDown, scrollDownParams );
+
+	m_abilityMenuButtons.push_back( startButton );
+	m_abilityMenuButtons.push_back( backButton );
+	m_abilityMenuButtons.push_back( scrollUp );
+	m_abilityMenuButtons.push_back( scrollDown );
+
+	CreateAbilityButtons();
+	CreateCharacterButton( "char_one", Vec2( 0.4f, 0.92f ) );
+	CreateCharacterButton( "char_two", Vec2( 0.6f, 0.92f ) );
 
 	//Pause Menu buttons
 	//---------------------------------------------------------------------------------------------------------
@@ -517,6 +587,86 @@ void Game::CreateMenuButtons()
 	m_deadMenuButtons.push_back( menuButton );
 
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::CreateAbilityButtons()
+{
+	const float abilitySize = HALF_SCREEN_X * 0.33f;
+	const float abilityGap = abilitySize * 0.25f;
+	const float distanceBetweenAbilities = abilitySize + abilityGap;
+
+	Vec2 abilityDimensions = Vec2( abilitySize, abilitySize );
+	Vec2 buttonDimensions = Vec2(4.f, 1.f);
+
+	Vec2 slotsStartOffset = -Vec2( distanceBetweenAbilities * 1.5f, 0.f );
+	for( int slotIndex = 0; slotIndex < MAX_ABILITY_COUNT; ++slotIndex )
+	{
+		Vec2 abilitySlotOffset = slotsStartOffset + Vec2( distanceBetweenAbilities, 0.f ) * static_cast<float>( slotIndex );
+		
+		UIButton* abilitySlotButton = new UIButton( "Ability", abilityDimensions, Vec2( 0.5f, 0.65f ), abilitySlotOffset );
+		abilitySlotButton->SetTextSize( 0.2f );
+		abilitySlotButton->SetHoveredTint( Rgba8::CYAN );
+		abilitySlotButton->SetPressedTint( Rgba8( 0, 177, 177, 255 ) );
+
+		NamedProperties* parameters = new NamedProperties();
+		parameters->SetValue( "slot", slotIndex );
+
+		abilitySlotButton->SetOnClick( this, &Game::AbilitySlotOnClick, parameters );
+
+		m_abilitySlotButtons.push_back( abilitySlotButton );
+		m_abilityMenuButtons.push_back( abilitySlotButton );
+	}
+
+	float buttonRowOffset = -1.25f;
+	for( int buttonIndex = 0; buttonIndex < Ability::GetNumAbilities(); ++buttonIndex )
+	{
+		int buttonRow = buttonIndex / 2;
+		int buttonColumn = buttonIndex - ( buttonRow * 2 );
+		Vec2 abilityButtonOffset = Vec2( 0.f, buttonRowOffset * buttonRow );
+
+		UIButton* abilitySelectButton = new UIButton( "Ability", buttonDimensions, buttonColumn == 0 ? Vec2( 0.25f, 0.3f ) : Vec2( 0.75f, 0.3f ), abilityButtonOffset );
+		abilitySelectButton->SetTextSize( 0.2f );
+		abilitySelectButton->SetHoveredTint( Rgba8::GREEN );
+		abilitySelectButton->SetPressedTint( Rgba8( 0, 177, 0, 255 ) );
+
+		NamedProperties* parameters = new NamedProperties();
+		parameters->SetValue( "slot", buttonIndex );
+
+		abilitySelectButton->SetOnClick( this, &Game::AbilitySelectOnClick, parameters );
+
+		m_abilitySelectButtons.push_back( abilitySelectButton );
+		m_abilityMenuButtons.push_back( abilitySelectButton );
+	}
+}
+
+//---------------------------------------------------------------------------------------------------------
+void Game::CreateCharacterButton( char const* charType, Vec2 const& alignment )
+{
+	Texture* charTexture = g_theRenderer->CreateOrGetTextureFromFile( Stringf( "Data/Images/Player/%s/Idle/down.png", charType ).c_str() );
+	SpriteSheet* charSpriteSheet = new SpriteSheet( *charTexture, IntVec2( 6, 1 ) );
+	SpriteAnimDefinition* charAnim = new SpriteAnimDefinition( *charSpriteSheet, 0, 5, 1.f );
+	m_characterSpriteAnims.push_back( charAnim );
+
+	UIButton* charButton = new UIButton( "", Vec2::UNIT, alignment );
+	charButton->SetHoveredTint( Rgba8( 177, 177, 177, 255 ) );
+	charButton->SetPressedTint( Rgba8( 127, 127, 127, 255 ) );
+
+	Vec2 minUVs;
+	Vec2 maxUVs;
+	SpriteDefinition charDef = charAnim->GetSpriteDefAtTime( 0.f );
+	charDef.GetUVs( minUVs, maxUVs );
+	charButton->SetButtonTexture( (Texture*)&charDef.GetTexture(), minUVs, maxUVs );
+
+	NamedProperties* parameters = new NamedProperties();
+	parameters->SetValue( "characterType", charType );
+
+	charButton->SetOnClick( this, &Game::CharacterSelectOnClick, parameters );
+
+	m_characterButtons.push_back( charButton );
+	m_abilityMenuButtons.push_back( charButton );
+}
+
 
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderLoading() const
@@ -571,6 +721,8 @@ void Game::UpdateMainMenu()
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateAbilitySelect()
 {
+	float totalElapsedSeconds = static_cast<float>( m_gameClock->GetTotalElapsedSeconds() );
+
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
 	{
 		m_menuState = MENU_STATE_MAIN;
@@ -598,7 +750,6 @@ void Game::UpdateAbilitySelect()
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_UP_ARROW ) )
 	{
 		m_selectedAbilityButton -= 2;
-
 	}
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_RIGHT_ARROW ) )
 	{
@@ -611,23 +762,41 @@ void Game::UpdateAbilitySelect()
 
 	if( m_selectedAbilityButton >= static_cast<int>( m_shownAbilities.size() ) )
 	{
-		m_firstAbilityToDisplay += 2;
-		Clamp( m_firstAbilityToDisplay, 0, Ability::GetNumAbilities() - 2 );
-		m_shownAbilities = Ability::GetAbilityList( m_firstAbilityToDisplay, 6 );
-		m_selectedAbilityButton -= 2;
+		ScrollDown( nullptr );
 	}
 	else if( m_selectedAbilityButton < 0 )
 	{
-		m_firstAbilityToDisplay -= 2;
-		Clamp( m_firstAbilityToDisplay, 0, Ability::GetNumAbilities() - 2 );
-		m_shownAbilities = Ability::GetAbilityList( m_firstAbilityToDisplay, 6 );
-		m_selectedAbilityButton += 2;
+		ScrollUp( nullptr );
 	}
-	Clamp( m_selectedAbilityButton, 0, 5 );
 
 	for( int buttonIndex = 0; buttonIndex < m_abilityMenuButtons.size(); ++buttonIndex )
 	{
 		m_abilityMenuButtons[ buttonIndex ]->Update();
+	}
+
+	for( int buttonIndex = 0; buttonIndex < m_abilitySlotButtons.size(); ++buttonIndex )
+	{
+		UIButton* buttonToModify = m_abilitySlotButtons[buttonIndex];
+		std::string buttonText = m_selectedAbilities[buttonIndex];
+		buttonToModify->SetTextToDisplay( buttonText );
+	}
+
+	uint buttonsToShow = Min( static_cast<uint>( m_abilitySelectButtons.size() ), static_cast<uint>( m_shownAbilities.size() ) );
+	for( uint buttonIndex = 0; buttonIndex < buttonsToShow; ++buttonIndex )
+	{
+		UIButton* buttonToModify = m_abilitySelectButtons[buttonIndex];
+		std::string buttonText = m_shownAbilities[buttonIndex];
+		buttonToModify->SetTextToDisplay( buttonText );
+	}
+
+	for( int buttonIndex = 0; buttonIndex < m_characterButtons.size(); ++buttonIndex )
+	{
+		Vec2 minUVs;
+		Vec2 maxUVs;
+		UIButton* buttonToModify = m_characterButtons[buttonIndex];
+		SpriteDefinition spriteDef = m_characterSpriteAnims[ buttonIndex ]->GetSpriteDefAtTime( totalElapsedSeconds );
+		spriteDef.GetUVs( minUVs, maxUVs );
+		buttonToModify->SetButtonUVs( minUVs, maxUVs );
 	}
 }
 
@@ -635,10 +804,6 @@ void Game::UpdateAbilitySelect()
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderMenu() const
 {
-	const float abilitySize = HALF_SCREEN_X * 0.33f;
-	const float abilityGap = abilitySize * 0.25f;
-	const float distanceBetweenAbilities = abilitySize + abilityGap;
-
 	if( m_menuState == MENU_STATE_MAIN )
 	{
 		Vec3 orthoBottomLeft = m_worldCamera->GetOrthoBottomLeft();
@@ -660,50 +825,28 @@ void Game::RenderMenu() const
 	}
 	else if( m_menuState == MENU_STATE_ABILITY_SELECT )
 	{
-		for( int buttonIndex = 0; buttonIndex < m_abilityMenuButtons.size(); ++buttonIndex )
-		{
-			m_abilityMenuButtons[ buttonIndex ]->Render();
-		}
-
 		Vec2 scrollButtonSize = Vec2( 0.5f, 1.f );
-		Vec2 abilityDimensions = Vec2( abilitySize, abilitySize );
-		Vec2 buttonDimensions = Vec2( 4.f, 1.f );
+		
+		int charButtonIndex = m_charTypeSelected == "char_one" ? 0 : 1;
+		AABB2 characterButtonSelected = m_characterButtons[ charButtonIndex ]->GetBounds();
+		characterButtonSelected.AddDimensions( Vec2( 0.2f, 0.2f ) );
+		DrawAABB2AtPoint( Vec2::ZERO, characterButtonSelected, Rgba8::BLUE, 0.1f );
 
 		Vec3 orthoBottomLeft = m_worldCamera->GetOrthoBottomLeft();
 		Vec3 orthoTopRight = m_worldCamera->GetOrthoTopRight();
 		AABB2 screenRect = AABB2( orthoBottomLeft.x, orthoBottomLeft.y, orthoTopRight.x, orthoTopRight.y );
 
-		std::vector<Vec2> abilitySlotPositions;
-		Vec2 slotsStartPosition = screenRect.GetPointAtUV( Vec2( 0.5f, 0.75f ) );
-		slotsStartPosition -= Vec2( distanceBetweenAbilities * 1.5f, 0.f );
-		for( int slotIndex = 0; slotIndex < MAX_ABILITY_COUNT; ++slotIndex )
-		{
-			abilitySlotPositions.push_back( slotsStartPosition + Vec2( distanceBetweenAbilities, 0.f ) * static_cast<float>( slotIndex ) );
-		}
+		AABB2 abilitySlotSelected = m_abilitySlotButtons[ m_selectedAbilitySlot ]->GetBounds();
+		abilitySlotSelected.AddDimensions( Vec2( 0.2f, 0.2f ) );
 
-		std::vector<Vec2> abilityButtonPositions;
-		Vec2 buttonStartPosition = screenRect.GetPointAtUV( Vec2( 0.25f, 0.4f ) );
-		float buttonRowOffset = -1.25f;
-		float buttonColumnOffset = HALF_SCREEN_X;
-		for( int buttonIndex = 0; buttonIndex < Ability::GetNumAbilities(); ++buttonIndex )
-		{
-			int buttonRow = buttonIndex / 2;
-			int buttonColumn = buttonIndex - ( buttonRow * 2 );
-			abilityButtonPositions.push_back( buttonStartPosition + Vec2( buttonColumnOffset * buttonColumn, buttonRowOffset * buttonRow ) );
-		}
-
-		AABB2 abilitySlotSelected;
-		abilitySlotSelected.SetDimensions( abilityDimensions + Vec2( 0.2f, 0.2f ) );
-		abilitySlotSelected.SetCenter( abilitySlotPositions[ m_selectedAbilitySlot ] );
-
-		AABB2 abilityButtonSelected;
-		abilityButtonSelected.SetDimensions( buttonDimensions + Vec2( 0.2f, 0.2f ) );
-		abilityButtonSelected.SetCenter( abilityButtonPositions[ m_selectedAbilityButton ] );
+		AABB2 abilityButtonSelected = m_abilitySelectButtons[ m_selectedAbilityButton ]->GetBounds();
+		abilityButtonSelected.AddDimensions( Vec2( 0.2f, 0.2f ) );
 
 		AABB2 abilityScrollButtonLeft = screenRect.GetBoxWithin( scrollButtonSize, Vec2( 0.05f, 0.75f ) );
-		abilityScrollButtonLeft.SetCenter( Vec2( abilityScrollButtonLeft.GetCenter().x, slotsStartPosition.y ) );
+		abilityScrollButtonLeft.SetCenter( Vec2( abilityScrollButtonLeft.GetCenter().x, abilitySlotSelected.GetCenter().y) );
+
 		AABB2 abilityScrollButtonRight = screenRect.GetBoxWithin( scrollButtonSize, Vec2( 0.95f, 0.75f ) );
-		abilityScrollButtonRight.SetCenter( Vec2( abilityScrollButtonRight.GetCenter().x, slotsStartPosition.y ) );
+		abilityScrollButtonRight.SetCenter( Vec2(abilityScrollButtonRight.GetCenter().x, abilitySlotSelected.GetCenter().y) );
 
 		std::vector<Vertex_PCU> abilityMenuVerts;
 		std::vector<Vertex_PCU> abilityMenuTextVerts;
@@ -712,52 +855,53 @@ void Game::RenderMenu() const
 		AppendVertsForAABB2D( abilityMenuVerts, abilityButtonSelected, Rgba8::GREEN );
 		AppendVertsForAABB2D( abilityMenuVerts, abilityScrollButtonLeft, Rgba8::WHITE );
 		AppendVertsForAABB2D( abilityMenuVerts, abilityScrollButtonRight, Rgba8::WHITE );
-		g_devConsoleFont->AddVertsForTextInBox2D( abilityMenuTextVerts, abilityScrollButtonLeft, 0.2f, "<Q", Rgba8::BLUE );
-		g_devConsoleFont->AddVertsForTextInBox2D( abilityMenuTextVerts, abilityScrollButtonRight, 0.2f, "E>", Rgba8::BLUE );
-
-		for( int slotIndex = 0; slotIndex < abilitySlotPositions.size(); ++slotIndex )
-		{
-			AABB2 slotBox;
-			slotBox.SetDimensions( abilityDimensions );
-			slotBox.SetCenter( abilitySlotPositions[ slotIndex ] );
-			AppendVertsForAABB2D( abilityMenuVerts, slotBox, Rgba8::WHITE );
-			g_devConsoleFont->AddVertsForTextInBox2D( abilityMenuTextVerts, slotBox, 0.2f, m_selectedAbilities[slotIndex], Rgba8::BLUE );
-		}
+		g_devConsoleFont->AddVertsForTextInBox2D( abilityMenuTextVerts, abilityScrollButtonLeft, 0.2f, "<Q", Rgba8::BLACK );
+		g_devConsoleFont->AddVertsForTextInBox2D( abilityMenuTextVerts, abilityScrollButtonRight, 0.2f, "E>", Rgba8::BLACK );
 		
-		for( int buttonIndex = 0; buttonIndex < abilityButtonPositions.size(); ++buttonIndex )
-		{
-			AABB2 buttonBox;
-			buttonBox.SetDimensions( buttonDimensions );
-			buttonBox.SetCenter( abilityButtonPositions[ buttonIndex ] );
-			AppendVertsForAABB2D( abilityMenuVerts, buttonBox, Rgba8::WHITE );
-
-			if( buttonIndex < m_shownAbilities.size() )
-			{
-				g_devConsoleFont->AddVertsForTextInBox2D( abilityMenuTextVerts, buttonBox, 0.2f, m_shownAbilities[buttonIndex], Rgba8::BLUE );
-			}
-		}
-
-		g_theRenderer->BindShader( (Shader*)nullptr );
+		g_theRenderer->BindShader( nullptr );
 
 		g_theRenderer->BindTexture( nullptr );
 		g_theRenderer->DrawVertexArray( abilityMenuVerts );
 
 		g_theRenderer->BindTexture( g_devConsoleFont->GetTexture() );
 		g_theRenderer->DrawVertexArray( abilityMenuTextVerts );
+
+		for( int buttonIndex = 0; buttonIndex < m_abilitySlotButtons.size(); ++buttonIndex )
+		{
+			m_abilitySlotButtons[buttonIndex]->Render();
+		}
+
+		uint buttonsToShow = Min( static_cast<uint>( m_abilitySelectButtons.size() ), static_cast<uint>( m_shownAbilities.size() ) );
+		for( uint buttonIndex = 0; buttonIndex < buttonsToShow; ++buttonIndex )
+		{
+			m_abilitySelectButtons[buttonIndex]->Render();
+		}
+
+		for( int buttonIndex = 0; buttonIndex < m_characterButtons.size(); ++buttonIndex )
+		{	
+			m_characterButtons[buttonIndex]->Render();
+		}
+
+		m_abilityMenuButtons[0]->Render();
+		m_abilityMenuButtons[1]->Render();
+		m_abilityMenuButtons[2]->Render();
+		m_abilityMenuButtons[3]->Render();
 	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::NewGameOnClick()
+void Game::NewGameOnClick( NamedProperties* parameters )
 {
+	UNUSED( parameters ); 
 	m_menuState = MENU_STATE_ABILITY_SELECT;
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::BackOnClick()
+void Game::BackOnClick( NamedProperties* parameters )
 {
+	UNUSED( parameters );
 	if( m_gameState != GAME_STATE_MENU )
 	{
 		m_gameState = GAME_STATE_MENU;
@@ -771,8 +915,9 @@ void Game::BackOnClick()
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::ReturnToMenuOnClick()
+void Game::ReturnToMenuOnClick( NamedProperties* parameters )
 {
+	UNUSED( parameters );
 	m_worldCamera->SetPosition( Vec3::ZERO );
 	m_UICamera->SetPosition( Vec3::ZERO );
 	m_gameState = GAME_STATE_MENU;
@@ -783,10 +928,12 @@ void Game::ReturnToMenuOnClick()
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::StartGameOnClick()
+void Game::StartGameOnClick( NamedProperties* parameters )
 {
+	UNUSED( parameters );
+
 	delete m_player;
-	m_player = new Player( this );
+	m_player = new Player( this, m_charTypeSelected );
 	m_world->AddPlayerToCurrentMap( m_player );
 
 	for( int selectedAbilityIndex = 0; selectedAbilityIndex < m_selectedAbilities.size(); ++selectedAbilityIndex )
@@ -800,30 +947,101 @@ void Game::StartGameOnClick()
 }
 
 //---------------------------------------------------------------------------------------------------------
-void Game::ResumeGameOnClick()
+void Game::ResumeGameOnClick( NamedProperties* parameters )
 {
+	UNUSED( parameters );
 	m_gameState = GAME_STATE_PLAYING;
 	m_gameClock->Resume();
+	m_player->IsWalkSoundPaused( false );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::QuitOnClick()
+void Game::QuitOnClick( NamedProperties* parameters )
 {
+	UNUSED( parameters );
 	m_isQuitting = true;
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AbilitySlotOnClick( NamedProperties* parameters )
+{
+	int abilitySlotIndex = parameters->GetValue( "slot", 0 );
+	m_selectedAbilitySlot = abilitySlotIndex;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AbilitySelectOnClick( NamedProperties* parameters )
+{
+	int abilitySelectIndex = parameters->GetValue( "slot", 0 );
+	m_selectedAbilityButton = abilitySelectIndex;
+
+	m_selectedAbilities[m_selectedAbilitySlot] = m_shownAbilities[m_selectedAbilityButton];
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::CharacterSelectOnClick( NamedProperties* parameters )
+{
+	m_charTypeSelected = parameters->GetValue( "characterType", "char_one" );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ScrollDown( NamedProperties* parameters )
+{
+	int amountToScroll = 0;
+	if( parameters != nullptr )
+	{
+		amountToScroll = parameters->GetValue( "scroll", 0 );
+		m_selectedAbilityButton += amountToScroll;
+		m_selectedAbilityButton = 0;
+	}
+
+	m_firstAbilityToDisplay += 2;
+	Clamp( m_firstAbilityToDisplay, 0, Ability::GetNumAbilities() - 2 );
+	m_shownAbilities = Ability::GetAbilityList( m_firstAbilityToDisplay, 4 );
+	m_selectedAbilityButton -= 2;
+
+	Clamp( m_selectedAbilityButton, 0, 3 );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ScrollUp( NamedProperties* parameters )
+{
+	int amountToScroll = 0;
+	if( parameters != nullptr )
+	{
+		amountToScroll = parameters->GetValue( "scroll", 0 );
+		m_selectedAbilityButton -= amountToScroll;
+		m_selectedAbilityButton = 0;
+	}
+	else
+	{
+		m_selectedAbilityButton += 2;
+	}
+
+	m_firstAbilityToDisplay -= 2;
+	Clamp( m_firstAbilityToDisplay, 0, Ability::GetNumAbilities() - 2 );
+	m_shownAbilities = Ability::GetAbilityList( m_firstAbilityToDisplay, 4 );
+
+	Clamp( m_selectedAbilityButton, 0, 3 );
+}
 
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdatePauseFromInput()
 {
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
 	{
-		ResumeGameOnClick();
+		ResumeGameOnClick( nullptr );
 	}
 
 	for( int buttonIndex = 0; buttonIndex < m_pauseMenuButtons.size(); ++buttonIndex )
 	{
+		m_pauseMenuButtons[buttonIndex]->UpdateBounds();
 		m_pauseMenuButtons[buttonIndex]->Update();
 	}
 }
@@ -862,11 +1080,12 @@ void Game::UpdateDeadFromInput()
 {
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
 	{
-		ReturnToMenuOnClick();
+		ReturnToMenuOnClick( nullptr );
 	}
 
 	for( int buttonIndex = 0; buttonIndex < m_deadMenuButtons.size(); ++buttonIndex )
 	{
+		m_deadMenuButtons[buttonIndex]->UpdateBounds();
 		m_deadMenuButtons[buttonIndex]->Update();
 	}
 }
@@ -934,6 +1153,10 @@ void Game::UpdateStateBasedOnGameState()
 
 		if( m_player->IsDead() )
 		{
+			SoundID deathSound = g_theAudio->CreateOrGetSound( "Data/Audio/death.flac" );
+			g_theAudio->PlaySound( deathSound, false, GetSFXVolume() );
+
+			m_player->IsWalkSoundPaused( true );
 			m_gameClock->Pause();
 			m_gameState = GAME_STATE_DEAD;
 		}

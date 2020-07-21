@@ -18,10 +18,11 @@
 
 
 //---------------------------------------------------------------------------------------------------------
-Player::Player( Game* theGame )
+Player::Player( Game* theGame, std::string const& characterType )
 	: Actor( theGame )
 {
 	m_movementSpeedPerSecond = 2.f;
+	m_characterType = characterType;
 
 	AssignAbilityToSlot( "Blink", 0 );
 	AssignAbilityToSlot( "Enrage", 1 );
@@ -33,20 +34,21 @@ Player::Player( Game* theGame )
 	m_abilityKeys[2] = g_gameConfigBlackboard.GetValue( "ability2Key", m_abilityKeys[2] );
 	m_abilityKeys[3] = g_gameConfigBlackboard.GetValue( "ability3Key", m_abilityKeys[3] );
 
-	CreateSpriteAnimFromPath( "Data/Images/Player/Walk/down.png" );
-	CreateSpriteAnimFromPath( "Data/Images/Player/Walk/left.png" );
-	CreateSpriteAnimFromPath( "Data/Images/Player/Walk/right.png" );
-	CreateSpriteAnimFromPath( "Data/Images/Player/Walk/up.png" );
+	CreateSpriteAnimFromPath( Stringf( "Data/Images/Player/%s/Walk/down.png"	, characterType.c_str() ).c_str() );
+	CreateSpriteAnimFromPath( Stringf( "Data/Images/Player/%s/Walk/left.png"	, characterType.c_str() ).c_str() );
+	CreateSpriteAnimFromPath( Stringf( "Data/Images/Player/%s/Walk/right.png"	, characterType.c_str() ).c_str() );
+	CreateSpriteAnimFromPath( Stringf( "Data/Images/Player/%s/Walk/up.png"		, characterType.c_str() ).c_str() );
+	CreateSpriteAnimFromPath( Stringf( "Data/Images/Player/%s/Idle/down.png"	, characterType.c_str() ).c_str() );
+	CreateSpriteAnimFromPath( Stringf( "Data/Images/Player/%s/Idle/left.png"	, characterType.c_str() ).c_str() );
+	CreateSpriteAnimFromPath( Stringf( "Data/Images/Player/%s/Idle/right.png"	, characterType.c_str() ).c_str() );
+	CreateSpriteAnimFromPath( Stringf( "Data/Images/Player/%s/Idle/up.png"		, characterType.c_str() ).c_str() );
+	CreateSpriteAnimFromPath( Stringf( "Data/Images/Player/%s/Attack/down.png"	, characterType.c_str() ).c_str() );
+	CreateSpriteAnimFromPath( Stringf( "Data/Images/Player/%s/Attack/left.png"	, characterType.c_str() ).c_str() );
+	CreateSpriteAnimFromPath( Stringf( "Data/Images/Player/%s/Attack/right.png" , characterType.c_str() ).c_str() );
+	CreateSpriteAnimFromPath( Stringf( "Data/Images/Player/%s/Attack/up.png"	, characterType.c_str() ).c_str() );
 
-	CreateSpriteAnimFromPath( "Data/Images/Player/Idle/down.png" );
-	CreateSpriteAnimFromPath( "Data/Images/Player/Idle/left.png" );
-	CreateSpriteAnimFromPath( "Data/Images/Player/Idle/right.png" );
-	CreateSpriteAnimFromPath( "Data/Images/Player/Idle/up.png" );
-
-	CreateSpriteAnimFromPath( "Data/Images/Player/Attack/down.png" );
-	CreateSpriteAnimFromPath( "Data/Images/Player/Attack/left.png" );
-	CreateSpriteAnimFromPath( "Data/Images/Player/Attack/right.png" );
-	CreateSpriteAnimFromPath( "Data/Images/Player/Attack/up.png" );
+	SoundID walkingSound = g_theAudio->CreateOrGetSound( "Data/Audio/walking.wav" );
+	m_walkingPlayback = g_theAudio->PlaySound( walkingSound, true, m_theGame->GetSFXVolume(), 0.f, GetMoveSpeed(), true );
 }
 
 
@@ -118,7 +120,8 @@ void Player::Update( float deltaSeconds )
 		}
 	}
 
-	UpdateAnimSpriteBasedOnMovementDirection( "Player" );
+	SetAudioPlayback();
+	UpdateAnimSpriteBasedOnMovementDirection( Stringf( "Player/%s", m_characterType.c_str() ).c_str() );
 }
 
 
@@ -252,11 +255,39 @@ void Player::BasicAttack( Enemy* target )
 	if( !m_attackTimer.HasElapsed() )
 		return;
 
+	SoundID attackSound = g_theAudio->CreateOrGetSound( "Data/Audio/playerAttack.wav" );
+	g_theAudio->PlaySound( attackSound, false, m_theGame->GetSFXVolume() );
+
 	Projectile* newBasicAttack = new Projectile( m_theGame, GetDamageToDeal(), 5.f, target );
 	newBasicAttack->SetCurrentPosition( m_currentPosition );
 	m_currentMap->AddEntityToList( newBasicAttack );
 
 	float attackCooldownSeconds = 1.f / GetAttackSpeed();
 	m_attackTimer.SetSeconds( m_theGame->GetGameClock(), attackCooldownSeconds );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Player::SetAudioPlayback()
+{
+	switch( m_actorState )
+	{
+	case ACTOR_STATE_WALK:
+	case ACTOR_STATE_ATTACK_MOVE:
+		g_theAudio->SoundIsPaused( m_walkingPlayback, false );
+		break;
+	case ACTOR_STATE_IDLE:
+	case ACTOR_STATE_ATTACK:
+	default:
+		g_theAudio->SoundIsPaused( m_walkingPlayback, true );
+		break;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Player::IsWalkSoundPaused( bool isPaused )
+{
+	g_theAudio->SoundIsPaused( m_walkingPlayback, isPaused );
 }
 

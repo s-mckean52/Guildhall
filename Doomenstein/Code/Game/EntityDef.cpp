@@ -37,7 +37,7 @@ EntityDef::EntityDef( XmlElement const& xmlElement, EntityType entityType )
 		return;
 	}
 
-	if( entityType != ENTITY_TYPE_PORTAL )
+	//if( entityType != ENTITY_TYPE_PORTAL )
 	{
 		XmlElement const* nextChildElement = xmlElement.FirstChildElement();
 		for( ;; )

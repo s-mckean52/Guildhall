@@ -7,6 +7,7 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Renderer/MeshUtils.hpp"
 #include "Engine/Renderer/Texture.hpp"
+#include "Engine/Renderer/BitmapFont.hpp"
 #include "Engine/Renderer/SpriteSheet.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
 
@@ -82,6 +83,11 @@ void Item::Render() const
 	g_theRenderer->BindShader( nullptr );
 	g_theRenderer->DrawVertexArray( itemVerts );
 
+	if( m_isHovered )
+	{
+		DrawItemStats();
+	}
+
 	if( g_isDebugDraw )
 	{
 		DebugRender();
@@ -94,6 +100,16 @@ void Item::Update( float deltaSeconds )
 {
 	UNUSED( deltaSeconds );
 
+	Vec2 cursorPos = m_theGame->GetCursorPosition();
+	if( !IsDead() && IsPointInsideDisk2D( cursorPos, m_currentPosition, m_physicsRadius ) )
+	{
+		m_isHovered = true;
+	}
+	else
+	{
+		m_isHovered = false;
+	}
+
 	Player* thePlayer = m_theGame->GetPlayer();
 	if( !IsDead() && DoDiscsOverlap( thePlayer->GetCurrentPosition(), thePlayer->GetPhysicsRadius(), m_currentPosition, m_physicsRadius ) )
 	{
@@ -104,10 +120,55 @@ void Item::Update( float deltaSeconds )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Item::DrawItemStats() const
+{
+	const float textHeight = 0.2f;
+	const float padding = 0.05f;
+
+	Strings statModStrings;
+	for( int statIndex = 0; statIndex < m_statMods.size(); ++statIndex )
+	{
+		StatMod statMod = m_statMods[statIndex];
+		statModStrings.push_back( Stringf( "+%.2f %s", statMod.amountToAdd, GetStringForActorStat( statMod.statToMod ).c_str() ) );
+	}
+
+	Vec2 maxTextDimensions;
+	for (int statIndex = 0; statIndex < statModStrings.size(); ++statIndex)
+	{
+		std::string stringToDisplay = statModStrings[statIndex];
+		Vec2 stringDimensions = g_devConsoleFont->GetDimensionsForText2D(textHeight, stringToDisplay);
+
+		maxTextDimensions.x = Maxf(stringDimensions.x, maxTextDimensions.x);
+		maxTextDimensions.y += stringDimensions.y + padding;
+	}
+	AABB2 statBox = AABB2( Vec2::ZERO, maxTextDimensions + Vec2( padding, textHeight ) * 2.f );
+	statBox.Translate( m_currentPosition );
+
+	std::vector<Vertex_PCU> statTextVerts;
+	for( int statIndex = 0; statIndex < statModStrings.size(); ++statIndex )
+	{
+		std::string stringToDisplay = statModStrings[statIndex];
+		g_devConsoleFont->AddVertsForTextInBox2D( statTextVerts, statBox, textHeight, stringToDisplay, Rgba8::WHITE, 1.f, ALIGN_TOP_LEFT, Vec2( 0.05f, -( ( textHeight * ( statIndex + 1 ) ) + padding )  ) );
+	}
+
+	std::vector<Vertex_PCU> statBoxVerts;
+	AppendVertsForAABB2D( statBoxVerts, statBox, Rgba8( 0, 0, 0, 127 ) );
+
+	g_theRenderer->BindTexture( nullptr );
+	g_theRenderer->BindShader( nullptr );
+	g_theRenderer->DrawVertexArray( statBoxVerts );
+
+	g_theRenderer->BindTexture( g_devConsoleFont->GetTexture() );
+	g_theRenderer->DrawVertexArray( statTextVerts );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 StatMod const& Item::GetStatModAtIndex( int index ) const
 {
 	return m_statMods[ index ];
 }
+
 
 //---------------------------------------------------------------------------------------------------------
 STATIC void Item::CreateItemsFromXML( const char* filepath )
@@ -156,6 +217,23 @@ STATIC ActorStat Item::GetStatTypeFromString( std::string const& statTypeAsStrin
 	{
 		ERROR_AND_DIE( "Read an unsupported string for actor stat" );
 		//return STAT_ATTACK_DAMAGE;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+STATIC std::string Item::GetStringForActorStat( ActorStat actorStat )
+{
+	switch( actorStat )
+	{
+	case STAT_CRIT_MULTIPLIER:	return "Crit Multiplier";
+	case STAT_CRIT_CHANCE:		return "Crit Chance";
+	case STAT_MOVEMENT_SPEED:	return "Movement Speed";
+	case STAT_ATTACK_SPEED:		return "Attack Speed";
+	case STAT_ATTACK_DAMAGE:	return "Attack Damage";
+	default:
+		return "IVALID";
+		break;
 	}
 }
 

@@ -35,18 +35,20 @@ Map::~Map()
 //---------------------------------------------------------------------------------------------------------
 void Map::SpawnPlayer( Camera* playerCamera )
 {
-	playerCamera->SetPosition( Vec3( m_playerStartPositionXY, PLAYER_HEIGHT ) );
-	playerCamera->SetPitchYawRollRotationDegrees( 0.f, m_playerStartYaw, 0.f );
+	g_theGame->SetPossessedEntity( m_playerStartEntity );
 	g_theGame->PlaySpawnSound();
+
+	if( m_playerStartEntity == nullptr )
+	{
+		playerCamera->SetPosition( Vec3( m_playerStartPositionXY, PLAYER_HEIGHT ) );
+		playerCamera->SetYawDegrees( m_playerStartYawDegrees );
+	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Map::SpawnNewEntityOnMap( XmlElement const& element )
 {
-	const float	invalidYaw = ~0;
-	const Vec2	invalidPos = Vec2( -1.f, -1.f );
-
 	std::string entityTypeAsString = element.Name();
 	EntityType entityType = EntityDef::GetEntityTypeFromString( entityTypeAsString );
 
@@ -54,20 +56,6 @@ void Map::SpawnNewEntityOnMap( XmlElement const& element )
 	if( entityDefName == "MISSING" )
 	{
 		g_theConsole->ErrorString( "Failed to parse \"name\" of entity at line %i", element.GetLineNum() );
-		return;
-	}
-
-	Vec2 entityPos = ParseXmlAttribute( element, "pos", invalidPos );
-	if( entityPos == invalidPos )
-	{
-		g_theConsole->ErrorString( "Failed to parse \"pos\" of entity at line %i", element.GetLineNum() );
-		return;
-	}
-
-	float entityYaw = ParseXmlAttribute( element, "yaw", invalidYaw );
-	if( entityYaw == invalidYaw )
-	{
-		g_theConsole->ErrorString( "Failed to parse \"yaw\" of entity at line %i", element.GetLineNum() );
 		return;
 	}
 
@@ -83,35 +71,33 @@ void Map::SpawnNewEntityOnMap( XmlElement const& element )
 		return;
 	}
 
-	Entity* spawnedEntity = SpawnNewEntityOfType( *entityDefToSpawn );
-	spawnedEntity->SetPosition( Vec3( entityPos, 0.f ) );
-	spawnedEntity->SetYaw( entityYaw );
+	SpawnNewEntityOfType( *entityDefToSpawn, element );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-Entity* Map::SpawnNewEntityOfType( std::string const& entityDefName )
+Entity* Map::SpawnNewEntityOfType( std::string const& entityDefName, XmlElement const& element )
 {
 	EntityDef* entityDef = EntityDef::GetEntityDefByName( entityDefName );
 	if( entityDef == nullptr )
 	{
 		return nullptr;
 	}
-	return SpawnNewEntityOfType( *entityDef );
+	return SpawnNewEntityOfType( *entityDef, element );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-Entity* Map::SpawnNewEntityOfType( EntityDef const& entityDef )
+Entity* Map::SpawnNewEntityOfType( EntityDef const& entityDef, XmlElement const& element )
 {
 	EntityType entityType = entityDef.GetEntityType();
 	Entity* spawnedEntity = nullptr;
 	switch( entityType )
 	{
-	case ENTITY_TYPE_ENTITY:		spawnedEntity = new Entity( m_game, m_world, this, entityDef ); break;
-	case ENTITY_TYPE_ACTOR:			spawnedEntity = new Actor( m_game, m_world, this, entityDef ); break;
-	case ENTITY_TYPE_PROJECTILE:	spawnedEntity = new Projectile( m_game, m_world, this, entityDef ); break;
-	case ENTITY_TYPE_PORTAL:		spawnedEntity = new Portal( m_game, m_world, this, entityDef ); break;
+	case ENTITY_TYPE_ENTITY:		spawnedEntity = new Entity( m_game, m_world, this, entityDef, element ); break;
+	case ENTITY_TYPE_ACTOR:			spawnedEntity = new Actor( m_game, m_world, this, entityDef, element ); break;
+	case ENTITY_TYPE_PROJECTILE:	spawnedEntity = new Projectile( m_game, m_world, this, entityDef, element ); break;
+	case ENTITY_TYPE_PORTAL:		spawnedEntity = new Portal( m_game, m_world, this, entityDef, element ); break;
 	default:
 		ERROR_AND_DIE( "Tried to spawn an unsupported entity on map" )
 		break;
@@ -125,6 +111,7 @@ Entity* Map::SpawnNewEntityOfType( EntityDef const& entityDef )
 //---------------------------------------------------------------------------------------------------------
 void Map::AddEntityToMap( Entity* entityToAdd )
 {
+	entityToAdd->SetMap( this );
 	EntityType entityType = entityToAdd->GetEntityType();
 	switch( entityType )
 	{
@@ -140,6 +127,30 @@ void Map::AddEntityToMap( Entity* entityToAdd )
 	AddEntityToList( m_entities, entityToAdd );
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void Map::RemoveEntityFromMap( Entity* entityToRemove )
+{
+	entityToRemove->SetMap( nullptr );
+	EntityType entityType = entityToRemove->GetEntityType();
+	switch( entityType )
+	{
+	case ENTITY_TYPE_ENTITY:		break;
+	case ENTITY_TYPE_ACTOR:			RemoveEntityFromList( m_actors, entityToRemove );		break;
+	case ENTITY_TYPE_PROJECTILE:	RemoveEntityFromList( m_projectiles, entityToRemove );	break;
+	case ENTITY_TYPE_PORTAL:		RemoveEntityFromList( m_portals, entityToRemove );		break;
+	default:
+		ERROR_AND_DIE( "Could not remove entity from map" );
+		break;
+	}
+
+	RemoveEntityFromList( m_entities, entityToRemove );
+
+	if( m_playerStartEntity == entityToRemove )
+	{
+		m_playerStartEntity = nullptr;
+	}
+}
 
 //---------------------------------------------------------------------------------------------------------
 Entity* Map::GetClosestEntityInForwardSector( Vec3 const& sectorStartPosition, float maxDistanceToCheck, Vec3 const& forwardDirNormalized, float aperatureDegrees )
@@ -185,6 +196,20 @@ void Map::AddEntityToList( std::vector<Entity*>& listToAddTo, Entity* entityToAd
 
 
 //---------------------------------------------------------------------------------------------------------
+void Map::RemoveEntityFromList( std::vector<Entity*>& listToRemoveFrom, Entity* entityToRemove )
+{
+	for( uint listIndex = 0; listIndex < listToRemoveFrom.size(); ++listIndex )
+	{
+		if( listToRemoveFrom[ listIndex ] == entityToRemove )
+		{
+			listToRemoveFrom[ listIndex ] = nullptr;
+			return;
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Map::HandleEntityVEntityCollisions()
 {
 	for( uint effectedEntityIndex = 0; effectedEntityIndex < m_entities.size(); ++effectedEntityIndex )
@@ -197,6 +222,8 @@ void Map::HandleEntityVEntityCollisions()
 	}
 }
 
+
+//---------------------------------------------------------------------------------------------------------
 void Map::HandleEntityCollisions( Entity* effectedEntity )
 {
 	for( uint effectorEntityIndex = 0; effectorEntityIndex < m_entities.size(); ++effectorEntityIndex )
@@ -209,6 +236,8 @@ void Map::HandleEntityCollisions( Entity* effectedEntity )
 	}
 }
 
+
+//---------------------------------------------------------------------------------------------------------
 void Map::HandleEntityVEntityCollision( Entity* effectedEntity, Entity* effectorEntity )
 {
 	if( ( !effectedEntity->IsPushedByEntities() && !effectorEntity->IsPushedByEntities() )	||
@@ -263,5 +292,46 @@ void Map::HandleEntityVEntityCollision( Entity* effectedEntity, Entity* effector
 
 		effectedEntity->Translate( Vec3( correctionDirectionNormalized * effectedCorrectionDistance, 0.f ) );
 		effectorEntity->Translate( Vec3( -correctionDirectionNormalized * effectorCorrectionDistance, 0.f ) );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Map::HandlePortalVEntityCollisions()
+{
+	for( int portalIndex = 0; portalIndex < m_portals.size(); ++portalIndex )
+	{
+		Entity* portalToUseAsEntity = m_portals[portalIndex];
+		for( int entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
+		{
+			Entity* entityToCheck = m_entities[entityIndex];
+			if( entityToCheck != nullptr )
+			{
+				HandlePortalVEntityCollision( portalToUseAsEntity, entityToCheck );
+			}
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Map::HandlePortalVEntityCollision( Entity* portalEntity, Entity* entity )
+{
+	if( dynamic_cast<Portal*>( entity ) != nullptr )
+		return;
+
+	Vec3 portalPosition = portalEntity->GetPosition();
+	Vec3 entityPosition = entity->GetPosition();
+
+	Vec2 portalPositionXY = Vec2( portalPosition.x, portalPosition.y );
+	Vec2 entityPositionXY = Vec2( entityPosition.x, entityPosition.y );
+
+	float portalRadius = portalEntity->GetPhysicsRadius();
+	float entityRadius = entity->GetPhysicsRadius();
+
+	if( DoDiscsOverlap( portalPositionXY, portalRadius, entityPositionXY, entityRadius ) )
+	{
+		Portal* portal = static_cast<Portal*>( portalEntity );
+		portal->UsePortal( entity );
 	}
 }

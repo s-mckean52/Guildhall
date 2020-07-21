@@ -14,12 +14,13 @@ public:
 	virtual void Render() const override;
 
 	bool HasTarget() const;
+	void ValidateTarget();
 	void DealDamageToActor( Actor* actorToDealDamageTo );
 
 private:
 	float	m_movementSpeed		= 0.f;
 	int		m_damage			= 0;
-	float	m_rangeRemaining				= 0.f;
+	float	m_rangeRemaining	= 0.f;
 	Actor*	m_targetEntity		= nullptr;
 	Vec2	m_direction			= Vec2::RIGHT;
 };

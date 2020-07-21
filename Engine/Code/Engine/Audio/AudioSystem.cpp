@@ -191,6 +191,20 @@ void AudioSystem::SetSoundPlaybackSpeed( SoundPlaybackID soundPlaybackID, float 
 }
 
 
+//---------------------------------------------------------------------------------------------------------
+void AudioSystem::SoundIsPaused( SoundPlaybackID soundPlaybackID, bool isPaused )
+{
+	if (soundPlaybackID == MISSING_SOUND_ID)
+	{
+		ERROR_RECOVERABLE("WARNING: attempt to set balance on missing sound playback ID!");
+		return;
+	}
+
+	FMOD::Channel* channelAssignedToSound = (FMOD::Channel*) soundPlaybackID;
+	channelAssignedToSound->setPaused( isPaused );
+}
+
+
 //-----------------------------------------------------------------------------------------------
 void AudioSystem::ValidateResult( FMOD_RESULT result )
 {

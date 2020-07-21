@@ -21,6 +21,7 @@ class World;
 class Map;
 class Cursor;
 class NamedProperties;
+class SpriteAnimDefinition;
 class UIButton;
 struct Vertex_PCUTBN;
 struct AABB3;
@@ -82,6 +83,8 @@ public:
 	Clock*	GetGameClock() const		{ return m_gameClock; }
 	bool	IsQuitting() const			{ return m_isQuitting; }
 	Enemy*	GetHoveredEnemy() const		{ return m_hoveredEnemy; }
+	float	GetBackgroundVolumeFraction() const;
+	float	GetSFXVolume() const;
 
 	//Static
 	static void GainFocus( EventArgs* args );
@@ -97,13 +100,20 @@ public:
 	void UpdateMainMenu();
 	void UpdateAbilitySelect();
 	void CreateMenuButtons();
+	void CreateAbilityButtons();
+	void CreateCharacterButton( char const* charType, Vec2 const& alignment );
 	void RenderMenu() const;
-	void NewGameOnClick();
-	void BackOnClick();
-	void ReturnToMenuOnClick();
-	void StartGameOnClick();
-	void ResumeGameOnClick();
-	void QuitOnClick();
+	void NewGameOnClick( NamedProperties* parameters );
+	void BackOnClick( NamedProperties* parameters );
+	void ReturnToMenuOnClick( NamedProperties* parameters );
+	void StartGameOnClick( NamedProperties* parameters );
+	void ResumeGameOnClick( NamedProperties* parameters );
+	void QuitOnClick( NamedProperties* parameters );
+	void AbilitySlotOnClick( NamedProperties* parameters );
+	void AbilitySelectOnClick( NamedProperties* parameters );
+	void CharacterSelectOnClick( NamedProperties* parameters );
+	void ScrollDown( NamedProperties* parameters );
+	void ScrollUp( NamedProperties* parameters );
 
 	void UpdatePauseFromInput();
 	void RenderPause() const;
@@ -122,9 +132,14 @@ private:
 	Player* m_player		= nullptr;
 	World* m_world			= nullptr;
 
-	Texture*	m_test			= nullptr;
-	Shader*		m_testShader	= nullptr;
-	SoundID		m_testSound;
+	SoundID				m_bgmSound;
+	SoundPlaybackID		m_bgmPlayback;
+	Texture*			m_test			= nullptr;
+	Shader*				m_testShader	= nullptr;
+
+	float m_masterVolume = 0.5f;
+	float m_backgroundVolume = 0.75f;
+	float m_sfxVolume = 1.f;
 
 	Rgba8 m_ambientColor = Rgba8::WHITE;
 	float m_ambientIntensity = 1.f;
@@ -136,10 +151,17 @@ private:
 	bool	m_isQuitting = false;
 
 	std::vector<UIButton*> m_mainMenuButtons;
-	std::vector<UIButton*> m_abilityMenuButtons;
 	std::vector<UIButton*> m_pauseMenuButtons;
 	std::vector<UIButton*> m_deadMenuButtons;
 
+	std::vector<UIButton*> m_characterButtons;
+	std::vector<SpriteAnimDefinition*> m_characterSpriteAnims;
+
+	std::vector<UIButton*> m_abilityMenuButtons;
+	std::vector<UIButton*> m_abilitySlotButtons;
+	std::vector<UIButton*> m_abilitySelectButtons;
+
+	std::string m_charTypeSelected = "char_one";
 	int m_selectedAbilitySlot = 0;
 	int m_selectedAbilityButton = 0;
 	int m_firstAbilityToDisplay = 0;

@@ -37,6 +37,17 @@ Map::~Map()
 //---------------------------------------------------------------------------------------------------------
 void Map::CleanUpEntities()
 {
+	for( int projectile = 0; projectile < m_projectiles.size(); ++projectile )
+	{
+		if( m_projectiles[projectile]->IsDead() )
+		{
+			m_projectiles.erase( m_projectiles.begin() + projectile );
+		}
+		else
+		{
+			static_cast<Projectile*>( m_projectiles[projectile] )->ValidateTarget();
+		}
+	}
 	for( int i = 0; i < m_entities.size(); ++i )
 	{
 		if( m_entities[i]->IsDead() && m_entities[i] != m_player )
@@ -56,14 +67,14 @@ void Map::CleanUpEntities()
 //---------------------------------------------------------------------------------------------------------
 void Map::ClearEntities()
 {
-	for( int i = 0; i < m_entities.size(); ++i )
-	{
-		if( m_entities[i] != m_player )
-		{
-			delete m_entities[i];
-			m_entities[i] = nullptr;
-		}
-	}
+// 	for( int i = 0; i < m_entities.size(); ++i )
+// 	{
+// 		if( m_entities[i] != nullptr && m_entities[i] != m_player )
+// 		{
+// 			delete m_entities[i];
+// 			m_entities[i] = nullptr;
+// 		}
+// 	}
 	m_entities.clear();
 	m_enemyCount = 0;
 }
@@ -203,6 +214,9 @@ void Map::PushActorOutOfTile( Actor* actorToPush, IntVec2 currentTileCoord, int 
 //---------------------------------------------------------------------------------------------------------
 void Map::Render() const
 {
+	if( m_verts.size() == 0 )
+		return;
+
 	//Draw Map Tiles
 	SpriteSheet* spriteSheetToUse = TileDefinition::s_spriteSheets["RPGTerrain"];
 	Texture const& textureToUse = spriteSheetToUse->GetTexture();
@@ -250,6 +264,11 @@ void Map::DebugRender() const
 //---------------------------------------------------------------------------------------------------------
 void Map::SetExitIsEnabled( bool isEnabled )
 {
+	if( !m_isExitEnabled && isEnabled )
+	{
+		SoundID teleporterSound = g_theAudio->CreateOrGetSound( "Data/Audio/portalOpen.wav" );
+		g_theAudio->PlaySound( teleporterSound, false, 0.75f * m_theGame->GetSFXVolume() );
+	}
 	m_isExitEnabled = isEnabled;
 }
 
@@ -285,15 +304,19 @@ bool Map::IsTileSolid( Tile* tile )
 //---------------------------------------------------------------------------------------------------------
 void Map::SpawnEnemy( int maxNumEnemies )
 {
-	if( m_enemyCount >= maxNumEnemies )
+	if( m_enemyCount >= maxNumEnemies || m_isExitEnabled )
 		return;
 
 	int enemySpawnPositionIndex = g_RNG->RollRandomIntInRange( 0, static_cast<int>( m_enemySpawnPositions.size() ) - 1 );
 	Vec2 spawnPosition = m_enemySpawnPositions[ enemySpawnPositionIndex ];
-	Enemy* newEnemy = new Enemy( m_theGame, spawnPosition );
-	newEnemy->m_theWorld = m_theWorld;
-	m_entities.push_back( newEnemy );
-	++m_enemyCount;
+
+	if( GetDiscOverlapEnemy( spawnPosition, 0.5f ) == nullptr )
+	{
+		Enemy* newEnemy = new Enemy( m_theGame, spawnPosition );
+		newEnemy->m_theWorld = m_theWorld;
+		m_entities.push_back( newEnemy );
+		++m_enemyCount;
+	}
 }
 
 
@@ -499,12 +522,13 @@ RaycastResult Map::RaycastAgainstActors( Vec2 const& startPosition, Vec2 const& 
 		if( potentialHitPoints.size() > 0 )
 		{
 			Vec2 closestImpact = potentialHitPoints[0];
-			float distanceToImpact = GetDistance2D( startPosition, closestImpact );
-			if( impactedEntity == nullptr || distanceToImpact < closestOverallDistance )
+			Vec2 displacmentToImpact = closestImpact - startPosition;
+			float signedDistanceToImpact = DotProduct2D( displacmentToImpact, direction );
+			if( impactedEntity == nullptr || ( signedDistanceToImpact < closestOverallDistance && signedDistanceToImpact > 0 ) )
 			{
 				impactedEntity = currentEntity;
 				closestOverallImpact = closestImpact;
-				closestOverallDistance = distanceToImpact;
+				closestOverallDistance = signedDistanceToImpact;
 			}
 		}
 	}

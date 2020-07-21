@@ -75,6 +75,7 @@ public:
 	bool	IsQuitting() const			{ return m_isQuitting; }
 	void	PlaySpawnSound();
 	void	TogglePossessEntity();
+	void	SetPossessedEntity( Entity* entityToPosses );
 	void	MoveCameraToEntityEye( Entity* entity );
 	void	DebugRaycast( Vec3 const& startPosition, Vec3 const& forwardDir, float maxDistance, float duration = 0.f );
 

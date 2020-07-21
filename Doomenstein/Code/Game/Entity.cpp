@@ -3,6 +3,7 @@
 #include "Game/GameCommon.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/DebugRender.hpp"
+#include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Renderer/SpriteSheet.hpp"
@@ -11,7 +12,7 @@
 
 
 //---------------------------------------------------------------------------------------------------------
-Entity::Entity( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef )
+Entity::Entity( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef, XmlElement const& element )
 	: m_entityDef( entityDef )
 {
 	m_theGame = theGame;
@@ -23,6 +24,8 @@ Entity::Entity( Game* theGame, World* theWorld, Map* theMap, EntityDef const& en
 	m_bottomRight	= Vec3( 0.f, spriteDimensions.x * 0.5f, 0.f );
 	m_topRight		= Vec3( 0.f, spriteDimensions.x * 0.5f, spriteDimensions.y );
 	m_topLeft		= Vec3( 0.f, -spriteDimensions.x * 0.5f, spriteDimensions.y );
+
+	SetValuesFromXML( element );
 }
 
 
@@ -121,6 +124,33 @@ void Entity::DebugRender() const
 	{
 		DebugAddWorldArrow( eyeLineStartPos, eyeLineStartPos + eyeLineDirection, Rgba8::CYAN, 0.f, DEBUG_RENDER_ALWAYS );
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Entity::SetValuesFromXML( XmlElement const& element )
+{
+	const float	invalidYaw = ~0;
+	const Vec2	invalidPos = Vec2( -1.f, -1.f );
+
+	Vec2 entityPos = ParseXmlAttribute( element, "pos", invalidPos );
+	if( entityPos == invalidPos )
+	{
+		g_theConsole->ErrorString( "Failed to parse \"pos\" of entity at line %i", element.GetLineNum() );
+		g_theConsole->ErrorString( "Position set to ( 1, 1 )" );
+		entityPos = Vec2( 1.f, 1.f );
+	}
+
+	float entityYaw = ParseXmlAttribute( element, "yaw", invalidYaw );
+	if( entityYaw == invalidYaw )
+	{
+		g_theConsole->ErrorString( "Failed to parse \"yaw\" of entity at line %i", element.GetLineNum() );
+		g_theConsole->ErrorString( "Yaw set to 0 degrees" );
+		entityYaw = 0.f;
+	}
+
+	SetPosition( Vec3( entityPos, 0.f ) );
+	SetYaw( entityYaw );
 }
 
 
@@ -227,6 +257,13 @@ void Entity::SetYaw( float yaw )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Entity::AddYaw( float yawToAdd )
+{
+	m_yaw += yawToAdd;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Entity::Translate( Vec3 const& translation )
 {
 	m_position += translation;
@@ -237,4 +274,11 @@ void Entity::Translate( Vec3 const& translation )
 void Entity::SetIsPossessed( bool isPossesed )
 {
 	m_isPossessed = isPossesed;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Entity::SetMap( Map* map )
+{
+	m_theMap = map;
 }

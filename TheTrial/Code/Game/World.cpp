@@ -96,9 +96,9 @@ void World::Update( float deltaSeconds )
 {
 	if( m_enemySpawnTimer.CheckAndReset() )
 	{
-		m_currentMap->SpawnEnemy( m_maxNumEnemies );
+		m_currentMap->SpawnEnemy(m_maxNumEnemies);
 	}
-	m_currentMap->Update( deltaSeconds );
+	m_currentMap->Update(deltaSeconds);
 
 
 	if( m_currentScore >= m_scoreToProceed )
@@ -109,6 +109,10 @@ void World::Update( float deltaSeconds )
 	CleanUpDeadEntities();
 	if( m_currentMap->IsPlayerInExit() )
 	{
+		SoundID teleportSound = g_theAudio->CreateOrGetSound( "Data/Audio/teleport.wav" );
+		g_theAudio->PlaySound( teleportSound, false, 1.5f * m_theGame->GetSFXVolume() );
+
+		++m_currentMapIndex;
 		LoadNextMap();
 	}
 }
@@ -149,7 +153,7 @@ void World::LoadNextMap()
 	m_currentMap->SetExitIsEnabled( false );
 	UpdateNewLevelProgress();
 
-	m_currentMap->CleanUpEntities();
+	//m_currentMap->CleanUpEntities();
 	m_currentMap->ClearEntities();
 	AddPlayerToCurrentMap( m_theGame->GetPlayer() );
 }
@@ -158,7 +162,7 @@ void World::LoadNextMap()
 //---------------------------------------------------------------------------------------------------------
 float World::GetItemDropChance( float entityBaseDropChance )
 {
-	float worldDropChance = m_difficultyLevel * 0.01f;
+	float worldDropChance = m_difficultyLevel * 0.02f;
 	return entityBaseDropChance + worldDropChance;
 }
 

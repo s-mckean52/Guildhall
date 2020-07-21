@@ -4,8 +4,8 @@
 
 
 //---------------------------------------------------------------------------------------------------------
-Actor::Actor( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef )
-	: Entity( theGame, theWorld, theMap, entityDef )
+Actor::Actor( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef, XmlElement const& element )
+	: Entity( theGame, theWorld, theMap, entityDef, element )
 {
 }
 

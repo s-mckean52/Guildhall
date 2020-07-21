@@ -44,6 +44,8 @@ public:
 	void Render() const					override;
 	void Update( float deltaSeconds )	override;
 
+	void DrawItemStats() const;
+
 	std::string		GetName() const			{ return m_name; }
 	size_t			GetNumStatMods() const	{ return m_statMods.size(); }
 	StatMod const&	GetStatModAtIndex( int index ) const;
@@ -52,6 +54,7 @@ public:
 	static void			CreateItemsFromXML( const char* filepath );
 	static Item const&	GetItemDefByName( std::string const& itemName );
 	static ActorStat	GetStatTypeFromString( std::string const& statTypeAsString );
+	static std::string	GetStringForActorStat( ActorStat actorStat );
 	static Item*		GetRandomItem();
 
 private:
@@ -63,6 +66,8 @@ private:
 	static std::map<std::string, Item>			s_itemDefinitions;
 
 private:
+	bool m_isHovered = false;
+
 	AABB2					m_spriteUVBounds;
 	std::string				m_name				= "";
 	Rgba8					m_tint				= Rgba8::WHITE;

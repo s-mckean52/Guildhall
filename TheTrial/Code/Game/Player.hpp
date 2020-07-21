@@ -13,7 +13,7 @@ class SpriteAnimDefinition;
 class Player : public Actor
 {
 public:
-	Player( Game* theGame );
+	Player( Game* theGame, std::string const& characterType );
 	~Player();
 
 	void Update( float deltaSeconds )						override;
@@ -29,11 +29,16 @@ public:
 	void SetCurrentMap( Map* map );
 	void AttackEnemy( Enemy* enemyToAttack );
 	void BasicAttack( Enemy* target );
+	void SetAudioPlayback();
+	void IsWalkSoundPaused( bool isPaused );
 
 private:
-	char m_abilityKeys[ 4 ] = { 'Q', 'W', 'E', 'R' };
-	Ability* m_abilities[ 4 ] = {};
+	Ability*	m_abilities[ 4 ]		= {};
+	char		m_abilityKeys[ 4 ]		= { 'Q', 'W', 'E', 'R' };
+	std::string m_characterType			= "char_one";
 
 	Map*	m_currentMap	= nullptr;
 	Enemy*	m_enemyTarget	= nullptr;
+	
+	SoundPlaybackID m_walkingPlayback;
 };

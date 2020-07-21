@@ -19,6 +19,8 @@ public:
 	Map( Game* theGame, World* theWorld, char const* imageFilepath );
 	~Map();
 
+	IntVec2 const& GetDimensions() { return m_dimensions; }
+
 	void CleanUpEntities();
 	void ClearEntities();
 

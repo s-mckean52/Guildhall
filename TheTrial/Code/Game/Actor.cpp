@@ -364,6 +364,9 @@ void Actor::PickUpItem( Item const& itemToPickUp )
 	}
 
 	CalculateBonusStats();
+
+	SoundID itemPickup = g_theAudio->CreateOrGetSound( "Data/Audio/itemCollect.wav" );
+	g_theAudio->PlaySound( itemPickup, false, m_theGame->GetSFXVolume() );
 }
 
 

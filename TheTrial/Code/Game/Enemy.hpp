@@ -23,6 +23,6 @@ public:
 
 private:
 	RaycastResult lineOfSight;
-	float m_baseItemDropChance	= 0.1f;
+	float m_baseItemDropChance	= 0.2f;
 	int m_scoreValue			= 25;
 };

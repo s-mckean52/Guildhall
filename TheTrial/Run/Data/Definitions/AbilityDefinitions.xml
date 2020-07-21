@@ -2,19 +2,20 @@
 
 	<Blink name="Blink" cooldown="5.f">
     <image name="xxxx"/>
-    <sound name="xxxx"/>
+    <sound name="Data/Audio/blink.wav"/>
     <values range="3.f"/>
   </Blink>
 
   <SkillShot name="Shot" cooldown="3.f">
     <image name="xxxx"/>
-    <sound name="xxxx"/>
+    <sound name="Data/Audio/shot.aiff"/>
     <values range="4.f" speed="2.f" numProjectiles="5" baseDamage="10" aperture="180">
       <Damage type="AttackDamage" fraction="1.5f"/>
     </values>
   </SkillShot>
 
   <Target name="Slow" cooldown="10.f">
+    <sound name="Data/Audio/slow.wav"/>
     <values range="10.f" duration="3.f" numTicks="3" damagePerTick="10.f">
       <Modify stat="MoveSpeed" amount="-1.f"/>
     </values>
@@ -22,7 +23,7 @@
   
   <Buff name="Enrage" cooldown="10.f">
     <image name="xxxx"/>
-    <sound name="xxxx"/>
+    <sound name="Data/Audio/enrage.wav" volume="0.5f"/>
     <values duration="5.f" tint="255, 0, 0, 0">
       <Modify stat="AttackDamage" amount="10"/>
       <Modify stat="AttackSpeed" amount="1.f"/>

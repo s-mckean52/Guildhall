@@ -2,6 +2,7 @@
 
 #define STATIC
 #define UNUSED(x) (void)(x);
+//#define BIT_FLAG(b)	( 1 << (b) );
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
 #include "Engine/Core/NamedStrings.hpp"
@@ -13,6 +14,7 @@ typedef unsigned int uint;
 struct Mat44;
 class DevConsole;
 class EventSystem;
+class JobSystem;
 
 enum KeyboardKeys
 {
@@ -41,6 +43,7 @@ enum MouseButtons
 extern float		SQRT_2_OVER_2;
 extern DevConsole*	g_theConsole;
 extern EventSystem* g_theEventSystem;
+extern JobSystem*	g_theJobSystem;
 extern NamedStrings g_gameConfigBlackboard;
 
 //Key Codes

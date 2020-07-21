@@ -5,6 +5,8 @@
 #include "Game/Tile.hpp"
 #include "Game/EntityDef.hpp"
 #include "Game/Entity.hpp"
+#include "Game/Portal.hpp"
+#include "Game/Actor.hpp"
 #include "Game/Game.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
@@ -283,6 +285,7 @@ void TileMap::Update()
 	UpdateEntities();
 	HandleEntityVEntityCollisions();
 	HandleEntitiesVWallCollisions();
+	HandlePortalVEntityCollisions();
 }
 
 
@@ -483,7 +486,10 @@ void TileMap::HandleEntitiesVWallCollisions()
 	for( uint entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
 	{
 		Entity* currentEntity = m_entities[ entityIndex ];
-		HandleEntityVWallCollisions( currentEntity );
+		if( currentEntity != nullptr )
+		{
+			HandleEntityVWallCollisions( currentEntity );
+		}
 	}
 }
 
@@ -525,6 +531,7 @@ void TileMap::PushEntityOutOfWall( Entity* entity, int xDir, int yDir )
 		entity->SetPosition( Vec3( entityPositionXY, entityPosition.z ) );
 	}
 }
+
 
 //---------------------------------------------------------------------------------------------------------
 void TileMap::AddGlyphToLegend( XmlElement const& xmlElement )
@@ -632,8 +639,11 @@ void TileMap::CreatePlayerStart( XmlElement const& xmlElement )
 		playerStartYawDegrees = 0.f;
 		g_theConsole->ErrorString( "Could not find yaw for Player Start - Yaw set to 0 Degrees" );
 	}
+
+	EntityDef* playerSpawnEntityDef = EntityDef::GetEntityDefByName( "Marine" );
+	m_playerStartEntity = SpawnNewEntityOfType( *playerSpawnEntityDef, xmlElement );
 	m_playerStartPositionXY = playerStartPositionXY;
-	m_playerStartYaw = playerStartYawDegrees;
+	m_playerStartYawDegrees = playerStartYawDegrees;
 }
 
 

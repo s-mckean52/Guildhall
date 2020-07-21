@@ -33,7 +33,14 @@
 		<Gameplay damage="5~15"/>
 	</Projectile>
 
-	<Portal name="Teleporter">
+	<Portal name="Energy Teleporter">
+    <Physics radius="0.4" height="1"/>
+    <Appearance size="1.0,1.0" billboard="CameraFacingXY" spriteSheet="Data/Images/Terrain_8x8.png" layout="8,8">
+      <Walk front="57"/>
+      <Attack front="57"/>
+      <Pain front="57"/>
+      <Death front="57"/>
+    </Appearance>
 	</Portal>
 
 </EntityTypes>

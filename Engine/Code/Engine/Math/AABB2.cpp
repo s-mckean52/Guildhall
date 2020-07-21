@@ -66,6 +66,14 @@ void AABB2::SetDimensions( const Vec2& newDimensions )
 
 
 //---------------------------------------------------------------------------------------------------------
+void AABB2::AddDimensions( const Vec2& addedDimensions )
+{
+	Vec2 currentDimensions = GetDimensions();
+	SetDimensions( currentDimensions + addedDimensions );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void AABB2::Translate( const Vec2& displacementVector )
 {
 	mins	+= displacementVector;

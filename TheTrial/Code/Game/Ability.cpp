@@ -36,6 +36,14 @@ Ability::Ability( XmlElement const& xmlElement )
 {
 	m_name					= ParseXmlAttribute( xmlElement, "name", m_name );
 	m_baseCooldownSeconds	= ParseXmlAttribute( xmlElement, "cooldown", m_baseCooldownSeconds );
+
+	XmlElement const& soundElement = *xmlElement.FirstChildElement( "sound" );
+	std::string soundFilepath = ParseXmlAttribute( soundElement, "name", "xxxx" );
+	m_castVolume = ParseXmlAttribute( soundElement, "volume", m_castVolume );
+	if( soundFilepath != "xxxx" )
+	{
+		m_castSound = g_theAudio->CreateOrGetSound( soundFilepath );
+	}
 }
 
 
@@ -47,6 +55,8 @@ Ability::Ability( Ability const& copyFrom )
 	, m_name( copyFrom.m_name )
 	, m_baseCooldownSeconds( copyFrom.m_baseCooldownSeconds )
 	, m_cooldownTimer( m_cooldownTimer )
+	, m_castSound( copyFrom.m_castSound )
+	, m_castVolume( copyFrom.m_castVolume )
 {
 }
 
@@ -103,6 +113,8 @@ void Ability::Use()
 {
 	double cooldownSeconds = m_baseCooldownSeconds;
 	m_cooldownTimer.SetSeconds( m_theGame->GetGameClock(), cooldownSeconds );
+
+	g_theAudio->PlaySound( m_castSound, false, m_castVolume * m_theGame->GetSFXVolume() );
 }
 
 
