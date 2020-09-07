@@ -58,6 +58,10 @@ public:
 	static void LoseFocus( EventArgs* args );
 
 	bool IsQuitting() const { return m_isQuitting; }
+	void PlayTestSound();
+
+	void GenerateOceanSurface( std::vector<Vertex_PCUTBN>& verts, std::vector<uint>& indicies, Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps );
+	Vec3 GetWaveHeightAtPosition( Vec3 const& position );
 
 private:
 	Clock* m_gameClock = nullptr;
@@ -85,5 +89,4 @@ private:
 	bool	m_isQuitting = false;
 
 	bool m_isFogEnabled = true;
-	void PlayTestSound();
 };

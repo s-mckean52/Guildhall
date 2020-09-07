@@ -78,13 +78,13 @@ void Game::StartUp()
 	m_UICamera = new Camera( g_theRenderer );
 	m_UICamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
-	std::vector<Vertex_PCUTBN> litCubeVerticies;
-	std::vector<uint> litCubeIndicies;
-	AddTestCubeToIndexVertexArray( litCubeVerticies, litCubeIndicies, AABB3( 0.f, 0.f, 0.f, 1.f, 1.f, 1.f ), Rgba8::WHITE );
-	m_meshCube = new GPUMesh( g_theRenderer, litCubeVerticies, litCubeIndicies );
-
 	m_cubeTransform = new Transform();
-	m_cubeTransform->SetPosition( Vec3( 2.f, 0.f, 0.f ) );
+/*	m_cubeTransform->SetPosition( Vec3( 0.f, 0.f, 0.f ) );*/
+
+	std::vector<Vertex_PCUTBN> surfacePlaneVerts;
+	std::vector<uint> surfacePlaneIndicies;
+	GenerateOceanSurface( surfacePlaneVerts, surfacePlaneIndicies, Vec3::ZERO, Rgba8::WHITE, Vec2( 10.f, 10.f ), IntVec2( 10, 10 ) );
+	m_meshCube = new GPUMesh( g_theRenderer, surfacePlaneVerts, surfacePlaneIndicies );
 
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 	m_test				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
@@ -165,22 +165,10 @@ void Game::RenderWorld() const
 	Mat44 cameraBasisMatrix = Mat44::CreateUniformScaleXYZ( 0.01f );
 	cameraBasisMatrix.SetTranslation3D( compasStartPosition );
 	DebugAddWorldBasis( cameraBasisMatrix, 0.f, DEBUG_RENDER_ALWAYS );
-// 	DebugAddWorldArrow( cameraBasisStartPosition, cameraBasisStartPosition + Vec3( 0.f, 0.f, 0.f ), Rgba8::RED, 0.f, DEBUG_RENDER_ALWAYS );
-// 	DebugAddWorldArrow( cameraBasisStartPosition, cameraBasisStartPosition + Vec3( 0.f, 1.f, 0.f ), Rgba8::GREEN, 0.f, DEBUG_RENDER_ALWAYS );
-// 	DebugAddWorldArrow( cameraBasisStartPosition, cameraBasisStartPosition + Vec3( 0.f, 0.f, 1.f ), Rgba8::BLUE, 0.f, DEBUG_RENDER_ALWAYS );
 
 	g_theRenderer->BindTexture( m_test );
 	g_theRenderer->BindShader( m_testShader );
 
-	m_cubeTransform->SetPosition( Vec3( 2.f, 0.f, 0.f ) );
-	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix() );
-	g_theRenderer->DrawMesh( m_meshCube );
-
-	m_cubeTransform->SetPosition( Vec3( 2.f, 2.f, 0.f ) );
-	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix() );
-	g_theRenderer->DrawMesh( m_meshCube );
-
-	m_cubeTransform->SetPosition( Vec3( 0.f, 2.f, 0.f ) );
 	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix() );
 	g_theRenderer->DrawMesh( m_meshCube );
 }
@@ -500,3 +488,65 @@ void Game::PlayTestSound()
 	float speed		= g_RNG->RollRandomFloatInRange(  0.5f,  2.0f );
 	g_theAudio->PlaySound( m_testSound, false, volume, balance, speed );
 }
+
+
+void Game::GenerateOceanSurface( std::vector<Vertex_PCUTBN>& verts, std::vector<uint>& indicies, Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps )
+{
+	float xStepAmount = dimensions.x / static_cast<float>( steps.x );
+	float yStepAmount = dimensions.y / static_cast<float>( steps.y );
+
+
+	float currentY = 0.f;
+	for( int yStep = 0; yStep < steps.y + 1; ++yStep )
+	{
+		float currentX = 0.f;
+		for( int xStep = 0; xStep < steps.x + 1; ++xStep )
+		{
+			Vec3 currentPosition = origin;
+			currentPosition.x += currentX;
+			currentPosition.y += currentY;
+
+			float u = RangeMapFloat( 0.f, dimensions.x, 0.f, 1.f, currentX );
+			float v = RangeMapFloat( 0.f, dimensions.y, 0.f, 1.f, currentY );
+			Vec2 uv = Vec2( u, v );
+
+			currentPosition += GetWaveHeightAtPosition( currentPosition );
+
+			verts.push_back( Vertex_PCUTBN( currentPosition, color, Vec3::UNIT_POSITIVE_X, Vec3::UNIT_POSITIVE_Y, Vec3::UNIT_POSITIVE_Z, uv ) );
+			currentX += xStepAmount;
+		}
+		currentY += yStepAmount;
+	}
+
+	unsigned int indexOffset = static_cast<unsigned int>( indicies.size() );
+	for( unsigned int yIndex = 0; yIndex < steps.y; ++yIndex )
+	{
+		for( unsigned int xIndex = 0; xIndex < steps.x; ++xIndex )
+		{
+			unsigned int currentVertIndex = xIndex + ( ( steps.x + 1 ) * yIndex );
+
+			unsigned int bottomLeft = currentVertIndex;
+			unsigned int bottomRight = currentVertIndex + 1;
+			unsigned int topLeft = currentVertIndex + steps.x + 1;
+			unsigned int topRight = currentVertIndex + steps.x + 2;
+
+			indicies.push_back( indexOffset + bottomLeft );
+			indicies.push_back( indexOffset + bottomRight );
+			indicies.push_back( indexOffset + topRight );
+
+			indicies.push_back( indexOffset + bottomLeft );
+			indicies.push_back( indexOffset + topRight );
+			indicies.push_back( indexOffset + topLeft );
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec3 Game::GetWaveHeightAtPosition( Vec3 const& position )
+{
+	float randomHeight = g_RNG->RollRandomFloatInRange( -1.f, 2.f );
+	return Vec3( 0.f, 0.f, randomHeight );
+}
+
+
