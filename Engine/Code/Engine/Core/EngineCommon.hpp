@@ -41,6 +41,7 @@ enum MouseButtons
 };
 
 extern float		SQRT_2_OVER_2;
+extern float		PI_VALUE;
 extern DevConsole*	g_theConsole;
 extern EventSystem* g_theEventSystem;
 extern JobSystem*	g_theJobSystem;

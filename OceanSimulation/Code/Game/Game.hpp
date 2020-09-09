@@ -9,6 +9,7 @@
 #include "Engine/Math/Transform.hpp"
 #include "Engine/Math/Mat44.hpp"
 #include <vector>
+#include <complex>
 
 class Entity;
 class XboxController;
@@ -23,6 +24,13 @@ enum CameraViewOrientation
 {
 	RIGHT_HAND_X_RIGHT_Y_UP,
 	RIGHT_HAND_X_FORWARD_Y_LEFT,
+};
+
+struct wave
+{
+public:
+	float amplitude = 1.f;
+	Vec3 direction = Vec3::UNIT_POSITIVE_X;
 };
 
 
@@ -62,6 +70,11 @@ public:
 
 	void GenerateOceanSurface( std::vector<Vertex_PCUTBN>& verts, std::vector<uint>& indicies, Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps );
 	Vec3 GetWaveHeightAtPosition( Vec3 const& position );
+	void UpdateSurfaceMesh();
+	float Phillips( Vec3 const& waveDir );
+
+	void UpdateGerstnerWave();
+	Vec3 GetWaveVectorSums(Vec3 const& initialPosition, std::vector<Vec3> const& waveVectors);
 
 private:
 	Clock* m_gameClock = nullptr;
@@ -89,4 +102,7 @@ private:
 	bool	m_isQuitting = false;
 
 	bool m_isFogEnabled = true;
+
+	std::vector<uint>			m_surfacePlaneIndicies;
+	std::vector<Vertex_PCUTBN>	m_surfacePlaneVerts;
 };

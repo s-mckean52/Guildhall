@@ -81,15 +81,14 @@ void Game::StartUp()
 	m_cubeTransform = new Transform();
 /*	m_cubeTransform->SetPosition( Vec3( 0.f, 0.f, 0.f ) );*/
 
-	std::vector<Vertex_PCUTBN> surfacePlaneVerts;
-	std::vector<uint> surfacePlaneIndicies;
-	GenerateOceanSurface( surfacePlaneVerts, surfacePlaneIndicies, Vec3::ZERO, Rgba8::WHITE, Vec2( 10.f, 10.f ), IntVec2( 10, 10 ) );
-	m_meshCube = new GPUMesh( g_theRenderer, surfacePlaneVerts, surfacePlaneIndicies );
+	GenerateOceanSurface( m_surfacePlaneVerts, m_surfacePlaneIndicies, Vec3::ZERO, Rgba8::WHITE, Vec2( 10.f, 10.f ), IntVec2( 128, 128 ) );
+	m_meshCube = new GPUMesh( g_theRenderer, m_surfacePlaneVerts, m_surfacePlaneIndicies );
 
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
-	m_test				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
+	m_test				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Grid.png" );
 
 	m_testShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/WorldOpaque.hlsl" );
+	//m_testShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/" );
 
 	m_testSound = g_theAudio->CreateOrGetSound( "Data/Audio/TestSound.mp3" );
 }
@@ -127,7 +126,7 @@ void Game::Render()
 	g_theRenderer->BeginCamera( *m_worldCamera );
 
 	g_theRenderer->BindSampler( nullptr );
-	g_theRenderer->SetCullMode( CULL_MODE_BACK );
+	g_theRenderer->SetCullMode( CULL_MODE_NONE );
 	g_theRenderer->SetDepthTest( COMPARE_FUNC_LEQUAL, true );
 
 	g_theRenderer->DisableAllLights();
@@ -167,7 +166,7 @@ void Game::RenderWorld() const
 	DebugAddWorldBasis( cameraBasisMatrix, 0.f, DEBUG_RENDER_ALWAYS );
 
 	g_theRenderer->BindTexture( m_test );
-	g_theRenderer->BindShader( m_testShader );
+	g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 
 	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix() );
 	g_theRenderer->DrawMesh( m_meshCube );
@@ -217,8 +216,8 @@ void Game::EnableLightsForRendering() const
 {
 // 	for( unsigned int lightIndex = 0; lightIndex < MAX_LIGHTS; ++lightIndex )
 // 	{
-// 		g_theRenderer->EnableLight( lightIndex, m_animatedLights[lightIndex].light );
 // 	}
+	g_theRenderer->EnableLight( 0, Light::DIRECTIONAL );
 }
 
 
@@ -383,6 +382,7 @@ void Game::Update()
 	if( !g_theConsole->IsOpen() )
 	{
 		UpdateFromInput( deltaSeconds );
+		UpdateGerstnerWave();
 	}
 }
 
@@ -490,11 +490,11 @@ void Game::PlayTestSound()
 }
 
 
+//---------------------------------------------------------------------------------------------------------
 void Game::GenerateOceanSurface( std::vector<Vertex_PCUTBN>& verts, std::vector<uint>& indicies, Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps )
 {
 	float xStepAmount = dimensions.x / static_cast<float>( steps.x );
 	float yStepAmount = dimensions.y / static_cast<float>( steps.y );
-
 
 	float currentY = 0.f;
 	for( int yStep = 0; yStep < steps.y + 1; ++yStep )
@@ -510,8 +510,6 @@ void Game::GenerateOceanSurface( std::vector<Vertex_PCUTBN>& verts, std::vector<
 			float v = RangeMapFloat( 0.f, dimensions.y, 0.f, 1.f, currentY );
 			Vec2 uv = Vec2( u, v );
 
-			currentPosition += GetWaveHeightAtPosition( currentPosition );
-
 			verts.push_back( Vertex_PCUTBN( currentPosition, color, Vec3::UNIT_POSITIVE_X, Vec3::UNIT_POSITIVE_Y, Vec3::UNIT_POSITIVE_Z, uv ) );
 			currentX += xStepAmount;
 		}
@@ -519,9 +517,9 @@ void Game::GenerateOceanSurface( std::vector<Vertex_PCUTBN>& verts, std::vector<
 	}
 
 	unsigned int indexOffset = static_cast<unsigned int>( indicies.size() );
-	for( unsigned int yIndex = 0; yIndex < steps.y; ++yIndex )
+	for( int yIndex = 0; yIndex < steps.y; ++yIndex )
 	{
-		for( unsigned int xIndex = 0; xIndex < steps.x; ++xIndex )
+		for( int xIndex = 0; xIndex < steps.x; ++xIndex )
 		{
 			unsigned int currentVertIndex = xIndex + ( ( steps.x + 1 ) * yIndex );
 
@@ -550,3 +548,107 @@ Vec3 Game::GetWaveHeightAtPosition( Vec3 const& position )
 }
 
 
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateSurfaceMesh()
+{
+	const float sqrt_2_under_1 = 1 / sqrtf(2.f);
+	
+	//h0
+	float er = g_RNG->RollRandomFloatInRange( -4, 4 );
+	float ei = g_RNG->RollRandomFloatInRange( -4, 4 );
+
+	std::complex<float> complexPart( er, ei );
+	std::complex<float> complexConjugatePart( er, -ei );
+	
+	std::complex<float> h0			= sqrt_2_under_1 * complexPart * Phillips( Vec3::UNIT_POSITIVE_X );
+	std::complex<float> conjugateH0	= sqrt_2_under_1 * complexConjugatePart * Phillips( -Vec3::UNIT_POSITIVE_X );
+	g_theConsole->PrintString( Rgba8::GREEN, Stringf( "h0: %.2f + %.2fi", std::real( h0 ), std::imag( h0 ) ) );
+	g_theConsole->PrintString( Rgba8::GREEN, Stringf( "conjugate h0: %.2f + %.2fi", std::real( conjugateH0 ), std::imag( conjugateH0 ) ) );
+
+	float wk = sqrtf( 9.81f * 1.f );
+	std::complex<float> complexPower = std::exp( wk * 1 );
+	std::complex<float> complexPowerConjugate = std::exp( -wk * 1 );
+
+	int n = g_RNG->RollRandomIntInRange( -64, 64 );
+	int m = g_RNG->RollRandomIntInRange( -64, 64 );
+
+	float kx = ( 2 * PI_VALUE * n ) / 10.f ;
+	float ky = ( 2 * PI_VALUE * m ) / 10.f ;
+
+	m_meshCube->UpdateVerticies( m_surfacePlaneVerts.size(), &m_surfacePlaneVerts[0] );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float Game::Phillips( Vec3 const& waveDir )
+{
+	const float e = 2.71828f;
+
+	// Phillips Spectrum
+	float a = 1.f;
+	Vec3 windDir = Vec3::UNIT_POSITIVE_X;
+	float waveMagnitude = waveDir.GetLength();
+	float waveMagTo4 = waveMagnitude * waveMagnitude * waveMagnitude * waveMagnitude;
+
+	float gravity = 9.81f;
+	float windSpeed = 1.f;
+	float l = ( windSpeed * windSpeed ) / gravity;
+
+	float ePow = -1 / ( ( waveMagnitude * l ) * ( waveMagnitude * l ) );
+	float windDirDotWaveDir = abs( DotProduct3D( waveDir, windDir ) ); 
+	float windDirDotWaveDirSquared = windDirDotWaveDir * windDirDotWaveDir;
+	float phillipsOfK = a * ( powf( e, ePow ) / waveMagTo4 ) * windDirDotWaveDirSquared;
+
+	return phillipsOfK;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateGerstnerWave()
+{
+	std::vector<Vec3> waveVectors = { Vec3::UNIT_POSITIVE_X, Vec3::UNIT_POSITIVE_Y };
+
+
+	size_t numSurfacePoints = m_surfacePlaneVerts.size();
+
+	std::vector<Vertex_PCUTBN> gerstnerWaveVerts = m_surfacePlaneVerts;
+
+	for( uint pointIndex = 0; pointIndex < numSurfacePoints; ++pointIndex )
+	{
+		Vec3 initialPosition = m_surfacePlaneVerts[pointIndex].m_position;
+		initialPosition.z = 0.f;
+
+		Vec3 finalPosition = GetWaveVectorSums( initialPosition, waveVectors );
+
+		gerstnerWaveVerts[pointIndex].m_position = finalPosition;
+	}
+
+	m_meshCube->UpdateVerticies( static_cast<uint>( gerstnerWaveVerts.size() ), &gerstnerWaveVerts[0] );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec3 Game::GetWaveVectorSums( Vec3 const& initialPosition, std::vector<Vec3> const& waveVectors )
+{
+	Vec3 finalPosition = Vec3::ZERO;
+	float finalHeight = 0.f;
+
+	for( int waveVectorIndex = 0; waveVectorIndex < waveVectors.size(); ++waveVectorIndex )
+	{
+		Vec3 waveVector = waveVectors[ waveVectorIndex ];
+		float k = ( 2 * PI_VALUE ) / waveVector.GetLength();
+		float wk = sqrtf( 9.81f * k * 0.01f );
+		float amplitude = 1.1f;
+		float t = static_cast<float>( m_gameClock->GetTotalElapsedSeconds() );
+
+		float kDotInitial = DotProduct3D( waveVector.GetNormalize(), initialPosition ) - ( wk * t );
+
+		finalPosition += ( ( waveVector / k ) * amplitude * sinf( kDotInitial ) );
+		finalHeight += amplitude * cosf( kDotInitial );
+	}
+
+	finalPosition = initialPosition - finalPosition;
+	finalPosition.z = finalHeight;
+
+	return finalPosition;
+}
