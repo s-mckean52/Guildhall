@@ -33,6 +33,12 @@
     <ClCompile Include="Main_Windows.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
+    <ClCompile Include="WaveSimulation.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="GerstnerWaveSimulation.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -45,6 +51,12 @@
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="GameCommon.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="WaveSimulation.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="GerstnerWaveSimulation.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>

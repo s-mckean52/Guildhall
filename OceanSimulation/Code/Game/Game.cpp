@@ -29,6 +29,8 @@
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Renderer/ShaderState.hpp"
 #include "Engine/Renderer/Material.hpp"
+#include "Game/GerstnerWaveSimulation.hpp"
+#include "Game/WaveSimulation.hpp"
 #include <string>
 
 
@@ -78,11 +80,9 @@ void Game::StartUp()
 	m_UICamera = new Camera( g_theRenderer );
 	m_UICamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
-	m_cubeTransform = new Transform();
-/*	m_cubeTransform->SetPosition( Vec3( 0.f, 0.f, 0.f ) );*/
-
-	GenerateOceanSurface( m_surfacePlaneVerts, m_surfacePlaneIndicies, Vec3::ZERO, Rgba8::WHITE, Vec2( 10.f, 10.f ), IntVec2( 128, 128 ) );
-	m_meshCube = new GPUMesh( g_theRenderer, m_surfacePlaneVerts, m_surfacePlaneIndicies );
+	m_waveSimulation = new GersternWaveSimulation( Vec2( 10.f, 10.f ), 128 );
+	m_waveSimulation->AddWave( new Wave( Vec2::RIGHT, 2.f, 1.f, 0.5f ) );
+	//m_waveSimulation->AddWave( new Wave( Vec2::RIGHT, 2.f, 2.f, 0.f ) );
 
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 	m_test				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Grid.png" );
@@ -105,12 +105,6 @@ void Game::ShutDown()
 
 	delete m_UICamera;
 	m_UICamera = nullptr;
-
-	delete m_meshCube;
-	m_meshCube = nullptr;
-
-	delete m_cubeTransform;
-	m_cubeTransform = nullptr;
 
 	delete m_gameClock;
 	m_gameClock = nullptr;
@@ -167,9 +161,8 @@ void Game::RenderWorld() const
 
 	g_theRenderer->BindTexture( m_test );
 	g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
-
-	g_theRenderer->SetModelUBO( m_cubeTransform->ToMatrix() );
-	g_theRenderer->DrawMesh( m_meshCube );
+	
+	m_waveSimulation->Render();
 }
 
 
@@ -189,11 +182,21 @@ void Game::RenderUI() const
 	Mat44 cameraView = m_worldCamera->GetViewMatrix();
 	MatrixInvertOrthoNormal( cameraView );
 
+	Wave* selectedWave = m_waveSimulation->GetWaveAtIndex( m_selectedWaveIndex );
+
 	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "Camera - Rotation (Pitch, Yaw, Roll): (%.2f, %.2f, %.2f)", cameraRotationPitchYawRollDegrees.x, cameraRotationPitchYawRollDegrees.y, cameraRotationPitchYawRollDegrees.z ) ) );
 	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "       - Position (x, y, z):          (%.2f, %.2f, %.2f)", cameraPosition.x, cameraPosition.y, cameraPosition.z ) ) );
 	strings.push_back( ColorString( Rgba8::RED,		Stringf( "iBasis (forward, +x world-east when identity): (%.2f, %.2f, %.2f)", cameraView.Ix, cameraView.Iy, cameraView.Iz ) ) );
 	strings.push_back( ColorString( Rgba8::GREEN,	Stringf( "jBasis (left, +y world-north when identity  ): (%.2f, %.2f, %.2f)", cameraView.Jx, cameraView.Jy, cameraView.Jz ) ) );
 	strings.push_back( ColorString( Rgba8::BLUE,	Stringf( "kBasis (up, +z world-up when identity       ): (%.2f, %.2f, %.2f)", cameraView.Kx, cameraView.Ky, cameraView.Kz ) ) );
+	strings.push_back( ColorString( Rgba8::BLUE,	Stringf( " " ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[LEFT, RIGHT] - Wave: %i", m_selectedWaveIndex ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[UP, DOWN]    - Direction: ( %.2f, %.2f )", selectedWave->direction.x, selectedWave->direction.y ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[{, }]        - Size:      %.2f", selectedWave->direction.GetLength() ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[-, +]        - Amplitude: %.2f", selectedWave->amplitude ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[;, ']        - Phase:     %.2f", selectedWave->phase ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Frequency: %.2f", selectedWave->frequency ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Magnitude: %.2f", selectedWave->magnitude ) ) );
 
 	Vec2 cameraTopLeft = Vec2( m_UICamera->GetOrthoBottomLeft().x, m_UICamera->GetOrthoTopRight().y );
 	Vec2 textStartPos = cameraTopLeft + Vec2( paddingFromLeft, -paddingFromTop - textHeight );
@@ -332,6 +335,82 @@ void Game::UpdateBasedOnMouseMovement()
 
 
 //---------------------------------------------------------------------------------------------------------
+void Game::UpdateSimulationFromInput()
+{
+	const float updateSpeed = 1.f;
+
+	int numWaves = m_waveSimulation->GetNumWaves();
+	if( numWaves <= 0 )
+		return;
+
+	float deltaSeconds = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
+
+	//Change Wave
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_LEFT_ARROW ) )
+	{
+		--m_selectedWaveIndex;
+	}
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_RIGHT_ARROW ) )
+	{
+		++m_selectedWaveIndex;
+	}
+	Clamp( m_selectedWaveIndex, 0, numWaves );
+	Wave* waveToModify = m_waveSimulation->GetWaveAtIndex( m_selectedWaveIndex );
+
+	//Change Direction
+	if( g_theInput->IsKeyPressed( KEY_CODE_UP_ARROW ) )
+	{
+		waveToModify->RotateDirectionDegrees( updateSpeed * 3.f * deltaSeconds );
+	}
+	if( g_theInput->IsKeyPressed( KEY_CODE_DOWN_ARROW ) )
+	{
+		waveToModify->RotateDirectionDegrees( -updateSpeed * 3.f * deltaSeconds );
+	}
+
+	//Change Amplitude
+	if( g_theInput->IsKeyPressed( KEY_CODE_PLUS ) )
+	{
+		waveToModify->AddAmplitude( updateSpeed * deltaSeconds );
+	}
+	if( g_theInput->IsKeyPressed( KEY_CODE_MINUS ) )
+	{
+		waveToModify->AddAmplitude( -updateSpeed * deltaSeconds );
+	}
+
+	//Change Frequency
+	if( g_theInput->IsKeyPressed( KEY_CODE_RIGHT_BRACKET ) )
+	{
+		waveToModify->AddMagnitude( updateSpeed * deltaSeconds );
+	}
+	if( g_theInput->IsKeyPressed( KEY_CODE_LEFT_BRACKET ) )
+	{
+		waveToModify->AddMagnitude( -updateSpeed * deltaSeconds );
+	}
+
+	//Change Phase
+	if( g_theInput->IsKeyPressed( KEY_CODE_APOSTROPHE ) )
+	{
+		waveToModify->AddPhase( updateSpeed * deltaSeconds );
+	}
+	if( g_theInput->IsKeyPressed( KEY_CODE_SEMICOLON ) )
+	{
+		waveToModify->AddPhase( -updateSpeed * deltaSeconds );
+	}
+
+	//Change Wave Size
+	if( g_theInput->IsKeyPressed( KEY_CODE_COMMA ) )
+	{
+		//Increase Amplitude
+	}
+	if( g_theInput->IsKeyPressed( KEY_CODE_PERIOD ) )
+	{
+		//Decrease Amplitude
+	}
+
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::UpdateCameraProjection( Camera* camera )
 {
 	float mat[] = {
@@ -382,7 +461,7 @@ void Game::Update()
 	if( !g_theConsole->IsOpen() )
 	{
 		UpdateFromInput( deltaSeconds );
-		UpdateGerstnerWave();
+		m_waveSimulation->Simulate();
 	}
 }
 
@@ -393,6 +472,8 @@ void Game::UpdateFromInput( float deltaSeconds )
 	UpdateBasedOnMouseMovement();
 
 	MoveWorldCamera( deltaSeconds );
+
+	UpdateSimulationFromInput();
 
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
 	{
@@ -575,7 +656,7 @@ void Game::UpdateSurfaceMesh()
 	float kx = ( 2 * PI_VALUE * n ) / 10.f ;
 	float ky = ( 2 * PI_VALUE * m ) / 10.f ;
 
-	m_meshCube->UpdateVerticies( m_surfacePlaneVerts.size(), &m_surfacePlaneVerts[0] );
+	//m_meshCube->UpdateVerticies( m_surfacePlaneVerts.size(), &m_surfacePlaneVerts[0] );
 }
 
 
@@ -600,55 +681,4 @@ float Game::Phillips( Vec3 const& waveDir )
 	float phillipsOfK = a * ( powf( e, ePow ) / waveMagTo4 ) * windDirDotWaveDirSquared;
 
 	return phillipsOfK;
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::UpdateGerstnerWave()
-{
-	std::vector<Vec3> waveVectors = { Vec3::UNIT_POSITIVE_X, Vec3::UNIT_POSITIVE_Y };
-
-
-	size_t numSurfacePoints = m_surfacePlaneVerts.size();
-
-	std::vector<Vertex_PCUTBN> gerstnerWaveVerts = m_surfacePlaneVerts;
-
-	for( uint pointIndex = 0; pointIndex < numSurfacePoints; ++pointIndex )
-	{
-		Vec3 initialPosition = m_surfacePlaneVerts[pointIndex].m_position;
-		initialPosition.z = 0.f;
-
-		Vec3 finalPosition = GetWaveVectorSums( initialPosition, waveVectors );
-
-		gerstnerWaveVerts[pointIndex].m_position = finalPosition;
-	}
-
-	m_meshCube->UpdateVerticies( static_cast<uint>( gerstnerWaveVerts.size() ), &gerstnerWaveVerts[0] );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-Vec3 Game::GetWaveVectorSums( Vec3 const& initialPosition, std::vector<Vec3> const& waveVectors )
-{
-	Vec3 finalPosition = Vec3::ZERO;
-	float finalHeight = 0.f;
-
-	for( int waveVectorIndex = 0; waveVectorIndex < waveVectors.size(); ++waveVectorIndex )
-	{
-		Vec3 waveVector = waveVectors[ waveVectorIndex ];
-		float k = ( 2 * PI_VALUE ) / waveVector.GetLength();
-		float wk = sqrtf( 9.81f * k * 0.01f );
-		float amplitude = 1.1f;
-		float t = static_cast<float>( m_gameClock->GetTotalElapsedSeconds() );
-
-		float kDotInitial = DotProduct3D( waveVector.GetNormalize(), initialPosition ) - ( wk * t );
-
-		finalPosition += ( ( waveVector / k ) * amplitude * sinf( kDotInitial ) );
-		finalHeight += amplitude * cosf( kDotInitial );
-	}
-
-	finalPosition = initialPosition - finalPosition;
-	finalPosition.z = finalHeight;
-
-	return finalPosition;
 }

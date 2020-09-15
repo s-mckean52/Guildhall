@@ -17,6 +17,7 @@ class Shader;
 class GPUMesh;
 class Clock;
 class NamedProperties;
+class GersternWaveSimulation;
 struct Vertex_PCUTBN;
 struct AABB3;
 
@@ -50,6 +51,7 @@ public:
 	void UpdateFromInput( float deltaSeconds );
 	void MoveWorldCamera( float deltaSeconds );
 	void UpdateBasedOnMouseMovement();
+	void UpdateSimulationFromInput();
 
 	//Rendering
 	void UpdateCameraProjection( Camera* camera );
@@ -59,6 +61,7 @@ public:
 	void EnableLightsForRendering() const;
 	
 	//Other
+	Clock* GetGameClock() const { return m_gameClock; }
 	void AddTestCubeToIndexVertexArray( std::vector<Vertex_PCUTBN>& vertexArray, std::vector<uint>& indexArray, AABB3 const& box, Rgba8 const& color );
 
 	//Static
@@ -73,14 +76,11 @@ public:
 	void UpdateSurfaceMesh();
 	float Phillips( Vec3 const& waveDir );
 
-	void UpdateGerstnerWave();
-	Vec3 GetWaveVectorSums(Vec3 const& initialPosition, std::vector<Vec3> const& waveVectors);
-
 private:
+	GersternWaveSimulation* m_waveSimulation = nullptr;
+
 	Clock* m_gameClock = nullptr;
 
-	GPUMesh*	m_meshCube		= nullptr;
-	Transform*	m_cubeTransform	= nullptr;
 	Texture*	m_test			= nullptr;
 
 	Rgba8 m_ambientColor = Rgba8::WHITE;
@@ -103,6 +103,5 @@ private:
 
 	bool m_isFogEnabled = true;
 
-	std::vector<uint>			m_surfacePlaneIndicies;
-	std::vector<Vertex_PCUTBN>	m_surfacePlaneVerts;
+	int m_selectedWaveIndex = 0;
 };
