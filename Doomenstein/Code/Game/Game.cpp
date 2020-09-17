@@ -105,13 +105,13 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
-	constexpr int NUM_JOBS = 50000;
-	//TestJob* jobs[ NUM_JOBS ];
-	for( int i = 0; i < NUM_JOBS; ++i )
-	{
-		g_theJobSystem->PostJob( new TestJob( i + 1 ) );
-	}
-	g_theJobSystem->CreateWorkerThreads( 20 );
+// 	constexpr int NUM_JOBS = 50000;
+// 	//TestJob* jobs[ NUM_JOBS ];
+// 	for( int i = 0; i < NUM_JOBS; ++i )
+// 	{
+// 		g_theJobSystem->PostJob( new TestJob( i + 1 ) );
+// 	}
+// 	g_theJobSystem->CreateWorkerThreads( 20 );
 
 
 	g_RNG = new RandomNumberGenerator();

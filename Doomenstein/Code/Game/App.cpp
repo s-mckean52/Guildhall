@@ -10,6 +10,7 @@
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/JobSystem.hpp"
+#include "Engine/Network/NetworkSystem.hpp"
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/DebugRender.hpp"
@@ -17,6 +18,7 @@
 
 EventSystem*	g_theEventSystem	= nullptr;
 JobSystem*		g_theJobSystem		= nullptr;
+NetworkSystem*	g_theNetworkSystem	= nullptr;
 RenderContext*	g_theRenderer		= nullptr;
 InputSystem*	g_theInput			= nullptr;
 AudioSystem*	g_theAudio			= nullptr;
@@ -31,6 +33,7 @@ void App::StartUp()
 
 	g_theJobSystem		= new JobSystem();
 	g_theEventSystem	= new EventSystem();
+	g_theNetworkSystem	= new NetworkSystem();
 	g_theRenderer		= new RenderContext();
 	g_theInput			= new InputSystem();
 	g_theAudio			= new AudioSystem();
@@ -41,6 +44,7 @@ void App::StartUp()
 	g_theRenderer->StartUp( g_theWindow );
 	g_theInput->StartUp( g_theWindow );
 	g_theConsole->StartUp( g_theInput, g_theEventSystem );
+	g_theNetworkSystem->StartUp();
 
 	DebugRenderSystemStartup( g_theRenderer );
 
@@ -66,6 +70,10 @@ void App::ShutDown()
 	DebugRenderSystemShutdown();
 
 	g_theGame->ShutDown();
+	delete g_theGame;
+	g_theGame = nullptr;
+
+	g_theNetworkSystem->ShutDown();
 	delete g_theGame;
 	g_theGame = nullptr;
 
@@ -155,6 +163,7 @@ void App::BeginFrame()
 	g_theRenderer->BeginFrame();
 	g_theInput->BeginFrame();
 	g_theAudio->BeginFrame();
+	g_theNetworkSystem->BeginFrame();
 
 	DebugRenderBeginFrame();
 }
@@ -203,6 +212,7 @@ void App::EndFrame()
 	g_theRenderer->EndFrame();
 	g_theInput->EndFrame();
 	g_theAudio->EndFrame();
+	g_theNetworkSystem->EndFrame();
 
 	DebugRenderEndFrame();
 }

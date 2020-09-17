@@ -15,6 +15,7 @@ struct Mat44;
 class DevConsole;
 class EventSystem;
 class JobSystem;
+class NetworkSystem;
 
 enum KeyboardKeys
 {
@@ -40,12 +41,14 @@ enum MouseButtons
 	NUM_MOUSE_BUTTONS
 };
 
-extern float		SQRT_2_OVER_2;
-extern float		PI_VALUE;
-extern DevConsole*	g_theConsole;
-extern EventSystem* g_theEventSystem;
-extern JobSystem*	g_theJobSystem;
-extern NamedStrings g_gameConfigBlackboard;
+extern float SQRT_2_OVER_2;
+extern float PI_VALUE;
+
+extern DevConsole*		g_theConsole;
+extern EventSystem*		g_theEventSystem;
+extern JobSystem*		g_theJobSystem;
+extern NetworkSystem*	g_theNetworkSystem;
+extern NamedStrings		g_gameConfigBlackboard;
 
 //Key Codes
 extern const unsigned char KEY_CODE_ESC;

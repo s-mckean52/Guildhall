@@ -15,3 +15,11 @@ Controls:
 		'O' - Set Position and Rotations to 0
 	   'F1' - Debug Draw
 	   'F3' - Toggle Possession of Entity
+
+	Netowrking Console Commands:
+		startTCPServer port=<portNumber> 	- starts a tcp server on 48000 unless specified otherwise
+		stopTCPServer						- stops the current TCP server
+		sendMessage message=<message>		- sends message to client or server dependent on how you are connected.
+											  Commands do not support spaces
+		connect ip=<host:port>				- Connects client to specified ip on a specific port. Defaults to ":48000"
+		disconnect							- Disconnects client from server
