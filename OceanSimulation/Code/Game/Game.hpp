@@ -17,7 +17,7 @@ class Shader;
 class GPUMesh;
 class Clock;
 class NamedProperties;
-class GersternWaveSimulation;
+class WaveSimulation;
 struct Vertex_PCUTBN;
 struct AABB3;
 
@@ -77,7 +77,7 @@ public:
 	float Phillips( Vec3 const& waveDir );
 
 private:
-	GersternWaveSimulation* m_waveSimulation = nullptr;
+	WaveSimulation* m_waveSimulation = nullptr;
 
 	Clock* m_gameClock = nullptr;
 

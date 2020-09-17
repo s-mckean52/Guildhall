@@ -39,6 +39,9 @@
     <ClCompile Include="GerstnerWaveSimulation.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
+    <ClCompile Include="FFTWaveSimulation.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -57,6 +60,9 @@
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="GerstnerWaveSimulation.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="FFTWaveSimulation.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>

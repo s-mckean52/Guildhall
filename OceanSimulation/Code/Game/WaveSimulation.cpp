@@ -106,6 +106,9 @@ int WaveSimulation::GetNumWaves() const
 //---------------------------------------------------------------------------------------------------------
 Wave* WaveSimulation::GetWaveAtIndex( int index ) const
 {
+	if( m_waves.size() == 0 )
+		return nullptr;
+
 	Clamp( index, 0, static_cast<int>( m_waves.size() - 1 ) );
 	return m_waves[index];
 }
@@ -114,21 +117,23 @@ Wave* WaveSimulation::GetWaveAtIndex( int index ) const
 //---------------------------------------------------------------------------------------------------------
 void WaveSimulation::GenerateSurface( Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps )
 {
+	Vec2 halfDimensions = dimensions * 0.5f;
+
 	float xStepAmount = dimensions.x / static_cast<float>( steps.x );
 	float yStepAmount = dimensions.y / static_cast<float>( steps.y );
 
-	float currentY = 0.f;
+	float currentY = -halfDimensions.y;
 	for( int yStep = 0; yStep < steps.y + 1; ++yStep )
 	{
-		float currentX = 0.f;
+		float currentX = -halfDimensions.x;
 		for( int xStep = 0; xStep < steps.x + 1; ++xStep )
 		{
 			Vec3 currentPosition = origin;
 			currentPosition.x += currentX;
 			currentPosition.y += currentY;
 
-			float u = RangeMapFloat( 0.f, dimensions.x, 0.f, 1.f, currentX );
-			float v = RangeMapFloat( 0.f, dimensions.y, 0.f, 1.f, currentY );
+			float u = RangeMapFloat( -halfDimensions.x, halfDimensions.x, 0.f, 1.f, currentX );
+			float v = RangeMapFloat( -halfDimensions.y, halfDimensions.y, 0.f, 1.f, currentY );
 			Vec2 uv = Vec2( u, v );
 
 			m_surfaceVerts.push_back( Vertex_PCUTBN( currentPosition, color, Vec3::UNIT_POSITIVE_X, Vec3::UNIT_POSITIVE_Y, Vec3::UNIT_POSITIVE_Z, uv ) );

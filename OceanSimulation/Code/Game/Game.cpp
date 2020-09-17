@@ -30,6 +30,7 @@
 #include "Engine/Renderer/ShaderState.hpp"
 #include "Engine/Renderer/Material.hpp"
 #include "Game/GerstnerWaveSimulation.hpp"
+#include "Game/FFTWaveSimulation.hpp"
 #include "Game/WaveSimulation.hpp"
 #include <string>
 
@@ -80,15 +81,14 @@ void Game::StartUp()
 	m_UICamera = new Camera( g_theRenderer );
 	m_UICamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
-	m_waveSimulation = new GersternWaveSimulation( Vec2( 10.f, 10.f ), 128 );
-	m_waveSimulation->AddWave( new Wave( Vec2::RIGHT, 2.f, 1.f, 0.5f ) );
-	//m_waveSimulation->AddWave( new Wave( Vec2::RIGHT, 2.f, 2.f, 0.f ) );
+	m_waveSimulation = new FFTWaveSimulation( Vec2( 10.f, 10.f ), 128 );
+	m_waveSimulation->AddWave( new Wave( Vec2::RIGHT, 4.59f, 0.26f, 0.0f ) );
+	//m_waveSimulation->AddWave( new Wave( Vec2::RIGHT, 1.f, 0.26f, 0.f ) );
 
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 	m_test				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Grid.png" );
 
 	m_testShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/WorldOpaque.hlsl" );
-	//m_testShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/" );
 
 	m_testSound = g_theAudio->CreateOrGetSound( "Data/Audio/TestSound.mp3" );
 }
@@ -160,7 +160,7 @@ void Game::RenderWorld() const
 	DebugAddWorldBasis( cameraBasisMatrix, 0.f, DEBUG_RENDER_ALWAYS );
 
 	g_theRenderer->BindTexture( m_test );
-	g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
+	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 	
 	m_waveSimulation->Render();
 }
@@ -176,6 +176,8 @@ void Game::RenderUI() const
 	std::vector<ColorString> strings;
 	std::vector<Vertex_PCU> textVerts;
 
+	float fps = 1.f / m_gameClock->GetLastDeltaSeconds();
+
 	Transform cameraTransform = m_worldCamera->GetTransform();
 	Vec3 cameraPosition = cameraTransform.GetPosition();
 	Vec3 cameraRotationPitchYawRollDegrees = cameraTransform.GetRotationPitchYawRollDegrees();
@@ -184,19 +186,24 @@ void Game::RenderUI() const
 
 	Wave* selectedWave = m_waveSimulation->GetWaveAtIndex( m_selectedWaveIndex );
 
+	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "FPS: %.2f", fps ) ) );
 	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "Camera - Rotation (Pitch, Yaw, Roll): (%.2f, %.2f, %.2f)", cameraRotationPitchYawRollDegrees.x, cameraRotationPitchYawRollDegrees.y, cameraRotationPitchYawRollDegrees.z ) ) );
 	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "       - Position (x, y, z):          (%.2f, %.2f, %.2f)", cameraPosition.x, cameraPosition.y, cameraPosition.z ) ) );
 	strings.push_back( ColorString( Rgba8::RED,		Stringf( "iBasis (forward, +x world-east when identity): (%.2f, %.2f, %.2f)", cameraView.Ix, cameraView.Iy, cameraView.Iz ) ) );
 	strings.push_back( ColorString( Rgba8::GREEN,	Stringf( "jBasis (left, +y world-north when identity  ): (%.2f, %.2f, %.2f)", cameraView.Jx, cameraView.Jy, cameraView.Jz ) ) );
 	strings.push_back( ColorString( Rgba8::BLUE,	Stringf( "kBasis (up, +z world-up when identity       ): (%.2f, %.2f, %.2f)", cameraView.Kx, cameraView.Ky, cameraView.Kz ) ) );
-	strings.push_back( ColorString( Rgba8::BLUE,	Stringf( " " ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[LEFT, RIGHT] - Wave: %i", m_selectedWaveIndex ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[UP, DOWN]    - Direction: ( %.2f, %.2f )", selectedWave->direction.x, selectedWave->direction.y ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[{, }]        - Size:      %.2f", selectedWave->direction.GetLength() ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[-, +]        - Amplitude: %.2f", selectedWave->amplitude ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[;, ']        - Phase:     %.2f", selectedWave->phase ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Frequency: %.2f", selectedWave->frequency ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Magnitude: %.2f", selectedWave->magnitude ) ) );
+	
+	if( selectedWave != nullptr )
+	{
+		strings.push_back( ColorString( Rgba8::BLUE,	Stringf( " " ) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[LEFT, RIGHT] - Wave: %i", m_selectedWaveIndex ) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[UP, DOWN]    - Direction: ( %.2f, %.2f )", selectedWave->direction.x, selectedWave->direction.y ) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[{, }]        - Size:      %.2f", selectedWave->direction.GetLength() ) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[-, +]        - Amplitude: %.2f", selectedWave->amplitude ) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[;, ']        - Phase:     %.2f", selectedWave->phase ) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Frequency: %.2f", selectedWave->frequency ) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Magnitude: %.2f", selectedWave->magnitude ) ) );
+	}
 
 	Vec2 cameraTopLeft = Vec2( m_UICamera->GetOrthoBottomLeft().x, m_UICamera->GetOrthoTopRight().y );
 	Vec2 textStartPos = cameraTopLeft + Vec2( paddingFromLeft, -paddingFromTop - textHeight );
@@ -354,7 +361,7 @@ void Game::UpdateSimulationFromInput()
 	{
 		++m_selectedWaveIndex;
 	}
-	Clamp( m_selectedWaveIndex, 0, numWaves );
+	Clamp( m_selectedWaveIndex, 0, numWaves - 1 );
 	Wave* waveToModify = m_waveSimulation->GetWaveAtIndex( m_selectedWaveIndex );
 
 	//Change Direction
