@@ -197,6 +197,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="DFTWaveSimulation.cpp" />
     <ClCompile Include="FFTWaveSimulation.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameCommon.cpp" />
@@ -206,6 +207,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp" />
+    <ClInclude Include="DFTWaveSimulation.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />
     <ClInclude Include="FFTWaveSimulation.hpp" />
     <ClInclude Include="Game.hpp" />

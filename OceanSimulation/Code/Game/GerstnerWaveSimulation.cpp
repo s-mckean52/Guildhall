@@ -14,45 +14,40 @@ GersternWaveSimulation::GersternWaveSimulation( Vec2 const& dimensions, uint sam
 //---------------------------------------------------------------------------------------------------------
 void GersternWaveSimulation::Simulate()
 {
-	size_t numSurfacePoints = m_surfaceVerts.size();
-
-	std::vector<Vertex_PCUTBN> gerstnerWaveVerts = m_surfaceVerts;
+	size_t numSurfacePoints = m_initialSurfacePositions.size();
 
 	for( uint pointIndex = 0; pointIndex < numSurfacePoints; ++pointIndex )
 	{
-		Vec3 initialPosition = m_surfaceVerts[pointIndex].m_position;
-		initialPosition.z = 0.f;
+		Vec3 const& initialSurfacePosition = m_initialSurfacePositions[pointIndex];
+		Vec3 newSurfacePosition = GetSurfacePositionAtTime( initialSurfacePosition );
 
-		Vec3 finalPosition = GetWaveVectorSums( initialPosition );
-
-		gerstnerWaveVerts[pointIndex].m_position = finalPosition;
+		m_surfaceVerts[pointIndex].m_position = newSurfacePosition;
 	}
 
-	m_surfaceMesh->UpdateVerticies( static_cast<uint>( gerstnerWaveVerts.size() ), &gerstnerWaveVerts[0] );
+	m_surfaceMesh->UpdateVerticies( static_cast<uint>( m_surfaceVerts.size() ), &m_surfaceVerts[0] );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-Vec3 GersternWaveSimulation::GetWaveVectorSums( Vec3 const& initialPosition )
+Vec3 GersternWaveSimulation::GetSurfacePositionAtTime( Vec3 const& initialPosition )
 {
-	Vec3 finalPosition = Vec3::ZERO;
-	float finalHeight = 0.f;
+	float totalTimeElapsed = .1f * static_cast<float>(g_theGame->GetGameClock()->GetTotalElapsedSeconds());
 
-	float t = static_cast<float>(g_theGame->GetGameClock()->GetTotalElapsedSeconds());
+	float finalHeight = 0.f;//initialPosition.z;
+	Vec2 finalPositionXY = Vec2::ZERO;
+	Vec2 initialPositionXY = Vec2( initialPosition.x, initialPosition.y );
 	for( int waveIndex = 0; waveIndex < m_waves.size(); ++waveIndex )
 	{
-		Wave* wave = m_waves[waveIndex];
-		Vec3 waveDir3D = Vec3( wave->direction, 0.f );
+		Wave& wave = *m_waves[waveIndex];
 
-		float kDotInitial = DotProduct3D( waveDir3D.GetNormalize(), initialPosition ) - ( wave->frequency * t ) + wave->phase;
+		float kDotInitial = DotProduct2D( wave.m_directionNormal, initialPositionXY ) - ( wave.m_frequency * totalTimeElapsed ) + wave.m_phase;
 
-		finalPosition += ( ( waveDir3D / wave->magnitude ) * wave->amplitude * sinf( kDotInitial ) );
-		finalHeight += wave->amplitude * cosf( kDotInitial );
+		finalPositionXY += ( ( wave.m_directionNormal / wave.m_magnitude ) * wave.m_amplitude * sinf( kDotInitial ) );
+		finalHeight += wave.m_amplitude * cosf( kDotInitial );
 	}
 
-	finalPosition = initialPosition - finalPosition;
-	finalPosition.z = finalHeight;
-
+	Vec3 finalPosition = initialPosition - Vec3( finalPositionXY, 0.f );
+	finalPosition.z = initialPosition.z + finalHeight;
 	return finalPosition;
 }
 

@@ -31,6 +31,7 @@
 #include "Engine/Renderer/Material.hpp"
 #include "Game/GerstnerWaveSimulation.hpp"
 #include "Game/FFTWaveSimulation.hpp"
+#include "Game/DFTWaveSimulation.hpp"
 #include "Game/WaveSimulation.hpp"
 #include <string>
 
@@ -75,15 +76,24 @@ void Game::StartUp()
 	m_worldCamera->SetProjectionPerspective( 60.f, -0.09f, -100.f );
 	m_worldCamera->SetDepthStencilTarget( g_theRenderer->m_defaultDepthStencil );
 	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, m_clearColor, 1.0f, 0 );
+	m_worldCamera->SetPosition( Vec3( 0.f, -10.f, 5.f ) );
+	m_worldCamera->SetPitchYawRollRotationDegrees( 30.f, 90.f, 0.f );
 	UpdateCameraProjection( m_worldCamera );
 	g_theRenderer->DisableFog();
 
 	m_UICamera = new Camera( g_theRenderer );
 	m_UICamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
-	m_waveSimulation = new FFTWaveSimulation( Vec2( 10.f, 10.f ), 128 );
-	m_waveSimulation->AddWave( new Wave( Vec2::RIGHT, 4.59f, 0.26f, 0.0f ) );
-	//m_waveSimulation->AddWave( new Wave( Vec2::RIGHT, 1.f, 0.26f, 0.f ) );
+	m_waveSimulation = new DFTWaveSimulation( Vec2( 10.f, 10.f ), 32 );
+// 	for( int i = 0; i < -1; ++i )
+// 	{
+// 		Vec2 randomDirection = g_RNG->RollRandomDirection2D();
+// 		float randomWaveLength = g_RNG->RollRandomFloatInRange( 0.5f, 7.f ) * 0.1f;
+// 		float randomAmplitude = g_RNG->RollRandomFloatInRange( 0.1f, 1.f ) * 0.1f;
+// 		float randomPhase = g_RNG->RollRandomFloatInRange( 0.0f, 5.f );
+// 
+// 		m_waveSimulation->AddWave( new Wave( randomDirection, randomWaveLength, randomAmplitude, randomPhase ) );
+// 	}
 
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 	m_test				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Grid.png" );
@@ -197,12 +207,12 @@ void Game::RenderUI() const
 	{
 		strings.push_back( ColorString( Rgba8::BLUE,	Stringf( " " ) ) );
 		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[LEFT, RIGHT] - Wave: %i", m_selectedWaveIndex ) ) );
-		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[UP, DOWN]    - Direction: ( %.2f, %.2f )", selectedWave->direction.x, selectedWave->direction.y ) ) );
-		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[{, }]        - Size:      %.2f", selectedWave->direction.GetLength() ) ) );
-		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[-, +]        - Amplitude: %.2f", selectedWave->amplitude ) ) );
-		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[;, ']        - Phase:     %.2f", selectedWave->phase ) ) );
-		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Frequency: %.2f", selectedWave->frequency ) ) );
-		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Magnitude: %.2f", selectedWave->magnitude ) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[UP, DOWN]    - Direction: ( %.2f, %.2f )", selectedWave->m_directionNormal.x, selectedWave->m_directionNormal.y ) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[{, }]        - Size:      %.2f", selectedWave->m_directionNormal.GetLength() ) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[-, +]        - Amplitude: %.2f", selectedWave->m_amplitude ) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[;, ']        - Phase:     %.2f", selectedWave->m_phase ) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Frequency: %.2f", selectedWave->m_frequency ) ) );
+		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Magnitude: %.2f", selectedWave->m_magnitude ) ) );
 	}
 
 	Vec2 cameraTopLeft = Vec2( m_UICamera->GetOrthoBottomLeft().x, m_UICamera->GetOrthoTopRight().y );

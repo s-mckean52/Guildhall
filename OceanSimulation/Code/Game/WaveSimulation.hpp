@@ -14,11 +14,12 @@ class	GPUMesh;
 struct Wave
 {
 public:
-	Vec2	direction	= Vec2::RIGHT;
-	float	amplitude	= 1.f;
-	float	phase		= 0.f;
-	float	frequency	= 100.f;
-	float	magnitude	= 100.f;
+	Vec2	m_directionNormal	= Vec2::RIGHT;
+	float	m_directionLength	= 1.f;
+	float	m_amplitude			= 1.f;
+	float	m_phase				= 0.f;
+	float	m_frequency			= 100.f;
+	float	m_magnitude			= 100.f;
 
 public:
 	~Wave() = default;
@@ -60,4 +61,5 @@ protected:
 	GPUMesh*					m_surfaceMesh		= nullptr; 
 	std::vector<uint>			m_surfaceIndicies;
 	std::vector<Vertex_PCUTBN>	m_surfaceVerts;
+	std::vector<Vec3>			m_initialSurfacePositions;
 };

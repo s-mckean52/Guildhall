@@ -37,6 +37,8 @@ extern bool g_isDebugCamera;
 
 //---------------------------------------------------------------------------------------------------------
 // Global Game-specific Constants
+constexpr float GRAVITY					= 9.81f;
+constexpr float INVERSE_GRAVITY			= 1 / GRAVITY;
 constexpr float MAX_FRAME_TIME			= .1f;
 constexpr float CAMERA_SIZE_X			= 16.f;
 constexpr float CAMERA_SIZE_Y			= 9.f;

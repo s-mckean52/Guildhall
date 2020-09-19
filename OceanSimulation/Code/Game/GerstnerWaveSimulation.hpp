@@ -10,5 +10,5 @@ public:
 
 	void Simulate() override;
 
-	Vec3 GetWaveVectorSums( Vec3 const& initialPosition );
+	Vec3 GetSurfacePositionAtTime( Vec3 const& initialPosition );
 };

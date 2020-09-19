@@ -42,6 +42,9 @@
     <ClCompile Include="FFTWaveSimulation.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
+    <ClCompile Include="DFTWaveSimulation.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -63,6 +66,9 @@
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="FFTWaveSimulation.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="DFTWaveSimulation.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>

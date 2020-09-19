@@ -14,45 +14,50 @@
 //---------------------------------------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------------------------------------
-Wave::Wave( Vec2 const& dir, float waveSize, float setAmplitude, float setPhase )
-	: amplitude( setAmplitude )
-	, phase( setPhase )
+Wave::Wave( Vec2 const& dir, float wavelength, float setAmplitude, float setPhase )
+	: m_amplitude( setAmplitude )
+	, m_phase( setPhase )
 {
-	direction = dir * waveSize;
-	CalculateMagnitudeAndFrequency( waveSize );
+	m_directionNormal = dir;
+	if( !ApproximatelyEqual( m_directionNormal.GetLength(), 0.f ) )
+	{
+		m_directionNormal.Normalize();
+	}
+
+	CalculateMagnitudeAndFrequency( wavelength );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Wave::CalculateMagnitudeAndFrequency( float waveSize )
 {
-	magnitude = ( 2 * PI_VALUE ) / waveSize;
-	frequency = sqrtf( 9.81f * magnitude );
+	m_magnitude = ( 2 * PI_VALUE ) / waveSize;
+	m_frequency = sqrtf( 9.81f * m_magnitude );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Wave::RotateDirectionDegrees( float degreesToRotate )
 {
-	direction.RotateDegrees( degreesToRotate );
+	m_directionNormal.RotateDegrees( degreesToRotate );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Wave::AddAmplitude( float amplitudeToAdd )
 {
-	amplitude += amplitudeToAdd;
-	Clamp( amplitude, 0.f, 100.f );
+	m_amplitude += amplitudeToAdd;
+	Clamp( m_amplitude, 0.f, 100.f );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void Wave::AddMagnitude( float magnitudeToAdd )
 {
-	float waveLength = direction.GetLength();
+	float waveLength = m_directionNormal.GetLength();
 	waveLength += magnitudeToAdd;
 	Clamp( waveLength, 0.1f, 100.f );
-	direction.SetLength( waveLength );
+	m_directionNormal.SetLength( waveLength );
 	CalculateMagnitudeAndFrequency( waveLength );
 }
 
@@ -60,8 +65,8 @@ void Wave::AddMagnitude( float magnitudeToAdd )
 //---------------------------------------------------------------------------------------------------------
 void Wave::AddPhase( float phaseToAdd )
 {
-	phase += phaseToAdd;
-	Clamp( phase, 0.f, 100.f );
+	m_phase += phaseToAdd;
+	Clamp( m_phase, 0.f, 100.f );
 }
 
 
@@ -136,6 +141,7 @@ void WaveSimulation::GenerateSurface( Vec3 const& origin, Rgba8 const& color, Ve
 			float v = RangeMapFloat( -halfDimensions.y, halfDimensions.y, 0.f, 1.f, currentY );
 			Vec2 uv = Vec2( u, v );
 
+			m_initialSurfacePositions.push_back( currentPosition );
 			m_surfaceVerts.push_back( Vertex_PCUTBN( currentPosition, color, Vec3::UNIT_POSITIVE_X, Vec3::UNIT_POSITIVE_Y, Vec3::UNIT_POSITIVE_Z, uv ) );
 			currentX += xStepAmount;
 		}
