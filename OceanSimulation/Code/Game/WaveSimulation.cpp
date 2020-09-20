@@ -91,6 +91,25 @@ WaveSimulation::WaveSimulation( Vec2 const& dimensions, uint samples )
 void WaveSimulation::Render() const
 {
 	g_theRenderer->SetModelUBO( m_transform->ToMatrix() );
+
+	if( m_isWireFrame ) 
+	{ 
+		g_theRenderer->BindTexture( nullptr );
+		g_theRenderer->SetModelTint( Rgba8::MakeFromFloats( 0.5f, 0.65f, 0.75f ) );
+		g_theRenderer->SetCullMode( CULL_MODE_NONE );
+		g_theRenderer->SetFillMode( FILL_MODE_WIREFRAME );
+	}
+	else
+	{
+		g_theRenderer->BindTextureByPath( "Data/Images/Grid.png" );
+		g_theRenderer->SetCullMode( CULL_MODE_NONE );
+		g_theRenderer->SetFillMode( FILL_MODE_SOLID );
+	}
+
+	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
+
+	g_theRenderer->BindShader( nullptr );
+
 	g_theRenderer->DrawMesh( m_surfaceMesh );
 }
 
@@ -116,6 +135,13 @@ Wave* WaveSimulation::GetWaveAtIndex( int index ) const
 
 	Clamp( index, 0, static_cast<int>( m_waves.size() - 1 ) );
 	return m_waves[index];
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::ToggleWireFrameMode()
+{
+	m_isWireFrame = !m_isWireFrame;
 }
 
 

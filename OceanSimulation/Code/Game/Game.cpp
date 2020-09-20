@@ -168,9 +168,6 @@ void Game::RenderWorld() const
 	Mat44 cameraBasisMatrix = Mat44::CreateUniformScaleXYZ( 0.01f );
 	cameraBasisMatrix.SetTranslation3D( compasStartPosition );
 	DebugAddWorldBasis( cameraBasisMatrix, 0.f, DEBUG_RENDER_ALWAYS );
-
-	g_theRenderer->BindTexture( m_test );
-	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 	
 	m_waveSimulation->Render();
 }
@@ -355,6 +352,11 @@ void Game::UpdateBasedOnMouseMovement()
 void Game::UpdateSimulationFromInput()
 {
 	const float updateSpeed = 1.f;
+
+	if( g_theInput->WasKeyJustPressed( 'F' ) )
+	{
+		m_waveSimulation->ToggleWireFrameMode();
+	}
 
 	int numWaves = m_waveSimulation->GetNumWaves();
 	if( numWaves <= 0 )

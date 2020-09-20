@@ -31,7 +31,7 @@ public:
 
 private:
 	//Phillips Spectrum Variables
-	float	m_A				= 1.f;			//Phillips Spectrum Constant
+	float	m_A				= 0.01f;			//Phillips Spectrum Constant
 	Vec2	m_windDirection	= Vec2::RIGHT;
 	float	m_windSpeed		= 1.f;
 

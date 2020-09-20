@@ -48,7 +48,7 @@ void DFTWaveSimulation::Simulate()
 		
 		WavePoint wavePoint = GetHeightAtPosition( initialPositionXY, elapsedTime );
 
-		m_surfaceVerts[positionIndex].m_position = initialPosition + Vec3( 0.f, 0.f, wavePoint.m_height.real() );
+		m_surfaceVerts[positionIndex].m_position = initialPosition + Vec3( wavePoint.m_position.x, wavePoint.m_position.y, wavePoint.m_height.real() );
 	}
 	m_surfaceMesh->UpdateVerticies( static_cast<uint>( m_surfaceVerts.size() ), &m_surfaceVerts[0] );
 }

@@ -48,11 +48,14 @@ public:
 
 	int			GetNumWaves() const;
 	Wave*		GetWaveAtIndex( int index ) const;
+	
+	void		ToggleWireFrameMode();
 
 private:
 	void GenerateSurface( Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps );
 
 protected:
+	bool				m_isWireFrame	= false;
 	Transform*			m_transform		= nullptr;
 	Vec2				m_dimensions	= Vec2( 10.f, 10.f );
 	uint				m_numSamples	= 128;
