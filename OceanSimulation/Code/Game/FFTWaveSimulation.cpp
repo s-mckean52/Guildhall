@@ -1,16 +1,49 @@
-#include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Renderer/GPUMesh.hpp"
+#include "Game/DFTWaveSimulation.hpp"
 #include "Game/FFTWaveSimulation.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/Game.hpp"
-#include <complex>
 
 
 //---------------------------------------------------------------------------------------------------------
 FFTWaveSimulation::FFTWaveSimulation( Vec2 const& dimensions, uint samples )
 	: WaveSimulation( dimensions, samples )
+{
+	int samplesSquared = samples * samples;
+	m_hTilde.resize( samplesSquared );
+	m_hTilde_dx.resize( samplesSquared );
+	m_hTilde_dy.resize( samplesSquared );
+
+	m_c.resize(2);
+	m_c[0].resize( samples );
+	m_c[1].resize( samples );
+
+	m_log2N = static_cast<uint>( std::log2( samples ) );
+	m_pi2 = 2.f * PI_VALUE;
+
+	CreateBitReversedIndicies();
+	CalculateTForIndicies();
+
+	m_hTilde0Data.resize( m_numSamples * m_numSamples );
+	for( int i = 0; i < m_initialSurfacePositions.size(); ++i )
+	{	
+		int m = i / m_numSamples;
+		int n = i - ( m * m_numSamples );
+
+		HTilde0Data hTilde0Data;
+		hTilde0Data.m_htilde0		= hTilde0( n, m );
+		hTilde0Data.m_htilde0Conj	= std::conj( hTilde0( n, m, true ) );
+
+		m_hTilde0Data[i] = hTilde0Data;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+FFTWaveSimulation::~FFTWaveSimulation()
 {
 }
 
@@ -18,80 +51,168 @@ FFTWaveSimulation::FFTWaveSimulation( Vec2 const& dimensions, uint samples )
 //---------------------------------------------------------------------------------------------------------
 void FFTWaveSimulation::Simulate()
 {
-	float t = static_cast<float>( g_theGame->GetGameClock()->GetTotalElapsedSeconds() );
-
-	std::vector<Vertex_PCUTBN> wavePoints = m_surfaceVerts;
-
-	for( int wavePointIndex = 0; wavePointIndex < wavePoints.size(); ++wavePointIndex )
+	float elapsedTime = static_cast<float>( g_theGame->GetGameClock()->GetTotalElapsedSeconds() );
+	for( int positionIndex = 0; positionIndex < m_initialSurfacePositions.size(); ++positionIndex )
 	{
+		int m = positionIndex / m_numSamples;
+		int n = positionIndex - ( m * m_numSamples );
 
-		Vec2 position = Vec2::ZERO;
-		position.x = m_surfaceVerts[wavePointIndex].m_position.x; //n
-		position.y = m_surfaceVerts[wavePointIndex].m_position.y; //m
-		
-		float n = ( position.x * m_numSamples ) * m_dimensions.x;
-		float m = ( position.y * m_numSamples ) * m_dimensions.y;
-
-		Vec2 k = Vec2::ZERO;
-		k.x = ( 2 * PI_VALUE * n ) / m_dimensions.x;
-		k.y = ( 2 * PI_VALUE * m ) / m_dimensions.y;
-
-		wavePoints[wavePointIndex].m_position.z = CalculateFFTHeight( position, k, t );
+		GetHeightAtPosition( n, m, elapsedTime );
 	}
-	m_surfaceMesh->UpdateVerticies( wavePoints.size(), &wavePoints[0] );
+
+	for( uint mIndex = 0; mIndex < m_numSamples; ++mIndex )
+	{
+		CalculateFFT( m_hTilde, m_hTilde, 1, mIndex * m_numSamples );
+		CalculateFFT( m_hTilde_dx, m_hTilde_dx, 1, mIndex * m_numSamples );
+		CalculateFFT( m_hTilde_dy, m_hTilde_dy, 1, mIndex * m_numSamples );
+	}
+	for( uint nIndex = 0; nIndex < m_numSamples; ++nIndex )
+	{
+		CalculateFFT( m_hTilde, m_hTilde, m_numSamples, nIndex );
+		CalculateFFT( m_hTilde_dx, m_hTilde_dx, m_numSamples, nIndex );
+		CalculateFFT( m_hTilde_dy, m_hTilde_dy, m_numSamples, nIndex );
+	}
+
+	for( uint positionIndex = 0; positionIndex < m_initialSurfacePositions.size(); ++positionIndex )
+	{
+		int m = positionIndex / m_numSamples;
+		int n = positionIndex - ( m * m_numSamples );
+
+		float sign = 1.f - ( 2.f * ( ( n + m ) % 2 ) );
+
+		Vec3 translation;
+		translation.x = 0.f; //-m_hTilde_dx[positionIndex].real() * sign;
+		translation.y = 0.f; //-m_hTilde_dy[positionIndex].real() * sign;
+		translation.z = m_hTilde[positionIndex].real() * sign;
+
+		m_surfaceVerts[positionIndex].m_position = m_initialSurfacePositions[positionIndex] + translation;
+	}
+
+	m_surfaceMesh->UpdateVerticies( static_cast<uint>( m_surfaceVerts.size() ), &m_surfaceVerts[0] );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-float FFTWaveSimulation::CalculateFFTHeight( Vec2 const& initialPosition, Vec2 const& k, float timeElapsed )
+uint FFTWaveSimulation::ReverseBits( uint value )
 {
-	std::complex<float> kx( 0.f, k.x );
-	std::complex<float> ky( 0.f, k.y );
-	std::complex<float> totalHeight ( 0, 0 );
+	//---------------------------------------------------------------------------------------------------------
+	//http://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
+	unsigned int v = value;		// input bits to be reversed
+	unsigned int r = v;			// r will be reversed bits of v; first get LSB of v
+	int s = m_log2N - 1;		// extra shift needed at end
 
-	//for( int waveIndex = 0; waveIndex < m_waves.size(); ++waveIndex )
-	//{
-		const float sqrt_2_under_1 = 1 / sqrtf( 2.f );
-
-		//h0
-		float wk = sqrtf( 9.81f * k.GetLength() );
-		float er = g_RNG->RollRandomFloatInRange( -100000, 100000 );
-		float ei = g_RNG->RollRandomFloatInRange( -100000, 100000 );
-
-		std::complex<float> complexPart( er, ei );
-		std::complex<float> complexConjugatePart( er, -ei );
-
-		std::complex<float> h0 = sqrt_2_under_1 * complexPart * PhillipsEquation( k );
-		std::complex<float> conjugateH0 = sqrt_2_under_1 * complexConjugatePart * PhillipsEquation( k );
-		
-		std::complex<float> complexPower = std::exp( std::complex<float>( 0.f, wk * timeElapsed ) );
-		std::complex<float> complexPowerConjugate = std::exp( std::complex<float>( 0.f, wk * timeElapsed ) );
-
-		std::complex<float> h = ( h0 * complexPower ) + ( conjugateH0 * complexPowerConjugate );
-		totalHeight += h * std::exp( ( kx * initialPosition.x ) + ( ky * initialPosition.y ) );
-	//}
-	return totalHeight.real();
+	for( v >>= 1; v; v >>= 1 )
+	{
+		r <<= 1;
+		r |= v & 1;
+		s--;
+	}
+	r <<= s;					// shift when v's highest bits are zero
+	r &= m_numSamples - 1;		// Zero out bits that are beyond number of samples
+	//---------------------------------------------------------------------------------------------------------
+	return r;
 }
+
 
 //---------------------------------------------------------------------------------------------------------
-float FFTWaveSimulation::PhillipsEquation( Vec2 const& waveDirection )
+void FFTWaveSimulation::CreateBitReversedIndicies()
 {
-	const float e = 2.71828f;
-
-	// Phillips Spectrum
-	float a = 10000000.f;
-	Vec2 windDir = Vec2::RIGHT;
-	float waveMagnitude = waveDirection.GetLength();
-	float waveMagTo4 = waveMagnitude * waveMagnitude * waveMagnitude * waveMagnitude;
-
-	float gravity = 9.81f;
-	float windSpeed = 0.1f;
-	float l = ( windSpeed * windSpeed ) / gravity;
-
-	float ePow = -1 / ( ( waveMagnitude * l ) * ( waveMagnitude * l ) );
-	float windDirDotWaveDir = abs( DotProduct2D( waveDirection.GetNormalized(), windDir.GetNormalized() ) ); 
-	float windDirDotWaveDirSquared = windDirDotWaveDir * windDirDotWaveDir;
-	float phillipsOfK = a * ( std::exp( ePow ) / waveMagTo4 ) * windDirDotWaveDirSquared;
-
-	return phillipsOfK;
+	GUARANTEE_OR_DIE( IsValidNumSamples( m_numSamples ), "Number of samples needs to be a power of 2" );
+	m_bitReversedIndicies.resize( m_numSamples );
+	for( uint index = 0; index < m_numSamples; ++index )
+	{
+		m_bitReversedIndicies[index] = ReverseBits( index );
+	}
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+void FFTWaveSimulation::CalculateTForIndicies()
+{
+	uint pow2 = 1;
+	m_Ts.resize( m_log2N );
+	for( uint i = 0; i < m_log2N; ++i )
+	{
+		m_Ts[i].resize( pow2 );
+		for( uint j = 0; j < pow2; ++j )
+		{
+			m_Ts[i][j] = GetTCalculation( j, pow2 * 2 );
+		}
+		pow2 *= 2;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+ComplexFloat FFTWaveSimulation::GetTCalculation( uint x, uint samplesAtDimension )
+{
+	float value = ( m_pi2 * x ) / samplesAtDimension;
+	return ComplexFloat( cos( value ), sin( value ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void FFTWaveSimulation::CalculateFFT( std::vector<ComplexFloat>& data_in, std::vector<ComplexFloat>& data_out, int stride, int offset )
+{
+	for( uint sampleIndex = 0; sampleIndex < m_numSamples; ++sampleIndex )
+	{
+		int dataIndex = m_bitReversedIndicies[sampleIndex] * stride + offset;
+		m_c[which][sampleIndex] = data_in[ dataIndex ];
+	}
+
+	int w_ = 0;
+	int numLoops = m_numSamples >> 1;
+	int size = 2;
+	int sizeOver2 = 1;
+
+	for( uint i = 0; i < m_log2N; ++i )
+	{
+		which ^= 1;
+		for( int j = 0; j < numLoops; ++j )
+		{
+			for( int k = 0; k < sizeOver2; ++k )
+			{
+				int jSizePlusK = ( j * size ) + k;
+				m_c[which][jSizePlusK] = m_c[which^1][jSizePlusK] + m_c[which^1][jSizePlusK + sizeOver2] * m_Ts[w_][k];
+			}
+
+			for( int k = sizeOver2; k < size; ++k )
+			{
+				int jSizePlusK = ( j * size ) + k;
+				m_c[which][jSizePlusK] = m_c[which ^ 1][jSizePlusK - sizeOver2] - m_c[which ^ 1][jSizePlusK] * m_Ts[w_][k - sizeOver2];
+			}
+		}
+		numLoops	>>= 1;
+		size		<<= 1;
+		sizeOver2	<<= 1;
+		++w_;
+	}
+
+	for( uint sampleIndex = 0; sampleIndex < m_numSamples; ++sampleIndex )
+	{
+		int dataIndex = sampleIndex * stride + offset;
+		data_out[dataIndex] = m_c[which][sampleIndex];
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void FFTWaveSimulation::GetHeightAtPosition( int n, int m, float time )
+{
+	int index = m * m_numSamples + n;
+
+	Vec2 k = GetK( n, m );
+	
+	m_hTilde[index] = hTilde( n, m, time );
+	if( k.GetLength() < 0.000001f )
+	{
+		m_hTilde_dx[index] = ComplexFloat( 0.f, 0.f );
+		m_hTilde_dy[index] = ComplexFloat( 0.f, 0.f );
+	}
+	else
+	{
+		m_hTilde_dx[index] = m_hTilde[index] * ComplexFloat( 0.f, -k.x / k.GetLength() );
+		m_hTilde_dy[index] = m_hTilde[index] * ComplexFloat( 0.f, -k.y / k.GetLength() );
+	}
+}
+

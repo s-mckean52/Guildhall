@@ -13,3 +13,4 @@ Controls:
 		'~' - Open the dev console
 		'I' - Set Yaw, Pitch, and Roll to 0
 		'O' - Set Position and Rotations to 0
+		'F' - Toggle Wire Frame Rendering

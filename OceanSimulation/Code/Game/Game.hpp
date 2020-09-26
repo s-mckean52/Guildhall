@@ -71,13 +71,9 @@ public:
 	bool IsQuitting() const { return m_isQuitting; }
 	void PlayTestSound();
 
-	void GenerateOceanSurface( std::vector<Vertex_PCUTBN>& verts, std::vector<uint>& indicies, Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps );
-	Vec3 GetWaveHeightAtPosition( Vec3 const& position );
-	void UpdateSurfaceMesh();
-	float Phillips( Vec3 const& waveDir );
-
 private:
-	WaveSimulation* m_waveSimulation = nullptr;
+	WaveSimulation* m_DFTWaveSimulation = nullptr;
+	WaveSimulation* m_FFTWaveSimulation = nullptr;
 
 	Clock* m_gameClock = nullptr;
 

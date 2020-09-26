@@ -61,6 +61,7 @@ void Game::StartUp()
 	g_theConsole->PrintString( Rgba8::MAGENTA, Stringf( "Game Config File Aspect: %.3f", configAspect ) );
 
 	g_RNG = new RandomNumberGenerator();
+	g_RNG->Reset(100);
 
 	EnableDebugRendering();
 
@@ -84,7 +85,12 @@ void Game::StartUp()
 	m_UICamera = new Camera( g_theRenderer );
 	m_UICamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
-	m_waveSimulation = new DFTWaveSimulation( Vec2( 10.f, 10.f ), 32 );
+	Vec2 dimensions = Vec2( 10.f, 10.f );
+	uint samples = 16;
+	m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples );
+	m_FFTWaveSimulation = new FFTWaveSimulation( dimensions, samples );
+	m_FFTWaveSimulation->SetPosition( Vec3( 10.f, 0.f, 0.f ) );
+	m_gameClock->SetScale( 10.f );
 // 	for( int i = 0; i < -1; ++i )
 // 	{
 // 		Vec2 randomDirection = g_RNG->RollRandomDirection2D();
@@ -118,6 +124,12 @@ void Game::ShutDown()
 
 	delete m_gameClock;
 	m_gameClock = nullptr;
+
+	delete m_FFTWaveSimulation;
+	m_FFTWaveSimulation = nullptr;
+	
+	delete m_DFTWaveSimulation;
+	m_DFTWaveSimulation = nullptr;
 }
 
 
@@ -169,7 +181,8 @@ void Game::RenderWorld() const
 	cameraBasisMatrix.SetTranslation3D( compasStartPosition );
 	DebugAddWorldBasis( cameraBasisMatrix, 0.f, DEBUG_RENDER_ALWAYS );
 	
-	m_waveSimulation->Render();
+	m_DFTWaveSimulation->Render();
+	m_FFTWaveSimulation->Render();
 }
 
 
@@ -183,7 +196,7 @@ void Game::RenderUI() const
 	std::vector<ColorString> strings;
 	std::vector<Vertex_PCU> textVerts;
 
-	float fps = 1.f / m_gameClock->GetLastDeltaSeconds();
+	float fps = 1.f / static_cast<float>( Clock::GetMaster()->GetLastDeltaSeconds() / Clock::GetMaster()->GetScale() );
 
 	Transform cameraTransform = m_worldCamera->GetTransform();
 	Vec3 cameraPosition = cameraTransform.GetPosition();
@@ -191,7 +204,7 @@ void Game::RenderUI() const
 	Mat44 cameraView = m_worldCamera->GetViewMatrix();
 	MatrixInvertOrthoNormal( cameraView );
 
-	Wave* selectedWave = m_waveSimulation->GetWaveAtIndex( m_selectedWaveIndex );
+	Wave* selectedWave = m_DFTWaveSimulation->GetWaveAtIndex( m_selectedWaveIndex );
 
 	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "FPS: %.2f", fps ) ) );
 	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "Camera - Rotation (Pitch, Yaw, Roll): (%.2f, %.2f, %.2f)", cameraRotationPitchYawRollDegrees.x, cameraRotationPitchYawRollDegrees.y, cameraRotationPitchYawRollDegrees.z ) ) );
@@ -355,10 +368,16 @@ void Game::UpdateSimulationFromInput()
 
 	if( g_theInput->WasKeyJustPressed( 'F' ) )
 	{
-		m_waveSimulation->ToggleWireFrameMode();
+		m_DFTWaveSimulation->ToggleWireFrameMode();
+		m_FFTWaveSimulation->ToggleWireFrameMode();
 	}
 
-	int numWaves = m_waveSimulation->GetNumWaves();
+	if( g_theInput->WasKeyJustPressed( 'P' ) )
+	{
+		m_gameClock->TogglePause();
+	}
+
+	int numWaves = m_DFTWaveSimulation->GetNumWaves();
 	if( numWaves <= 0 )
 		return;
 
@@ -374,7 +393,7 @@ void Game::UpdateSimulationFromInput()
 		++m_selectedWaveIndex;
 	}
 	Clamp( m_selectedWaveIndex, 0, numWaves - 1 );
-	Wave* waveToModify = m_waveSimulation->GetWaveAtIndex( m_selectedWaveIndex );
+	Wave* waveToModify = m_DFTWaveSimulation->GetWaveAtIndex( m_selectedWaveIndex );
 
 	//Change Direction
 	if( g_theInput->IsKeyPressed( KEY_CODE_UP_ARROW ) )
@@ -480,7 +499,8 @@ void Game::Update()
 	if( !g_theConsole->IsOpen() )
 	{
 		UpdateFromInput( deltaSeconds );
-		m_waveSimulation->Simulate();
+		m_DFTWaveSimulation->Simulate();
+		m_FFTWaveSimulation->Simulate();
 	}
 }
 
@@ -587,117 +607,4 @@ void Game::PlayTestSound()
 	float balance	= g_RNG->RollRandomFloatInRange( -1.0f,  1.0f );
 	float speed		= g_RNG->RollRandomFloatInRange(  0.5f,  2.0f );
 	g_theAudio->PlaySound( m_testSound, false, volume, balance, speed );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::GenerateOceanSurface( std::vector<Vertex_PCUTBN>& verts, std::vector<uint>& indicies, Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps )
-{
-	float xStepAmount = dimensions.x / static_cast<float>( steps.x );
-	float yStepAmount = dimensions.y / static_cast<float>( steps.y );
-
-	float currentY = 0.f;
-	for( int yStep = 0; yStep < steps.y + 1; ++yStep )
-	{
-		float currentX = 0.f;
-		for( int xStep = 0; xStep < steps.x + 1; ++xStep )
-		{
-			Vec3 currentPosition = origin;
-			currentPosition.x += currentX;
-			currentPosition.y += currentY;
-
-			float u = RangeMapFloat( 0.f, dimensions.x, 0.f, 1.f, currentX );
-			float v = RangeMapFloat( 0.f, dimensions.y, 0.f, 1.f, currentY );
-			Vec2 uv = Vec2( u, v );
-
-			verts.push_back( Vertex_PCUTBN( currentPosition, color, Vec3::UNIT_POSITIVE_X, Vec3::UNIT_POSITIVE_Y, Vec3::UNIT_POSITIVE_Z, uv ) );
-			currentX += xStepAmount;
-		}
-		currentY += yStepAmount;
-	}
-
-	unsigned int indexOffset = static_cast<unsigned int>( indicies.size() );
-	for( int yIndex = 0; yIndex < steps.y; ++yIndex )
-	{
-		for( int xIndex = 0; xIndex < steps.x; ++xIndex )
-		{
-			unsigned int currentVertIndex = xIndex + ( ( steps.x + 1 ) * yIndex );
-
-			unsigned int bottomLeft = currentVertIndex;
-			unsigned int bottomRight = currentVertIndex + 1;
-			unsigned int topLeft = currentVertIndex + steps.x + 1;
-			unsigned int topRight = currentVertIndex + steps.x + 2;
-
-			indicies.push_back( indexOffset + bottomLeft );
-			indicies.push_back( indexOffset + bottomRight );
-			indicies.push_back( indexOffset + topRight );
-
-			indicies.push_back( indexOffset + bottomLeft );
-			indicies.push_back( indexOffset + topRight );
-			indicies.push_back( indexOffset + topLeft );
-		}
-	}
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-Vec3 Game::GetWaveHeightAtPosition( Vec3 const& position )
-{
-	float randomHeight = g_RNG->RollRandomFloatInRange( -1.f, 2.f );
-	return Vec3( 0.f, 0.f, randomHeight );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::UpdateSurfaceMesh()
-{
-	const float sqrt_2_under_1 = 1 / sqrtf(2.f);
-	
-	//h0
-	float er = g_RNG->RollRandomFloatInRange( -4, 4 );
-	float ei = g_RNG->RollRandomFloatInRange( -4, 4 );
-
-	std::complex<float> complexPart( er, ei );
-	std::complex<float> complexConjugatePart( er, -ei );
-	
-	std::complex<float> h0			= sqrt_2_under_1 * complexPart * Phillips( Vec3::UNIT_POSITIVE_X );
-	std::complex<float> conjugateH0	= sqrt_2_under_1 * complexConjugatePart * Phillips( -Vec3::UNIT_POSITIVE_X );
-	g_theConsole->PrintString( Rgba8::GREEN, Stringf( "h0: %.2f + %.2fi", std::real( h0 ), std::imag( h0 ) ) );
-	g_theConsole->PrintString( Rgba8::GREEN, Stringf( "conjugate h0: %.2f + %.2fi", std::real( conjugateH0 ), std::imag( conjugateH0 ) ) );
-
-	float wk = sqrtf( 9.81f * 1.f );
-	std::complex<float> complexPower = std::exp( wk * 1 );
-	std::complex<float> complexPowerConjugate = std::exp( -wk * 1 );
-
-	int n = g_RNG->RollRandomIntInRange( -64, 64 );
-	int m = g_RNG->RollRandomIntInRange( -64, 64 );
-
-	float kx = ( 2 * PI_VALUE * n ) / 10.f ;
-	float ky = ( 2 * PI_VALUE * m ) / 10.f ;
-
-	//m_meshCube->UpdateVerticies( m_surfacePlaneVerts.size(), &m_surfacePlaneVerts[0] );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-float Game::Phillips( Vec3 const& waveDir )
-{
-	const float e = 2.71828f;
-
-	// Phillips Spectrum
-	float a = 1.f;
-	Vec3 windDir = Vec3::UNIT_POSITIVE_X;
-	float waveMagnitude = waveDir.GetLength();
-	float waveMagTo4 = waveMagnitude * waveMagnitude * waveMagnitude * waveMagnitude;
-
-	float gravity = 9.81f;
-	float windSpeed = 1.f;
-	float l = ( windSpeed * windSpeed ) / gravity;
-
-	float ePow = -1 / ( ( waveMagnitude * l ) * ( waveMagnitude * l ) );
-	float windDirDotWaveDir = abs( DotProduct3D( waveDir, windDir ) ); 
-	float windDirDotWaveDirSquared = windDirDotWaveDir * windDirDotWaveDir;
-	float phillipsOfK = a * ( powf( e, ePow ) / waveMagTo4 ) * windDirDotWaveDirSquared;
-
-	return phillipsOfK;
 }

@@ -8,7 +8,6 @@
 #include "Game/GameCommon.hpp"
 #include "Game/WaveSimulation.hpp"
 
-
 //---------------------------------------------------------------------------------------------------------
 // Wave
 //---------------------------------------------------------------------------------------------------------
@@ -82,7 +81,7 @@ WaveSimulation::WaveSimulation( Vec2 const& dimensions, uint samples )
 {
 	m_transform = new Transform();
 
-	GenerateSurface( Vec3::ZERO, Rgba8::WHITE, dimensions, IntVec2( samples, samples ) );
+	GenerateSurface( Vec3::ZERO, Rgba8::WHITE, dimensions, IntVec2( samples - 1, samples - 1 ) );
 	m_surfaceMesh = new GPUMesh( g_theRenderer, m_surfaceVerts, m_surfaceIndicies );
 }
 
@@ -90,13 +89,12 @@ WaveSimulation::WaveSimulation( Vec2 const& dimensions, uint samples )
 //---------------------------------------------------------------------------------------------------------
 void WaveSimulation::Render() const
 {
-	g_theRenderer->SetModelUBO( m_transform->ToMatrix() );
-
+	Rgba8 renderColor = Rgba8::WHITE;
 	if( m_isWireFrame ) 
 	{ 
+		renderColor =  Rgba8::MakeFromFloats( 0.5f, 0.65f, 0.75f );
 		g_theRenderer->BindTexture( nullptr );
-		g_theRenderer->SetModelTint( Rgba8::MakeFromFloats( 0.5f, 0.65f, 0.75f ) );
-		g_theRenderer->SetCullMode( CULL_MODE_NONE );
+		g_theRenderer->SetCullMode( CULL_MODE_BACK );
 		g_theRenderer->SetFillMode( FILL_MODE_WIREFRAME );
 	}
 	else
@@ -110,7 +108,17 @@ void WaveSimulation::Render() const
 
 	g_theRenderer->BindShader( nullptr );
 
-	g_theRenderer->DrawMesh( m_surfaceMesh );
+	int dim = 1;
+	for( int i = 0; i < dim * dim; ++i )
+	{
+		Vec3 newPosition = Vec3::ZERO;
+		newPosition.x = m_dimensions.x * ( i / dim );
+		newPosition.y = m_dimensions.y * ( i % dim );
+		m_transform->Translate( newPosition );
+
+		g_theRenderer->SetModelUBO( m_transform->ToMatrix(), renderColor );
+		g_theRenderer->DrawMesh( m_surfaceMesh );
+	}
 }
 
 //---------------------------------------------------------------------------------------------------------
@@ -142,6 +150,35 @@ Wave* WaveSimulation::GetWaveAtIndex( int index ) const
 void WaveSimulation::ToggleWireFrameMode()
 {
 	m_isWireFrame = !m_isWireFrame;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool WaveSimulation::IsValidNumSamples( uint numSamples )
+{
+	if( numSamples < 2 || numSamples > 2048 ) return false;
+
+	if( numSamples & ( numSamples - 1 ) ) return false;
+
+	return true;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec2 WaveSimulation::GetK( int n, int m )
+{
+	Vec2 k;
+	k.x = ( PI_VALUE * ( ( 2.f * static_cast<float>( n ) ) - static_cast<float>( m_numSamples ) ) ) / m_dimensions.x;
+	k.y = ( PI_VALUE * ( ( 2.f * static_cast<float>( m ) ) - static_cast<float>( m_numSamples ) ) ) / m_dimensions.y;
+
+	return k;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::SetPosition( Vec3 const& newPosition )
+{
+	m_transform->SetPosition( newPosition );
 }
 
 
@@ -195,4 +232,92 @@ void WaveSimulation::GenerateSurface( Vec3 const& origin, Rgba8 const& color, Ve
 			m_surfaceIndicies.push_back( indexOffset + topLeft );
 		}
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float WaveSimulation::GetDeepDispersion( Vec2 const& k )
+{
+	constexpr float w0 = 2.f * 3.14159f / 200.f;
+	float wk = sqrtf( GRAVITY * k.GetLength() );
+	return RoundDownToInt( wk ) * w0;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float WaveSimulation::PhillipsEquation( Vec2 const& k )
+{
+	// A * e^( -1 / ( k * L )^2 ) / k^4 * ( Dot( k, w )^2 )
+
+	float lengthK = k.GetLength();
+	if( lengthK <= 0.000001f )
+		return 0.f;
+
+	float L = ( m_windSpeed * m_windSpeed ) * INVERSE_GRAVITY;
+
+	float kQuad = lengthK * lengthK * lengthK * lengthK;
+	float exponentOfE = -1 / ( lengthK * L ) * ( lengthK * L);
+	float eComponent = std::exp( exponentOfE );
+
+	float kDotW = DotProduct2D( k, m_windDirection );
+	float kDotWSquared = kDotW * kDotW;
+
+	float damper = 0.001f;
+	float damperSquared = damper * damper;
+	float lengthKSquared = lengthK * lengthK;
+	float supressionValue = std::exp( -lengthKSquared * damperSquared );
+
+	return m_A * ( eComponent / kQuad ) * kDotWSquared * supressionValue;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+ComplexFloat WaveSimulation::hTilde( int n, int m, float time )
+{
+	// 	int halfSamples = static_cast<int>( m_numSamples * 0.5 );
+	// 	int index = ( ( m + halfSamples ) * m_numSamples ) + ( n + halfSamples );
+	int index = ( m * m_numSamples ) + n;
+
+	Vec2 k = GetK( n, m );
+
+	ComplexFloat htilde0 = m_hTilde0Data[index].m_htilde0;
+	ComplexFloat htilde0Conj = m_hTilde0Data[index].m_htilde0Conj;
+
+	float dispersionRelation = GetDeepDispersion( k );
+	float dispersionTime = dispersionRelation * time;
+
+	float cosDispersionTime = cos( dispersionTime );
+	float sinDispersionTime = sin( dispersionTime );
+
+	ComplexFloat eulers( cosDispersionTime, sinDispersionTime );
+	ComplexFloat eulersConj( cosDispersionTime, -sinDispersionTime );
+	
+	return ( htilde0 * eulers ) + ( htilde0Conj * eulersConj );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+ComplexFloat WaveSimulation::hTilde0( int n, int m, bool doesNegateK )
+{
+	Vec2 k = GetK( n, m );
+	if( doesNegateK )
+	{
+		k = -k;
+	}
+
+	const float inverse_sqrt_2 = 1.f / sqrtf(2.f);
+
+	//Gaussian;
+	float random1 = 0.5f; //g_RNG->RollRandomFloatZeroToOneInclusive();
+	float random2 = 0.5f; //g_RNG->RollRandomFloatZeroToOneInclusive();
+
+	float v = sqrtf( -2 * std::log( random1 ) );
+	float f = 2.f * PI_VALUE * random2;
+
+	float gRand1 = v * cos(f);
+	float gRand2 = v * sin(f);
+
+	std::complex<float> guassianComplex( gRand1, gRand2 );
+	
+	return inverse_sqrt_2 * guassianComplex * sqrt( PhillipsEquation( k ) ); 
 }

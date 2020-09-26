@@ -17,6 +17,7 @@ public:
 
 	void Pause();
 	void Resume();
+	void TogglePause();
 	void SetScale( double scale );
 
 	void SetFrameLimits( double minFrameTime, double maxFrameTime );

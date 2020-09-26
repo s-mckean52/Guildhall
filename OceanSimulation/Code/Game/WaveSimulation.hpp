@@ -3,12 +3,24 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Vertex_PCUTBN.hpp"
 #include <vector>
+#include <complex>
+
+typedef std::complex<float>			ComplexFloat;
+typedef std::vector<ComplexFloat>	ComplexFloatVector;
 
 struct	Vec3;
 struct	Rgba8;
 struct	IntVec2;
 class	Transform;
 class	GPUMesh;
+
+
+//---------------------------------------------------------------------------------------------------------
+struct HTilde0Data
+{
+	ComplexFloat m_htilde0;
+	ComplexFloat m_htilde0Conj;
+};
 
 //---------------------------------------------------------------------------------------------------------
 struct Wave
@@ -48,21 +60,37 @@ public:
 
 	int			GetNumWaves() const;
 	Wave*		GetWaveAtIndex( int index ) const;
+	float		GetDeepDispersion( Vec2 const& k );
+	float		PhillipsEquation( Vec2 const& k );
 	
+	ComplexFloat hTilde( int n, int m, float time );
+	ComplexFloat hTilde0( int n, int m, bool doesNegateK = false );
 	void		ToggleWireFrameMode();
 
+	bool		IsValidNumSamples( uint numSamples );
+	Vec2		GetK( int n, int m );
+
+	void		SetPosition( Vec3 const& newPosition );
+
 private:
-	void GenerateSurface( Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps );
+	void	GenerateSurface( Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps );
 
 protected:
-	bool				m_isWireFrame	= false;
+	bool				m_isWireFrame	= true;
+	Vec2				m_dimensions	= Vec2( 1.f, 1.f );
 	Transform*			m_transform		= nullptr;
-	Vec2				m_dimensions	= Vec2( 10.f, 10.f );
 	uint				m_numSamples	= 128;
 	std::vector<Wave*>	m_waves;
+
+		//Phillips Spectrum Variables
+	float	m_A				= 0.01f;			//Phillips Spectrum Constant
+	Vec2	m_windDirection	= Vec2::RIGHT;
+	float	m_windSpeed		= 37.f;
 
 	GPUMesh*					m_surfaceMesh		= nullptr; 
 	std::vector<uint>			m_surfaceIndicies;
 	std::vector<Vertex_PCUTBN>	m_surfaceVerts;
 	std::vector<Vec3>			m_initialSurfacePositions;
+
+	std::vector<HTilde0Data> m_hTilde0Data;
 };
