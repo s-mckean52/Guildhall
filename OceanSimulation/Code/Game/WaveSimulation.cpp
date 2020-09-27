@@ -108,15 +108,16 @@ void WaveSimulation::Render() const
 
 	g_theRenderer->BindShader( nullptr );
 
-	int dim = 1;
-	for( int i = 0; i < dim * dim; ++i )
+	uint tilingDimSquared = m_tilingDimensions * m_tilingDimensions;
+	for( uint i = 0; i < tilingDimSquared; ++i )
 	{
+		Transform newTransform = *m_transform;
 		Vec3 newPosition = Vec3::ZERO;
-		newPosition.x = m_dimensions.x * ( i / dim );
-		newPosition.y = m_dimensions.y * ( i % dim );
-		m_transform->Translate( newPosition );
+		newPosition.x = m_dimensions.x * ( i / m_tilingDimensions );
+		newPosition.y = m_dimensions.y * ( i % m_tilingDimensions );
+		newTransform.Translate( newPosition );
 
-		g_theRenderer->SetModelUBO( m_transform->ToMatrix(), renderColor );
+		g_theRenderer->SetModelUBO( newTransform.ToMatrix(), renderColor );
 		g_theRenderer->DrawMesh( m_surfaceMesh );
 	}
 }
@@ -179,6 +180,13 @@ Vec2 WaveSimulation::GetK( int n, int m )
 void WaveSimulation::SetPosition( Vec3 const& newPosition )
 {
 	m_transform->SetPosition( newPosition );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::SetTilingDimensions( uint tilingDimenisions )
+{
+	m_tilingDimensions = tilingDimenisions;
 }
 
 

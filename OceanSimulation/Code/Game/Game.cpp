@@ -86,11 +86,12 @@ void Game::StartUp()
 	m_UICamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
 	Vec2 dimensions = Vec2( 10.f, 10.f );
-	uint samples = 16;
+	uint samples = 32;
 	m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples );
 	m_FFTWaveSimulation = new FFTWaveSimulation( dimensions, samples );
 	m_FFTWaveSimulation->SetPosition( Vec3( 10.f, 0.f, 0.f ) );
-	m_gameClock->SetScale( 10.f );
+	m_FFTWaveSimulation->SetTilingDimensions( 1 );
+	m_gameClock->SetScale( 1.f );
 // 	for( int i = 0; i < -1; ++i )
 // 	{
 // 		Vec2 randomDirection = g_RNG->RollRandomDirection2D();
@@ -196,7 +197,7 @@ void Game::RenderUI() const
 	std::vector<ColorString> strings;
 	std::vector<Vertex_PCU> textVerts;
 
-	float fps = 1.f / static_cast<float>( Clock::GetMaster()->GetLastDeltaSeconds() / Clock::GetMaster()->GetScale() );
+	float fps = 1.f / static_cast<float>( m_gameClock->GetLastDeltaSeconds() / m_gameClock->GetScale() );
 
 	Transform cameraTransform = m_worldCamera->GetTransform();
 	Vec3 cameraPosition = cameraTransform.GetPosition();

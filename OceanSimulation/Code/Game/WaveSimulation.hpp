@@ -71,11 +71,13 @@ public:
 	Vec2		GetK( int n, int m );
 
 	void		SetPosition( Vec3 const& newPosition );
+	void		SetTilingDimensions( uint tilingDimenisions );
 
 private:
 	void	GenerateSurface( Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps );
 
 protected:
+	uint				m_tilingDimensions = 1;
 	bool				m_isWireFrame	= true;
 	Vec2				m_dimensions	= Vec2( 1.f, 1.f );
 	Transform*			m_transform		= nullptr;
