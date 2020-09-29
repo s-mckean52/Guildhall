@@ -86,12 +86,12 @@ void Game::StartUp()
 	m_UICamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
 	Vec2 dimensions = Vec2( 10.f, 10.f );
-	uint samples = 32;
+	uint samples = 16;
 	m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples );
 	m_FFTWaveSimulation = new FFTWaveSimulation( dimensions, samples );
-	m_FFTWaveSimulation->SetPosition( Vec3( 10.f, 0.f, 0.f ) );
+	m_FFTWaveSimulation->SetPosition( Vec3( dimensions.x, 0.f, 0.f ) );
 	m_FFTWaveSimulation->SetTilingDimensions( 1 );
-	m_gameClock->SetScale( 1.f );
+	m_gameClock->SetScale( 10.f );
 // 	for( int i = 0; i < -1; ++i )
 // 	{
 // 		Vec2 randomDirection = g_RNG->RollRandomDirection2D();

@@ -81,11 +81,11 @@ protected:
 	bool				m_isWireFrame	= true;
 	Vec2				m_dimensions	= Vec2( 1.f, 1.f );
 	Transform*			m_transform		= nullptr;
-	uint				m_numSamples	= 128;
+	uint				m_numSamples	= 16;
 	std::vector<Wave*>	m_waves;
 
 		//Phillips Spectrum Variables
-	float	m_A				= 0.01f;			//Phillips Spectrum Constant
+	float	m_A				= 0.01f;//05f;			//Phillips Spectrum Constant
 	Vec2	m_windDirection	= Vec2::RIGHT;
 	float	m_windSpeed		= 37.f;
 

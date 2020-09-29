@@ -4,9 +4,11 @@
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Renderer/GPUMesh.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
+#include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Math/Transform.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/WaveSimulation.hpp"
+
 
 //---------------------------------------------------------------------------------------------------------
 // Wave
@@ -316,8 +318,8 @@ ComplexFloat WaveSimulation::hTilde0( int n, int m, bool doesNegateK )
 	const float inverse_sqrt_2 = 1.f / sqrtf(2.f);
 
 	//Gaussian;
-	float random1 = 0.5f; //g_RNG->RollRandomFloatZeroToOneInclusive();
-	float random2 = 0.5f; //g_RNG->RollRandomFloatZeroToOneInclusive();
+	float random1 = 0.5f;//g_RNG->RollRandomFloatZeroToOneInclusive();
+	float random2 = 0.5f;//g_RNG->RollRandomFloatZeroToOneInclusive();
 
 	float v = sqrtf( -2 * std::log( random1 ) );
 	float f = 2.f * PI_VALUE * random2;
