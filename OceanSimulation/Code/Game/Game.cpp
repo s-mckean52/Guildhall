@@ -92,7 +92,8 @@ void Game::StartUp()
 	uint samples = 16;
 	m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples );
 	m_FFTWaveSimulation = new FFTWaveSimulation( dimensions, samples );
-	m_FFTWaveSimulation->SetPosition( Vec3( 10.f, 0.f, 0.f ) );
+	m_FFTWaveSimulation->SetPosition( Vec3( dimensions.x, 0.f, 0.f ) );
+	m_FFTWaveSimulation->SetTilingDimensions( 1 );
 	m_gameClock->SetScale( 10.f );
 // 	for( int i = 0; i < -1; ++i )
 // 	{
@@ -215,7 +216,7 @@ void Game::RenderUI() const
 	std::vector<ColorString> strings;
 	std::vector<Vertex_PCU> textVerts;
 
-	float fps = 1.f / static_cast<float>( Clock::GetMaster()->GetLastDeltaSeconds() / Clock::GetMaster()->GetScale() );
+	float fps = 1.f / static_cast<float>( m_gameClock->GetLastDeltaSeconds() / m_gameClock->GetScale() );
 
 	Transform cameraTransform = m_worldCamera->GetTransform();
 	Vec3 cameraPosition = cameraTransform.GetPosition();

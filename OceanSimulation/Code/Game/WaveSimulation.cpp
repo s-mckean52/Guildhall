@@ -4,10 +4,12 @@
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Renderer/GPUMesh.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
+#include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Math/Transform.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/WaveSimulation.hpp"
+
 
 //---------------------------------------------------------------------------------------------------------
 // Wave
@@ -108,15 +110,14 @@ void WaveSimulation::Render() const
 	g_theRenderer->BindShader( nullptr );
 	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 
-	int dim = 1;
-	for( int i = 0; i < dim * dim; ++i )
+	uint tilingDimSquared = m_tilingDimensions * m_tilingDimensions;
+	for( uint i = 0; i < tilingDimSquared; ++i )
 	{
 		Transform newTransform = *m_transform;
-
-		Vec3 translation = Vec3::ZERO;
-		translation.x = m_dimensions.x * ( i / dim );
-		translation.y = m_dimensions.y * ( i % dim );
-		newTransform.Translate( translation );
+		Vec3 newPosition = Vec3::ZERO;
+		newPosition.x = m_dimensions.x * ( i / m_tilingDimensions );
+		newPosition.y = m_dimensions.y * ( i % m_tilingDimensions );
+		newTransform.Translate( newPosition );
 
 		g_theRenderer->SetModelUBO( newTransform.ToMatrix(), renderColor );
 		g_theRenderer->DrawMesh( m_surfaceMesh );
@@ -181,6 +182,13 @@ Vec2 WaveSimulation::GetK( int n, int m )
 void WaveSimulation::SetPosition( Vec3 const& newPosition )
 {
 	m_transform->SetPosition( newPosition );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::SetTilingDimensions( uint tilingDimenisions )
+{
+	m_tilingDimensions = tilingDimenisions;
 }
 
 
@@ -310,8 +318,8 @@ ComplexFloat WaveSimulation::hTilde0( int n, int m, bool doesNegateK )
 	const float inverse_sqrt_2 = 1.f / sqrtf(2.f);
 
 	//Gaussian;
-	float random1 = 0.5f; //g_RNG->RollRandomFloatZeroToOneInclusive();
-	float random2 = 0.5f; //g_RNG->RollRandomFloatZeroToOneInclusive();
+	float random1 = 0.5f;//g_RNG->RollRandomFloatZeroToOneInclusive();
+	float random2 = 0.5f;//g_RNG->RollRandomFloatZeroToOneInclusive();
 
 	float v = sqrtf( -2 * std::log( random1 ) );
 	float f = 2.f * PI_VALUE * random2;

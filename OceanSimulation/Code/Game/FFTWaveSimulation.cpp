@@ -90,7 +90,7 @@ void FFTWaveSimulation::Simulate()
 		Vec3 translation;
 		translation.x = 0.f; //-m_hTilde_dx[positionIndex].real() * sign;
 		translation.y = 0.f; //-m_hTilde_dy[positionIndex].real() * sign;
-		translation.z = m_hTilde[positionIndex].real() * sign;
+		translation.z = m_hTilde[positionIndex].real() *sign;
 
 // 		Vec3 normal;
 // 		normal.x = -m_slopeX[positionIndex].real() * sign;
@@ -178,29 +178,29 @@ void FFTWaveSimulation::CalculateFFT( std::vector<ComplexFloat>& data_in, std::v
 
 	int w_ = 0;
 	int numLoops = m_numSamples >> 1;
-	int size = 2;
-	int sizeOver2 = 1;
+	int currentIterationSize = 2;
+	int lastIterationSize = 1;
 
 	for( uint i = 0; i < m_log2N; ++i )
 	{
 		which ^= 1;
 		for( int j = 0; j < numLoops; ++j )
 		{
-			for( int k = 0; k < sizeOver2; ++k )
+			for( int k = 0; k < lastIterationSize; ++k )
 			{
-				int jSizePlusK = ( j * size ) + k;
-				m_c[which][jSizePlusK] = m_c[which^1][jSizePlusK] + m_c[which^1][jSizePlusK + sizeOver2] * m_Ts[w_][k];
+				int jSizePlusK = ( j * currentIterationSize ) + k;
+				m_c[which][jSizePlusK] = m_c[which^1][jSizePlusK] + m_c[which^1][jSizePlusK + lastIterationSize] * m_Ts[w_][k];
 			}
 
-			for( int k = sizeOver2; k < size; ++k )
+			for( int k = lastIterationSize; k < currentIterationSize; ++k )
 			{
-				int jSizePlusK = ( j * size ) + k;
-				m_c[which][jSizePlusK] = m_c[which ^ 1][jSizePlusK - sizeOver2] - m_c[which ^ 1][jSizePlusK] * m_Ts[w_][k - sizeOver2];
+				int jSizePlusK = ( j * currentIterationSize ) + k;
+				m_c[which][jSizePlusK] = m_c[which ^ 1][jSizePlusK - lastIterationSize] - m_c[which ^ 1][jSizePlusK] * m_Ts[w_][k - lastIterationSize];
 			}
 		}
 		numLoops	>>= 1;
-		size		<<= 1;
-		sizeOver2	<<= 1;
+		currentIterationSize		<<= 1;
+		lastIterationSize	<<= 1;
 		++w_;
 	}
 
