@@ -8,6 +8,7 @@
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Math/Transform.hpp"
 #include "Engine/Math/Mat44.hpp"
+#include "Engine/Renderer/Light.hpp"
 #include <vector>
 #include <complex>
 
@@ -75,12 +76,13 @@ private:
 	WaveSimulation* m_DFTWaveSimulation = nullptr;
 	WaveSimulation* m_FFTWaveSimulation = nullptr;
 
-	Clock* m_gameClock = nullptr;
-
-	Texture*	m_test			= nullptr;
+	Clock*		m_gameClock = nullptr;
+	Texture*	m_test = nullptr;
+	
+	Light	m_theSun = Light::DIRECTIONAL;
 
 	Rgba8 m_ambientColor = Rgba8::WHITE;
-	float m_ambientIntensity = 1.f;
+	float m_ambientIntensity = 0.1f;
 
 	float m_distanceFromCamera = -1.f;;
 

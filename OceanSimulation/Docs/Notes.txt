@@ -1,0 +1,8 @@
+Seems that FFT and DFT are correct throughtout and consistent in using n' and m' then converting that when calculating k.
+I now feel like the issue is with the dft approach and not the FFT but both should be tested.
+
+Testing steps:
+  Sample size = 4
+  Step through DFT at each calculation point and check values
+  Step through FFt at each calculation step and check values
+  Compare the two results

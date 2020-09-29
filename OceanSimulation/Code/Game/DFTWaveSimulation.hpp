@@ -17,4 +17,7 @@ public:
 	void Simulate() override;
 
 	WavePoint			GetHeightAtPosition( Vec2 const& initialPosition, float time );
+
+private:
+	std::vector<ComplexFloat> m_hTilde;
 };

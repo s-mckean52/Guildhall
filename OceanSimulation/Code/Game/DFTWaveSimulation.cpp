@@ -12,6 +12,7 @@
 DFTWaveSimulation::DFTWaveSimulation( Vec2 const& dimensions, uint samples )
 	: WaveSimulation( dimensions, samples )
 {
+	m_hTilde.resize( m_numSamples * m_numSamples );
 	for( int i = 0; i < m_initialSurfacePositions.size(); ++i )
 	{
 		int m = i / m_numSamples;
@@ -43,10 +44,11 @@ void DFTWaveSimulation::Simulate()
 		WavePoint wavePoint = GetHeightAtPosition( initialPositionXY, elapsedTime );
 
 		Vec3 translation;
-		translation.x = wavePoint.m_position.x;
-		translation.y = wavePoint.m_position.y;
+		translation.x = 0.f;	//wavePoint.m_position.x;
+		translation.y = 0.f;	//wavePoint.m_position.y;
 		translation.z = wavePoint.m_height.real();
 
+		m_hTilde[positionIndex] = wavePoint.m_height;
 		m_surfaceVerts[positionIndex].m_position = initialPosition + translation;
 	}
 	m_surfaceMesh->UpdateVerticies( static_cast<uint>( m_surfaceVerts.size() ), &m_surfaceVerts[0] );
@@ -59,13 +61,10 @@ WavePoint DFTWaveSimulation::GetHeightAtPosition( Vec2 const& initialPosition, f
 	std::complex<float> complexHeight;
 	Vec2 horizontalDisplacement = Vec2::ZERO;
 
-	for( int initialPositionIndex = 0; initialPositionIndex < m_initialSurfacePositions.size(); ++initialPositionIndex )
+	for( int positionIndex = 0; positionIndex < m_initialSurfacePositions.size(); ++positionIndex )
 	{
-		Vec3 position = m_initialSurfacePositions[initialPositionIndex];
-		//Vec2 positionXY = Vec2( position.x, position.y );
-		
-		int m = initialPositionIndex / m_numSamples;
-		int n = initialPositionIndex - ( m * m_numSamples );
+		int m = positionIndex / m_numSamples;			// 0 < n < numSamples  
+		int n = positionIndex - ( m * m_numSamples );	// 0 < m < numSamples
 
 		Vec2 k = GetK( n, m );
 

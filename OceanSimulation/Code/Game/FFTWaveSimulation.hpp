@@ -16,7 +16,7 @@ public:
 
 	uint			ReverseBits( uint value );
 	void			CreateBitReversedIndicies();
-	void			CalculateTForIndicies();
+	void			CalculateTForIndices();
 	ComplexFloat 	GetTCalculation( uint x, uint samplesAtDimension );
 
 	void CalculateFFT( std::vector<ComplexFloat>& data_in, std::vector<ComplexFloat>& data_out, int stride, int offset );
@@ -30,9 +30,11 @@ protected:
 	ComplexFloatVector m_hTilde;
 	ComplexFloatVector m_hTilde_dx;
 	ComplexFloatVector m_hTilde_dy;
+	ComplexFloatVector m_slopeX;
+	ComplexFloatVector m_slopeY;
 
 	std::vector<ComplexFloatVector> m_c;
 	std::vector<ComplexFloatVector> m_Ts;
 
-	std::vector<uint> m_bitReversedIndicies;
+	std::vector<uint> m_bitReversedIndices;
 };

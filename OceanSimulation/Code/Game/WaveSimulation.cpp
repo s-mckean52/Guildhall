@@ -5,6 +5,7 @@
 #include "Engine/Renderer/GPUMesh.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Math/Transform.hpp"
+#include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/WaveSimulation.hpp"
 
@@ -104,19 +105,20 @@ void WaveSimulation::Render() const
 		g_theRenderer->SetFillMode( FILL_MODE_SOLID );
 	}
 
-	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
-
 	g_theRenderer->BindShader( nullptr );
+	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 
 	int dim = 1;
 	for( int i = 0; i < dim * dim; ++i )
 	{
-		Vec3 newPosition = Vec3::ZERO;
-		newPosition.x = m_dimensions.x * ( i / dim );
-		newPosition.y = m_dimensions.y * ( i % dim );
-		m_transform->Translate( newPosition );
+		Transform newTransform = *m_transform;
 
-		g_theRenderer->SetModelUBO( m_transform->ToMatrix(), renderColor );
+		Vec3 translation = Vec3::ZERO;
+		translation.x = m_dimensions.x * ( i / dim );
+		translation.y = m_dimensions.y * ( i % dim );
+		newTransform.Translate( translation );
+
+		g_theRenderer->SetModelUBO( newTransform.ToMatrix(), renderColor );
 		g_theRenderer->DrawMesh( m_surfaceMesh );
 	}
 }

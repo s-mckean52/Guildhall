@@ -85,6 +85,9 @@ void Game::StartUp()
 	m_UICamera = new Camera( g_theRenderer );
 	m_UICamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
+	m_theSun.direction = Vec3( -0.5f, -0.5f, -0.5 ).GetNormalize();
+	m_theSun.position = Vec3( 10.f, 10.f, 10.f );
+
 	Vec2 dimensions = Vec2( 10.f, 10.f );
 	uint samples = 16;
 	m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples );
@@ -164,6 +167,20 @@ void Game::Render()
 
 
 //---------------------------------------------------------------------------------------------------------
+void Game::Update()
+{
+	float deltaSeconds = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
+
+	if( !g_theConsole->IsOpen() )
+	{
+		UpdateFromInput( deltaSeconds );
+		m_DFTWaveSimulation->Simulate();
+		m_FFTWaveSimulation->Simulate();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::RenderWorld() const
 {
 	DebugAddWorldBasis( Mat44::IDENTITY, 0.f, DEBUG_RENDER_ALWAYS );
@@ -181,6 +198,8 @@ void Game::RenderWorld() const
 	cameraBasisMatrix.SetTranslation3D( compasStartPosition );
 	DebugAddWorldBasis( cameraBasisMatrix, 0.f, DEBUG_RENDER_ALWAYS );
 	
+	DebugAddWorldArrow( m_theSun.position, m_theSun.position + m_theSun.direction, Rgba8::WHITE, 0.f, DEBUG_RENDER_ALWAYS );
+
 	m_DFTWaveSimulation->Render();
 	m_FFTWaveSimulation->Render();
 }
@@ -247,7 +266,7 @@ void Game::EnableLightsForRendering() const
 // 	for( unsigned int lightIndex = 0; lightIndex < MAX_LIGHTS; ++lightIndex )
 // 	{
 // 	}
-	g_theRenderer->EnableLight( 0, Light::DIRECTIONAL );
+	g_theRenderer->EnableLight( 0, m_theSun );
 }
 
 
@@ -488,20 +507,6 @@ void Game::UpdateCameraView( Camera* camera, CameraViewOrientation cameraOrienta
 	viewMatrix.ScaleNonUniform3D( camera->GetScale() );
 	MatrixInvertOrthoNormal( viewMatrix );
 	camera->SetViewMatrix( viewMatrix );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void Game::Update()
-{
-	float deltaSeconds = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
-
-	if( !g_theConsole->IsOpen() )
-	{
-		UpdateFromInput( deltaSeconds );
-		m_DFTWaveSimulation->Simulate();
-		m_FFTWaveSimulation->Simulate();
-	}
 }
 
 

@@ -14,6 +14,9 @@
     <Filter Include="Data\Shaders">
       <UniqueIdentifier>{5a50d78a-11aa-415a-8cfc-a7c3db6b57b0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Notes">
+      <UniqueIdentifier>{e122f428-bd39-45b8-be61-146d1cd499bf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\..\Run\Data\GameConfig.xml">
@@ -71,5 +74,10 @@
     <ClInclude Include="DFTWaveSimulation.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\Docs\Notes.txt">
+      <Filter>Notes</Filter>
+    </Text>
   </ItemGroup>
 </Project>

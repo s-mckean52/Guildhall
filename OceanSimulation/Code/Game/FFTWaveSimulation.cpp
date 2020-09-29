@@ -2,6 +2,7 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Renderer/GPUMesh.hpp"
+#include "Engine/Renderer/MeshUtils.hpp"
 #include "Game/DFTWaveSimulation.hpp"
 #include "Game/FFTWaveSimulation.hpp"
 #include "Game/GameCommon.hpp"
@@ -16,6 +17,8 @@ FFTWaveSimulation::FFTWaveSimulation( Vec2 const& dimensions, uint samples )
 	m_hTilde.resize( samplesSquared );
 	m_hTilde_dx.resize( samplesSquared );
 	m_hTilde_dy.resize( samplesSquared );
+	m_slopeX.resize( samplesSquared );
+	m_slopeY.resize( samplesSquared );
 
 	m_c.resize(2);
 	m_c[0].resize( samples );
@@ -25,7 +28,7 @@ FFTWaveSimulation::FFTWaveSimulation( Vec2 const& dimensions, uint samples )
 	m_pi2 = 2.f * PI_VALUE;
 
 	CreateBitReversedIndicies();
-	CalculateTForIndicies();
+	CalculateTForIndices();
 
 	m_hTilde0Data.resize( m_numSamples * m_numSamples );
 	for( int i = 0; i < m_initialSurfacePositions.size(); ++i )
@@ -63,14 +66,18 @@ void FFTWaveSimulation::Simulate()
 	for( uint mIndex = 0; mIndex < m_numSamples; ++mIndex )
 	{
 		CalculateFFT( m_hTilde, m_hTilde, 1, mIndex * m_numSamples );
-		CalculateFFT( m_hTilde_dx, m_hTilde_dx, 1, mIndex * m_numSamples );
-		CalculateFFT( m_hTilde_dy, m_hTilde_dy, 1, mIndex * m_numSamples );
+// 		CalculateFFT( m_hTilde_dx, m_hTilde_dx, 1, mIndex * m_numSamples );
+// 		CalculateFFT( m_hTilde_dy, m_hTilde_dy, 1, mIndex * m_numSamples );
+// 		CalculateFFT( m_slopeX, m_slopeX, 1, mIndex * m_numSamples );
+// 		CalculateFFT( m_slopeY, m_slopeY, 1, mIndex * m_numSamples );
 	}
 	for( uint nIndex = 0; nIndex < m_numSamples; ++nIndex )
 	{
 		CalculateFFT( m_hTilde, m_hTilde, m_numSamples, nIndex );
-		CalculateFFT( m_hTilde_dx, m_hTilde_dx, m_numSamples, nIndex );
-		CalculateFFT( m_hTilde_dy, m_hTilde_dy, m_numSamples, nIndex );
+// 		CalculateFFT( m_hTilde_dx, m_hTilde_dx, m_numSamples, nIndex );
+// 		CalculateFFT( m_hTilde_dy, m_hTilde_dy, m_numSamples, nIndex );
+// 		CalculateFFT( m_slopeX, m_slopeX, m_numSamples, nIndex );
+// 		CalculateFFT( m_slopeY, m_slopeY, m_numSamples, nIndex );
 	}
 
 	for( uint positionIndex = 0; positionIndex < m_initialSurfacePositions.size(); ++positionIndex )
@@ -85,9 +92,18 @@ void FFTWaveSimulation::Simulate()
 		translation.y = 0.f; //-m_hTilde_dy[positionIndex].real() * sign;
 		translation.z = m_hTilde[positionIndex].real() * sign;
 
-		m_surfaceVerts[positionIndex].m_position = m_initialSurfacePositions[positionIndex] + translation;
+// 		Vec3 normal;
+// 		normal.x = -m_slopeX[positionIndex].real() * sign;
+// 		normal.y = -m_slopeY[positionIndex].real() * sign;
+// 		normal.z = 1.f;
+// 		normal.Normalize();
+
+		Vertex_PCUTBN& currentVert = m_surfaceVerts[positionIndex];
+		currentVert.m_position = m_initialSurfacePositions[positionIndex] + translation;
+/*		currentVert.m_normal = normal;*/
 	}
 
+/*	MeshGenerateTangents( m_surfaceVerts );*/
 	m_surfaceMesh->UpdateVerticies( static_cast<uint>( m_surfaceVerts.size() ), &m_surfaceVerts[0] );
 }
 
@@ -118,16 +134,16 @@ uint FFTWaveSimulation::ReverseBits( uint value )
 void FFTWaveSimulation::CreateBitReversedIndicies()
 {
 	GUARANTEE_OR_DIE( IsValidNumSamples( m_numSamples ), "Number of samples needs to be a power of 2" );
-	m_bitReversedIndicies.resize( m_numSamples );
+	m_bitReversedIndices.resize( m_numSamples );
 	for( uint index = 0; index < m_numSamples; ++index )
 	{
-		m_bitReversedIndicies[index] = ReverseBits( index );
+		m_bitReversedIndices[index] = ReverseBits( index );
 	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void FFTWaveSimulation::CalculateTForIndicies()
+void FFTWaveSimulation::CalculateTForIndices()
 {
 	uint pow2 = 1;
 	m_Ts.resize( m_log2N );
@@ -156,7 +172,7 @@ void FFTWaveSimulation::CalculateFFT( std::vector<ComplexFloat>& data_in, std::v
 {
 	for( uint sampleIndex = 0; sampleIndex < m_numSamples; ++sampleIndex )
 	{
-		int dataIndex = m_bitReversedIndicies[sampleIndex] * stride + offset;
+		int dataIndex = m_bitReversedIndices[sampleIndex] * stride + offset;
 		m_c[which][sampleIndex] = data_in[ dataIndex ];
 	}
 
@@ -204,6 +220,8 @@ void FFTWaveSimulation::GetHeightAtPosition( int n, int m, float time )
 	Vec2 k = GetK( n, m );
 	
 	m_hTilde[index] = hTilde( n, m, time );
+// 	m_slopeX[index] = m_hTilde[index] * ComplexFloat( 0.f, k.x );
+// 	m_slopeY[index] = m_hTilde[index] * ComplexFloat( 0.f, k.y );
 	if( k.GetLength() < 0.000001f )
 	{
 		m_hTilde_dx[index] = ComplexFloat( 0.f, 0.f );

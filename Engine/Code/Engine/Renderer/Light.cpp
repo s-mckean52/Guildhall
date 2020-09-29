@@ -37,7 +37,7 @@ STATIC const Light Light::POINT = Light(
 	/*Attenuation*/				Vec3( 0.f, 1.f, 0.f ),
 	/*Specular Attenuation*/	Vec3( 0.f, 1.f, 0.f ),
 	/*Color*/					Rgba8::WHITE,
-	/*Intensity*/				0.f,
+	/*Intensity*/				1.f,
 	/*Inner Half Angle*/		180.f,
 	/*Outter Half Angle*/		180.f,
 	/*Is Directional*/			0.f
@@ -50,7 +50,7 @@ STATIC const Light Light::DIRECTIONAL = Light(
 	/*Attenuation*/				Vec3( 1.f, 0.f, 0.f ),
 	/*Specular Attenuation*/	Vec3( 1.f, 0.f, 0.f ),
 	/*Color*/					Rgba8::WHITE,
-	/*Intensity*/				0.f,
+	/*Intensity*/				1.f,
 	/*Inner Half Angle*/		180.f,
 	/*Outter Half Angle*/		180.f,
 	/*Is Directional*/			1.f
@@ -63,7 +63,7 @@ STATIC const Light Light::SPOTLIGHT = Light(
 	/*Attenuation*/				Vec3( 0.f, 1.f, 0.f ),
 	/*Specular Attenuation*/	Vec3( 0.f, 1.f, 0.f ),
 	/*Color*/					Rgba8::WHITE,
-	/*Intensity*/				0.f,
+	/*Intensity*/				1.f,
 	/*Inner Half Angle*/		15.f,
 	/*Outter Half Angle*/		30.f,
 	/*Is Directional*/			0.f

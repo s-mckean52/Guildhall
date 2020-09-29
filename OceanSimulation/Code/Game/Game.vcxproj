@@ -215,6 +215,9 @@
     <ClInclude Include="GerstnerWaveSimulation.hpp" />
     <ClInclude Include="WaveSimulation.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\Docs\Notes.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
