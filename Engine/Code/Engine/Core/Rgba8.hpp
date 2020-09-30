@@ -1,5 +1,6 @@
 #pragma once
 
+struct Vec3;
 struct Vec4;
 
 struct Rgba8
@@ -18,6 +19,7 @@ public:
 	explicit Rgba8( Vec4 const& fractions );
 	
 	Vec4 GetValuesAsFractions() const;
+	Vec3 GetValuesAsFractionsVec3() const;
 	void SetFromText( const char* text );
 	static Rgba8 MakeFromFloats( float red, float green, float blue, float alpha = 1.f );
 	static Rgba8 MakeFromVec4( Vec4 const& colorAsFractions );

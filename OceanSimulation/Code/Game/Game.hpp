@@ -81,8 +81,8 @@ private:
 	
 	Light	m_theSun = Light::DIRECTIONAL;
 
-	Rgba8 m_ambientColor = Rgba8::WHITE;
-	float m_ambientIntensity = 0.1f;
+	Rgba8 m_ambientColor = Rgba8( 255, 255, 204 );
+	float m_ambientIntensity = 0.0f;
 
 	float m_distanceFromCamera = -1.f;;
 

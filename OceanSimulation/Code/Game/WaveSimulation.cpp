@@ -92,23 +92,23 @@ WaveSimulation::WaveSimulation( Vec2 const& dimensions, uint samples )
 //---------------------------------------------------------------------------------------------------------
 void WaveSimulation::Render() const
 {
-	Rgba8 renderColor = Rgba8::WHITE;
+	
+	Rgba8 renderColor =  Rgba8::MakeFromFloats( 0.f, 0.412f, 0.58f );
 	if( m_isWireFrame ) 
 	{ 
-		renderColor =  Rgba8::MakeFromFloats( 0.5f, 0.65f, 0.75f );
 		g_theRenderer->BindTexture( nullptr );
 		g_theRenderer->SetCullMode( CULL_MODE_BACK );
 		g_theRenderer->SetFillMode( FILL_MODE_WIREFRAME );
 	}
 	else
 	{
-		g_theRenderer->BindTextureByPath( "Data/Images/Grid.png" );
-		g_theRenderer->SetCullMode( CULL_MODE_NONE );
+		g_theRenderer->BindTexture( nullptr );
+		g_theRenderer->SetCullMode( CULL_MODE_BACK );
 		g_theRenderer->SetFillMode( FILL_MODE_SOLID );
 	}
 
-	g_theRenderer->BindShader( nullptr );
-	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
+	//g_theRenderer->BindShaderByPath( "Data/Shaders/Normals.hlsl" );
+	g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 
 	uint tilingDimSquared = m_tilingDimensions * m_tilingDimensions;
 	for( uint i = 0; i < tilingDimSquared; ++i )
@@ -119,7 +119,7 @@ void WaveSimulation::Render() const
 		newPosition.y = m_dimensions.y * ( i % m_tilingDimensions );
 		newTransform.Translate( newPosition );
 
-		g_theRenderer->SetModelUBO( newTransform.ToMatrix(), renderColor );
+		g_theRenderer->SetModelUBO( newTransform.ToMatrix(), renderColor, 1.0f, 256.f );
 		g_theRenderer->DrawMesh( m_surfaceMesh );
 	}
 }
@@ -266,13 +266,13 @@ float WaveSimulation::PhillipsEquation( Vec2 const& k )
 	float L = ( m_windSpeed * m_windSpeed ) * INVERSE_GRAVITY;
 
 	float kQuad = lengthK * lengthK * lengthK * lengthK;
-	float exponentOfE = -1 / ( lengthK * L ) * ( lengthK * L);
+	float exponentOfE = -1 / ( ( lengthK * L ) * ( lengthK * L) );
 	float eComponent = std::exp( exponentOfE );
 
 	float kDotW = DotProduct2D( k, m_windDirection );
 	float kDotWSquared = kDotW * kDotW;
 
-	float damper = 0.001f;
+	float damper = 1.f;
 	float damperSquared = damper * damper;
 	float lengthKSquared = lengthK * lengthK;
 	float supressionValue = std::exp( -lengthKSquared * damperSquared );
@@ -294,7 +294,7 @@ ComplexFloat WaveSimulation::hTilde( int n, int m, float time )
 	ComplexFloat htilde0Conj = m_hTilde0Data[index].m_htilde0Conj;
 
 	float dispersionRelation = GetDeepDispersion( k );
-	float dispersionTime = dispersionRelation * time;
+	float dispersionTime = dispersionRelation * time * 10.f;
 
 	float cosDispersionTime = cos( dispersionTime );
 	float sinDispersionTime = sin( dispersionTime );
@@ -318,8 +318,8 @@ ComplexFloat WaveSimulation::hTilde0( int n, int m, bool doesNegateK )
 	const float inverse_sqrt_2 = 1.f / sqrtf(2.f);
 
 	//Gaussian;
-	float random1 = 0.5f;//g_RNG->RollRandomFloatZeroToOneInclusive();
-	float random2 = 0.5f;//g_RNG->RollRandomFloatZeroToOneInclusive();
+	float random1 = g_RNG->RollRandomFloatZeroToOneInclusive();
+	float random2 = g_RNG->RollRandomFloatZeroToOneInclusive();
 
 	float v = sqrtf( -2 * std::log( random1 ) );
 	float f = 2.f * PI_VALUE * random2;

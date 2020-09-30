@@ -85,9 +85,9 @@ protected:
 	std::vector<Wave*>	m_waves;
 
 		//Phillips Spectrum Variables
-	float	m_A				= 0.01f;//05f;			//Phillips Spectrum Constant
+	float	m_A				= 0.0005f;			//Phillips Spectrum Constant 0.001 is slightly above max value for this
 	Vec2	m_windDirection	= Vec2::RIGHT;
-	float	m_windSpeed		= 37.f;
+	float	m_windSpeed		= 37.0f;
 
 	GPUMesh*					m_surfaceMesh		= nullptr; 
 	std::vector<uint>			m_surfaceIndicies;

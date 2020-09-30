@@ -66,18 +66,18 @@ void FFTWaveSimulation::Simulate()
 	for( uint mIndex = 0; mIndex < m_numSamples; ++mIndex )
 	{
 		CalculateFFT( m_hTilde, m_hTilde, 1, mIndex * m_numSamples );
-// 		CalculateFFT( m_hTilde_dx, m_hTilde_dx, 1, mIndex * m_numSamples );
-// 		CalculateFFT( m_hTilde_dy, m_hTilde_dy, 1, mIndex * m_numSamples );
-// 		CalculateFFT( m_slopeX, m_slopeX, 1, mIndex * m_numSamples );
-// 		CalculateFFT( m_slopeY, m_slopeY, 1, mIndex * m_numSamples );
+		CalculateFFT( m_hTilde_dx, m_hTilde_dx, 1, mIndex * m_numSamples );
+		CalculateFFT( m_hTilde_dy, m_hTilde_dy, 1, mIndex * m_numSamples );
+		CalculateFFT( m_slopeX, m_slopeX, 1, mIndex * m_numSamples );
+		CalculateFFT( m_slopeY, m_slopeY, 1, mIndex * m_numSamples );
 	}
 	for( uint nIndex = 0; nIndex < m_numSamples; ++nIndex )
 	{
 		CalculateFFT( m_hTilde, m_hTilde, m_numSamples, nIndex );
-// 		CalculateFFT( m_hTilde_dx, m_hTilde_dx, m_numSamples, nIndex );
-// 		CalculateFFT( m_hTilde_dy, m_hTilde_dy, m_numSamples, nIndex );
-// 		CalculateFFT( m_slopeX, m_slopeX, m_numSamples, nIndex );
-// 		CalculateFFT( m_slopeY, m_slopeY, m_numSamples, nIndex );
+		CalculateFFT( m_hTilde_dx, m_hTilde_dx, m_numSamples, nIndex );
+		CalculateFFT( m_hTilde_dy, m_hTilde_dy, m_numSamples, nIndex );
+		CalculateFFT( m_slopeX, m_slopeX, m_numSamples, nIndex );
+		CalculateFFT( m_slopeY, m_slopeY, m_numSamples, nIndex );
 	}
 
 	for( uint positionIndex = 0; positionIndex < m_initialSurfacePositions.size(); ++positionIndex )
@@ -88,22 +88,22 @@ void FFTWaveSimulation::Simulate()
 		float sign = 1.f - ( 2.f * ( ( n + m ) % 2 ) );
 
 		Vec3 translation;
-		translation.x = 0.f; //-m_hTilde_dx[positionIndex].real() * sign;
-		translation.y = 0.f; //-m_hTilde_dy[positionIndex].real() * sign;
+		translation.x = -m_hTilde_dx[positionIndex].real() * sign;
+		translation.y = -m_hTilde_dy[positionIndex].real() * sign;
 		translation.z = m_hTilde[positionIndex].real() *sign;
 
-// 		Vec3 normal;
-// 		normal.x = -m_slopeX[positionIndex].real() * sign;
-// 		normal.y = -m_slopeY[positionIndex].real() * sign;
-// 		normal.z = 1.f;
-// 		normal.Normalize();
+		Vec3 normal;
+		normal.x = -m_slopeX[positionIndex].real() * sign;
+		normal.y = -m_slopeY[positionIndex].real() * sign;
+		normal.z = 1.f;
+		normal.Normalize();
 
 		Vertex_PCUTBN& currentVert = m_surfaceVerts[positionIndex];
 		currentVert.m_position = m_initialSurfacePositions[positionIndex] + translation;
-/*		currentVert.m_normal = normal;*/
+		currentVert.m_normal = normal;
 	}
 
-/*	MeshGenerateTangents( m_surfaceVerts );*/
+	MeshGenerateTangents( m_surfaceVerts );
 	m_surfaceMesh->UpdateVerticies( static_cast<uint>( m_surfaceVerts.size() ), &m_surfaceVerts[0] );
 }
 
@@ -220,8 +220,8 @@ void FFTWaveSimulation::GetHeightAtPosition( int n, int m, float time )
 	Vec2 k = GetK( n, m );
 	
 	m_hTilde[index] = hTilde( n, m, time );
-// 	m_slopeX[index] = m_hTilde[index] * ComplexFloat( 0.f, k.x );
-// 	m_slopeY[index] = m_hTilde[index] * ComplexFloat( 0.f, k.y );
+	m_slopeX[index] = m_hTilde[index] * ComplexFloat( 0.f, k.x );
+	m_slopeY[index] = m_hTilde[index] * ComplexFloat( 0.f, k.y );
 	if( k.GetLength() < 0.000001f )
 	{
 		m_hTilde_dx[index] = ComplexFloat( 0.f, 0.f );

@@ -87,14 +87,17 @@ void Game::StartUp()
 
 	m_theSun.direction = Vec3( -0.5f, -0.5f, -0.5 ).GetNormalize();
 	m_theSun.position = Vec3( 10.f, 10.f, 10.f );
+	m_theSun.color = Rgba8(255, 184, 19).GetValuesAsFractionsVec3();
+	m_theSun.intensity = 1.f;
 
-	Vec2 dimensions = Vec2( 10.f, 10.f );
-	uint samples = 16;
+
+	Vec2 dimensions = Vec2( 128.f, 128.f );
+	uint samples = 128;
 	m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples );
 	m_FFTWaveSimulation = new FFTWaveSimulation( dimensions, samples );
-	m_FFTWaveSimulation->SetPosition( Vec3( dimensions.x, 0.f, 0.f ) );
+	//m_FFTWaveSimulation->SetPosition( Vec3( dimensions.x, 0.f, 0.f ) );
 	m_FFTWaveSimulation->SetTilingDimensions( 1 );
-	m_gameClock->SetScale( 10.f );
+	m_gameClock->SetScale( 1.f );
 // 	for( int i = 0; i < -1; ++i )
 // 	{
 // 		Vec2 randomDirection = g_RNG->RollRandomDirection2D();
@@ -175,7 +178,7 @@ void Game::Update()
 	if( !g_theConsole->IsOpen() )
 	{
 		UpdateFromInput( deltaSeconds );
-		m_DFTWaveSimulation->Simulate();
+		//m_DFTWaveSimulation->Simulate();
 		m_FFTWaveSimulation->Simulate();
 	}
 }
@@ -201,7 +204,7 @@ void Game::RenderWorld() const
 	
 	DebugAddWorldArrow( m_theSun.position, m_theSun.position + m_theSun.direction, Rgba8::WHITE, 0.f, DEBUG_RENDER_ALWAYS );
 
-	m_DFTWaveSimulation->Render();
+	//m_DFTWaveSimulation->Render();
 	m_FFTWaveSimulation->Render();
 }
 
@@ -216,7 +219,7 @@ void Game::RenderUI() const
 	std::vector<ColorString> strings;
 	std::vector<Vertex_PCU> textVerts;
 
-	float fps = 1.f / static_cast<float>( m_gameClock->GetLastDeltaSeconds() / m_gameClock->GetScale() );
+	float fps = 1.f / static_cast<float>( m_gameClock->GetLastDeltaSeconds() * m_gameClock->GetScale() );
 
 	Transform cameraTransform = m_worldCamera->GetTransform();
 	Vec3 cameraPosition = cameraTransform.GetPosition();

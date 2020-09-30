@@ -1,6 +1,7 @@
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Math/Vec4.hpp"
+#include "Engine/Math/Vec3.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -60,6 +61,18 @@ Vec4 Rgba8::GetValuesAsFractions() const
 	colorAsFloats.y = static_cast<float>( g ) / 255.f;
 	colorAsFloats.z = static_cast<float>( b ) / 255.f;
 	colorAsFloats.w = static_cast<float>( a ) / 255.f;
+
+	return colorAsFloats;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec3 Rgba8::GetValuesAsFractionsVec3() const
+{
+	Vec3 colorAsFloats;
+	colorAsFloats.x = static_cast<float>( r ) / 255.f;
+	colorAsFloats.y = static_cast<float>( g ) / 255.f;
+	colorAsFloats.z = static_cast<float>( b ) / 255.f;
 
 	return colorAsFloats;
 }
