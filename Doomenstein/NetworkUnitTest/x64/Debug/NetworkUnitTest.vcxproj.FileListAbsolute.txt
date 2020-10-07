@@ -1,0 +1,2 @@
+D:\Git\Guildhall\Doomenstein\x64\Debug\NetworkUnitTest.pdb
+D:\Git\Guildhall\Doomenstein\NetworkUnitTest\x64\Debug\NetworkUnitTest.pdb

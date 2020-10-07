@@ -2,6 +2,7 @@
 
 #define STATIC
 #define UNUSED(x) (void)(x);
+//#define TEST_MODE
 //#define BIT_FLAG(b)	( 1 << (b) );
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"

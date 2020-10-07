@@ -87,7 +87,7 @@ void Game::StartUp()
 
 	m_theSun.direction = Vec3( -0.5f, -0.5f, -0.5 ).GetNormalize();
 	m_theSun.position = Vec3( 10.f, 10.f, 10.f );
-	m_theSun.color = Rgba8(255, 184, 19).GetValuesAsFractionsVec3();
+	m_theSun.color = Rgba8::WHITE.GetValuesAsFractionsVec3();//Rgba8(255, 184, 19).GetValuesAsFractionsVec3();
 	m_theSun.intensity = 1.f;
 
 

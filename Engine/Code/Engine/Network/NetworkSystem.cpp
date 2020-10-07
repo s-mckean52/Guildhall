@@ -4,6 +4,7 @@
 #include "Engine/Core/NamedProperties.hpp"
 #include "Engine/Network/TCPServer.hpp"
 #include "Engine/Network/TCPClient.hpp"
+#include "Engine/Network/UDPSocket.hpp"
 #include <array>
 
 #pragma comment( lib, "Ws2_32.lib" )
@@ -31,17 +32,22 @@ void NetworkSystem::StartUp()
 	{
 		g_theConsole->ErrorString( "Call to WSAStartup failed %i", WSAGetLastError() );
 	}
-	g_theEventSystem->SubscribeEventCallbackMethod( "startTCPServer", this, &NetworkSystem::start_tcp_server );
-	g_theEventSystem->SubscribeEventCallbackMethod( "stopTCPServer", this, &NetworkSystem::stop_tcp_server );
-	g_theEventSystem->SubscribeEventCallbackMethod( "sendMessage", this, &NetworkSystem::send_message );
+	g_theEventSystem->SubscribeEventCallbackMethod( "start_tcp_server", this, &NetworkSystem::start_tcp_server );
+	g_theEventSystem->SubscribeEventCallbackMethod( "stop_tcp_server", this, &NetworkSystem::stop_tcp_server );
+	g_theEventSystem->SubscribeEventCallbackMethod( "send_message", this, &NetworkSystem::send_message );
 	g_theEventSystem->SubscribeEventCallbackMethod( "connect", this, &NetworkSystem::client_connect );
 	g_theEventSystem->SubscribeEventCallbackMethod( "disconnect", this, &NetworkSystem::client_disconnect );
+	g_theEventSystem->SubscribeEventCallbackMethod( "open_udp_port", this, &NetworkSystem::open_udp_port );
+	g_theEventSystem->SubscribeEventCallbackMethod( "close_udp_port", this, &NetworkSystem::close_udp_port );
+	g_theEventSystem->SubscribeEventCallbackMethod( "send_udp_message", this, &NetworkSystem::send_udp_message );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void NetworkSystem::BeginFrame()
 {
+	UDPReadMessages();
+
 	if( m_tcpServers.empty() && m_mode == TCPMODE_SERVER )
 	{
 		CreateTCPServer( SocketMode::NONBLOCKING );
@@ -65,10 +71,10 @@ void NetworkSystem::BeginFrame()
 			}
 
 			std::string data( buf.GetData(), buf.GetLength() );
-			MessageHeader* messageHeader = reinterpret_cast<MessageHeader*>( &data[0] );
-			ServerListeningMessage serverListenMessage;
+			TCPMessageHeader* messageHeader = reinterpret_cast<TCPMessageHeader*>( &data[0] );
+			TCPMessage serverListenMessage;
 			serverListenMessage.m_header = *messageHeader;
-			serverListenMessage.m_gameName = std::string( &data[4] );
+			serverListenMessage.m_message = std::string( &data[4] );
 
 			if( messageHeader->m_id == 3 )
 			{
@@ -78,7 +84,7 @@ void NetworkSystem::BeginFrame()
 			}
 			else if( buf.GetLength() > 0 )
 			{
-				g_theConsole->PrintString( Rgba8::WHITE, "Client: "+ serverListenMessage.m_gameName );
+				g_theConsole->PrintString( Rgba8::WHITE, "Client: "+ serverListenMessage.m_message );
 			}
 		}
 	}
@@ -95,10 +101,10 @@ void NetworkSystem::BeginFrame()
 			}
 
 			std::string data( buf.GetData(), buf.GetLength() );
-			MessageHeader* messageHeader = reinterpret_cast<MessageHeader*>( &data[0] );
-			ServerListeningMessage serverListenMessage;
+			TCPMessageHeader* messageHeader = reinterpret_cast<TCPMessageHeader*>( &data[0] );
+			TCPMessage serverListenMessage;
 			serverListenMessage.m_header = *messageHeader;
-			serverListenMessage.m_gameName = std::string( &data[4] );
+			serverListenMessage.m_message = std::string( &data[4] );
 
 
 			if( messageHeader->m_id == 3 )
@@ -109,7 +115,7 @@ void NetworkSystem::BeginFrame()
 			}
 			else if( buf.GetLength() > 0 )
 			{
-				g_theConsole->PrintString( Rgba8::WHITE, "Server: " + serverListenMessage.m_gameName );
+				g_theConsole->PrintString( Rgba8::WHITE, "Server: " + serverListenMessage.m_message );
 			}
 		}
 	}
@@ -130,6 +136,11 @@ void NetworkSystem::ShutDown()
 	if( iResult == SOCKET_ERROR )
 	{
 		g_theConsole->ErrorString( "Winsock cleanup failed %i", WSAGetLastError() );
+	}
+
+	if( m_UDPSocket != nullptr )
+	{
+		CloseUDPPort( 48000 );
 	}
 }
 
@@ -154,10 +165,77 @@ void NetworkSystem::SendDisconnectMessage()
 	if( !m_clientSocket.IsValid() )
 		return;
 
-	MessageHeader messageHeader;
+	TCPMessageHeader messageHeader;
 	messageHeader.m_id = 3;
 	messageHeader.m_size = 4;
 	m_clientSocket.Send( (const char*)&messageHeader, 4 );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::OpenUDPPort( int bindPort, int sendToPort )
+{
+	if( m_UDPSocket != nullptr )
+	{
+		CloseUDPPort( 48000 );
+	}
+
+	m_isUDPSocketQuitting = false;
+	m_UDPSocket = new UDPSocket( "127.0.0.1", bindPort );
+	m_UDPSocket->Bind( sendToPort );
+
+	m_UDPReadThread = std::thread( &NetworkSystem::UDPReceiveMessagesJob, this, m_UDPSocket );
+	m_UDPSendThread = std::thread( &NetworkSystem::UDPSendMessagesJob, this, m_UDPSocket );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::CloseUDPPort( int bindPort )
+{
+	UNUSED( bindPort );
+
+	if( m_UDPSocket == nullptr )
+		return;
+
+	m_isUDPSocketQuitting = true;
+
+	m_UDPReadThread.join();
+	m_UDPSendThread.join();
+
+	delete m_UDPSocket;
+	m_UDPSocket = nullptr;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::SendUDPMessage( uint16_t id, uint16_t sequenceNum, std::string const& message )
+{
+	if( m_UDPSocket != nullptr && m_UDPSocket->IsValid() )
+	{
+		UDPMessage messageToSend;
+
+		messageToSend.m_header.m_id = id;
+		messageToSend.m_header.m_seqNo = sequenceNum;
+		messageToSend.m_header.m_size = static_cast<uint16_t>( message.length() );
+		messageToSend.m_message = message;
+
+		m_UDPMessagesToSend.Push( messageToSend );
+	}
+	else
+	{
+		g_theConsole->ErrorString( "Must have an open UDP port to send a message" );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::UDPReadMessages()
+{
+	UDPMessage message;
+	while( m_UDPMessagesToReceive.Pop( message ) )
+	{
+		g_theConsole->PrintString( Rgba8::BLUE, message.m_message );
+	}
 }
 
 
@@ -199,7 +277,7 @@ void NetworkSystem::send_message( EventArgs* args )
 	std::array<char, 256> buffer;
 	std::string message = args->GetValue( "message", "" );
 
-	MessageHeader* headerPtr = reinterpret_cast<MessageHeader*>( &buffer[0] );
+	TCPMessageHeader* headerPtr = reinterpret_cast<TCPMessageHeader*>( &buffer[0] );
 	headerPtr->m_id = 2;
 	headerPtr->m_size = static_cast<uint16_t>( message.size() );
 	
@@ -247,4 +325,94 @@ void NetworkSystem::client_disconnect( EventArgs* args )
 
 	m_mode = TCPMODE_INVALID;
 
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::open_udp_port( EventArgs* args )
+{
+	int bindPort = args->GetValue( "bindPort", 48000 );
+	int sendToPort = args->GetValue( "sendToPort", 48001 );
+
+	g_theConsole->PrintString( Rgba8::GREEN, "Opening UDP Port on %i and sending to on %i...", bindPort, sendToPort );
+
+	OpenUDPPort( bindPort, sendToPort );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::send_udp_message( EventArgs* args )
+{
+	std::string message = args->GetValue( "message", "" );
+
+	g_theConsole->PrintString( Rgba8::GREEN, "Sending Message..." );
+
+	SendUDPMessage( 0, 0, message );
+}
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::close_udp_port( EventArgs* args )
+{
+	int bindPort = args->GetValue( "bindPort", 48000 );
+
+	g_theConsole->PrintString( Rgba8::GREEN, "Closing port on %i...", bindPort );
+
+	CloseUDPPort( bindPort );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::UDPReceiveMessagesJob( UDPSocket* socket )
+{
+	while( !m_isUDPSocketQuitting )
+	{
+		size_t length = 0;
+		
+		if( m_UDPSocket->IsDataAvailable() )
+		{
+			length = socket->Receive();
+		}
+
+		if( length > 0 )
+		{
+			UDPMessageHeader const* messageHeader = nullptr;
+
+			auto& buffer = socket->ReceiveBuffer();
+			messageHeader = reinterpret_cast<UDPMessageHeader const*>(&buffer[0]);
+
+			UDPMessage messageToReceive;
+			messageToReceive.m_header = *messageHeader;
+			messageToReceive.m_message = &buffer[sizeof(UDPMessageHeader)];
+			m_UDPMessagesToReceive.Push( messageToReceive );
+		}
+		else
+		{
+			std::this_thread::sleep_for( std::chrono::microseconds(10) );
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::UDPSendMessagesJob( UDPSocket* socket )
+{
+	while( !m_isUDPSocketQuitting )
+	{
+		UDPMessage messageToSend;
+		if( m_UDPMessagesToSend.Pop( messageToSend ) )
+		{
+			auto& buffer = socket->SendBuffer();
+			*reinterpret_cast<UDPMessageHeader*>(&buffer[0]) = messageToSend.m_header;
+
+			memcpy(&(socket->SendBuffer()[sizeof(UDPMessageHeader)]), messageToSend.m_message.c_str(), messageToSend.m_header.m_size );
+
+			socket->SendBuffer()[sizeof(UDPMessageHeader) + messageToSend.m_header.m_size] = NULL;
+
+			socket->Send(sizeof(UDPMessageHeader) + messageToSend.m_header.m_size + 1);
+		}
+		else
+		{
+			std::this_thread::sleep_for( std::chrono::microseconds(10) );
+		}
+	}
 }

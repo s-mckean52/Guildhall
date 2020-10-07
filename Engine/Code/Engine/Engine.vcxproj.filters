@@ -301,6 +301,9 @@
     <ClCompile Include="Network\TCPClient.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="Network\UDPSocket.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -578,6 +581,12 @@
     </ClInclude>
     <ClInclude Include="Network\TCPClient.hpp">
       <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network\UDPSocket.hpp">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\SynchronizedNonBlockingQueue.hpp">
+      <Filter>Core\JobSystem</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

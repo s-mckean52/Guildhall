@@ -223,6 +223,7 @@
     <ClCompile Include="Network\TCPClient.cpp" />
     <ClCompile Include="Network\TCPServer.cpp" />
     <ClCompile Include="Network\TCPSocket.cpp" />
+    <ClCompile Include="Network\UDPSocket.cpp" />
     <ClCompile Include="Physics\Collider2D.cpp" />
     <ClCompile Include="Physics\Collision2D.cpp" />
     <ClCompile Include="Physics\DiscCollider2D.cpp" />
@@ -283,6 +284,7 @@
     <ClInclude Include="Core\FileUtils.hpp" />
     <ClInclude Include="Core\Rgba8.hpp" />
     <ClInclude Include="Core\StringUtils.hpp" />
+    <ClInclude Include="Core\SynchronizedNonBlockingQueue.hpp" />
     <ClInclude Include="Core\Time.hpp" />
     <ClInclude Include="Core\Timer.hpp" />
     <ClInclude Include="Core\Vertex_Master.hpp" />
@@ -317,6 +319,7 @@
     <ClInclude Include="Network\TCPClient.hpp" />
     <ClInclude Include="Network\TCPServer.hpp" />
     <ClInclude Include="Network\TCPSocket.hpp" />
+    <ClInclude Include="Network\UDPSocket.hpp" />
     <ClInclude Include="Physics\Collider2D.hpp" />
     <ClInclude Include="Physics\Collision2D.hpp" />
     <ClInclude Include="Physics\DiscCollider2D.hpp" />

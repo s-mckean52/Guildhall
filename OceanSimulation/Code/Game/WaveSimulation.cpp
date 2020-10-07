@@ -170,6 +170,8 @@ bool WaveSimulation::IsValidNumSamples( uint numSamples )
 //---------------------------------------------------------------------------------------------------------
 Vec2 WaveSimulation::GetK( int n, int m )
 {
+
+
 	Vec2 k;
 	k.x = ( PI_VALUE * ( ( 2.f * static_cast<float>( n ) ) - static_cast<float>( m_numSamples ) ) ) / m_dimensions.x;
 	k.y = ( PI_VALUE * ( ( 2.f * static_cast<float>( m ) ) - static_cast<float>( m_numSamples ) ) ) / m_dimensions.y;
