@@ -7,7 +7,9 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Math/Transform.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
+#include "Engine/Core/Clock.hpp"
 #include "Game/GameCommon.hpp"
+#include "Game/Game.hpp"
 #include "Game/WaveSimulation.hpp"
 
 
@@ -82,6 +84,7 @@ WaveSimulation::WaveSimulation( Vec2 const& dimensions, uint samples )
 	: m_dimensions( dimensions )
 	, m_numSamples( samples )
 {
+	m_simulationClock = new Clock( g_theGame->GetGameClock() );
 	m_transform = new Transform();
 
 	GenerateSurface( Vec3::ZERO, Rgba8::WHITE, dimensions, IntVec2( samples - 1, samples - 1 ) );
@@ -107,8 +110,9 @@ void WaveSimulation::Render() const
 		g_theRenderer->SetFillMode( FILL_MODE_SOLID );
 	}
 
-	//g_theRenderer->BindShaderByPath( "Data/Shaders/Normals.hlsl" );
-	g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
+	//g_theRenderer->BindShaderByPath( "Data/Shaders/Water.hlsl" );
+	g_theRenderer->BindShaderByPath( "Data/Shaders/Normals.hlsl" );
+	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 
 	uint tilingDimSquared = m_tilingDimensions * m_tilingDimensions;
 	for( uint i = 0; i < tilingDimSquared; ++i )
@@ -191,6 +195,13 @@ void WaveSimulation::SetPosition( Vec3 const& newPosition )
 void WaveSimulation::SetTilingDimensions( uint tilingDimenisions )
 {
 	m_tilingDimensions = tilingDimenisions;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::ToggleSimulationClockPause()
+{
+	m_simulationClock->TogglePause();
 }
 
 

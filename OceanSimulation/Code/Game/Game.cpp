@@ -397,7 +397,8 @@ void Game::UpdateSimulationFromInput()
 
 	if( g_theInput->WasKeyJustPressed( 'P' ) )
 	{
-		m_gameClock->TogglePause();
+		m_DFTWaveSimulation->ToggleSimulationClockPause();
+		m_FFTWaveSimulation->ToggleSimulationClockPause();
 	}
 
 	int numWaves = m_DFTWaveSimulation->GetNumWaves();

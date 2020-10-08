@@ -1,5 +1,3 @@
-SDST Assignment 01 - Protogame3D
-
 Controls:
 	Movement:
 		'W' - Move Relative Forward on XY-Plane

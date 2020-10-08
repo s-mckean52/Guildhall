@@ -34,9 +34,11 @@ struct TCPMessage
 //---------------------------------------------------------------------------------------------------------
 struct UDPMessageHeader
 {
-	uint16_t m_id;
-	uint16_t m_size;
-	uint16_t m_seqNo;
+	uint16_t	m_id;
+	uint16_t	m_size;
+	uint16_t	m_seqNo;
+	uint16_t	m_port;
+	char		m_fromAddress[16];
 };
 
 
@@ -72,7 +74,7 @@ public:
 	//UDP
 	void OpenUDPPort( int bindPort, int sendToPort );
 	void CloseUDPPort( int bindPort );
-	void SendUDPMessage( uint16_t id, uint16_t sequenceNum, std::string const& message );
+	void SendUDPMessage( std::string const& ipAddress, uint16_t port, uint16_t id, uint16_t sequenceNum, std::string const& message );
 	void UDPReadMessages();
 	
 public:

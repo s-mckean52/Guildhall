@@ -5,6 +5,7 @@
 #include "Engine/Network/TCPServer.hpp"
 #include "Engine/Network/TCPClient.hpp"
 #include "Engine/Network/UDPSocket.hpp"
+#include "Engine/Math/MathUtils.hpp"
 #include <array>
 
 #pragma comment( lib, "Ws2_32.lib" )
@@ -199,20 +200,27 @@ void NetworkSystem::CloseUDPPort( int bindPort )
 
 	m_isUDPSocketQuitting = true;
 
+	delete m_UDPSocket;
+	m_UDPSocket = nullptr;
+
 	m_UDPReadThread.join();
 	m_UDPSendThread.join();
 
-	delete m_UDPSocket;
-	m_UDPSocket = nullptr;
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void NetworkSystem::SendUDPMessage( uint16_t id, uint16_t sequenceNum, std::string const& message )
+void NetworkSystem::SendUDPMessage( std::string const& ipAddress, uint16_t port, uint16_t id, uint16_t sequenceNum, std::string const& message )
 {
 	if( m_UDPSocket != nullptr && m_UDPSocket->IsValid() )
 	{
 		UDPMessage messageToSend;
+
+		uint ipLength = Min( static_cast<uint>( ipAddress.length() ), 15 );
+		memcpy( messageToSend.m_header.m_fromAddress, ipAddress.c_str(), ipLength );
+		messageToSend.m_header.m_fromAddress[ipLength] = '\0';
+
+		messageToSend.m_header.m_port = port;
 
 		messageToSend.m_header.m_id = id;
 		messageToSend.m_header.m_seqNo = sequenceNum;
@@ -234,7 +242,7 @@ void NetworkSystem::UDPReadMessages()
 	UDPMessage message;
 	while( m_UDPMessagesToReceive.Pop( message ) )
 	{
-		g_theConsole->PrintString( Rgba8::BLUE, message.m_message );
+		g_theConsole->PrintString( Rgba8::YELLOW, "%s:%i said: \"%s\"", message.m_header.m_fromAddress, message.m_header.m_port, message.m_message.c_str() );
 	}
 }
 
@@ -347,7 +355,10 @@ void NetworkSystem::send_udp_message( EventArgs* args )
 
 	g_theConsole->PrintString( Rgba8::GREEN, "Sending Message..." );
 
-	SendUDPMessage( 0, 0, message );
+	std::string hostData = m_UDPSocket->GetHostData();
+	uint16_t sendToPort = static_cast<uint16_t>( m_UDPSocket->GetSendToPort() );
+
+	SendUDPMessage( hostData, sendToPort, 0, 0, message );
 }
 
 //---------------------------------------------------------------------------------------------------------
@@ -366,12 +377,9 @@ void NetworkSystem::UDPReceiveMessagesJob( UDPSocket* socket )
 {
 	while( !m_isUDPSocketQuitting )
 	{
-		size_t length = 0;
-		
-		if( m_UDPSocket->IsDataAvailable() )
-		{
-			length = socket->Receive();
-		}
+		int length = 0;
+
+		length = socket->Receive();
 
 		if( length > 0 )
 		{

@@ -54,7 +54,7 @@ FFTWaveSimulation::~FFTWaveSimulation()
 //---------------------------------------------------------------------------------------------------------
 void FFTWaveSimulation::Simulate()
 {
-	float elapsedTime = static_cast<float>( g_theGame->GetGameClock()->GetTotalElapsedSeconds() );
+	float elapsedTime = static_cast<float>( m_simulationClock->GetTotalElapsedSeconds() );
 	for( int positionIndex = 0; positionIndex < m_initialSurfacePositions.size(); ++positionIndex )
 	{
 		int m = positionIndex / m_numSamples;
@@ -93,10 +93,12 @@ void FFTWaveSimulation::Simulate()
 		translation.z = m_hTilde[positionIndex].real() *sign;
 
 		Vec3 normal;
-		normal.x = -m_slopeX[positionIndex].real() * sign;
-		normal.y = -m_slopeY[positionIndex].real() * sign;
-		normal.z = 1.f;
-		normal.Normalize();
+		normal.x = m_slopeX[positionIndex].real() * sign;
+		normal.y = m_slopeY[positionIndex].real() * sign;
+		normal.z = 0.f;
+
+		normal = Vec3::UNIT_POSITIVE_Y - normal / sqrtf( 1.f + DotProduct3D( normal, normal ) );
+		//normal.Normalize();
 
 		Vertex_PCUTBN& currentVert = m_surfaceVerts[positionIndex];
 		currentVert.m_position = m_initialSurfacePositions[positionIndex] + translation;

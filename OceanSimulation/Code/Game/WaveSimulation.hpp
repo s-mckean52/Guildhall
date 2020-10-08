@@ -72,11 +72,14 @@ public:
 
 	void		SetPosition( Vec3 const& newPosition );
 	void		SetTilingDimensions( uint tilingDimenisions );
+	void		ToggleSimulationClockPause();
 
 private:
 	void	GenerateSurface( Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps );
 
 protected:
+	Clock*				m_simulationClock = nullptr;
+
 	uint				m_tilingDimensions = 1;
 	bool				m_isWireFrame	= true;
 	Vec2				m_dimensions	= Vec2( 1.f, 1.f );
@@ -87,7 +90,7 @@ protected:
 		//Phillips Spectrum Variables
 	float	m_A				= 0.0005f;			//Phillips Spectrum Constant 0.001 is slightly above max value for this
 	Vec2	m_windDirection	= Vec2::RIGHT;
-	float	m_windSpeed		= 37.0f;
+	float	m_windSpeed		= 37.f;
 
 	GPUMesh*					m_surfaceMesh		= nullptr; 
 	std::vector<uint>			m_surfaceIndicies;

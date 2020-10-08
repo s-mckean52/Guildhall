@@ -20,19 +20,21 @@ public:
 	~UDPSocket();
 
 	bool	IsValid() const { return m_socket != INVALID_SOCKET; }
-	bool	IsDataAvailable();
 
 	void	Close();
 	void	Bind( int port );
 	int		Send( int length );
 	int		Receive();
 
+	std::string	GetHostData();
+	uint16_t	GetSendToPort() { return m_sendToPort; }
+
 	Buffer& SendBuffer()	{ return m_sendBuffer; }
 	Buffer& ReceiveBuffer() { return m_recieveBuffer; }
 
 private:
-	FD_SET		m_fdSet;
-	timeval		m_timeval;
+	uint16_t m_sendToPort = 0;
+	uint16_t m_receivePort = 0;
 
 	Buffer		m_sendBuffer;
 	Buffer		m_recieveBuffer;
