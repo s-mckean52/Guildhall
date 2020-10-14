@@ -1,5 +1,6 @@
 #pragma once
 #include "Game/WaveSimulation.hpp"
+#include "Game/WaveSurfaceVertex.hpp"
 
 struct WavePoint;
 struct HTilde0Data;
@@ -20,6 +21,7 @@ public:
 	ComplexFloat 	GetTCalculation( uint x, uint samplesAtDimension );
 
 	void CalculateFFT( std::vector<ComplexFloat>& data_in, std::vector<ComplexFloat>& data_out, int stride, int offset );
+	void CalculateFFT( std::vector<WaveSurfaceVertex>& data, int stride, int offset );
 
 
 protected:
@@ -32,6 +34,8 @@ protected:
 	ComplexFloatVector m_hTilde_dy;
 	ComplexFloatVector m_slopeX;
 	ComplexFloatVector m_slopeY;
+
+	std::vector<WaveSurfaceVertex> m_waveSurfaceVerts;
 
 	std::vector<ComplexFloatVector> m_c;
 	std::vector<ComplexFloatVector> m_Ts;

@@ -2,8 +2,12 @@
 #include "Engine/Core/Rgba8.hpp"
 #include "Engine/Core/StringUtils.hpp"
 #include "Engine/Core/ErrorWarningAssert.hpp"
+#include <complex>
 
-#define UNUSED(x) (void)(x);
+#define UNUSED(x) (void)(x)
+
+typedef std::complex<float>			ComplexFloat;
+typedef std::vector<ComplexFloat>	ComplexFloatVector;
 
 struct Vec2;
 class App;

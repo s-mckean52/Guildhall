@@ -204,6 +204,7 @@
     <ClCompile Include="GerstnerWaveSimulation.cpp" />
     <ClCompile Include="Main_Windows.cpp" />
     <ClCompile Include="WaveSimulation.cpp" />
+    <ClCompile Include="WaveSurfaceVertex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp" />
@@ -214,6 +215,7 @@
     <ClInclude Include="GameCommon.hpp" />
     <ClInclude Include="GerstnerWaveSimulation.hpp" />
     <ClInclude Include="WaveSimulation.hpp" />
+    <ClInclude Include="WaveSurfaceVertex.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\..\Docs\Notes.txt" />

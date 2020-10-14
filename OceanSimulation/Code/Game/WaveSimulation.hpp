@@ -1,12 +1,10 @@
 #pragma once
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/EngineCommon.hpp"
+#include "Game/GameCommon.hpp"
 #include "Engine/Core/Vertex_PCUTBN.hpp"
 #include <vector>
-#include <complex>
 
-typedef std::complex<float>			ComplexFloat;
-typedef std::vector<ComplexFloat>	ComplexFloatVector;
 
 struct	Vec3;
 struct	Rgba8;
@@ -60,8 +58,8 @@ public:
 
 	int			GetNumWaves() const;
 	Wave*		GetWaveAtIndex( int index ) const;
-	float		GetDeepDispersion( Vec2 const& k );
-	float		PhillipsEquation( Vec2 const& k );
+	static float	GetDeepDispersion( Vec2 const& k );
+	static float	PhillipsEquation( Vec2 const& k );
 	
 	ComplexFloat hTilde( int n, int m, float time );
 	ComplexFloat hTilde0( int n, int m, bool doesNegateK = false );
