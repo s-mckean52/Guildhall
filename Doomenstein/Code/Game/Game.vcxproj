@@ -198,6 +198,8 @@
   <ItemGroup>
     <ClCompile Include="Actor.cpp" />
     <ClCompile Include="App.cpp" />
+    <ClCompile Include="AuthoritativeServer.cpp" />
+    <ClCompile Include="Client.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="EntityDef.cpp" />
     <ClCompile Include="Game.cpp" />
@@ -206,9 +208,13 @@
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="MapMaterial.cpp" />
     <ClCompile Include="MapRegion.cpp" />
+    <ClCompile Include="PlayerClient.cpp" />
     <ClCompile Include="Portal.cpp" />
     <ClCompile Include="Projectile.cpp" />
     <ClCompile Include="RaycastResult.cpp" />
+    <ClCompile Include="RemoteClient.cpp" />
+    <ClCompile Include="RemoteServer.cpp" />
+    <ClCompile Include="Server.cpp" />
     <ClCompile Include="Tile.cpp" />
     <ClCompile Include="TileMap.cpp" />
     <ClCompile Include="World.cpp" />
@@ -216,6 +222,8 @@
   <ItemGroup>
     <ClInclude Include="Actor.hpp" />
     <ClInclude Include="App.hpp" />
+    <ClInclude Include="AuthoritativeServer.hpp" />
+    <ClInclude Include="Client.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />
     <ClInclude Include="Entity.hpp" />
     <ClInclude Include="EntityDef.hpp" />
@@ -224,9 +232,15 @@
     <ClInclude Include="Map.hpp" />
     <ClInclude Include="MapMaterial.hpp" />
     <ClInclude Include="MapRegion.hpp" />
+    <ClInclude Include="MultiplayerGame.hpp" />
+    <ClInclude Include="PlayerClient.hpp" />
     <ClInclude Include="Portal.hpp" />
     <ClInclude Include="Projectile.hpp" />
     <ClInclude Include="RaycastResult.hpp" />
+    <ClInclude Include="RemoteClient.hpp" />
+    <ClInclude Include="RemoteServer.hpp" />
+    <ClInclude Include="Server.hpp" />
+    <ClInclude Include="SinglePlayerGame.hpp" />
     <ClInclude Include="Tile.hpp" />
     <ClInclude Include="TileMap.hpp" />
     <ClInclude Include="World.hpp" />

@@ -1,6 +1,3 @@
-#include "Game/App.hpp"
-#include "Game/GameCommon.hpp"
-#include "Game/Game.hpp"
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/Vec3.hpp"
 #include "Engine/Core/Time.hpp"
@@ -14,6 +11,15 @@
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/DebugRender.hpp"
+#include "Engine/Core/NamedProperties.hpp"
+#include "Game/App.hpp"
+#include "Game/GameCommon.hpp"
+#include "Game/Game.hpp"
+#include "Game/AuthoritativeServer.hpp"
+#include "Game/RemoteServer.hpp"
+#include "Game/PlayerClient.hpp"
+#include "Game/RemoteClient.hpp"
+#include <string>
 
 
 EventSystem*	g_theEventSystem	= nullptr;
@@ -38,7 +44,8 @@ void App::StartUp()
 	g_theInput			= new InputSystem();
 	g_theAudio			= new AudioSystem();
 	g_theConsole		= new DevConsole();
-	g_theGame			= new Game();
+	m_theServer			= new AuthoritativeServer();
+	//g_theGame			= new Game();
 
 	g_theEventSystem->StartUp();
 	g_theRenderer->StartUp( g_theWindow );
@@ -48,13 +55,17 @@ void App::StartUp()
 
 	DebugRenderSystemStartup( g_theRenderer );
 
-	g_theGame->StartUp();
+	m_theServer->StartUp( SINGLE_PLAYER_GAME );
+	new PlayerClient( m_theServer );
+	//g_theGame->StartUp();
 	
 	g_theWindow->SetInputSystem( g_theInput );
 	g_theWindow->SetEventSystem( g_theEventSystem );
 
 	g_theEventSystem->SubscribeEventCallbackFunction( "quit", QuitRequested );
 	g_theEventSystem->SubscribeEventCallbackFunction( "help", HelpCommand );
+	g_theEventSystem->SubscribeEventCallbackMethod( "start_multiplayer_server", this, &App::start_multiplayer_server );
+	g_theEventSystem->SubscribeEventCallbackMethod( "connect_to_multiplayer_server", this, &App::connect_to_mulitplayer_server );
 
 	m_devConsoleCamera = new Camera( g_theRenderer );
 	m_devConsoleCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
@@ -69,9 +80,12 @@ void App::ShutDown()
 
 	DebugRenderSystemShutdown();
 
-	g_theGame->ShutDown();
-	delete g_theGame;
-	g_theGame = nullptr;
+	m_theServer->ShutDown();
+	delete m_theServer;
+	m_theServer = nullptr;
+// 	g_theGame->ShutDown();
+// 	delete g_theGame;
+// 	g_theGame = nullptr;
 
 	g_theNetworkSystem->ShutDown();
 	delete g_theGame;
@@ -118,6 +132,41 @@ void App::RestartGame()
 
 
 //---------------------------------------------------------------------------------------------------------
+void App::start_multiplayer_server( EventArgs* args )
+{
+	std::string port = args->GetValue( "port", "48000" );
+
+	m_theServer->ShutDown();
+	delete m_theServer;
+	m_theServer = nullptr;
+
+	g_theConsole->PrintString( Rgba8::GREEN, "Making multiplayer Server on port %s...", port.c_str() );
+
+	m_theServer = new AuthoritativeServer();
+	m_theServer->StartUp( MULTI_PLAYER_GAME );
+	new PlayerClient( m_theServer );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void App::connect_to_mulitplayer_server( EventArgs* args )
+{
+	std::string ipAddress	= args->GetValue( "ip", "127.0.0.1" );
+	std::string port		= args->GetValue( "port", "48000" );
+
+	m_theServer->ShutDown();
+	delete m_theServer;
+	m_theServer = nullptr;
+
+	g_theConsole->PrintString( Rgba8::GREEN, "Connecting to multiplayer server %s:%s...", ipAddress.c_str(), port.c_str() );
+
+	m_theServer = new RemoteServer();
+	m_theServer->StartUp( MULTI_PLAYER_GAME );
+	new RemoteClient( m_theServer );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 STATIC void App::QuitRequested( EventArgs* args )
 {
 	UNUSED( args );
@@ -139,10 +188,10 @@ STATIC void App::HelpCommand( EventArgs* args )
 //---------------------------------------------------------------------------------------------------------
 void App::RunFrame()
 {
-	BeginFrame(); //All engine systems 
-	Update(); //only for the game
-	Render();	//only game
-	EndFrame();	//all engine system
+	BeginFrame();	//All engine systems 
+	Update();		//only for the game
+	Render();		//only game
+	EndFrame();		//all engine system
 }
 
 
@@ -164,6 +213,7 @@ void App::BeginFrame()
 	g_theInput->BeginFrame();
 	g_theAudio->BeginFrame();
 	g_theNetworkSystem->BeginFrame();
+	m_theServer->BeginFrame();
 
 	DebugRenderBeginFrame();
 }
@@ -172,10 +222,11 @@ void App::BeginFrame()
 //---------------------------------------------------------------------------------------------------------
 void App::Update()
 {
-	g_theGame->Update();
+	m_theServer->Update();
+	//g_theGame->Update();
 	g_theConsole->Update();
 
-	if( g_theGame->IsQuitting() || g_theWindow->IsQuitting() )
+	if( ( g_theGame != nullptr && g_theGame->IsQuitting() ) || g_theWindow->IsQuitting() )
 	{
 		HandleQuitRequested();
 	}
@@ -200,15 +251,17 @@ void App::Update()
 //---------------------------------------------------------------------------------------------------------
 void App::Render() const
 {
-	g_theGame->Render();
-	DebugRenderScreenTo( g_theRenderer->GetBackBuffer() );
-	g_theConsole->Render( *g_theRenderer, *m_devConsoleCamera, DEV_CONSOLE_LINE_HEIGHT, g_devConsoleFont );
+	//g_theGame->Render();
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void App::EndFrame()
 {
+	m_theServer->EndFrame();
+	DebugRenderScreenTo( g_theRenderer->GetBackBuffer() );
+	g_theConsole->Render( *g_theRenderer, *m_devConsoleCamera, DEV_CONSOLE_LINE_HEIGHT, g_devConsoleFont );
+	
 	g_theRenderer->EndFrame();
 	g_theInput->EndFrame();
 	g_theAudio->EndFrame();

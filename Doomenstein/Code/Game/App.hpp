@@ -3,12 +3,14 @@
 #include "Engine/Core/EngineCommon.hpp"
 
 class Camera;
+class Server;
 
 class App
 {
 private:
-	bool m_isQuitting = false;
-	Camera* m_devConsoleCamera = nullptr;
+	bool	m_isQuitting		= false;
+	Server*	m_theServer			= nullptr;
+	Camera*	m_devConsoleCamera	= nullptr;
 
 public:
 	App() {};
@@ -17,6 +19,9 @@ public:
 	void ShutDown();
 	void RunFrame();
 	void RestartGame();
+
+	void start_multiplayer_server( EventArgs* args );
+	void connect_to_mulitplayer_server( EventArgs* args );
 
 	static void HelpCommand( EventArgs* args );
 	static void QuitRequested( EventArgs* args );

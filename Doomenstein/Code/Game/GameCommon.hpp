@@ -51,6 +51,14 @@ enum class BillboardType
 
 
 //---------------------------------------------------------------------------------------------------------
+enum GameType
+{
+	SINGLE_PLAYER_GAME,
+	MULTI_PLAYER_GAME,
+};
+
+
+//---------------------------------------------------------------------------------------------------------
 // Global Game-specific Constants
 constexpr float MAX_FRAME_TIME			= .1f;
 constexpr float CAMERA_SIZE_X			= 16.f;

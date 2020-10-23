@@ -14,6 +14,12 @@
     <Filter Include="Data\Shaders">
       <UniqueIdentifier>{5a50d78a-11aa-415a-8cfc-a7c3db6b57b0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Framework\Server">
+      <UniqueIdentifier>{970bddee-46bb-4ad5-8ccf-96a91caa7823}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Framework\Client">
+      <UniqueIdentifier>{fc1bd9c5-f8ea-45e4-b05f-149efe8b061c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="..\..\Run\Data\GameConfig.xml">
@@ -69,6 +75,24 @@
     <ClCompile Include="RaycastResult.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
+    <ClCompile Include="RemoteServer.cpp">
+      <Filter>Framework\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Server.cpp">
+      <Filter>Framework\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="AuthoritativeServer.cpp">
+      <Filter>Framework\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Client.cpp">
+      <Filter>Framework\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerClient.cpp">
+      <Filter>Framework\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="RemoteClient.cpp">
+      <Filter>Framework\Client</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -117,6 +141,30 @@
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="RaycastResult.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="RemoteServer.hpp">
+      <Filter>Framework\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Server.hpp">
+      <Filter>Framework\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="AuthoritativeServer.hpp">
+      <Filter>Framework\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Client.hpp">
+      <Filter>Framework\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerClient.hpp">
+      <Filter>Framework\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="RemoteClient.hpp">
+      <Filter>Framework\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="SinglePlayerGame.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="MultiplayerGame.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>
