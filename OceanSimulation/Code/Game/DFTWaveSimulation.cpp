@@ -9,8 +9,8 @@
 
 
 //---------------------------------------------------------------------------------------------------------
-DFTWaveSimulation::DFTWaveSimulation( Vec2 const& dimensions, uint samples )
-	: WaveSimulation( dimensions, samples )
+DFTWaveSimulation::DFTWaveSimulation( Vec2 const& dimensions, uint samples, float windSpeed )
+	: WaveSimulation( dimensions, samples, windSpeed )
 {
 	m_hTilde.resize( m_numSamples * m_numSamples );
 	for( int i = 0; i < m_initialSurfacePositions.size(); ++i )

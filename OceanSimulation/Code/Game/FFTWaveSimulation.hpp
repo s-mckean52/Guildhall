@@ -1,19 +1,26 @@
 #pragma once
 #include "Game/WaveSimulation.hpp"
-#include "Game/WaveSurfaceVertex.hpp"
 
 struct WavePoint;
 struct HTilde0Data;
+struct WaveSurfaceVertex;
+class IWave;
 
 class FFTWaveSimulation : public WaveSimulation
 {
 public:
 	~FFTWaveSimulation();
-	FFTWaveSimulation( Vec2 const& dimensions, uint samples );
+	FFTWaveSimulation( Vec2 const& dimensions, uint samples, float windSpeed );
 
 	void Simulate() override;
 
+	bool	IsIWaveEnabled() const				{ return m_isIWaveEnabled; }
+	bool	IsChoppyWater() const				{ return m_isChoppyWater; }
+	void SetIWaveEnabled( bool isEnabled );
+	void SetIsChoppyWater( bool isChoppyWater );
+
 	void GetHeightAtPosition( int n, int m, float time );
+	WaveSurfaceVertex& GetWaveVertAtIndex( int index );
 
 	uint			ReverseBits( uint value );
 	void			CreateBitReversedIndicies();
@@ -24,7 +31,11 @@ public:
 	void CalculateFFT( std::vector<WaveSurfaceVertex>& data, int stride, int offset );
 
 
+	IWave* m_iWave = nullptr;
 protected:
+	bool m_isIWaveEnabled = true;
+	bool m_isChoppyWater = true;
+
 	uint m_log2N = 0;
 	float m_pi2 = 0.f;
 	uint which = 0;
@@ -38,6 +49,7 @@ protected:
 	std::vector<WaveSurfaceVertex> m_waveSurfaceVerts;
 
 	std::vector<ComplexFloatVector> m_c;
+	std::vector<WaveSurfaceVertexVector> m_switchArray;
 	std::vector<ComplexFloatVector> m_Ts;
 
 	std::vector<uint> m_bitReversedIndices;

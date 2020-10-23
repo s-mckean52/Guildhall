@@ -6,7 +6,7 @@
 
 //---------------------------------------------------------------------------------------------------------
 GersternWaveSimulation::GersternWaveSimulation( Vec2 const& dimensions, uint samples )
-	: WaveSimulation( dimensions, samples )
+	: WaveSimulation( dimensions, samples, 37.f )
 {
 }
 

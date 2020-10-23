@@ -32,6 +32,7 @@
 #include "Game/GerstnerWaveSimulation.hpp"
 #include "Game/FFTWaveSimulation.hpp"
 #include "Game/DFTWaveSimulation.hpp"
+#include "Game/IWave.hpp"
 #include "Game/WaveSimulation.hpp"
 #include <string>
 
@@ -70,6 +71,7 @@ void Game::StartUp()
 
 	g_theEventSystem->SubscribeEventCallbackFunction( "GainFocus", GainFocus );
 	g_theEventSystem->SubscribeEventCallbackFunction( "LoseFocus", LoseFocus );
+	g_theEventSystem->SubscribeEventCallbackMethod( "new_fft_sim", this, &Game::create_new_fft_simulation );
 
 	g_theInput->SetCursorMode( MOUSE_MODE_RELATIVE );
 
@@ -77,8 +79,8 @@ void Game::StartUp()
 	m_worldCamera->SetProjectionPerspective( 60.f, -0.09f, -100.f );
 	m_worldCamera->SetDepthStencilTarget( g_theRenderer->m_defaultDepthStencil );
 	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, m_clearColor, 1.0f, 0 );
-	m_worldCamera->SetPosition( Vec3( 0.f, -10.f, 5.f ) );
-	m_worldCamera->SetPitchYawRollRotationDegrees( 30.f, 90.f, 0.f );
+	m_worldCamera->SetPosition( Vec3( -16.f, -20.f, 1.f ) );
+	m_worldCamera->SetPitchYawRollRotationDegrees( 0.f, 90.f, 0.f );
 	UpdateCameraProjection( m_worldCamera );
 	g_theRenderer->DisableFog();
 
@@ -91,13 +93,11 @@ void Game::StartUp()
 	m_theSun.intensity = 1.f;
 
 
-	Vec2 dimensions = Vec2( 128.f, 128.f );
-	uint samples = 128;
-	m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples );
-	m_FFTWaveSimulation = new FFTWaveSimulation( dimensions, samples );
+	uint samples = 32;
+	Vec2 dimensions = Vec2( 32.f, 32.f );
+	m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples, 37.f );
+	CreateNewFFTSimulation( samples, dimensions, 0.f );
 	//m_FFTWaveSimulation->SetPosition( Vec3( dimensions.x, 0.f, 0.f ) );
-	m_FFTWaveSimulation->SetTilingDimensions( 1 );
-	m_gameClock->SetScale( 1.f );
 // 	for( int i = 0; i < -1; ++i )
 // 	{
 // 		Vec2 randomDirection = g_RNG->RollRandomDirection2D();
@@ -230,11 +230,14 @@ void Game::RenderUI() const
 	Wave* selectedWave = m_DFTWaveSimulation->GetWaveAtIndex( m_selectedWaveIndex );
 
 	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "FPS: %.2f", fps ) ) );
-	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "Camera - Rotation (Pitch, Yaw, Roll): (%.2f, %.2f, %.2f)", cameraRotationPitchYawRollDegrees.x, cameraRotationPitchYawRollDegrees.y, cameraRotationPitchYawRollDegrees.z ) ) );
-	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "       - Position (x, y, z):          (%.2f, %.2f, %.2f)", cameraPosition.x, cameraPosition.y, cameraPosition.z ) ) );
-	strings.push_back( ColorString( Rgba8::RED,		Stringf( "iBasis (forward, +x world-east when identity): (%.2f, %.2f, %.2f)", cameraView.Ix, cameraView.Iy, cameraView.Iz ) ) );
-	strings.push_back( ColorString( Rgba8::GREEN,	Stringf( "jBasis (left, +y world-north when identity  ): (%.2f, %.2f, %.2f)", cameraView.Jx, cameraView.Jy, cameraView.Jz ) ) );
-	strings.push_back( ColorString( Rgba8::BLUE,	Stringf( "kBasis (up, +z world-up when identity       ): (%.2f, %.2f, %.2f)", cameraView.Kx, cameraView.Ky, cameraView.Kz ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Wave Simulation: FFT" ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "iWave: %s", ( m_FFTWaveSimulation->IsIWaveEnabled() ? "Enabled" : "Disabled" ) ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Choppiness: %s", ( m_FFTWaveSimulation->IsChoppyWater() ? "Enabled" : "Disabled" ) ) ) );
+
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Samples: %i", m_FFTWaveSimulation->GetNumSamples() ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Dimensions: %.2f, %.2f", m_FFTWaveSimulation->GetGridDimensions().x, m_FFTWaveSimulation->GetGridDimensions().y ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Wind Speed: %.2f", m_FFTWaveSimulation->GetWindSpeed() ) ) );
+
 	
 	if( selectedWave != nullptr )
 	{
@@ -373,6 +376,19 @@ void Game::AddTestCubeToIndexVertexArray( std::vector<Vertex_PCUTBN>& vertexArra
 
 
 //---------------------------------------------------------------------------------------------------------
+void Game::CreateNewFFTSimulation( int samples, Vec2 const& dimensions, float windSpeed )
+{
+	if( m_FFTWaveSimulation != nullptr )
+	{
+		delete m_FFTWaveSimulation;
+		m_FFTWaveSimulation = nullptr;
+	}
+	m_FFTWaveSimulation = new FFTWaveSimulation( dimensions, samples, windSpeed );
+	m_FFTWaveSimulation->SetTilingDimensions( 1 );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::UpdateBasedOnMouseMovement()
 {
 	Vec2 relativeMovement = g_theInput->GetCursorRelativeMovement();
@@ -388,6 +404,16 @@ void Game::UpdateBasedOnMouseMovement()
 void Game::UpdateSimulationFromInput()
 {
 	const float updateSpeed = 1.f;
+
+	if( g_theInput->WasKeyJustPressed( 'M' ) )
+	{
+		FFTWaveSimulation* fft = dynamic_cast<FFTWaveSimulation*>( m_FFTWaveSimulation );
+		fft->m_iWave->AddSource( 32 * 16 + 16, -1.f );
+		fft->m_iWave->AddSource( 32 * 16 + 15, -1.f );
+		fft->m_iWave->AddSource( 32 * 16 + 17, -1.f );
+		fft->m_iWave->AddSource( 32 * 17 + 16, -1.f );
+		fft->m_iWave->AddSource( 32 * 15 + 16, -1.f );
+	}
 
 	if( g_theInput->WasKeyJustPressed( 'F' ) )
 	{
@@ -609,6 +635,25 @@ STATIC void Game::LoseFocus( EventArgs* args )
 	g_theInput->SetCursorMode( MOUSE_MODE_ABSOLUTE );
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void Game::create_new_fft_simulation( EventArgs* args )
+{
+	int		defaultSamples		= 32;
+	float	defaultWindSpeed	= 37.f;
+	Vec2	defaultDim			= Vec2( 32.f, 32.f );
+
+	Vec2	dimensions	= args->GetValue( "dimensions", defaultDim );
+	int		samples		= args->GetValue( "samples", defaultSamples );
+	float	windSpeed	= args->GetValue( "windSpeed", defaultWindSpeed );
+
+	g_theConsole->PrintString( Rgba8::YELLOW, "Creating New FFT Simulation: with %i samples and dimensions %.2fx%.2f", samples, dimensions.x, dimensions.y );
+	g_theConsole->PrintString( Rgba8::YELLOW, "   Samples:    %i", samples );
+	g_theConsole->PrintString( Rgba8::YELLOW, "   Dimensions: %.2f x %.2f", dimensions.x, dimensions.y );
+	g_theConsole->PrintString( Rgba8::YELLOW, "   Wind Speed: %.2f", windSpeed );
+
+	CreateNewFFTSimulation( samples, dimensions, windSpeed );
+}
 
 //---------------------------------------------------------------------------------------------------------
 void Game::PlayTestSound()

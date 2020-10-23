@@ -19,6 +19,7 @@ class GPUMesh;
 class Clock;
 class NamedProperties;
 class WaveSimulation;
+class FFTWaveSimulation;
 struct Vertex_PCUTBN;
 struct AABB3;
 
@@ -64,17 +65,19 @@ public:
 	//Other
 	Clock* GetGameClock() const { return m_gameClock; }
 	void AddTestCubeToIndexVertexArray( std::vector<Vertex_PCUTBN>& vertexArray, std::vector<uint>& indexArray, AABB3 const& box, Rgba8 const& color );
+	void CreateNewFFTSimulation( int samples, Vec2 const& dimensions, float windSpeed );
 
-	//Static
+	//Commands
 	static void GainFocus( EventArgs* args );
 	static void LoseFocus( EventArgs* args );
+	void create_new_fft_simulation( EventArgs* args );
 
 	bool IsQuitting() const { return m_isQuitting; }
 	void PlayTestSound();
 
 private:
 	WaveSimulation* m_DFTWaveSimulation = nullptr;
-	WaveSimulation* m_FFTWaveSimulation = nullptr;
+	FFTWaveSimulation* m_FFTWaveSimulation = nullptr;
 
 	Clock*		m_gameClock = nullptr;
 	Texture*	m_test = nullptr;

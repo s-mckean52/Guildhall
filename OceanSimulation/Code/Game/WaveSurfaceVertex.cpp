@@ -1,28 +1,33 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
+#include "Engine/Math/MathUtils.hpp"
+#include "Engine/Core/Vertex_PCUTBN.hpp"
 #include "Game/WaveSurfaceVertex.hpp"
 #include "Game/WaveSimulation.hpp"
+#include "Game/FFTWaveSimulation.hpp"
 
 //---------------------------------------------------------------------------------------------------------
-WaveSurfaceVertex::WaveSurfaceVertex( int xSamplePosition, int ySamplePosition, IntVec2 const& sampleDimensions, Vec2 const& dimensions )
+WaveSurfaceVertex::WaveSurfaceVertex( WaveSimulation* owner, int xSamplePosition, int ySamplePosition, IntVec2 const& sampleDimensions, Vec2 const& dimensions )
+	: m_owner( owner )
 {
 	TranslateSurfaceCoord( xSamplePosition, ySamplePosition, sampleDimensions );
 	
 	float xStep = dimensions.x / static_cast<float>( sampleDimensions.x );
 	float yStep = dimensions.y / static_cast<float>( sampleDimensions.y );
-	m_initialPosition.x = xSamplePosition * xStep;
-	m_initialPosition.y = ySamplePosition * yStep;
+	m_initialPosition.x = m_translatedCoord.x * xStep;
+	m_initialPosition.y = m_translatedCoord.y * yStep;
+	m_initialPosition.z = 0.f;
 
 	CalculateK( sampleDimensions, dimensions );
 
-	m_hTilde0 = hTilde0();
-	m_hTilde0Conj = std::conj( hTilde0( true ) );
+	m_hTilde0 = CalculateHTilde0();
+	m_hTilde0Conj = std::conj( CalculateHTilde0( true ) );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void WaveSurfaceVertex::CalculateHTildeAtTime( float time )
 {
-	float dispersionRelation = WaveSimulation::GetDeepDispersion( m_k );
+	float dispersionRelation = m_owner->GetDeepDispersion( m_k );
 	float dispersionTime = dispersionRelation * time * 10.f;
 
 	float cosDispersionTime = cos( dispersionTime );
@@ -58,12 +63,38 @@ ComplexFloat WaveSurfaceVertex::CalculateHTilde0( bool doesNegateK )
 
 	std::complex<float> guassianComplex( gRand1, gRand2 );
 	
-	return inverse_sqrt_2 * guassianComplex * sqrt( WaveSimulation::PhillipsEquation( k ) ); 
+	return inverse_sqrt_2 * guassianComplex * sqrt( m_owner->PhillipsEquation( k ) ); 
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void WaveSurfaceVertex::CalculateValuesAtTime( float time)
+void WaveSurfaceVertex::SetVertexPositionAndNormal( Vertex_PCUTBN& vertexToModify )
+{
+ 	float sign = 1.f - ( 2.f * PositiveMod( m_translatedCoord.x + m_translatedCoord.y, 2 ) );
+// 
+// 	m_height = m_hTilde.real() * sign;
+
+	Vec3 translation;
+	translation.x = 0.f;//-m_position[0].real() * sign;
+	translation.y = 0.f;// -m_position[1].real() * sign;
+	translation.z = m_height;
+
+	m_surfaceNormal.x = m_surfaceSlope[0].real() * sign;
+	m_surfaceNormal.y = m_surfaceSlope[1].real() * sign;
+	m_surfaceNormal.z = 0.f;
+
+	m_surfaceNormal = ( Vec3::UNIT_POSITIVE_Z - m_surfaceNormal ) / sqrtf( 1.f + DotProduct3D( m_surfaceNormal, m_surfaceNormal ) );
+	//normal.Normalize();
+
+	vertexToModify.m_position = m_initialPosition + translation;
+	vertexToModify.m_normal = m_surfaceNormal;
+	vertexToModify.m_tangent = CrossProduct3D( Vec3::UNIT_POSITIVE_Y, m_surfaceNormal );
+	vertexToModify.m_bitangent = CrossProduct3D( m_surfaceNormal, vertexToModify.m_tangent );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSurfaceVertex::CalculateValuesAtTime( float time )
 {
 	float kLength = m_k.GetLength();
 
@@ -86,16 +117,19 @@ void WaveSurfaceVertex::CalculateValuesAtTime( float time)
 //---------------------------------------------------------------------------------------------------------
 void WaveSurfaceVertex::TranslateSurfaceCoord( int xSamplePosition, int ySamplePosition, IntVec2 const& sampleDimensions )
 {
-	IntVec2 halfDimensions = sampleDimensions * 0.5f;
-	m_translatedCoord = IntVec2( xSamplePosition, ySamplePosition );
+	IntVec2 halfDimensions;
+	halfDimensions.x = static_cast<int>( static_cast<float>( sampleDimensions.x ) * 0.5f );
+	halfDimensions.y = static_cast<int>( static_cast<float>( sampleDimensions.y ) * 0.5f );
 
-	m_translatedCoord -= sampleDimensions;
+	m_translatedCoord = IntVec2( xSamplePosition, ySamplePosition ) - halfDimensions;
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void WaveSurfaceVertex::CalculateK( IntVec2 const& sampleDimensions, Vec2 const& dimensions )
 {
+	UNUSED( sampleDimensions );
+
 	m_k.x = ( PI_VALUE * 2.f * static_cast<float>( m_translatedCoord.x ) ) / dimensions.x;
 	m_k.y = ( PI_VALUE * 2.f * static_cast<float>( m_translatedCoord.y ) ) / dimensions.y;
 }

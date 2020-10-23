@@ -11,7 +11,7 @@ struct WavePoint
 class DFTWaveSimulation : public WaveSimulation
 {
 public:
-	DFTWaveSimulation( Vec2 const& dimensions, uint samples );
+	DFTWaveSimulation( Vec2 const& dimensions, uint samples, float windSpeed );
 	~DFTWaveSimulation();
 
 	void Simulate() override;

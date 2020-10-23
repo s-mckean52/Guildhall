@@ -3,17 +3,22 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Renderer/GPUMesh.hpp"
+#include "Engine/Core/DebugRender.hpp"
 #include "Engine/Renderer/MeshUtils.hpp"
+#include "Engine/Input/InputSystem.hpp"
 #include "Game/DFTWaveSimulation.hpp"
 #include "Game/FFTWaveSimulation.hpp"
+#include "Game/IWave.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/Game.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
-FFTWaveSimulation::FFTWaveSimulation( Vec2 const& dimensions, uint samples )
-	: WaveSimulation( dimensions, samples )
+FFTWaveSimulation::FFTWaveSimulation( Vec2 const& dimensions, uint samples, float windSpeed )
+	: WaveSimulation( dimensions, samples, windSpeed )
 {
+	m_iWave = new IWave( this, dimensions, samples, samples );
+
 	int samplesSquared = samples * samples;
 	m_hTilde.resize( samplesSquared );
 	m_hTilde_dx.resize( samplesSquared );
@@ -25,6 +30,10 @@ FFTWaveSimulation::FFTWaveSimulation( Vec2 const& dimensions, uint samples )
 	m_c[0].resize( samples );
 	m_c[1].resize( samples );
 
+	m_switchArray.resize(2);
+	m_switchArray[0].resize( samples );
+	m_switchArray[1].resize( samples );
+
 	m_log2N = static_cast<uint>( std::log2( samples ) );
 	m_pi2 = 2.f * PI_VALUE;
 
@@ -32,13 +41,16 @@ FFTWaveSimulation::FFTWaveSimulation( Vec2 const& dimensions, uint samples )
 	CalculateTForIndices();
 
 	m_hTilde0Data.resize( m_numSamples * m_numSamples );
-	m_surfaceVerts.resize( m_numSamples * m_numSamples );
+	m_waveSurfaceVerts.resize( m_numSamples * m_numSamples );
 	for( int i = 0; i < m_initialSurfacePositions.size(); ++i )
 	{	
 		int m = i / m_numSamples;
 		int n = i - ( m * m_numSamples );
 		
-		m_waveSurfaceVerts[i] = WaveSurfaceVertex( n, m, IntVec2( m_numSamples, m_numSamples ), m_dimensions );
+		m_hTilde0Data[i].m_htilde0 = hTilde0(n, m);
+		m_hTilde0Data[i].m_htilde0Conj = std::conj( hTilde0(n, m, true) );
+
+		m_waveSurfaceVerts[i] = WaveSurfaceVertex( this, n, m, IntVec2( m_numSamples, m_numSamples ), m_dimensions );
 	}
 }
 
@@ -53,6 +65,7 @@ FFTWaveSimulation::~FFTWaveSimulation()
 void FFTWaveSimulation::Simulate()
 {
 	float elapsedTime = static_cast<float>( m_simulationClock->GetTotalElapsedSeconds() );
+	float deltaSeconds = static_cast<float>( m_simulationClock->GetLastDeltaSeconds() );
 	for( int positionIndex = 0; positionIndex < m_initialSurfacePositions.size(); ++positionIndex )
 	{
 // 		int m = positionIndex / m_numSamples;
@@ -83,30 +96,55 @@ void FFTWaveSimulation::Simulate()
 
 	for( uint positionIndex = 0; positionIndex < m_initialSurfacePositions.size(); ++positionIndex )
 	{
-		int m = positionIndex / m_numSamples;
-		int n = positionIndex - ( m * m_numSamples );
+// 		int m = positionIndex / m_numSamples;
+// 		int n = positionIndex - ( m * m_numSamples );
+// 
+// 		float sign = 1.f - ( 2.f * ( ( n + m ) % 2 ) );
+// 
+// 		Vec3 translation;
+// 		translation.x = -m_hTilde_dx[positionIndex].real() * sign;
+// 		translation.y = -m_hTilde_dy[positionIndex].real() * sign;
+// 		translation.z = m_hTilde[positionIndex].real() *sign;
+// 
+// 		Vec3 normal;
+// 		normal.x = m_slopeX[positionIndex].real() * sign;
+// 		normal.y = m_slopeY[positionIndex].real() * sign;
+// 		normal.z = 0.f;
+// 
+// 		normal = ( Vec3::UNIT_POSITIVE_Z - normal ) / sqrtf( 1.f + DotProduct3D( normal, normal ) );
+// 		//normal.Normalize();
+// 
+// 		Vertex_PCUTBN& currentVert = m_surfaceVerts[positionIndex];
+// 		currentVert.m_position = m_initialSurfacePositions[positionIndex] + translation;
+// 		currentVert.m_normal = normal;
 
-		float sign = 1.f - ( 2.f * ( ( n + m ) % 2 ) );
+		//Vertex_PCUTBN& currentVert = m_surfaceVerts[positionIndex];
+		//m_waveSurfaceVerts[positionIndex].SetVertexPositionAndNormal( currentVert );
+		WaveSurfaceVertex& currentVert = m_waveSurfaceVerts[positionIndex];
+		float sign = 1.f - (2.f * PositiveMod(currentVert.m_translatedCoord.x + currentVert.m_translatedCoord.y, 2));
 
-		Vec3 translation;
-		translation.x = -m_hTilde_dx[positionIndex].real() * sign;
-		translation.y = -m_hTilde_dy[positionIndex].real() * sign;
-		translation.z = m_hTilde[positionIndex].real() *sign;
-
-		Vec3 normal;
-		normal.x = m_slopeX[positionIndex].real() * sign;
-		normal.y = m_slopeY[positionIndex].real() * sign;
-		normal.z = 0.f;
-
-		normal = Vec3::UNIT_POSITIVE_Y - normal / sqrtf( 1.f + DotProduct3D( normal, normal ) );
-		//normal.Normalize();
-
-		Vertex_PCUTBN& currentVert = m_surfaceVerts[positionIndex];
-		currentVert.m_position = m_initialSurfacePositions[positionIndex] + translation;
-		currentVert.m_normal = normal;
+		currentVert.m_height = currentVert.m_hTilde.real() * sign;
 	}
 
-	MeshGenerateTangents( m_surfaceVerts );
+	if( m_isIWaveEnabled )
+	{
+		m_iWave->Update( deltaSeconds );
+	}
+	for( uint positionIndex = 0; positionIndex < m_initialSurfacePositions.size(); ++positionIndex )
+	{
+		Vertex_PCUTBN& currentVert = m_surfaceVerts[positionIndex];
+		m_waveSurfaceVerts[positionIndex].SetVertexPositionAndNormal( currentVert );
+	}
+
+	//MeshGenerateTangents( m_surfaceVerts );
+// 	for( int i = 0; i < m_surfaceVerts.size(); ++i )
+// 	{
+// 		Vertex_PCUTBN const& currentVert = m_surfaceVerts[i];
+// 		DebugAddWorldArrow( currentVert.m_position, currentVert.m_position + currentVert.m_tangent, Rgba8::RED, 0.f, DEBUG_RENDER_XRAY );
+// 		DebugAddWorldArrow( currentVert.m_position, currentVert.m_position + currentVert.m_bitangent, Rgba8::GREEN, 0.f, DEBUG_RENDER_XRAY );
+// 		DebugAddWorldArrow( currentVert.m_position, currentVert.m_position + currentVert.m_normal, Rgba8::BLUE, 0.f, DEBUG_RENDER_XRAY );
+// 	}
+
 	m_surfaceMesh->UpdateVerticies( static_cast<uint>( m_surfaceVerts.size() ), &m_surfaceVerts[0] );
 }
 
@@ -220,7 +258,7 @@ void FFTWaveSimulation::CalculateFFT( std::vector<WaveSurfaceVertex>& data, int 
 	for( uint sampleIndex = 0; sampleIndex < m_numSamples; ++sampleIndex )
 	{
 		int dataIndex = m_bitReversedIndices[sampleIndex] * stride + offset;
-		m_c[which][sampleIndex] = data[ dataIndex ];
+		m_switchArray[which][sampleIndex] = data[ dataIndex ];
 	}
 
 	int w_ = 0;
@@ -236,28 +274,65 @@ void FFTWaveSimulation::CalculateFFT( std::vector<WaveSurfaceVertex>& data, int 
 			for( int k = 0; k < lastIterationSize; ++k )
 			{
 				int jSizePlusK = ( j * currentIterationSize ) + k;
-				m_c[which][jSizePlusK] = m_c[which^1][jSizePlusK] + m_c[which^1][jSizePlusK + lastIterationSize] * m_Ts[w_][k];
+				WaveSurfaceVertex& waveStorage = m_switchArray[which][jSizePlusK];
+				WaveSurfaceVertex& waveToModify = m_switchArray[which^1][jSizePlusK];
+				WaveSurfaceVertex& lastWaveToModify = m_switchArray[which^1][jSizePlusK + lastIterationSize];
+				ComplexFloat currentTValue = m_Ts[w_][k];
+
+				waveStorage.m_hTilde = waveToModify.m_hTilde + lastWaveToModify.m_hTilde * currentTValue;
+				waveStorage.m_position[0] = waveToModify.m_position[0] + lastWaveToModify.m_position[0] * currentTValue;
+				waveStorage.m_position[1] = waveToModify.m_position[1] + lastWaveToModify.m_position[1] * currentTValue;
+				waveStorage.m_surfaceSlope[0] = waveToModify.m_surfaceSlope[0] + lastWaveToModify.m_surfaceSlope[0] * currentTValue;
+				waveStorage.m_surfaceSlope[1] = waveToModify.m_surfaceSlope[1] + lastWaveToModify.m_surfaceSlope[1] * currentTValue;
 			}
 
 			for( int k = lastIterationSize; k < currentIterationSize; ++k )
 			{
 				int jSizePlusK = ( j * currentIterationSize ) + k;
-				m_c[which][jSizePlusK] = m_c[which ^ 1][jSizePlusK - lastIterationSize] - m_c[which ^ 1][jSizePlusK] * m_Ts[w_][k - lastIterationSize];
+				WaveSurfaceVertex& waveStorage = m_switchArray[which][jSizePlusK];
+				WaveSurfaceVertex& waveToModify = m_switchArray[which^1][jSizePlusK];
+				WaveSurfaceVertex& lastWaveToModify = m_switchArray[which^1][jSizePlusK - lastIterationSize];
+				ComplexFloat currentTValue = m_Ts[w_][k - lastIterationSize];
+
+				waveStorage.m_hTilde = lastWaveToModify.m_hTilde - waveToModify.m_hTilde * currentTValue;
+				waveStorage.m_position[0] = lastWaveToModify.m_position[0] - waveToModify.m_position[0] * currentTValue;
+				waveStorage.m_position[1] = lastWaveToModify.m_position[1] - waveToModify.m_position[1] * currentTValue;
+				waveStorage.m_surfaceSlope[0] = lastWaveToModify.m_surfaceSlope[0] - waveToModify.m_surfaceSlope[0] * currentTValue;
+				waveStorage.m_surfaceSlope[1] = lastWaveToModify.m_surfaceSlope[1] - waveToModify.m_surfaceSlope[1] * currentTValue;
 			}
 		}
-		numLoops	>>= 1;
-		currentIterationSize		<<= 1;
-		lastIterationSize	<<= 1;
+		numLoops				>>= 1;
+		currentIterationSize	<<= 1;
+		lastIterationSize		<<= 1;
 		++w_;
 	}
 
 	for( uint sampleIndex = 0; sampleIndex < m_numSamples; ++sampleIndex )
 	{
 		int dataIndex = sampleIndex * stride + offset;
-		data_out[dataIndex] = m_c[which][sampleIndex];
+		WaveSurfaceVertex& vertexDataTo = data[dataIndex];
+		WaveSurfaceVertex& vertexDataFrom = m_switchArray[which][sampleIndex];
+		vertexDataTo.m_hTilde = vertexDataFrom.m_hTilde;
+		vertexDataTo.m_position[0] = vertexDataFrom.m_position[0];
+		vertexDataTo.m_position[1] = vertexDataFrom.m_position[1];
+		vertexDataTo.m_surfaceSlope[0] = vertexDataFrom.m_surfaceSlope[0];
+		vertexDataTo.m_surfaceSlope[1] = vertexDataFrom.m_surfaceSlope[1];
 	}
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void FFTWaveSimulation::SetIWaveEnabled( bool isEnabled )
+{
+	m_isIWaveEnabled = isEnabled;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void FFTWaveSimulation::SetIsChoppyWater( bool isChoppyWater )
+{
+	m_isChoppyWater = isChoppyWater;
+}
 
 //---------------------------------------------------------------------------------------------------------
 void FFTWaveSimulation::GetHeightAtPosition( int n, int m, float time )
@@ -279,5 +354,12 @@ void FFTWaveSimulation::GetHeightAtPosition( int n, int m, float time )
 		m_hTilde_dx[index] = m_hTilde[index] * ComplexFloat( 0.f, -k.x / k.GetLength() );
 		m_hTilde_dy[index] = m_hTilde[index] * ComplexFloat( 0.f, -k.y / k.GetLength() );
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+WaveSurfaceVertex& FFTWaveSimulation::GetWaveVertAtIndex( int index )
+{
+	return m_waveSurfaceVerts[index];
 }
 

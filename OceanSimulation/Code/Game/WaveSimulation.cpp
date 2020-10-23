@@ -80,9 +80,10 @@ void Wave::AddPhase( float phaseToAdd )
 
 
 //---------------------------------------------------------------------------------------------------------
-WaveSimulation::WaveSimulation( Vec2 const& dimensions, uint samples )
+WaveSimulation::WaveSimulation( Vec2 const& dimensions, uint samples, float windSpeed )
 	: m_dimensions( dimensions )
 	, m_numSamples( samples )
+	, m_windSpeed( windSpeed )
 {
 	m_simulationClock = new Clock( g_theGame->GetGameClock() );
 	m_transform = new Transform();
@@ -111,8 +112,8 @@ void WaveSimulation::Render() const
 	}
 
 	//g_theRenderer->BindShaderByPath( "Data/Shaders/Water.hlsl" );
-	g_theRenderer->BindShaderByPath( "Data/Shaders/Normals.hlsl" );
-	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
+	//g_theRenderer->BindShaderByPath( "Data/Shaders/Normals.hlsl" );
+	g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 
 	uint tilingDimSquared = m_tilingDimensions * m_tilingDimensions;
 	for( uint i = 0; i < tilingDimSquared; ++i )

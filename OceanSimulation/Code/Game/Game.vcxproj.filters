@@ -51,6 +51,9 @@
     <ClCompile Include="WaveSurfaceVertex.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
+    <ClCompile Include="IWave.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -78,6 +81,9 @@
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="WaveSurfaceVertex.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="IWave.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>

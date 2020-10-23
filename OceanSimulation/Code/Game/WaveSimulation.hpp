@@ -1,8 +1,9 @@
 #pragma once
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-#include "Game/GameCommon.hpp"
 #include "Engine/Core/Vertex_PCUTBN.hpp"
+#include "Game/WaveSurfaceVertex.hpp"
+#include "Game/GameCommon.hpp"
 #include <vector>
 
 
@@ -11,6 +12,7 @@ struct	Rgba8;
 struct	IntVec2;
 class	Transform;
 class	GPUMesh;
+class	Clock;
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -49,7 +51,7 @@ class WaveSimulation
 {
 public:
 	virtual ~WaveSimulation() = default;
-	WaveSimulation( Vec2 const& dimensions, uint samples );
+	WaveSimulation( Vec2 const& dimensions, uint samples, float windSpeed );
 
 	virtual void Simulate() = 0;
 
@@ -57,9 +59,12 @@ public:
 	virtual void AddWave( Wave* waveToAdd );
 
 	int			GetNumWaves() const;
+	int			GetNumSamples() const		{ return m_numSamples; }
+	Vec2 const& GetGridDimensions() const	{ return m_dimensions; }
+	float		GetWindSpeed() const		{ return m_windSpeed; }
 	Wave*		GetWaveAtIndex( int index ) const;
-	static float	GetDeepDispersion( Vec2 const& k );
-	static float	PhillipsEquation( Vec2 const& k );
+	float		GetDeepDispersion( Vec2 const& k );
+	float		PhillipsEquation( Vec2 const& k );
 	
 	ComplexFloat hTilde( int n, int m, float time );
 	ComplexFloat hTilde0( int n, int m, bool doesNegateK = false );
@@ -76,6 +81,8 @@ private:
 	void	GenerateSurface( Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps );
 
 protected:
+
+
 	Clock*				m_simulationClock = nullptr;
 
 	uint				m_tilingDimensions = 1;
