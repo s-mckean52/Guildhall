@@ -20,6 +20,7 @@ class Clock;
 class NamedProperties;
 class WaveSimulation;
 class FFTWaveSimulation;
+class WaterObject;
 struct Vertex_PCUTBN;
 struct AABB3;
 
@@ -76,6 +77,8 @@ public:
 	void PlayTestSound();
 
 private:
+	WaterObject* m_testCube = nullptr;
+
 	WaveSimulation* m_DFTWaveSimulation = nullptr;
 	FFTWaveSimulation* m_FFTWaveSimulation = nullptr;
 

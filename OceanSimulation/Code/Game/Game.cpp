@@ -34,6 +34,7 @@
 #include "Game/DFTWaveSimulation.hpp"
 #include "Game/IWave.hpp"
 #include "Game/WaveSimulation.hpp"
+#include "Game/WaterObject.hpp"
 #include <string>
 
 
@@ -78,9 +79,9 @@ void Game::StartUp()
 	m_worldCamera = new Camera( g_theRenderer );
 	m_worldCamera->SetProjectionPerspective( 60.f, -0.09f, -100.f );
 	m_worldCamera->SetDepthStencilTarget( g_theRenderer->m_defaultDepthStencil );
-	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, m_clearColor, 1.0f, 0 );
-	m_worldCamera->SetPosition( Vec3( -16.f, -20.f, 1.f ) );
-	m_worldCamera->SetPitchYawRollRotationDegrees( 0.f, 90.f, 0.f );
+	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, Rgba8::MakeFromFloats( 0.1f, 0.1f, 0.1f ), 1.0f, 0 );
+	m_worldCamera->SetPosition( Vec3( -8.f, -8.f, 1.f ) );
+	m_worldCamera->SetPitchYawRollRotationDegrees( 10.f, 90.f, 0.f );
 	UpdateCameraProjection( m_worldCamera );
 	g_theRenderer->DisableFog();
 
@@ -92,11 +93,15 @@ void Game::StartUp()
 	m_theSun.color = Rgba8::WHITE.GetValuesAsFractionsVec3();//Rgba8(255, 184, 19).GetValuesAsFractionsVec3();
 	m_theSun.intensity = 1.f;
 
+	g_theRenderer->SetAmbientColor( Rgba8::BLACK );
+	g_theRenderer->SetAmbientIntensity( 0.f );
 
-	uint samples = 32;
-	Vec2 dimensions = Vec2( 32.f, 32.f );
-	m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples, 37.f );
-	CreateNewFFTSimulation( samples, dimensions, 0.f );
+	uint samples = 256;
+	Vec2 dimensions = Vec2( 64.f, 64.f );
+	float wind = 37.f;
+	m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples, wind );
+	m_FFTWaveSimulation = dynamic_cast<FFTWaveSimulation*>( WaveSimulation::CreateWaveSimulation( "Data/SimulationSettings/Test.xml" ) );
+	//CreateNewFFTSimulation( samples, dimensions, wind );
 	//m_FFTWaveSimulation->SetPosition( Vec3( dimensions.x, 0.f, 0.f ) );
 // 	for( int i = 0; i < -1; ++i )
 // 	{
@@ -107,6 +112,8 @@ void Game::StartUp()
 // 
 // 		m_waveSimulation->AddWave( new Wave( randomDirection, randomWaveLength, randomAmplitude, randomPhase ) );
 // 	}
+
+	m_testCube = new WaterObject( Vec3( 1.f, 1.f, 1.f ), Vec3( 0.f, 0.f, 0.f ) );
 
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 	m_test				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Grid.png" );
@@ -177,8 +184,10 @@ void Game::Update()
 
 	if( !g_theConsole->IsOpen() )
 	{
+		m_testCube->Update();
 		UpdateFromInput( deltaSeconds );
 		//m_DFTWaveSimulation->Simulate();
+		m_FFTWaveSimulation->m_iWave->AddWaterObject( m_testCube );
 		m_FFTWaveSimulation->Simulate();
 	}
 }
@@ -206,6 +215,7 @@ void Game::RenderWorld() const
 
 	//m_DFTWaveSimulation->Render();
 	m_FFTWaveSimulation->Render();
+	m_testCube->Render();
 }
 
 
@@ -231,8 +241,8 @@ void Game::RenderUI() const
 
 	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "FPS: %.2f", fps ) ) );
 	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Wave Simulation: FFT" ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "iWave: %s", ( m_FFTWaveSimulation->IsIWaveEnabled() ? "Enabled" : "Disabled" ) ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Choppiness: %s", ( m_FFTWaveSimulation->IsChoppyWater() ? "Enabled" : "Disabled" ) ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[I] - iWave: %s", ( m_FFTWaveSimulation->IsIWaveEnabled() ? "Enabled" : "Disabled" ) ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[C] - Choppiness: %s", ( m_FFTWaveSimulation->IsChoppyWater() ? "Enabled" : "Disabled" ) ) ) );
 
 	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Samples: %i", m_FFTWaveSimulation->GetNumSamples() ) ) );
 	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Dimensions: %.2f, %.2f", m_FFTWaveSimulation->GetGridDimensions().x, m_FFTWaveSimulation->GetGridDimensions().y ) ) );
@@ -405,14 +415,24 @@ void Game::UpdateSimulationFromInput()
 {
 	const float updateSpeed = 1.f;
 
+	if( g_theInput->WasKeyJustPressed( 'I' ) )
+	{
+		m_FFTWaveSimulation->SetIWaveEnabled( !m_FFTWaveSimulation->IsIWaveEnabled() );
+	}
+
+	if( g_theInput->WasKeyJustPressed( 'C' ) )
+	{
+		m_FFTWaveSimulation->SetIsChoppyWater( !m_FFTWaveSimulation->IsChoppyWater() );
+	}
+
 	if( g_theInput->WasKeyJustPressed( 'M' ) )
 	{
 		FFTWaveSimulation* fft = dynamic_cast<FFTWaveSimulation*>( m_FFTWaveSimulation );
-		fft->m_iWave->AddSource( 32 * 16 + 16, -1.f );
-		fft->m_iWave->AddSource( 32 * 16 + 15, -1.f );
-		fft->m_iWave->AddSource( 32 * 16 + 17, -1.f );
-		fft->m_iWave->AddSource( 32 * 17 + 16, -1.f );
-		fft->m_iWave->AddSource( 32 * 15 + 16, -1.f );
+		fft->m_iWave->AddSource( 32 * 16 + 16, -0.5f );
+		fft->m_iWave->AddSource( 32 * 16 + 15, -0.5f );
+		fft->m_iWave->AddSource( 32 * 16 + 17, -0.5f );
+		fft->m_iWave->AddSource( 32 * 17 + 16, -0.5f );
+		fft->m_iWave->AddSource( 32 * 15 + 16, -0.5f );
 	}
 
 	if( g_theInput->WasKeyJustPressed( 'F' ) )
@@ -561,15 +581,10 @@ void Game::UpdateFromInput( float deltaSeconds )
 		m_worldCamera->SetPitchYawRollRotationDegrees( 0.f, 0.f, 0.0f );
 	}
 
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_F1 ) )
-	{
-		PlayTestSound();
-	}
-
-	if( g_theInput->WasKeyJustPressed( 'I' ) )
-	{
-		m_worldCamera->SetPitchYawRollRotationDegrees( 0.f, 0.f, 0.f );
-	}
+// 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F1 ) )
+// 	{
+// 		PlayTestSound();
+// 	}
 }
 
 

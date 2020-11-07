@@ -2,6 +2,7 @@
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/Vertex_PCUTBN.hpp"
+#include "Engine/Core/XmlUtils.hpp"
 #include "Game/WaveSurfaceVertex.hpp"
 #include "Game/GameCommon.hpp"
 #include <vector>
@@ -14,6 +15,13 @@ class	Transform;
 class	GPUMesh;
 class	Clock;
 
+
+enum WaveSimulationMode
+{
+	FFT_WAVE_SIMULATION,
+	DFT_WAVE_SIMULATION,
+	GERSTNER_WAVE_SIMULATION,
+};
 
 //---------------------------------------------------------------------------------------------------------
 struct HTilde0Data
@@ -50,10 +58,11 @@ public:
 class WaveSimulation
 {
 public:
-	virtual ~WaveSimulation() = default;
+	virtual ~WaveSimulation() {};
+	WaveSimulation( XmlElement const& element );
 	WaveSimulation( Vec2 const& dimensions, uint samples, float windSpeed );
 
-	virtual void Simulate() = 0;
+	virtual void Simulate();
 
 	virtual void Render() const;
 	virtual void AddWave( Wave* waveToAdd );
@@ -65,6 +74,11 @@ public:
 	Wave*		GetWaveAtIndex( int index ) const;
 	float		GetDeepDispersion( Vec2 const& k );
 	float		PhillipsEquation( Vec2 const& k );
+
+	bool	IsIWaveEnabled() const { return m_isIWaveEnabled; }
+	bool	IsChoppyWater() const { return m_isChoppyWater; }
+	void	SetIWaveEnabled( bool isEnabled );
+	void	SetIsChoppyWater( bool isChoppyWater );
 	
 	ComplexFloat hTilde( int n, int m, float time );
 	ComplexFloat hTilde0( int n, int m, bool doesNegateK = false );
@@ -77,13 +91,21 @@ public:
 	void		SetTilingDimensions( uint tilingDimenisions );
 	void		ToggleSimulationClockPause();
 
+public:
+	static	WaveSimulation*		CreateWaveSimulation( std::string filePath );
+	static	WaveSimulation*		CreateWaveSimulationFromXML( XmlElement* element );
+	static	WaveSimulationMode	GetWaveSimulationModeFromString( std::string waveSimulationMode );
+			void				SetPhillipsSpectrumValues( XmlElement const& element );
+			void				SetRuntimeDefaults( XmlElement const& element );
+
 private:
 	void	GenerateSurface( Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps );
 
 protected:
-
-
-	Clock*				m_simulationClock = nullptr;
+	Clock*				m_simulationClock		= nullptr;
+	WaveSimulationMode	m_waveSimulationMode	= FFT_WAVE_SIMULATION;
+	bool				m_isIWaveEnabled		= false;
+	bool				m_isChoppyWater			= true;
 
 	uint				m_tilingDimensions = 1;
 	bool				m_isWireFrame	= true;
@@ -93,9 +115,10 @@ protected:
 	std::vector<Wave*>	m_waves;
 
 		//Phillips Spectrum Variables
-	float	m_A				= 0.0005f;			//Phillips Spectrum Constant 0.001 is slightly above max value for this
-	Vec2	m_windDirection	= Vec2::RIGHT;
-	float	m_windSpeed		= 37.f;
+	float	m_A					= 0.0005f;			//Phillips Spectrum Constant 0.001 is slightly above max value for this
+	float	m_waveSuppression	= 1.f;
+	Vec2	m_windDirection		= Vec2::RIGHT;
+	float	m_windSpeed			= 37.f;
 
 	GPUMesh*					m_surfaceMesh		= nullptr; 
 	std::vector<uint>			m_surfaceIndicies;

@@ -17,41 +17,16 @@
 FFTWaveSimulation::FFTWaveSimulation( Vec2 const& dimensions, uint samples, float windSpeed )
 	: WaveSimulation( dimensions, samples, windSpeed )
 {
-	m_iWave = new IWave( this, dimensions, samples, samples );
+	InitializeValues();
+}
 
-	int samplesSquared = samples * samples;
-	m_hTilde.resize( samplesSquared );
-	m_hTilde_dx.resize( samplesSquared );
-	m_hTilde_dy.resize( samplesSquared );
-	m_slopeX.resize( samplesSquared );
-	m_slopeY.resize( samplesSquared );
 
-	m_c.resize(2);
-	m_c[0].resize( samples );
-	m_c[1].resize( samples );
 
-	m_switchArray.resize(2);
-	m_switchArray[0].resize( samples );
-	m_switchArray[1].resize( samples );
-
-	m_log2N = static_cast<uint>( std::log2( samples ) );
-	m_pi2 = 2.f * PI_VALUE;
-
-	CreateBitReversedIndicies();
-	CalculateTForIndices();
-
-	m_hTilde0Data.resize( m_numSamples * m_numSamples );
-	m_waveSurfaceVerts.resize( m_numSamples * m_numSamples );
-	for( int i = 0; i < m_initialSurfacePositions.size(); ++i )
-	{	
-		int m = i / m_numSamples;
-		int n = i - ( m * m_numSamples );
-		
-		m_hTilde0Data[i].m_htilde0 = hTilde0(n, m);
-		m_hTilde0Data[i].m_htilde0Conj = std::conj( hTilde0(n, m, true) );
-
-		m_waveSurfaceVerts[i] = WaveSurfaceVertex( this, n, m, IntVec2( m_numSamples, m_numSamples ), m_dimensions );
-	}
+//---------------------------------------------------------------------------------------------------------
+FFTWaveSimulation::FFTWaveSimulation( XmlElement const& element )
+	: WaveSimulation( element )
+{
+	InitializeValues();
 }
 
 
@@ -148,6 +123,46 @@ void FFTWaveSimulation::Simulate()
 	m_surfaceMesh->UpdateVerticies( static_cast<uint>( m_surfaceVerts.size() ), &m_surfaceVerts[0] );
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void FFTWaveSimulation::InitializeValues()
+{
+	m_iWave = new IWave( this, m_dimensions, m_numSamples, m_numSamples );
+
+	int samplesSquared = m_numSamples * m_numSamples;
+	m_hTilde.resize( samplesSquared );
+	m_hTilde_dx.resize( samplesSquared );
+	m_hTilde_dy.resize( samplesSquared );
+	m_slopeX.resize( samplesSquared );
+	m_slopeY.resize( samplesSquared );
+
+	m_c.resize(2);
+	m_c[0].resize( m_numSamples );
+	m_c[1].resize( m_numSamples );
+
+	m_switchArray.resize(2);
+	m_switchArray[0].resize( m_numSamples );
+	m_switchArray[1].resize( m_numSamples );
+
+	m_log2N = static_cast<uint>( std::log2( m_numSamples ) );
+	m_pi2 = 2.f * PI_VALUE;
+
+	CreateBitReversedIndicies();
+	CalculateTForIndices();
+
+	m_hTilde0Data.resize( m_numSamples * m_numSamples );
+	m_waveSurfaceVerts.resize( m_numSamples * m_numSamples );
+	for( int i = 0; i < m_initialSurfacePositions.size(); ++i )
+	{	
+		int m = i / m_numSamples;
+		int n = i - ( m * m_numSamples );
+		
+		m_hTilde0Data[i].m_htilde0 = hTilde0(n, m);
+		m_hTilde0Data[i].m_htilde0Conj = std::conj( hTilde0(n, m, true) );
+
+		m_waveSurfaceVerts[i] = WaveSurfaceVertex( this, n, m, IntVec2( m_numSamples, m_numSamples ), m_dimensions );
+	}
+}
 
 //---------------------------------------------------------------------------------------------------------
 uint FFTWaveSimulation::ReverseBits( uint value )
@@ -320,19 +335,6 @@ void FFTWaveSimulation::CalculateFFT( std::vector<WaveSurfaceVertex>& data, int 
 	}
 }
 
-
-//---------------------------------------------------------------------------------------------------------
-void FFTWaveSimulation::SetIWaveEnabled( bool isEnabled )
-{
-	m_isIWaveEnabled = isEnabled;
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void FFTWaveSimulation::SetIsChoppyWater( bool isChoppyWater )
-{
-	m_isChoppyWater = isChoppyWater;
-}
 
 //---------------------------------------------------------------------------------------------------------
 void FFTWaveSimulation::GetHeightAtPosition( int n, int m, float time )

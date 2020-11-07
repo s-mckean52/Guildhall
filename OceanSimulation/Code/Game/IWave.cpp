@@ -1,9 +1,10 @@
-#include "Engine/Math/Vec2.hpp"
 #include "Engine/Math/MathUtils.hpp"
+#include "Engine/Math/AABB2.hpp"
 #include "Game/IWave.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/FFTWaveSimulation.hpp"
 #include "Game/WaveSurfaceVertex.hpp"
+#include "Game/WaterObject.hpp"
 #include <complex>
 #include <corecrt_math.h>
 
@@ -11,6 +12,9 @@
 IWave::IWave( FFTWaveSimulation* owner, Vec2 const& dimensions, int xSamples, int ySamples )
 	:m_owner( owner )
 {
+	m_deltas.x = dimensions.x / xSamples;
+	m_deltas.y = dimensions.y / ySamples;
+
 	m_gridDimensions = IntVec2( xSamples, ySamples );
 	int numPoints = xSamples * ySamples;
 	m_samplePoints.resize( numPoints );
@@ -84,6 +88,7 @@ void IWave::ClearSources()
 	for( int index = 0; index < m_sources.size(); ++index )
 	{
 		m_sources[index] = 0.f;
+		m_obstructions[index] = 1.f;
 	}
 }
 
@@ -220,4 +225,46 @@ float IWave::GetHeightAtIndex( int index )
 	}
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void IWave::AddWaterObject( WaterObject* waterObjectToAdd )
+{
+	Vec3 position = waterObjectToAdd->GetPosition();
+	AABB3 objectBounds = waterObjectToAdd->GetBounds();
+	AABB2 object2DInnerBounds = AABB2( objectBounds.mins.x, objectBounds.mins.y, objectBounds.maxes.x, objectBounds.maxes.y );
+
+
+	Vec2 minOutterBoundsOnGrid;
+	minOutterBoundsOnGrid.x = RoundDownToInt( object2DInnerBounds.mins.x / m_deltas.x ) * m_deltas.x;
+	minOutterBoundsOnGrid.y = RoundDownToInt( object2DInnerBounds.mins.y / m_deltas.y ) * m_deltas.y; 
+	
+	Vec2 maxOutterBoundsOnGrid;
+	maxOutterBoundsOnGrid.x = ( RoundDownToInt( object2DInnerBounds.maxes.x / m_deltas.x ) + 1 ) * m_deltas.x;
+	maxOutterBoundsOnGrid.y = ( RoundDownToInt( object2DInnerBounds.maxes.y / m_deltas.y ) + 1 ) * m_deltas.y; 
+
+	AABB2 object2DOutterBounds = AABB2( minOutterBoundsOnGrid, maxOutterBoundsOnGrid );
+
+	object2DInnerBounds.Translate( Vec2( position.x, position.y ) );
+	object2DOutterBounds.Translate( Vec2( position.x, position.y ) );
+
+
+	for( int i = 0; i < m_obstructions.size(); ++i )
+	{
+		Vec2 samplePointPosition;
+		samplePointPosition.y = static_cast<float>( ( i / m_gridDimensions.x ) - ( m_gridDimensions.x / 2 ) ) * m_deltas.y; 
+		samplePointPosition.x = static_cast<float>( ( i % m_gridDimensions.x ) - ( m_gridDimensions.y / 2 ) ) * m_deltas.x;
+
+		if( IsPointInsideAABB2D( samplePointPosition, object2DInnerBounds ) )
+		{
+			m_obstructions[i] = 0.f;
+		}
+		else if( IsPointInsideAABB2D( samplePointPosition, object2DOutterBounds ) )
+		{
+			Vec2 nearestPointOnInnerBounds = GetNearestPointOnAABB2D( samplePointPosition, object2DInnerBounds );
+			Vec2 displacementToPoint = samplePointPosition - nearestPointOnInnerBounds;
+			float percent = ( ( displacementToPoint.x / m_deltas.x ) + ( displacementToPoint.y / m_deltas.y ) ) * 0.5f;
+			m_obstructions[i] = 1.f - abs( percent );
+		}
+	}
+}
 

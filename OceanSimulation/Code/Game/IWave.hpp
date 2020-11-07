@@ -1,9 +1,10 @@
 #pragma once
 #include "Engine/Math/IntVec2.hpp"
+#include "Engine/Math/Vec2.hpp"
 #include <vector>
 
 class FFTWaveSimulation;
-
+class WaterObject;
 
 //---------------------------------------------------------------------------------------------------------
 struct IWaveData
@@ -35,15 +36,18 @@ public:
 	void	ConvolveHeights();
 	float	GetConvolutionValue( int index );
 	float	GetHeightAtIndex( int index );
+
+	void	AddWaterObject( WaterObject* waterObjectToAdd );
 	
 	void ResetHeightsToZero();
 
 private:
 	FFTWaveSimulation* m_owner = nullptr;
 
+	Vec2	m_deltas;
 	IntVec2 m_gridDimensions;
-	int m_kernelSize = 0;
-	int m_kernelDimension = 0;
+	int		m_kernelSize = 0;
+	int		m_kernelDimension = 0;
 
 	std::vector<float>		m_kernelValuesLookUp;
 	std::vector<float>		m_sources;

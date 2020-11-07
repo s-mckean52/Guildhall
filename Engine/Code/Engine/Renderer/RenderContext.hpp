@@ -232,7 +232,7 @@ private:
 	Clock* m_gameClock = nullptr;
 	Camera* m_effectCamera = nullptr;
 
-	float m_gamma = 2.f;
+	float m_gamma = 1.f;
 	float m_inverseGamma = 1 / m_gamma;
 	Rgba8 m_fogNearColor = Rgba8::WHITE;
 	Rgba8 m_fogFarColor = Rgba8::WHITE;

@@ -204,6 +204,7 @@
     <ClCompile Include="GerstnerWaveSimulation.cpp" />
     <ClCompile Include="IWave.cpp" />
     <ClCompile Include="Main_Windows.cpp" />
+    <ClCompile Include="WaterObject.cpp" />
     <ClCompile Include="WaveSimulation.cpp" />
     <ClCompile Include="WaveSurfaceVertex.cpp" />
   </ItemGroup>
@@ -216,6 +217,7 @@
     <ClInclude Include="GameCommon.hpp" />
     <ClInclude Include="GerstnerWaveSimulation.hpp" />
     <ClInclude Include="IWave.hpp" />
+    <ClInclude Include="WaterObject.hpp" />
     <ClInclude Include="WaveSimulation.hpp" />
     <ClInclude Include="WaveSurfaceVertex.hpp" />
   </ItemGroup>

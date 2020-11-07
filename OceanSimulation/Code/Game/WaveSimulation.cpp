@@ -8,9 +8,12 @@
 #include "Engine/Math/Transform.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Core/Clock.hpp"
+#include "Engine/Core/DevConsole.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/Game.hpp"
 #include "Game/WaveSimulation.hpp"
+#include "Game/FFTWaveSimulation.hpp"
+#include "Game/DFTWaveSimulation.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -94,6 +97,34 @@ WaveSimulation::WaveSimulation( Vec2 const& dimensions, uint samples, float wind
 
 
 //---------------------------------------------------------------------------------------------------------
+WaveSimulation::WaveSimulation( XmlElement const& element )
+{
+	m_simulationClock = new Clock(g_theGame->GetGameClock());
+	m_transform = new Transform();
+
+	std::string simulationModeAsString = ParseXmlAttribute( element, "type", "Default" );
+	m_waveSimulationMode = GetWaveSimulationModeFromString( simulationModeAsString );
+	m_numSamples = ParseXmlAttribute( element, "samples", -1 );
+	m_dimensions = ParseXmlAttribute( element, "dimensions", Vec2( -1.f, -1.f ) );
+
+	XmlElement const& phillipsElement = *element.FirstChildElement( "PhillipsSpectrum" );
+	SetPhillipsSpectrumValues( phillipsElement ); 
+
+	XmlElement const& defaultsElement = *element.FirstChildElement( "RuntimeDefaults" );
+	SetRuntimeDefaults( defaultsElement ); 
+
+	GenerateSurface( Vec3::ZERO, Rgba8::WHITE, m_dimensions, IntVec2( m_numSamples - 1, m_numSamples - 1 ) );
+	m_surfaceMesh = new GPUMesh( g_theRenderer, m_surfaceVerts, m_surfaceIndicies );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::Simulate()
+{
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void WaveSimulation::Render() const
 {
 	
@@ -111,9 +142,9 @@ void WaveSimulation::Render() const
 		g_theRenderer->SetFillMode( FILL_MODE_SOLID );
 	}
 
-	//g_theRenderer->BindShaderByPath( "Data/Shaders/Water.hlsl" );
+	g_theRenderer->BindShaderByPath( "Data/Shaders/Water.hlsl" );
 	//g_theRenderer->BindShaderByPath( "Data/Shaders/Normals.hlsl" );
-	g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
+	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 
 	uint tilingDimSquared = m_tilingDimensions * m_tilingDimensions;
 	for( uint i = 0; i < tilingDimSquared; ++i )
@@ -124,7 +155,7 @@ void WaveSimulation::Render() const
 		newPosition.y = m_dimensions.y * ( i % m_tilingDimensions );
 		newTransform.Translate( newPosition );
 
-		g_theRenderer->SetModelUBO( newTransform.ToMatrix(), renderColor, 1.0f, 256.f );
+		g_theRenderer->SetModelUBO( newTransform.ToMatrix(), renderColor, 0.0f, 256.f );
 		g_theRenderer->DrawMesh( m_surfaceMesh );
 	}
 }
@@ -205,6 +236,76 @@ void WaveSimulation::ToggleSimulationClockPause()
 
 
 //---------------------------------------------------------------------------------------------------------
+STATIC WaveSimulation* WaveSimulation::CreateWaveSimulation( std::string filePath )
+{
+	XmlDocument waveSimulationFile = new XmlDocument();
+	waveSimulationFile.LoadFile( filePath.c_str() );
+
+	if( waveSimulationFile.ErrorID() != 0 )
+	{
+		g_theConsole->ErrorString( "%s does not exist in Run/Data", filePath.c_str() );
+		return nullptr;
+	}
+	return CreateWaveSimulationFromXML( waveSimulationFile.RootElement() );	
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+STATIC WaveSimulation* WaveSimulation::CreateWaveSimulationFromXML( XmlElement* element )
+{
+	std::string waveSimulationType = ParseXmlAttribute( *element, "type", "Default" );
+	WaveSimulationMode waveMode = GetWaveSimulationModeFromString( waveSimulationType );
+	switch( waveMode )
+	{
+	case FFT_WAVE_SIMULATION: { return new FFTWaveSimulation( *element ); };
+	case DFT_WAVE_SIMULATION: //{ //return new DFTWaveSimulation( element );
+	case GERSTNER_WAVE_SIMULATION:
+	default:
+		{ return nullptr; }
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+WaveSimulationMode WaveSimulation::GetWaveSimulationModeFromString( std::string waveSimulationMode )
+{
+	if( waveSimulationMode == "FFT" )			{ return FFT_WAVE_SIMULATION; }
+	else if( waveSimulationMode == "DFT" )		{ return DFT_WAVE_SIMULATION; }
+	else if( waveSimulationMode == "GERSTNER" )	{ return GERSTNER_WAVE_SIMULATION; }
+	else										{ return FFT_WAVE_SIMULATION; }
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::SetPhillipsSpectrumValues( XmlElement const& element )
+{
+	m_A					= ParseXmlAttribute( element, "aConstant", -1.f );
+	m_windSpeed			= ParseXmlAttribute( element, "windSpeed", -1.f );
+	m_waveSuppression	= ParseXmlAttribute( element, "waveSuppression", -1.f );
+
+	Vec2 defaultWindDir = Vec2( 0.f, 0.f );
+	m_windDirection	= ParseXmlAttribute( element, "windDirection", defaultWindDir );
+	if( m_windDirection == defaultWindDir )
+	{
+		g_theConsole->ErrorString( "Wind Direction defaulted to (1.f, 0.f)" );
+		m_windDirection = Vec2( 1.f, 0.f );
+	}
+	m_windDirection.Normalize();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::SetRuntimeDefaults( XmlElement const& element )
+{
+	m_isChoppyWater		= ParseXmlAttribute( element, "choppinessEnabled", false );
+	m_isIWaveEnabled	= ParseXmlAttribute( element, "iWaveEnabled", false );
+	m_isWireFrame		= ParseXmlAttribute( element, "wireFrameEnabled", false );
+	m_tilingDimensions	= ParseXmlAttribute( element, "tilingSize", 1 );
+	//m_dispersionRelation = ParseXmlAttribute( element, "dispersionRelation", "Default" );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void WaveSimulation::GenerateSurface( Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps )
 {
 	Vec2 halfDimensions = dimensions * 0.5f;
@@ -272,7 +373,7 @@ float WaveSimulation::PhillipsEquation( Vec2 const& k )
 	// A * e^( -1 / ( k * L )^2 ) / k^4 * ( Dot( k, w )^2 )
 
 	float lengthK = k.GetLength();
-	if( lengthK <= 0.000001f )
+	if( lengthK <= m_waveSuppression )
 		return 0.f;
 
 	float L = ( m_windSpeed * m_windSpeed ) * INVERSE_GRAVITY;
@@ -284,8 +385,7 @@ float WaveSimulation::PhillipsEquation( Vec2 const& k )
 	float kDotW = DotProduct2D( k, m_windDirection );
 	float kDotWSquared = kDotW * kDotW;
 
-	float damper = 1.f;
-	float damperSquared = damper * damper;
+	float damperSquared = m_waveSuppression * m_waveSuppression;
 	float lengthKSquared = lengthK * lengthK;
 	float supressionValue = std::exp( -lengthKSquared * damperSquared );
 
@@ -342,4 +442,18 @@ ComplexFloat WaveSimulation::hTilde0( int n, int m, bool doesNegateK )
 	std::complex<float> guassianComplex( gRand1, gRand2 );
 	
 	return inverse_sqrt_2 * guassianComplex * sqrt( PhillipsEquation( k ) ); 
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::SetIWaveEnabled( bool isEnabled)
+{
+	m_isIWaveEnabled = isEnabled;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::SetIsChoppyWater( bool isChoppyWater )
+{
+	m_isChoppyWater = isChoppyWater;
 }

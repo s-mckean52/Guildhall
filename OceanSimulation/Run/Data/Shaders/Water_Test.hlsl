@@ -146,21 +146,7 @@ v2f_t VertexFunction( vs_input_t input )
 // is being drawn to the first bound color target.
 float4 FragmentFunction( v2f_t input ) : SV_Target0
 {
-	float3 upwelling = float3( 0.f, 0.2f, 0.3f );
-	float3 sky = float3( 0.69f, 0.84f, 1.f );
-	float3 air = float3( 0.1f, 0.1f, 0.1f );
-	float nSnell = 1.34f;
-	float kDiffuse = 0.91f;
-	
-	float reflectivity;
-
 	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
-	float3 dPE = CAMERA_POSITION - input.world_position;
-	float dist = length(dPE) * kDiffuse;
-	dist = 1.f;
-	dist = input.position.z;
-	dist *= kDiffuse;
-	dist = exp(-dist);
 
 	float3 normal = normalize( input.world_normal );
 	float3 tangent = normalize( input.world_tangent );
@@ -170,7 +156,7 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 	float4 texture_color = tDiffuse.Sample( sSampler, input.uv );
 
 	float3 surface_color = pow( texture_color.xyz, GAMMA.xxx );
-	//surface_color *= input.color.xyz;
+	surface_color *= input.color.xyz;
 	float surface_alpha = ( input.color.a * texture_color.a );
 
 	//float3 surface_normal = ( normal_color.xyz * float3( 2.0f, 2.0f, 1.0f ) ) - float3( 1.0f, 1.0f, 0.0f );
@@ -179,7 +165,6 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 	float3 diffuse = AMBIENT.xyz * AMBIENT.w;
 	float3 specular_color = float3( 0.0f, 0.0f, 0.0f );
 	//return float4( world_normal, 1.f );
-
 
 	for (int i = 0; i < 8; ++i)
 	{
@@ -204,23 +189,6 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 
 		//Diffuse
 		float dot3 = max( 0.0f, dot( dir_to_light, world_normal ) );
-		float costhetai = dot3;
-		float thetai = acos(costhetai);
-		float sinthetat = sin(thetai) / nSnell;
-		float thetat = asin(sinthetat);
-
-		if (thetai == 0.0)
-		{
-			reflectivity = (nSnell - 1) / (nSnell + 1);
-			reflectivity = reflectivity * reflectivity;
-		}
-		else
-		{
-			float fs = sin(thetat - thetai) / sin(thetat + thetai);
-			float ts = tan(thetat - thetai) / tan(thetat + thetai);
-			reflectivity = 0.5f * (fs * fs + ts * ts);
-		}
-
 		float facing = smoothstep( -0.5, 0.0f, dot( dir_to_light, world_normal ) );
 
 		//Specular
@@ -236,8 +204,7 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 
 		specular *= facing;
 
-		//diffuse += dot3 * diffuse_att * light_color;
-		diffuse += ( dist * (reflectivity * sky + (1 - reflectivity) * upwelling) + (1 - dist) * air ) * diffuse_att;
+		diffuse += dot3 * diffuse_att * light_color;
 		specular_color += light_color * specular;
 	}
 

@@ -11,13 +11,10 @@ class FFTWaveSimulation : public WaveSimulation
 public:
 	~FFTWaveSimulation();
 	FFTWaveSimulation( Vec2 const& dimensions, uint samples, float windSpeed );
+	FFTWaveSimulation( XmlElement const& element );
 
 	void Simulate() override;
-
-	bool	IsIWaveEnabled() const				{ return m_isIWaveEnabled; }
-	bool	IsChoppyWater() const				{ return m_isChoppyWater; }
-	void SetIWaveEnabled( bool isEnabled );
-	void SetIsChoppyWater( bool isChoppyWater );
+	void InitializeValues();
 
 	void GetHeightAtPosition( int n, int m, float time );
 	WaveSurfaceVertex& GetWaveVertAtIndex( int index );
@@ -33,8 +30,7 @@ public:
 
 	IWave* m_iWave = nullptr;
 protected:
-	bool m_isIWaveEnabled = true;
-	bool m_isChoppyWater = true;
+
 
 	uint m_log2N = 0;
 	float m_pi2 = 0.f;
