@@ -40,8 +40,6 @@
 #include "Engine/Renderer/Material.hpp"
 #include <string>
 
-
-RandomNumberGenerator*	g_RNG = nullptr;
 BitmapFont*				g_devConsoleFont = nullptr;
 
 bool					g_isDebugDraw = false;
@@ -113,9 +111,6 @@ void Game::StartUp()
 // 	}
 // 	g_theJobSystem->CreateWorkerThreads( 20 );
 
-
-	g_RNG = new RandomNumberGenerator();
-
 	EnableDebugRendering();
 
 	m_gameClock = new Clock();
@@ -154,9 +149,6 @@ void Game::ShutDown()
 {
 	delete m_world;
 	m_world = nullptr;
-
-	delete g_RNG;
-	g_RNG = nullptr;
 
 	delete m_worldCamera;
 	m_worldCamera = nullptr;

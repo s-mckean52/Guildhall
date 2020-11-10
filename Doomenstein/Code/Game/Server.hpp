@@ -5,6 +5,13 @@
 class Game;
 class Client;
 
+enum MessageID
+{
+	MESSAGE_ID_DISCONNECT = 3,
+	MESSAGE_ID_UDP_REQUEST = 4,
+	MESSAGE_ID_UDP_SOCKET = 5,
+};
+
 class Server
 {
 public:

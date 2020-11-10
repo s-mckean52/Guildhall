@@ -10,4 +10,8 @@ public:
 	void BeginFrame()					override;
 	void EndFrame()						override;
 	void Update()						override;
+
+	void ProcessTCPMessages();
+	void ProcessTCPMessage( TCPMessage* message );
+	void OpenUDPSocket( std::string const& udpSocketData );
 };

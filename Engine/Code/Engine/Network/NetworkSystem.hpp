@@ -20,6 +20,7 @@ struct TCPMessageHeader
 {
 	uint16_t m_id;
 	uint16_t m_size;
+	uint16_t m_key;
 };
 
 
@@ -34,6 +35,7 @@ struct TCPMessage
 //---------------------------------------------------------------------------------------------------------
 struct UDPMessageHeader
 {
+	uint16_t	m_key;
 	uint16_t	m_id;
 	uint16_t	m_size;
 	uint16_t	m_seqNo;
@@ -67,9 +69,13 @@ public:
 	void ShutDown();
 
 	//TCP
-	void CreateTCPServer( SocketMode mode );
-	void CreateTCPClient();
-	void SendDisconnectMessage();
+	void		CreateTCPServer( SocketMode mode );
+	void		CreateTCPClient();
+	void		ConnectTCPClient( std::string const& ipAddress, uint16_t portNum, SocketMode socketMode = SocketMode::NONBLOCKING );
+	void		SendTCPMessage( TCPMessage tcpMessageToSend );
+	void		SendDisconnectMessage();
+	void		AppendTCPMessage( TCPMessage* tcpMessage );
+	TCPMessage*	GetTCPMessage();
 
 	//UDP
 	void OpenUDPPort( int bindPort, int sendToPort );
@@ -95,6 +101,7 @@ private:
 private:
 	TCPMode m_mode = TCPMODE_INVALID;
 	TCPSocket m_clientSocket;
+	std::deque<TCPMessage*> m_tcpMessages;
 	std::vector<TCPServer*> m_tcpServers;
 	std::vector<TCPClient*> m_tcpClients;
 

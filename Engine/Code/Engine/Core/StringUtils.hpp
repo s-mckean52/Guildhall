@@ -32,6 +32,7 @@ std::string FindNextWord( std::string const& stringToParse, unsigned int& startI
 //---------------------------------------------------------------------------------------------------------
 std::string ToString( int value );
 std::string ToString( uint value );
+std::string ToString( uint16_t value );
 std::string ToString( float value );
 std::string ToString( double value );
 std::string ToString( char value );

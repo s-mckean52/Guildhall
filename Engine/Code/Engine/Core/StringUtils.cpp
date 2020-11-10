@@ -161,6 +161,13 @@ std::string ToString( std::string const& value )
 
 
 //---------------------------------------------------------------------------------------------------------
+std::string ToString( uint16_t value )
+{
+	return Stringf( "%u", value );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 int SetFromText( char const* valueAsText, int defaultValue )
 {
 	int value = atoi( valueAsText );

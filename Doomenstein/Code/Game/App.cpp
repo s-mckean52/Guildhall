@@ -12,6 +12,7 @@
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/DebugRender.hpp"
 #include "Engine/Core/NamedProperties.hpp"
+#include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Game/App.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/Game.hpp"
@@ -22,14 +23,15 @@
 #include <string>
 
 
-EventSystem*	g_theEventSystem	= nullptr;
-JobSystem*		g_theJobSystem		= nullptr;
-NetworkSystem*	g_theNetworkSystem	= nullptr;
-RenderContext*	g_theRenderer		= nullptr;
-InputSystem*	g_theInput			= nullptr;
-AudioSystem*	g_theAudio			= nullptr;
-DevConsole*		g_theConsole		= nullptr;
-Game*			g_theGame			= nullptr;
+EventSystem*			g_theEventSystem	= nullptr;
+JobSystem*				g_theJobSystem		= nullptr;
+NetworkSystem*			g_theNetworkSystem	= nullptr;
+RenderContext*			g_theRenderer		= nullptr;
+InputSystem*			g_theInput			= nullptr;
+AudioSystem*			g_theAudio			= nullptr;
+DevConsole*				g_theConsole		= nullptr;
+Game*					g_theGame			= nullptr;
+RandomNumberGenerator*	g_RNG				= nullptr;
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -44,6 +46,7 @@ void App::StartUp()
 	g_theInput			= new InputSystem();
 	g_theAudio			= new AudioSystem();
 	g_theConsole		= new DevConsole();
+	g_RNG				= new RandomNumberGenerator();
 	m_theServer			= new AuthoritativeServer();
 	//g_theGame			= new Game();
 
@@ -86,6 +89,9 @@ void App::ShutDown()
 // 	g_theGame->ShutDown();
 // 	delete g_theGame;
 // 	g_theGame = nullptr;
+
+	delete g_RNG;
+	g_RNG = nullptr;
 
 	g_theNetworkSystem->ShutDown();
 	delete g_theGame;
@@ -160,9 +166,9 @@ void App::connect_to_mulitplayer_server( EventArgs* args )
 
 	g_theConsole->PrintString( Rgba8::GREEN, "Connecting to multiplayer server %s:%s...", ipAddress.c_str(), port.c_str() );
 
-	m_theServer = new RemoteServer();
+	m_theServer = new RemoteServer( ipAddress, port );
 	m_theServer->StartUp( MULTI_PLAYER_GAME );
-	new RemoteClient( m_theServer );
+	new PlayerClient( m_theServer );
 }
 
 

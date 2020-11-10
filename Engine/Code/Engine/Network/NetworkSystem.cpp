@@ -73,9 +73,9 @@ void NetworkSystem::BeginFrame()
 
 			std::string data( buf.GetData(), buf.GetLength() );
 			TCPMessageHeader* messageHeader = reinterpret_cast<TCPMessageHeader*>( &data[0] );
-			TCPMessage serverListenMessage;
-			serverListenMessage.m_header = *messageHeader;
-			serverListenMessage.m_message = std::string( &data[4] );
+			TCPMessage* serverListenMessage = new TCPMessage();
+			serverListenMessage->m_header = *messageHeader;
+			serverListenMessage->m_message = std::string( &data[4] );
 
 			if( messageHeader->m_id == 3 )
 			{
@@ -85,7 +85,8 @@ void NetworkSystem::BeginFrame()
 			}
 			else if( buf.GetLength() > 0 )
 			{
-				g_theConsole->PrintString( Rgba8::WHITE, "Client: "+ serverListenMessage.m_message );
+				//g_theConsole->PrintString( Rgba8::WHITE, "Client: "+ serverListenMessage.m_message );
+				AppendTCPMessage( serverListenMessage );
 			}
 		}
 	}
@@ -103,9 +104,9 @@ void NetworkSystem::BeginFrame()
 
 			std::string data( buf.GetData(), buf.GetLength() );
 			TCPMessageHeader* messageHeader = reinterpret_cast<TCPMessageHeader*>( &data[0] );
-			TCPMessage serverListenMessage;
-			serverListenMessage.m_header = *messageHeader;
-			serverListenMessage.m_message = std::string( &data[4] );
+			TCPMessage* serverListenMessage = new TCPMessage();
+			serverListenMessage->m_header = *messageHeader;
+			serverListenMessage->m_message = std::string( &data[4] );
 
 
 			if( messageHeader->m_id == 3 )
@@ -116,7 +117,8 @@ void NetworkSystem::BeginFrame()
 			}
 			else if( buf.GetLength() > 0 )
 			{
-				g_theConsole->PrintString( Rgba8::WHITE, "Server: " + serverListenMessage.m_message );
+				AppendTCPMessage( serverListenMessage );
+				//g_theConsole->PrintString( Rgba8::WHITE, "Server: " + serverListenMessage.m_message );
 			}
 		}
 	}
@@ -150,6 +152,12 @@ void NetworkSystem::ShutDown()
 void NetworkSystem::CreateTCPServer( SocketMode mode )
 {
 	m_tcpServers.push_back( new TCPServer( mode ) );
+	m_tcpServers.front()->SetListenPort( 48000 );
+	m_tcpServers.front()->SetIsListening( true );
+	m_tcpServers.front()->Bind();
+	m_tcpServers.front()->Listen();
+
+	m_mode = TCPMODE_SERVER;
 }
 
 
@@ -157,6 +165,33 @@ void NetworkSystem::CreateTCPServer( SocketMode mode )
 void NetworkSystem::CreateTCPClient()
 {
 	m_tcpClients.push_back( new TCPClient() );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::ConnectTCPClient( std::string const& ipAddress, uint16_t portNum, SocketMode socketMode )
+{
+	m_clientSocket = m_tcpClients.front()->Connect( ipAddress, portNum, socketMode );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::SendTCPMessage( TCPMessage tcpMessageToSend )
+{
+	std::array<char, 256> buffer;
+	memcpy( &buffer, &tcpMessageToSend.m_header, sizeof( TCPMessageHeader ) );
+
+	TCPMessageHeader messageHeader = tcpMessageToSend.m_header;
+	std::string message = tcpMessageToSend.m_message;
+	
+	for( int charIndex = 0; charIndex < message.size(); ++charIndex )
+	{
+		buffer[4 + charIndex] = message[charIndex];
+	}
+	if( m_clientSocket.IsValid() )
+	{
+		m_clientSocket.Send( &buffer[0], ( messageHeader.m_size + 4 ) );
+	}
 }
 
 
@@ -170,6 +205,26 @@ void NetworkSystem::SendDisconnectMessage()
 	messageHeader.m_id = 3;
 	messageHeader.m_size = 4;
 	m_clientSocket.Send( (const char*)&messageHeader, 4 );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::AppendTCPMessage( TCPMessage* tcpMessage )
+{
+	m_tcpMessages.push_back( tcpMessage );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+TCPMessage* NetworkSystem::GetTCPMessage()
+{
+	if( m_tcpMessages.size() > 0 )
+	{
+		TCPMessage* message = m_tcpMessages.front();
+		m_tcpMessages.pop_front();
+		return message;
+	}
+	return nullptr;
 }
 
 
@@ -314,7 +369,7 @@ void NetworkSystem::client_connect( EventArgs* args )
 
 	g_theConsole->PrintString( Rgba8::GREEN, "Connecting to %s...", input.c_str() );
 	g_theNetworkSystem->CreateTCPClient();
-	m_clientSocket = m_tcpClients.front()->Connect( split[0], static_cast<uint16_t>( atoi( split[1].c_str() ) ), SocketMode::NONBLOCKING );
+	g_theNetworkSystem->ConnectTCPClient( split[0], static_cast<uint16_t>( atoi( split[1].c_str() ) ), SocketMode::NONBLOCKING);
 
 	m_mode = TCPMODE_CLIENT;
 
