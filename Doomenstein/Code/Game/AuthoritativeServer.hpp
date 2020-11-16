@@ -11,7 +11,13 @@ public:
 	void EndFrame()						override;
 	void Update()						override;
 
-	void ProcessTCPMessages();
-	void ProcessTCPMessage( TCPMessage* message );
-	void OpenUDPSocket( std::string const& udpSocketData );
+	void OpenUDPSocket( TCPMessage const& message )			override;
+	void ProcessInputData( UDPMessage const& message )		override;
+	void ProcessEntityData( UDPMessage const& message )		override;
+	void ProcessConnectionData( UDPMessage const& message )	override;
+	void ProcessCameraData( UDPMessage const& message )		override;
+
+	void SendWorldDataToClient( Client* client );
+	void SendSetupMessage( Client* client );
+	void SendCameraData( Client* client );
 };

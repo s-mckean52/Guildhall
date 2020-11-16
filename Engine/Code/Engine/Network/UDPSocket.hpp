@@ -8,12 +8,12 @@
 #include <limits>
 #include <string>
 #include <array>
+constexpr int BufferSize = 512;
+typedef std::array<char, BufferSize> Buffer;
 
 class UDPSocket
 {
 public:
-	static const int BufferSize = 512;
-	using Buffer = std::array<char, BufferSize>;
 
 public:
 	UDPSocket( std::string const& host, int port );

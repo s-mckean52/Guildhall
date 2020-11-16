@@ -21,6 +21,10 @@ class NamedProperties;
 class SpriteSheet;
 struct Vertex_PCUTBN;
 struct AABB3;
+struct WorldData;
+struct ConnectionData;
+struct SpawnData;
+struct CameraData;
 
 enum CameraViewOrientation
 {
@@ -36,10 +40,10 @@ public:
 	Game();
 
 	//Basic Game
-	void StartUp();
-	void ShutDown();
-	void Render();
-	void Update();
+	virtual void StartUp();
+	virtual void ShutDown();
+	virtual void Render();
+	virtual void Update();
 
 	//---------------------------------------------------------------------------------------------------------
 	// START UP
@@ -54,9 +58,13 @@ public:
 	//Accessors
 	float GetDeltaSeconds() const;
 
+	//Upadate
+	void UpdateWorld();
+
 	//Input
 	void UpdateFromInput( float deltaSeconds );
-	void MoveWorldCamera( float deltaSeconds );
+	Vec3 MoveWorldCamera( float deltaSeconds, float yawDegrees, InputSystem* input = g_theInput );
+	Vec3 MoveEntity( Entity* entityToMove, float yawDegrees, InputSystem* input = g_theInput );
 	void UpdateBasedOnMouseMovement();
 
 	//Rendering
@@ -72,12 +80,21 @@ public:
 
 	//Other
 	Camera* GetPlayerCamera() const		{ return m_worldCamera; }
+	Entity**	GetPossessedEntityPointer()		{ return &m_possessedEntity; }
 	bool	IsQuitting() const			{ return m_isQuitting; }
 	void	PlaySpawnSound();
 	void	TogglePossessEntity();
-	void	SetPossessedEntity( Entity* entityToPosses );
-	void	MoveCameraToEntityEye( Entity* entity );
+	void	TryTogglePossessEntity( Entity** in_possessionEntity, Vec3 const& cameraPosition, Vec3 const& cameraForward );
+	void	SetPossessedEntity( Entity** in_possessionEntity, Entity* entityToPosses );
+	void	MoveCameraToEntityEye( Entity* entity, Vec3& out_position, float& out_yaw );
 	void	DebugRaycast( Vec3 const& startPosition, Vec3 const& forwardDir, float maxDistance, float duration = 0.f );
+	
+	WorldData	GetWorldData();
+	ConnectionData GetConnectionData();
+	void SetCurrentMapByName( std::string const& mapName );
+	void SpawnEntitiesFromSpawnData( SpawnData const& spawnData );
+	void UpdateEntitiesFromWorldData( WorldData const& worldData );
+	void SetWorldCameraFromCameraData( CameraData const& cameraData );
 
 	//Static
 	static void GainFocus( EventArgs* args );
@@ -87,7 +104,7 @@ public:
 public:
 	void set_current_map( EventArgs* args );
 
-private:
+protected:
 	World* m_world = nullptr;
 
 	Clock* m_gameClock = nullptr;

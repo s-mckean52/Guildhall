@@ -2,6 +2,7 @@
 #include "Engine/Network/TCPSocket.hpp"
 #include "Engine/Core/EventSystem.hpp"
 #include "Engine/Core/SynchronizedNonBlockingQueue.hpp"
+#include "Engine/Network/NetworkMessages.hpp"
 #include <ws2tcpip.h>
 #include <winsock2.h>
 #include <string>
@@ -13,42 +14,6 @@ enum TCPMode
 	TCPMODE_INVALID,
 	TCPMODE_SERVER,
 	TCPMODE_CLIENT,
-};
-
-//---------------------------------------------------------------------------------------------------------
-struct TCPMessageHeader
-{
-	uint16_t m_id;
-	uint16_t m_size;
-	uint16_t m_key;
-};
-
-
-//---------------------------------------------------------------------------------------------------------
-struct TCPMessage
-{
-	TCPMessageHeader	m_header;
-	std::string			m_message;
-};
-
-
-//---------------------------------------------------------------------------------------------------------
-struct UDPMessageHeader
-{
-	uint16_t	m_key;
-	uint16_t	m_id;
-	uint16_t	m_size;
-	uint16_t	m_seqNo;
-	uint16_t	m_port;
-	char		m_fromAddress[16];
-};
-
-
-//---------------------------------------------------------------------------------------------------------
-struct UDPMessage
-{
-	UDPMessageHeader	m_header;
-	std::string			m_message;
 };
 
 
@@ -69,19 +34,23 @@ public:
 	void ShutDown();
 
 	//TCP
-	void		CreateTCPServer( SocketMode mode );
-	void		CreateTCPClient();
-	void		ConnectTCPClient( std::string const& ipAddress, uint16_t portNum, SocketMode socketMode = SocketMode::NONBLOCKING );
-	void		SendTCPMessage( TCPMessage tcpMessageToSend );
-	void		SendDisconnectMessage();
-	void		AppendTCPMessage( TCPMessage* tcpMessage );
-	TCPMessage*	GetTCPMessage();
+	void	CreateTCPServer( SocketMode mode );
+	void	CreateTCPClient();
+	void	DisconnectTCPClient();
+	void	CloseTCPServer();
+	void	ConnectTCPClient( std::string const& ipAddress, uint16_t portNum, SocketMode socketMode = SocketMode::NONBLOCKING );
+	void	SendTCPMessage( TCPMessage tcpMessageToSend );
+	void	SendDisconnectMessage();
+	void	AppendTCPMessage( TCPMessage const& tcpMessage );
+	bool	GetTCPMessage( TCPMessage& out_message );
 
 	//UDP
-	void OpenUDPPort( int bindPort, int sendToPort );
-	void CloseUDPPort( int bindPort );
-	void SendUDPMessage( std::string const& ipAddress, uint16_t port, uint16_t id, uint16_t sequenceNum, std::string const& message );
-	void UDPReadMessages();
+	void	OpenUDPPort( int bindPort, int sendToPort );
+	void	CloseUDPPort( int bindPort );
+	void	SendUDPMessage( UDPMessage const& message );
+	void	UDPReadMessages();
+	bool	HasValidUDPSocket();
+	void	GetUDPMessages( std::deque<UDPMessage>& out_messages );
 	
 public:
 	void start_tcp_server( EventArgs* args );
@@ -101,7 +70,8 @@ private:
 private:
 	TCPMode m_mode = TCPMODE_INVALID;
 	TCPSocket m_clientSocket;
-	std::deque<TCPMessage*> m_tcpMessages;
+	std::deque<TCPMessage> m_tcpMessages;
+	std::deque<UDPMessage> m_udpMessages;
 	std::vector<TCPServer*> m_tcpServers;
 	std::vector<TCPClient*> m_tcpClients;
 

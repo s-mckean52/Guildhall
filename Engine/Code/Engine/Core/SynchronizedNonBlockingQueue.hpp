@@ -9,6 +9,7 @@ public:
 	SynchronizedNonBlockingQueue() = default;
 	~SynchronizedNonBlockingQueue() = default;
 
+	void Swap( std::deque<T>& copyToQueue );
 	void Push( T const& elem );
 	bool Pop( T& out_value );
 
@@ -16,6 +17,16 @@ private:
 	std::mutex		m_queueMutex;
 	std::deque<T>	m_queue;
 };
+
+
+//---------------------------------------------------------------------------------------------------------
+template<typename T>
+void SynchronizedNonBlockingQueue<T>::Swap( std::deque<T>& copyToQueue )
+{
+	m_queueMutex.lock();
+	m_queue.swap( copyToQueue );
+	m_queueMutex.unlock();
+}
 
 //---------------------------------------------------------------------------------------------------------
 template<typename T>

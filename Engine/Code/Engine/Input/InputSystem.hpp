@@ -2,6 +2,7 @@
 #include "Engine/Input/XboxController.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include <queue>
+constexpr int MAX_XBOX_CONTROLLERS = 4;
 
 enum MousePositionMode
 {
@@ -9,11 +10,31 @@ enum MousePositionMode
 	MOUSE_MODE_RELATIVE,
 };
 
+struct InputState
+{
+	InputState() = default;
+	~InputState() {};
+
+	float	m_scrollAmount = 0.f;
+	Vec2	m_mouseNormalizedPos;
+	Vec2	m_cursorRelativeMovement;
+	Vec2	m_cursorPositionLastFrame;
+
+	KeyButtonState	m_keyStates[NUM_KEYS];
+	KeyButtonState	m_mouseStates[NUM_MOUSE_BUTTONS];
+	XboxController	m_controllers[MAX_XBOX_CONTROLLERS] = 
+	{
+		XboxController(0),
+		XboxController(1),
+		XboxController(2),
+		XboxController(3)
+	};
+};
+
 struct IntVec2;
 struct AABB2;
 class Window;
 
-constexpr int MAX_XBOX_CONTROLLERS = 4;
 class InputSystem
 {
 public:
@@ -24,6 +45,9 @@ public:
 	void BeginFrame();
 	void EndFrame();
 	void ShutDown();
+
+	InputState	GetInputState();
+	void		SetFromInputState( InputState const& inputState );
 
 	// Mouse
 	void	UpdateMouse();

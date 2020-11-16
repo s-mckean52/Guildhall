@@ -19,8 +19,8 @@
 
 
 //---------------------------------------------------------------------------------------------------------
-TileMap::TileMap( Game* theGame, World* theWorld, XmlElement const& xmlElement )
-	: Map( theGame, theWorld )
+TileMap::TileMap( Game* theGame, World* theWorld, std::string const& name, XmlElement const& xmlElement )
+	: Map( theGame, theWorld, name )
 {
 	m_mapMesh = new GPUMesh( g_theRenderer );
 	CreateFromXML( xmlElement );

@@ -208,6 +208,7 @@
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="MapMaterial.cpp" />
     <ClCompile Include="MapRegion.cpp" />
+    <ClCompile Include="MultiplayerGame.cpp" />
     <ClCompile Include="PlayerClient.cpp" />
     <ClCompile Include="Portal.cpp" />
     <ClCompile Include="Projectile.cpp" />

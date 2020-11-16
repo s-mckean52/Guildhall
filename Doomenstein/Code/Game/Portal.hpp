@@ -7,6 +7,7 @@ class Map;
 class Portal : public Entity
 {
 public:
+	Portal( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef );
 	Portal( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef, XmlElement const& element );
 	~Portal();
 

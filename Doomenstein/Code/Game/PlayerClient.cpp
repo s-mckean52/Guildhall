@@ -32,6 +32,11 @@ void PlayerClient::EndFrame()
 //---------------------------------------------------------------------------------------------------------
 void PlayerClient::Update()
 {
+// 	Game* theGame = m_owner->GetGame();
+// 	if (theGame != nullptr)
+// 	{
+// 		theGame->Update();
+// 	}
 }
 
 
@@ -39,6 +44,9 @@ void PlayerClient::Update()
 void PlayerClient::Render()
 {
 	Game* theGame = m_owner->GetGame();
-	theGame->Render();
+	if( theGame != nullptr )
+	{
+		theGame->Render();
+	}
 }
 

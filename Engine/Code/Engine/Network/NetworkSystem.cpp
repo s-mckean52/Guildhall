@@ -47,7 +47,7 @@ void NetworkSystem::StartUp()
 //---------------------------------------------------------------------------------------------------------
 void NetworkSystem::BeginFrame()
 {
-	UDPReadMessages();
+	//UDPReadMessages();
 
 	if( m_tcpServers.empty() && m_mode == TCPMODE_SERVER )
 	{
@@ -73,9 +73,9 @@ void NetworkSystem::BeginFrame()
 
 			std::string data( buf.GetData(), buf.GetLength() );
 			TCPMessageHeader* messageHeader = reinterpret_cast<TCPMessageHeader*>( &data[0] );
-			TCPMessage* serverListenMessage = new TCPMessage();
-			serverListenMessage->m_header = *messageHeader;
-			serverListenMessage->m_message = std::string( &data[4] );
+			TCPMessage serverListenMessage;
+			serverListenMessage.m_header = *messageHeader;
+			serverListenMessage.m_message = std::string( &data[sizeof( TCPMessageHeader )] );
 
 			if( messageHeader->m_id == 3 )
 			{
@@ -104,9 +104,9 @@ void NetworkSystem::BeginFrame()
 
 			std::string data( buf.GetData(), buf.GetLength() );
 			TCPMessageHeader* messageHeader = reinterpret_cast<TCPMessageHeader*>( &data[0] );
-			TCPMessage* serverListenMessage = new TCPMessage();
-			serverListenMessage->m_header = *messageHeader;
-			serverListenMessage->m_message = std::string( &data[4] );
+			TCPMessage serverListenMessage;
+			serverListenMessage.m_header = *messageHeader;
+			serverListenMessage.m_message = std::string( &data[sizeof(TCPMessageHeader)] );
 
 
 			if( messageHeader->m_id == 3 )
@@ -165,6 +165,29 @@ void NetworkSystem::CreateTCPServer( SocketMode mode )
 void NetworkSystem::CreateTCPClient()
 {
 	m_tcpClients.push_back( new TCPClient() );
+	m_mode = TCPMODE_CLIENT;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::DisconnectTCPClient()
+{
+	SendDisconnectMessage();
+	m_clientSocket.ShutDown();
+	m_clientSocket.Close();
+
+	m_mode = TCPMODE_INVALID;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::CloseTCPServer()
+{
+	SendDisconnectMessage();
+	m_clientSocket.ShutDown();
+	m_clientSocket.Close();
+
+	m_mode = TCPMODE_INVALID;
 }
 
 
@@ -186,11 +209,11 @@ void NetworkSystem::SendTCPMessage( TCPMessage tcpMessageToSend )
 	
 	for( int charIndex = 0; charIndex < message.size(); ++charIndex )
 	{
-		buffer[4 + charIndex] = message[charIndex];
+		buffer[sizeof(TCPMessageHeader) + charIndex] = message[charIndex];
 	}
 	if( m_clientSocket.IsValid() )
 	{
-		m_clientSocket.Send( &buffer[0], ( messageHeader.m_size + 4 ) );
+		m_clientSocket.Send( &buffer[0], ( messageHeader.m_size + sizeof( TCPMessageHeader ) ) );
 	}
 }
 
@@ -204,27 +227,27 @@ void NetworkSystem::SendDisconnectMessage()
 	TCPMessageHeader messageHeader;
 	messageHeader.m_id = 3;
 	messageHeader.m_size = 4;
-	m_clientSocket.Send( (const char*)&messageHeader, 4 );
+	m_clientSocket.Send( (const char*)&messageHeader, sizeof( TCPMessageHeader ) );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void NetworkSystem::AppendTCPMessage( TCPMessage* tcpMessage )
+void NetworkSystem::AppendTCPMessage( TCPMessage const& tcpMessage )
 {
 	m_tcpMessages.push_back( tcpMessage );
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-TCPMessage* NetworkSystem::GetTCPMessage()
+bool NetworkSystem::GetTCPMessage( TCPMessage& out_message )
 {
 	if( m_tcpMessages.size() > 0 )
 	{
-		TCPMessage* message = m_tcpMessages.front();
+		out_message = m_tcpMessages.front();
 		m_tcpMessages.pop_front();
-		return message;
+		return true;
 	}
-	return nullptr;
+	return false;
 }
 
 
@@ -265,24 +288,11 @@ void NetworkSystem::CloseUDPPort( int bindPort )
 
 
 //---------------------------------------------------------------------------------------------------------
-void NetworkSystem::SendUDPMessage( std::string const& ipAddress, uint16_t port, uint16_t id, uint16_t sequenceNum, std::string const& message )
+void NetworkSystem::SendUDPMessage( UDPMessage const& message )
 {
-	if( m_UDPSocket != nullptr && m_UDPSocket->IsValid() )
+	if( HasValidUDPSocket() )
 	{
-		UDPMessage messageToSend;
-
-		uint ipLength = Min( static_cast<uint>( ipAddress.length() ), 15 );
-		memcpy( messageToSend.m_header.m_fromAddress, ipAddress.c_str(), ipLength );
-		messageToSend.m_header.m_fromAddress[ipLength] = '\0';
-
-		messageToSend.m_header.m_port = port;
-
-		messageToSend.m_header.m_id = id;
-		messageToSend.m_header.m_seqNo = sequenceNum;
-		messageToSend.m_header.m_size = static_cast<uint16_t>( message.length() );
-		messageToSend.m_message = message;
-
-		m_UDPMessagesToSend.Push( messageToSend );
+		m_UDPMessagesToSend.Push( message );
 	}
 	else
 	{
@@ -297,8 +307,23 @@ void NetworkSystem::UDPReadMessages()
 	UDPMessage message;
 	while( m_UDPMessagesToReceive.Pop( message ) )
 	{
-		g_theConsole->PrintString( Rgba8::YELLOW, "%s:%i said: \"%s\"", message.m_header.m_fromAddress, message.m_header.m_port, message.m_message.c_str() );
+		m_udpMessages.push_back( message );
+		//g_theConsole->PrintString( Rgba8::GREEN, "%s:%i said: \"%s\"", message.m_header.m_fromAddress, message.m_header.m_port, message.m_data );
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool NetworkSystem::HasValidUDPSocket()
+{
+	return ( m_UDPSocket != nullptr && m_UDPSocket->IsValid() );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void NetworkSystem::GetUDPMessages( std::deque<UDPMessage>& out_messages )
+{
+	m_UDPMessagesToReceive.Swap( out_messages );
 }
 
 
@@ -326,11 +351,7 @@ void NetworkSystem::stop_tcp_server( EventArgs* args )
 
 	g_theConsole->PrintString( Rgba8::GREEN, "TCPServer is no longer listening on port %i", m_tcpServers.front()->GetListenPort() );
 	
-	SendDisconnectMessage();
-	m_clientSocket.ShutDown();
-	m_clientSocket.Close();
-
-	m_mode = TCPMODE_INVALID;
+	CloseTCPServer();
 }
 
 
@@ -382,12 +403,7 @@ void NetworkSystem::client_disconnect( EventArgs* args )
 	UNUSED( args );
 
 	g_theConsole->PrintString( Rgba8::GREEN, "Disconnecting from %s...", m_clientSocket.GetAddress().c_str() );
-	SendDisconnectMessage();
-	m_clientSocket.ShutDown();
-	m_clientSocket.Close();
-
-	m_mode = TCPMODE_INVALID;
-
+	DisconnectTCPClient();
 }
 
 
@@ -412,9 +428,14 @@ void NetworkSystem::send_udp_message( EventArgs* args )
 
 	std::string hostData = m_UDPSocket->GetHostData();
 	uint16_t sendToPort = static_cast<uint16_t>( m_UDPSocket->GetSendToPort() );
-
-	SendUDPMessage( hostData, sendToPort, 0, 0, message );
+	
+	UDPMessage messageToSend;
+	messageToSend.m_header.m_port = sendToPort;
+	memcpy( messageToSend.m_header.m_fromAddress, &hostData, 16 );
+	memcpy(messageToSend.m_data, &message, message.size());
+	SendUDPMessage( messageToSend );
 }
+
 
 //---------------------------------------------------------------------------------------------------------
 void NetworkSystem::close_udp_port( EventArgs* args )
@@ -438,14 +459,11 @@ void NetworkSystem::UDPReceiveMessagesJob( UDPSocket* socket )
 
 		if( length > 0 )
 		{
-			UDPMessageHeader const* messageHeader = nullptr;
-
 			auto& buffer = socket->ReceiveBuffer();
-			messageHeader = reinterpret_cast<UDPMessageHeader const*>(&buffer[0]);
 
 			UDPMessage messageToReceive;
-			messageToReceive.m_header = *messageHeader;
-			messageToReceive.m_message = &buffer[sizeof(UDPMessageHeader)];
+			messageToReceive = *reinterpret_cast<UDPMessage*>( &buffer[0] );
+			//memcpy( &messageToReceive, &buffer[0], MAX_UDP_MESSAGE_SIZE );
 			m_UDPMessagesToReceive.Push( messageToReceive );
 		}
 		else
@@ -464,14 +482,10 @@ void NetworkSystem::UDPSendMessagesJob( UDPSocket* socket )
 		UDPMessage messageToSend;
 		if( m_UDPMessagesToSend.Pop( messageToSend ) )
 		{
-			auto& buffer = socket->SendBuffer();
-			*reinterpret_cast<UDPMessageHeader*>(&buffer[0]) = messageToSend.m_header;
-
-			memcpy(&(socket->SendBuffer()[sizeof(UDPMessageHeader)]), messageToSend.m_message.c_str(), messageToSend.m_header.m_size );
-
-			socket->SendBuffer()[sizeof(UDPMessageHeader) + messageToSend.m_header.m_size] = NULL;
-
-			socket->Send(sizeof(UDPMessageHeader) + messageToSend.m_header.m_size + 1);
+			Buffer& buffer = socket->SendBuffer();
+			buffer = *reinterpret_cast<Buffer*>( &messageToSend );
+			//memcpy( &buffer[0], &messageToSend, MAX_UDP_MESSAGE_SIZE );
+			socket->Send( MAX_UDP_MESSAGE_SIZE );
 		}
 		else
 		{

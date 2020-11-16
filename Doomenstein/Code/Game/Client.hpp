@@ -1,6 +1,15 @@
 #pragma once
+#include "Engine/Math/Vec3.hpp"
 
 class Server;
+
+struct CameraData
+{
+	Vec3 m_position;
+	float m_yawDegrees = 0.f;
+	float m_pitchDegrees = 0.f;
+	float m_rollDegrees = 0.f;
+};
 
 class Client
 {

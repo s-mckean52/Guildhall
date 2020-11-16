@@ -93,6 +93,9 @@
     <ClCompile Include="RemoteClient.cpp">
       <Filter>Framework\Client</Filter>
     </ClCompile>
+    <ClCompile Include="MultiplayerGame.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">

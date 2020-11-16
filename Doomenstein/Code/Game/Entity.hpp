@@ -7,9 +7,33 @@ class Game;
 class World;
 class Map;
 
+struct EntityData
+{
+	bool	m_isPossessed			= false;
+	bool	m_canBePushedByWalls	= true;
+	bool	m_canBePushedByEntities = true;
+	bool	m_canPushEntities		= true;
+	float	m_mass					= 1.f;
+
+	Vec3		m_position;
+	Vec2		m_forwardDirection;
+	float		m_yaw				= 0.f;
+	char		m_actionState[25]	= "Walk";
+};
+
+struct EntitySpawnData
+{
+	bool m_isUsed = false;
+	char m_entityDefName[50] = "";
+	EntityData m_data;
+};
+
+
+//---------------------------------------------------------------------------------------------------------
 class Entity
 {
 public:
+	explicit Entity( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef );
 	explicit Entity( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef, XmlElement const& element );
 	virtual ~Entity();
 
@@ -18,8 +42,10 @@ public:
 	virtual void Render() const;
 	virtual void DebugRender() const;
 	virtual void SetValuesFromXML( XmlElement const& element );
+	virtual void SetValuesFromEntityData( EntityData const& entityData );
 
 	//---------------------------------------------------------------------------------------------------------
+	std::string GetEntityName() const;
 	EntityType	GetEntityType() const;
 	Vec3 const&	GetPosition() const			{ return m_position; }
 	float		GetYaw() const				{ return m_yaw; }
@@ -32,6 +58,7 @@ public:
 	float		GetEyeHeight() const;
 	float		GetSpeed() const;
 	float		GetPhysicsRadius() const;
+	EntityData	GetEntityData() const;
 
 	void UpdateAnimDirection();
 	void CheckAndUpdateSpriteDirection( Vec2 const& directionToCompare, std::string const& directionName, Vec2 const& direction );

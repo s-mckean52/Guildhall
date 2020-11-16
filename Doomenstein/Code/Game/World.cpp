@@ -135,7 +135,8 @@ void World::CreateMapFromFilepath( char const* filepath )
 	std::string mapType = ParseXmlAttribute( *rootElement, "type", "MISSING" );
 	//TODO: Separate out into function
 	Map* newMap = nullptr;
-	if( mapType == "TileMap" ) { newMap = new TileMap( m_game, this, *rootElement ); }
+	std::string mapName = GetFileNameWithoutExtension( filepath );
+	if( mapType == "TileMap" ) { newMap = new TileMap( m_game, this, mapName, *rootElement ); }
 	else
 	{
 		g_theConsole->ErrorString(							"Tried to load unsupported map type %s", mapType.c_str(), filepath );
@@ -144,7 +145,6 @@ void World::CreateMapFromFilepath( char const* filepath )
 		return;
 	}
 
-	std::string mapName = GetFileNameWithoutExtension( filepath );
 	m_namedMaps.insert( { mapName, newMap } );
 }
 
@@ -187,6 +187,50 @@ void World::DeleteAllMaps()
 		mapIterator->second = nullptr;
 		++mapIterator;
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+WorldData World::GetWorldData()
+{
+	WorldData worldData;
+	std::string currentMapName = m_currentMap->GetMapName();
+	memcpy( &worldData.m_currentMapByName[0], &currentMapName[0], currentMapName.size() );
+	worldData.m_currentMapData = m_currentMap->GetMapData();
+
+	return worldData;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+ConnectionData World::GetConnectionData()
+{
+	ConnectionData connectionData;
+	std::string currentMapName = m_currentMap->GetMapName();
+	memcpy( &connectionData.m_currentMapByName[0], &currentMapName[0], currentMapName.size() );
+	//memcpy( &connectionData.m_entityData, &m_currentMap->GetEntitySpawnData(), sizeof( SpawnData ) );
+	return connectionData;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void World::SpawnEntitiesFromSpawnData( SpawnData const& spawnData )
+{
+	m_currentMap->DeleteAllEntities();
+	for( int i = 0; i < 30; ++i )
+	{
+		if( spawnData.m_entitiesToSpawn->m_isUsed )
+		{
+			m_currentMap->SpawnEntityFromSpawnData( spawnData.m_entitiesToSpawn[i] );
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void World::UpdateEntitiesFromWorldData( WorldData const& worldData )
+{
+	m_currentMap->UpdateEntitiesFromMapData( worldData.m_currentMapData );
 }
 
 

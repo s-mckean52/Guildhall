@@ -20,6 +20,9 @@
 #include "Game/RemoteServer.hpp"
 #include "Game/PlayerClient.hpp"
 #include "Game/RemoteClient.hpp"
+#include "Game/MapRegion.hpp"
+#include "Game/EntityDef.hpp"
+#include "Game/MapMaterial.hpp"
 #include <string>
 
 
@@ -57,6 +60,10 @@ void App::StartUp()
 	g_theNetworkSystem->StartUp();
 
 	DebugRenderSystemStartup( g_theRenderer );
+
+	MapMaterial::CreateMapMaterialsFromXML("Data/Definitions/MapMaterialTypes.xml");
+	MapRegion::CreateMapRegionsFromXML("Data/Definitions/MapRegionTypes.xml");
+	EntityDef::CreateEntityDefsFromXML("Data/Definitions/EntityTypes.xml");
 
 	m_theServer->StartUp( SINGLE_PLAYER_GAME );
 	new PlayerClient( m_theServer );
@@ -232,7 +239,7 @@ void App::Update()
 	//g_theGame->Update();
 	g_theConsole->Update();
 
-	if( ( g_theGame != nullptr && g_theGame->IsQuitting() ) || g_theWindow->IsQuitting() )
+	if( ( g_theGame != nullptr && g_theGame->IsQuitting() ) || g_theWindow->IsQuitting() || g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
 	{
 		HandleQuitRequested();
 	}

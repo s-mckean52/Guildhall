@@ -6,6 +6,7 @@ class EntityDef;
 class Actor : public Entity
 {
 public:
+	Actor( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef );
 	Actor( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef, XmlElement const& element );
 	~Actor();
 };

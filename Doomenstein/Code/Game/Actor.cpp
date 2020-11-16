@@ -11,6 +11,13 @@ Actor::Actor( Game* theGame, World* theWorld, Map* theMap, EntityDef const& enti
 
 
 //---------------------------------------------------------------------------------------------------------
+Actor::Actor( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef )
+	: Entity( theGame, theWorld, theMap, entityDef )
+{
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 Actor::~Actor()
 {
 }

@@ -14,12 +14,15 @@ public:
 	virtual void EndFrame()						override;
 	virtual void Update()						override;
 
-	void ProcessTCPMessage( TCPMessage* messageToProcess );
-	void OpenUDPSocket( std::string const& udpSocketData );
+	void SendInputData();
+	void RequestConnectionData();
+
+	void OpenUDPSocket( TCPMessage const& messageToProcess )	override;
+	void ProcessInputData( UDPMessage const& message )			override;
+	void ProcessEntityData( UDPMessage const& message )			override;
+	void ProcessConnectionData( UDPMessage const& message )		override;
+	void ProcessCameraData( UDPMessage const& message )			override;
 
 private:
 	uint16_t	m_key			= 0;
-	uint16_t	m_udpListenPort = 48000;
-	uint16_t	m_udpSendPort	= 480001;
-	std::string m_connectionIP	= "127.0.0.1";
 };

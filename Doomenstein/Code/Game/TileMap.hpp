@@ -11,7 +11,7 @@ class Camera;
 class TileMap : public Map
 {
 public:
-	TileMap( Game* theGame, World* theWorld, XmlElement const& xmlElement );
+	TileMap( Game* theGame, World* theWorld, std::string const& name, XmlElement const& xmlElement );
 	~TileMap();
 
 	RaycastResult		Raycast( Vec3 const& startPosition, Vec3 const& fwdDir, float maxDistance ) override;

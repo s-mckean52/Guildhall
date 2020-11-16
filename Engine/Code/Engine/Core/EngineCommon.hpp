@@ -2,6 +2,7 @@
 
 #define STATIC
 #define UNUSED(x) (void)(x);
+//#define SAFE_DELETE(obj) if( (obj) != nullptr ) { delete (obj); (obj) = nullptr; }
 //#define TEST_MODE
 //#define BIT_FLAG(b)	( 1 << (b) );
 #include "Engine/Core/StringUtils.hpp"
@@ -113,4 +114,5 @@ const Vec2 ALIGN_BOTTOM_RIGHT		= Vec2( 1.f, 0.f );
 
 
 //---------------------------------------------------------------------------------------------------------
-const unsigned int MAX_LIGHTS = 8;
+const uint MAX_LIGHTS = 8;
+const uint MAX_UDP_MESSAGE_SIZE = 512;

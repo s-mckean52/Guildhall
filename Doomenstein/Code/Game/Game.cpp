@@ -1,11 +1,3 @@
-#include "Game/Game.hpp"
-#include "Game/GameCommon.hpp"
-#include "Game/World.hpp"
-#include "Game/Entity.hpp"
-#include "Game/Map.hpp"
-#include "Game/MapMaterial.hpp"
-#include "Game/MapRegion.hpp"
-#include "Game/EntityDef.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/JobSystem.hpp"
 #include "Engine/Core/Rgba8.hpp"
@@ -38,6 +30,15 @@
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Renderer/ShaderState.hpp"
 #include "Engine/Renderer/Material.hpp"
+#include "Game/Game.hpp"
+#include "Game/GameCommon.hpp"
+#include "Game/World.hpp"
+#include "Game/Entity.hpp"
+#include "Game/Map.hpp"
+#include "Game/MapMaterial.hpp"
+#include "Game/MapRegion.hpp"
+#include "Game/EntityDef.hpp"
+#include "Game/Client.hpp"
 #include <string>
 
 BitmapFont*				g_devConsoleFont = nullptr;
@@ -118,7 +119,7 @@ void Game::StartUp()
 
 	g_theEventSystem->SubscribeEventCallbackFunction( "GainFocus", GainFocus );
 	g_theEventSystem->SubscribeEventCallbackFunction( "LoseFocus", LoseFocus );
-	g_theEventSystem->SubscribeEventCallbackMethod( "Map", this, &Game::set_current_map );
+// 	g_theEventSystem->SubscribeEventCallbackMethod( "Map", this, &Game::set_current_map );
 
 	g_theInput->SetCursorMode( MOUSE_MODE_RELATIVE );
 
@@ -137,9 +138,6 @@ void Game::StartUp()
 	LoadTextures();
 	LoadShaders();
 	LoadAudio();
-	MapMaterial::CreateMapMaterialsFromXML( "Data/Definitions/MapMaterialTypes.xml" );
-	MapRegion::CreateMapRegionsFromXML( "Data/Definitions/MapRegionTypes.xml" );
-	EntityDef::CreateEntityDefsFromXML( "Data/Definitions/EntityTypes.xml" );
 	m_world = new World( this );
 }
 
@@ -440,7 +438,11 @@ void Game::Update()
 
 	if( m_possessedEntity != nullptr )
 	{
-		MoveCameraToEntityEye( m_possessedEntity );
+		Vec3 position;
+		float yaw;
+		MoveCameraToEntityEye( m_possessedEntity, position, yaw );
+		m_worldCamera->SetPosition( position );
+		m_worldCamera->SetYawDegrees( yaw );
 		if( g_isDebugDraw )
 		{
 			Mat44 cameraView = m_worldCamera->GetViewMatrix();
@@ -493,11 +495,26 @@ float Game::GetDeltaSeconds() const
 
 
 //---------------------------------------------------------------------------------------------------------
+void Game::UpdateWorld()
+{
+	m_world->Update();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::UpdateFromInput( float deltaSeconds )
 {
 	UpdateBasedOnMouseMovement();
 
-	MoveWorldCamera( deltaSeconds );
+	if( m_possessedEntity == nullptr )
+	{
+		Vec3 cameraTranslation = MoveWorldCamera( deltaSeconds, m_worldCamera->GetYawDegrees() );
+		m_worldCamera->Translate( cameraTranslation );
+	}
+	else
+	{
+		MoveEntity( m_possessedEntity, m_worldCamera->GetYawDegrees() );
+	}
 
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
 	{
@@ -533,62 +550,95 @@ void Game::UpdateFromInput( float deltaSeconds )
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::MoveWorldCamera( float deltaSeconds )
+Vec3 Game::MoveWorldCamera( float deltaSeconds, float yawDegrees, InputSystem* input )
 {
 	float forwardMoveAmount = 0.f;
 	float leftMoveAmount = 0.f;
 	float upMoveAmount = 0.f;
 	float moveSpeed = 2.f * deltaSeconds;
-	if( g_theInput->IsKeyPressed( KEY_CODE_SHIFT ) )
+	if( input->IsKeyPressed( KEY_CODE_SHIFT ) )
 	{
 		moveSpeed *= 2.f;
 	}
 
-	if( m_possessedEntity != nullptr )
-	{
-		moveSpeed = m_possessedEntity->GetSpeed() * deltaSeconds;
-	}
-
-	if( g_theInput->IsKeyPressed( 'W' ) )
+	if( input->IsKeyPressed( 'W' ) )
 	{
 		forwardMoveAmount += moveSpeed;
 	}	
-	if( g_theInput->IsKeyPressed( 'S' ) )
+	if( input->IsKeyPressed( 'S' ) )
 	{
 		forwardMoveAmount -= moveSpeed;
 	}	
 
-	if( g_theInput->IsKeyPressed( 'A' ) )
+	if( input->IsKeyPressed( 'A' ) )
 	{
 		leftMoveAmount += moveSpeed;
 	}	
-	if( g_theInput->IsKeyPressed( 'D' ) )
+	if( input->IsKeyPressed( 'D' ) )
 	{
 		leftMoveAmount -= moveSpeed;
 	}
 
-	if( g_theInput->IsKeyPressed( 'Q' ) )
+	if( input->IsKeyPressed( 'Q' ) )
 	{
 		upMoveAmount += moveSpeed;
 	}
-	if( g_theInput->IsKeyPressed( 'E' ) )
+	if( input->IsKeyPressed( 'E' ) )
 	{
 		upMoveAmount -= moveSpeed;
 	}
 
-	Vec3 cameraForwardXY0 = Vec3( CosDegrees( m_worldCamera->GetYawDegrees() ), SinDegrees( m_worldCamera->GetYawDegrees() ), 0.f );
-	Vec3 cameraLeftXY0 = Vec3( -SinDegrees( m_worldCamera->GetYawDegrees() ), CosDegrees( m_worldCamera->GetYawDegrees() ), 0.f );
+	Vec3 cameraForwardXY0 = Vec3( CosDegrees( yawDegrees ), SinDegrees( yawDegrees ), 0.f );
+	Vec3 cameraLeftXY0 = Vec3( -SinDegrees( yawDegrees ), CosDegrees( yawDegrees ), 0.f );
 	Vec3 cameraTranslation = ( cameraForwardXY0 * forwardMoveAmount ) + ( cameraLeftXY0 * leftMoveAmount );
 	cameraTranslation.z = upMoveAmount;
 
-	if( m_possessedEntity == nullptr )
+	return cameraTranslation;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec3 Game::MoveEntity( Entity* entityToMove, float yawDegrees, InputSystem* input )
+{
+	float forwardMoveAmount = 0.f;
+	float leftMoveAmount = 0.f;
+	float upMoveAmount = 0.f;
+	float moveSpeed = entityToMove->GetSpeed() * static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
+
+	if( input->IsKeyPressed( 'W' ) )
 	{
-		m_worldCamera->Translate( cameraTranslation );
-	}
-	else
+		forwardMoveAmount += moveSpeed;
+	}	
+	if( input->IsKeyPressed( 'S' ) )
 	{
-		m_possessedEntity->Translate( cameraTranslation );
+		forwardMoveAmount -= moveSpeed;
+	}	
+
+	if( input->IsKeyPressed( 'A' ) )
+	{
+		leftMoveAmount += moveSpeed;
+	}	
+	if( input->IsKeyPressed( 'D' ) )
+	{
+		leftMoveAmount -= moveSpeed;
 	}
+
+	if( input->IsKeyPressed( 'Q' ) )
+	{
+		upMoveAmount += moveSpeed;
+	}
+	if( input->IsKeyPressed( 'E' ) )
+	{
+		upMoveAmount -= moveSpeed;
+	}
+
+	Vec3 forwardXY0 = Vec3( CosDegrees(  yawDegrees ), SinDegrees( yawDegrees ), 0.f );
+	Vec3 leftXY0	= Vec3( -SinDegrees( yawDegrees ), CosDegrees( yawDegrees ), 0.f );
+	Vec3 translation = ( forwardXY0 * forwardMoveAmount ) + ( leftXY0 * leftMoveAmount );
+	translation.z = upMoveAmount;
+
+	entityToMove->Translate( translation );
+	return entityToMove->GetPosition();
 }
 
 
@@ -621,55 +671,71 @@ void Game::PlaySpawnSound()
 //---------------------------------------------------------------------------------------------------------
 void Game::TogglePossessEntity()
 {
-	if( m_possessedEntity != nullptr )
-	{
-		m_possessedEntity->SetIsPossessed( false );
-		m_possessedEntity = nullptr;
-		return;
-	}
-
 	Vec3 cameraPosition = m_worldCamera->GetPosition();
 	Mat44 cameraView = m_worldCamera->GetViewMatrix();
 	MatrixInvertOrthoNormal( cameraView );
 	Vec3 cameraForward = cameraView.TransformVector3D( Vec3::UNIT_POSITIVE_X );
 
-	Entity* entityToPossess = m_world->GetClostestEntityInForwardSector( cameraPosition, 2.f, cameraForward, 90.f );
-	SetPossessedEntity( entityToPossess );
-}
+	TryTogglePossessEntity( &m_possessedEntity, cameraPosition, cameraForward );
 
-
-//---------------------------------------------------------------------------------------------------------
-void Game::SetPossessedEntity( Entity* entityToPosses )
-{
 	if( m_possessedEntity != nullptr )
 	{
-		Entity* previouslyPossessedEntity = m_possessedEntity;
-		m_possessedEntity = entityToPosses;
-
-		previouslyPossessedEntity->SetIsPossessed( false );
-	}
-	else if( m_possessedEntity == nullptr )
-	{
-		m_possessedEntity = entityToPosses;
-	}
-
-	if( entityToPosses != nullptr )
-	{
-		m_possessedEntity->SetIsPossessed( true );
 		m_worldCamera->SetYawDegrees( m_possessedEntity->GetYaw() );
 	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::MoveCameraToEntityEye( Entity* entity )
+void Game::TryTogglePossessEntity( Entity** in_possessionEntity, Vec3 const& cameraPosition, Vec3 const& cameraForward )
+{
+	if( *in_possessionEntity != nullptr )
+	{
+		(*in_possessionEntity)->SetIsPossessed( false );
+		*in_possessionEntity = nullptr;
+		return;
+	}
+
+	Entity* entityToPossess = m_world->GetClostestEntityInForwardSector( cameraPosition, 2.f, cameraForward, 90.f );
+	SetPossessedEntity( in_possessionEntity, entityToPossess );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::SetPossessedEntity( Entity** in_possessionEntity, Entity* entityToPosses )
+{
+	if( entityToPosses != nullptr && entityToPosses->IsPossessed() )
+		return;
+
+	if( *in_possessionEntity != nullptr )
+	{
+		Entity* previouslyPossessedEntity = *in_possessionEntity;
+		*in_possessionEntity = entityToPosses;
+
+		previouslyPossessedEntity->SetIsPossessed( false );
+	}
+	else if( *in_possessionEntity == nullptr )
+	{
+		*in_possessionEntity = entityToPosses;
+	}
+
+	if( entityToPosses != nullptr )
+	{
+		(*in_possessionEntity)->SetIsPossessed( true );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::MoveCameraToEntityEye( Entity* entity, Vec3& out_position, float& out_yaw )
 {
 	float possessedEntityEyeHeight = entity->GetEyeHeight();
 	Vec3 possessedEntityEyePosition = entity->GetPosition();
 	possessedEntityEyePosition.z += possessedEntityEyeHeight;
 
-	m_worldCamera->SetPosition( possessedEntityEyePosition );
-	m_worldCamera->SetYawDegrees( entity->GetYaw() );
+	out_position = possessedEntityEyePosition;
+	out_yaw = entity->GetYaw();
+	//m_worldCamera->SetPosition( possessedEntityEyePosition );
+	//m_worldCamera->SetYawDegrees( entity->GetYaw() );
 	//entity->SetYaw( m_worldCamera->GetYawDegrees() );
 }
 
@@ -691,12 +757,55 @@ void Game::DebugRaycast( Vec3 const& startPosition, Vec3 const& forwardDir, floa
 
 
 //---------------------------------------------------------------------------------------------------------
+WorldData Game::GetWorldData()
+{
+	return m_world->GetWorldData();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+ConnectionData Game::GetConnectionData()
+{
+	return m_world->GetConnectionData();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::SetCurrentMapByName( std::string const& mapName )
+{
+	m_world->SetCurrentMapByName( mapName );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::SpawnEntitiesFromSpawnData( SpawnData const& spawnData )
+{
+	m_world->SpawnEntitiesFromSpawnData( spawnData );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateEntitiesFromWorldData( WorldData const& worldData )
+{
+	m_world->UpdateEntitiesFromWorldData( worldData );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::SetWorldCameraFromCameraData( CameraData const& cameraData )
+{
+	m_worldCamera->SetPosition( cameraData.m_position );
+	m_worldCamera->SetPitchYawRollRotationDegrees( cameraData.m_pitchDegrees, cameraData.m_yawDegrees, cameraData.m_rollDegrees );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::set_current_map( EventArgs* args )
 {
 	std::string mapNameToLoad = args->GetValue( "map", "MISSING" );
 	if( mapNameToLoad != "MISSING" )
 	{
-		SetPossessedEntity( nullptr );
+		SetPossessedEntity( nullptr, nullptr );
 		m_world->SetCurrentMapByName( mapNameToLoad );
 		m_world->GetCurrentMap()->SpawnPlayer( m_worldCamera );
 	}

@@ -30,6 +30,22 @@ Entity::Entity( Game* theGame, World* theWorld, Map* theMap, EntityDef const& en
 
 
 //---------------------------------------------------------------------------------------------------------
+Entity::Entity( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef )
+	: m_entityDef( entityDef )
+{
+	m_theGame = theGame;
+	m_theWorld = theWorld;
+	m_theMap = theMap;
+
+	Vec2 spriteDimensions = m_entityDef.GetSize();
+	m_bottomLeft	= Vec3( 0.f, -spriteDimensions.x * 0.5f, 0.f );
+	m_bottomRight	= Vec3( 0.f, spriteDimensions.x * 0.5f, 0.f );
+	m_topRight		= Vec3( 0.f, spriteDimensions.x * 0.5f, spriteDimensions.y );
+	m_topLeft		= Vec3( 0.f, -spriteDimensions.x * 0.5f, spriteDimensions.y );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 Entity::~Entity()
 {
 }
@@ -38,8 +54,8 @@ Entity::~Entity()
 //---------------------------------------------------------------------------------------------------------
 void Entity::Update()
 {
-	if( m_isPossessed )
-		return;
+// 	if( m_isPossessed )
+// 		return;
 
 	m_forwardDirection = Vec2::MakeFromPolarDegrees( m_yaw ); 
 	UpdateAnimDirection(); //Should happen last
@@ -49,8 +65,8 @@ void Entity::Update()
 //---------------------------------------------------------------------------------------------------------
 void Entity::Render() const
 {
-	if( m_isPossessed )
-		return;
+// 	if( m_isPossessed )
+// 		return;
 
 	SpriteSheet* spriteSheet = m_entityDef.GetSpriteSheet();
 
@@ -155,6 +171,28 @@ void Entity::SetValuesFromXML( XmlElement const& element )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Entity::SetValuesFromEntityData( EntityData const& entityData )
+{
+	m_isPossessed			= entityData.m_isPossessed;
+	m_canBePushedByWalls	= entityData.m_canBePushedByWalls;
+	m_canBePushedByEntities	= entityData.m_canBePushedByEntities;
+	m_canPushEntities		= entityData.m_canPushEntities;
+	m_mass					= entityData.m_mass;
+
+	m_position			= entityData.m_position;
+	m_forwardDirection	= entityData.m_forwardDirection;
+	m_yaw				= entityData.m_yaw;
+	m_actionState		= entityData.m_actionState;
+}
+
+//---------------------------------------------------------------------------------------------------------
+std::string Entity::GetEntityName() const
+{
+	return m_entityDef.GetName();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 EntityType Entity::GetEntityType() const
 {
 	return m_entityDef.GetEntityType();
@@ -186,6 +224,25 @@ float Entity::GetSpeed() const
 float Entity::GetPhysicsRadius() const
 {
 	return m_entityDef.GetRadius();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+EntityData Entity::GetEntityData() const
+{
+	EntityData entityData;
+	entityData.m_isPossessed			= m_isPossessed;
+	entityData.m_canBePushedByWalls		= m_canBePushedByWalls;
+	entityData.m_canBePushedByEntities	= m_canBePushedByEntities;
+	entityData.m_canPushEntities		= m_canPushEntities;
+	entityData.m_mass					= m_mass;
+
+	entityData.m_position = m_position;
+	entityData.m_forwardDirection = m_forwardDirection;
+	entityData.m_yaw				= m_yaw;
+	memcpy( &entityData.m_actionState[0], &m_actionState[0], m_actionState.size() );
+
+	return entityData;
 }
 
 

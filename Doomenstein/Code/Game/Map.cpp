@@ -15,10 +15,11 @@
 
 
 //---------------------------------------------------------------------------------------------------------
-Map::Map( Game* theGame, World* theWorld )
+Map::Map( Game* theGame, World* theWorld, std::string const& name )
 {
 	m_game = theGame;
 	m_world = theWorld;
+	m_name = name;
 }
 
 
@@ -33,12 +34,84 @@ Map::~Map()
 
 
 //---------------------------------------------------------------------------------------------------------
+MapData Map::GetMapData()
+{
+	MapData mapData;
+	mapData.m_numEntities = m_entities.size();
+	GetEntityDataFromArray( mapData.m_entities, m_entities );
+	return mapData;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+SpawnData Map::GetEntitySpawnData()
+{
+	SpawnData spawnData;
+	for( int entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
+	{
+		EntitySpawnData& entitySpawnData = spawnData.m_entitiesToSpawn[entityIndex];
+		entitySpawnData.m_isUsed = true;
+		entitySpawnData.m_data = m_entities[entityIndex]->GetEntityData();
+
+		std::string entityName = m_entities[entityIndex]->GetEntityName();
+		memcpy( &entitySpawnData.m_entityDefName[0], &entityName[0], entityName.size() );
+	}
+	return spawnData;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Map::GetEntityDataFromArray( EntityData entityData[], std::vector<Entity*> const& entities )
+{
+	for( int entityIndex = 0; entityIndex < entities.size(); ++entityIndex )
+	{
+		entityData[entityIndex] = entities[entityIndex]->GetEntityData();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Entity* Map::SpawnEntityFromSpawnData( EntitySpawnData const& entitySpawnData )
+{
+	EntityDef* entityDef = EntityDef::GetEntityDefByName( entitySpawnData.m_entityDefName );
+	
+	EntityType entityType = entityDef->GetEntityType();
+	Entity* spawnedEntity = nullptr;
+	switch( entityType )
+	{
+	case ENTITY_TYPE_ENTITY:		spawnedEntity = new Entity(		m_game, m_world, this, *entityDef ); break;
+	case ENTITY_TYPE_ACTOR:			spawnedEntity = new Actor(		m_game, m_world, this, *entityDef ); break;
+	case ENTITY_TYPE_PROJECTILE:	spawnedEntity = new Projectile(	m_game, m_world, this, *entityDef ); break;
+	case ENTITY_TYPE_PORTAL:		spawnedEntity = new Portal(		m_game, m_world, this, *entityDef ); break;
+	default:
+		ERROR_AND_DIE( "Tried to spawn an unsupported entity on map" )
+		break;
+	}
+
+	AddEntityToMap( spawnedEntity );
+	spawnedEntity->SetValuesFromEntityData( entitySpawnData.m_data );
+	return spawnedEntity;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Map::UpdateEntitiesFromMapData( MapData const& mapData )
+{
+	for( int entityIndex = 0; entityIndex < mapData.m_numEntities; ++ entityIndex )
+	{
+		m_entities[entityIndex]->SetValuesFromEntityData( mapData.m_entities[entityIndex] );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Map::SpawnPlayer( Camera* playerCamera )
 {
-	g_theGame->SetPossessedEntity( m_playerStartEntity );
+	Entity** entityForPossession = g_theGame->GetPossessedEntityPointer();
+	g_theGame->SetPossessedEntity( entityForPossession, m_playerStartEntity );
 	g_theGame->PlaySpawnSound();
 
-	if( m_playerStartEntity == nullptr )
+	if( m_playerStartEntity == nullptr || *g_theGame->GetPossessedEntityPointer() == nullptr )
 	{
 		playerCamera->SetPosition( Vec3( m_playerStartPositionXY, PLAYER_HEIGHT ) );
 		playerCamera->SetYawDegrees( m_playerStartYawDegrees );
@@ -151,6 +224,19 @@ void Map::RemoveEntityFromMap( Entity* entityToRemove )
 		m_playerStartEntity = nullptr;
 	}
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+void Map::DeleteAllEntities()
+{
+	for( int entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
+	{
+		Entity* entityToDelete = m_entities[entityIndex];
+		RemoveEntityFromMap( entityToDelete );
+		delete entityToDelete;
+	}
+}
+
 
 //---------------------------------------------------------------------------------------------------------
 Entity* Map::GetClosestEntityInForwardSector( Vec3 const& sectorStartPosition, float maxDistanceToCheck, Vec3 const& forwardDirNormalized, float aperatureDegrees )

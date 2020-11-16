@@ -19,6 +19,17 @@ Portal::Portal( Game* theGame, World* theWorld, Map* theMap, EntityDef const& en
 
 
 //---------------------------------------------------------------------------------------------------------
+Portal::Portal( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef )
+	: Entity( theGame, theWorld, theMap, entityDef )
+{
+	m_mass					= 1.f;
+	m_canBePushedByWalls	= false;
+	m_canBePushedByEntities = false;
+	m_canPushEntities		= false;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 Portal::~Portal()
 {
 }

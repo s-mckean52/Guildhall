@@ -110,6 +110,37 @@ void InputSystem::ShutDown()
 
 
 //---------------------------------------------------------------------------------------------------------
+InputState InputSystem::GetInputState()
+{
+	InputState inputState;
+	inputState.m_scrollAmount				= m_scrollAmount;
+	inputState.m_mouseNormalizedPos			= m_mouseNormalizedPos;
+	inputState.m_cursorRelativeMovement		= m_cursorRelativeMovement;
+	inputState.m_cursorPositionLastFrame	= m_cursorPositionLastFrame;
+
+	memcpy( &inputState.m_keyStates,	&m_keyStates,	sizeof( m_keyStates ) );
+	memcpy( &inputState.m_mouseStates,	&m_mouseStates,	sizeof( m_mouseStates ) );
+	memcpy( &inputState.m_controllers,	&m_controllers,	sizeof( m_controllers ) );
+	
+	return inputState;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void InputSystem::SetFromInputState( InputState const& inputState )
+{
+	m_scrollAmount				= inputState.m_scrollAmount;
+	m_mouseNormalizedPos		= inputState.m_mouseNormalizedPos;
+	m_cursorRelativeMovement	= inputState.m_cursorRelativeMovement;
+	m_cursorPositionLastFrame	= inputState.m_cursorPositionLastFrame;
+
+	memcpy( &m_keyStates,	&inputState.m_keyStates,	sizeof( m_keyStates ) );
+	memcpy( &m_mouseStates,	&inputState.m_mouseStates,	sizeof( m_mouseStates ) );
+	memcpy( &m_controllers,	&inputState.m_controllers,	sizeof( m_controllers ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void InputSystem::UpdateMouse()
 {
 	switch( m_mouseMode )

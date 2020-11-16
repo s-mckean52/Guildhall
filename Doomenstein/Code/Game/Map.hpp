@@ -13,14 +13,37 @@ class Camera;
 class EntityDef;
 class Entity;
 
+
+//---------------------------------------------------------------------------------------------------------
+struct MapData
+{
+	int m_numEntities = 0;
+	EntityData m_entities[30] = {};
+};
+
+
+//---------------------------------------------------------------------------------------------------------
+struct SpawnData
+{
+	EntitySpawnData m_entitiesToSpawn[30] = {};
+};
+
+//---------------------------------------------------------------------------------------------------------
 class Map
 {
 public:
-	Map( Game* theGame, World* theWorld );
+	Map( Game* theGame, World* theWorld, std::string const& name );
 	virtual ~Map();
 
 	virtual void			Update()			= 0;
 	virtual void			Render() const		= 0;
+
+	std::string	GetMapName() const { return m_name; }
+	MapData		GetMapData();
+	SpawnData	GetEntitySpawnData();
+	void		GetEntityDataFromArray( EntityData entityData[], std::vector<Entity*> const& entities );
+	Entity*		SpawnEntityFromSpawnData( EntitySpawnData const& entitySpawnData );
+	void		UpdateEntitiesFromMapData( MapData const& mapData );
 
 	virtual RaycastResult	Raycast( Vec3 const& startPosition, Vec3 const& fwdDir, float maxDistance )	= 0;
 
@@ -31,6 +54,7 @@ public:
 
 	virtual void AddEntityToMap( Entity* entityToAdd );
 	virtual void RemoveEntityFromMap( Entity* entityToRemove );
+	virtual void DeleteAllEntities();
 
 	virtual Entity* GetClosestEntityInForwardSector( Vec3 const& sectorStartPosition, float maxDistanceToCheck, Vec3 const& forwardDirNormalized, float aperatureDegrees );
 
@@ -47,6 +71,8 @@ protected:
 	Game*		m_game		= nullptr;
 	World*		m_world		= nullptr;
 	GPUMesh*	m_mapMesh	= nullptr;
+
+	std::string m_name		= "Default";
 
 	Vec2 m_playerStartPositionXY;
 	float	m_playerStartYawDegrees		= 0.f;
