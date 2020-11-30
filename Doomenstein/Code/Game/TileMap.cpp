@@ -1,13 +1,6 @@
 #include "Game/TileMap.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/MapRegion.hpp"
-#include "Game/MapMaterial.hpp"
-#include "Game/Tile.hpp"
-#include "Game/EntityDef.hpp"
-#include "Game/Entity.hpp"
-#include "Game/Portal.hpp"
-#include "Game/Actor.hpp"
-#include "Game/Game.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Renderer/RenderContext.hpp"
 #include "Engine/Core/Vertex_PCUTBN.hpp"
@@ -16,6 +9,14 @@
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Core/Vertex_PCUTBN.hpp"
 #include "Engine/Core/DevConsole.hpp"
+#include "Game/MapMaterial.hpp"
+#include "Game/Tile.hpp"
+#include "Game/EntityDef.hpp"
+#include "Game/Entity.hpp"
+#include "Game/Portal.hpp"
+#include "Game/Projectile.hpp"
+#include "Game/Actor.hpp"
+#include "Game/Game.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -286,6 +287,7 @@ void TileMap::Update()
 	HandleEntityVEntityCollisions();
 	HandleEntitiesVWallCollisions();
 	HandlePortalVEntityCollisions();
+	HandleProjectileVEntityCollisions();
 }
 
 
@@ -295,7 +297,7 @@ void TileMap::UpdateEntities()
 	for( uint entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
 	{
 		Entity* currentEntity = m_entities[ entityIndex ];
-		if( currentEntity != nullptr )
+		if( currentEntity != nullptr && !currentEntity->GetIsDead() )
 		{
 			currentEntity->Update();
 		}
@@ -327,7 +329,7 @@ void TileMap::RenderEntities() const
 	for( uint entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
 	{
 		Entity* currentEntity = m_entities[ entityIndex ];
-		if( currentEntity != nullptr )
+		if( currentEntity != nullptr && !currentEntity->GetIsDead() )
 		{
 			currentEntity->Render();
 		}
@@ -486,7 +488,7 @@ void TileMap::HandleEntitiesVWallCollisions()
 	for( uint entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
 	{
 		Entity* currentEntity = m_entities[ entityIndex ];
-		if( currentEntity != nullptr )
+		if( currentEntity != nullptr && !currentEntity->GetIsDead() )
 		{
 			HandleEntityVWallCollisions( currentEntity );
 		}
@@ -512,6 +514,9 @@ void TileMap::HandleEntityVWallCollisions( Entity* entity )
 //---------------------------------------------------------------------------------------------------------
 void TileMap::PushEntityOutOfWall( Entity* entity, int xDir, int yDir )
 {
+	if( !entity->IsPushedByWalls() || entity->GetIsDead() )
+		return;
+
 	float entityRadius = entity->GetPhysicsRadius();
 	Vec3 entityPosition = entity->GetPosition();
 	Vec2 entityPositionXY = Vec2( entityPosition.x, entityPosition.y );
@@ -527,6 +532,11 @@ void TileMap::PushEntityOutOfWall( Entity* entity, int xDir, int yDir )
 
 	if( IsTileSolid( tileToCheck ) && DoDiscAndAABB2Overlap( tileXYBounds, entityPositionXY, entityRadius ) )
 	{
+		if( dynamic_cast<Projectile*>( entity ) != nullptr )
+		{
+			entity->TakeDamage( 100 );
+			return;
+		}
 		PushDiscOutOfAABB2( entityPositionXY, entityRadius, tileXYBounds );
 		entity->SetPosition( Vec3( entityPositionXY, entityPosition.z ) );
 	}

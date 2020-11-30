@@ -18,14 +18,14 @@ class Entity;
 struct MapData
 {
 	int m_numEntities = 0;
-	EntityData m_entities[30] = {};
+	EntityData m_entities[50] = {};
 };
 
 
 //---------------------------------------------------------------------------------------------------------
 struct SpawnData
 {
-	EntitySpawnData m_entitiesToSpawn[30] = {};
+	EntitySpawnData m_entitiesToSpawn[50] = {};
 };
 
 //---------------------------------------------------------------------------------------------------------
@@ -35,6 +35,7 @@ public:
 	Map( Game* theGame, World* theWorld, std::string const& name );
 	virtual ~Map();
 
+	void					BeginFrame();
 	virtual void			Update()			= 0;
 	virtual void			Render() const		= 0;
 
@@ -52,6 +53,7 @@ public:
 	virtual Entity* SpawnNewEntityOfType( std::string const& entityDefName, XmlElement const& element );
 	virtual Entity* SpawnNewEntityOfType( EntityDef const& entityDef, XmlElement const& element );
 
+	virtual void CleanUpDeadEntities();
 	virtual void AddEntityToMap( Entity* entityToAdd );
 	virtual void RemoveEntityFromMap( Entity* entityToRemove );
 	virtual void DeleteAllEntities();
@@ -66,6 +68,8 @@ protected:
 	virtual void HandleEntityVEntityCollision( Entity* effectedEntity, Entity* effectorEntity );
 	virtual void HandlePortalVEntityCollisions();
 	virtual void HandlePortalVEntityCollision( Entity* portalEntity, Entity* entity );
+	virtual void HandleProjectileVEntityCollisions();
+	virtual void HandleProjectileVEntityCollision( Entity* projectileEntity, Entity* entity );
 
 protected:
 	Game*		m_game		= nullptr;

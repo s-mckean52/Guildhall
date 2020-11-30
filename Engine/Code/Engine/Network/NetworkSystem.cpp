@@ -48,18 +48,17 @@ void NetworkSystem::StartUp()
 void NetworkSystem::BeginFrame()
 {
 	//UDPReadMessages();
+	SendReliableMessages();
 
-	if( m_tcpServers.empty() && m_mode == TCPMODE_SERVER )
+	if( m_tcpServer == nullptr && m_mode == TCPMODE_SERVER )
 	{
 		CreateTCPServer( SocketMode::NONBLOCKING );
-		m_tcpServers.front()->Bind();
-		m_tcpServers.front()->Listen();
 	}
 	else if( m_mode == TCPMODE_SERVER )
 	{	
 		if( !m_clientSocket.IsValid() )
 		{
-			m_clientSocket = m_tcpServers.front()->Accept();
+			m_clientSocket = m_tcpServer->Accept();
 		}
 		else if( m_clientSocket.IsDataAvailable() )
 		{
@@ -141,9 +140,13 @@ void NetworkSystem::ShutDown()
 		g_theConsole->ErrorString( "Winsock cleanup failed %i", WSAGetLastError() );
 	}
 
-	if( m_UDPSocket != nullptr )
+	for( int udpSocketIndex = 0; udpSocketIndex < m_UDPSockets.size(); ++udpSocketIndex )
 	{
-		CloseUDPPort( 48000 );
+		UDPSocket* udpSocket = m_UDPSockets[udpSocketIndex];
+		udpSocket->StopThreads();
+
+		delete m_UDPSockets[udpSocketIndex];
+		m_UDPSockets[udpSocketIndex] = nullptr;
 	}
 }
 
@@ -151,11 +154,17 @@ void NetworkSystem::ShutDown()
 //---------------------------------------------------------------------------------------------------------
 void NetworkSystem::CreateTCPServer( SocketMode mode )
 {
-	m_tcpServers.push_back( new TCPServer( mode ) );
-	m_tcpServers.front()->SetListenPort( 48000 );
-	m_tcpServers.front()->SetIsListening( true );
-	m_tcpServers.front()->Bind();
-	m_tcpServers.front()->Listen();
+	if( m_tcpServer != nullptr )
+	{
+		delete m_tcpServer;
+		m_tcpServer = nullptr;
+	}
+
+	m_tcpServer = new TCPServer( mode );
+	m_tcpServer->SetListenPort( 48000 );
+	m_tcpServer->SetIsListening( true );
+	m_tcpServer->Bind();
+	m_tcpServer->Listen();
 
 	m_mode = TCPMODE_SERVER;
 }
@@ -164,7 +173,13 @@ void NetworkSystem::CreateTCPServer( SocketMode mode )
 //---------------------------------------------------------------------------------------------------------
 void NetworkSystem::CreateTCPClient()
 {
-	m_tcpClients.push_back( new TCPClient() );
+	if( m_tcpClient != nullptr )
+	{
+		delete m_tcpClient;
+		m_tcpClient = nullptr;
+	}
+
+	m_tcpClient = new TCPClient();
 	m_mode = TCPMODE_CLIENT;
 }
 
@@ -192,9 +207,16 @@ void NetworkSystem::CloseTCPServer()
 
 
 //---------------------------------------------------------------------------------------------------------
+std::string NetworkSystem::GetTCPSocketAddress()
+{
+	return m_clientSocket.GetAddress();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void NetworkSystem::ConnectTCPClient( std::string const& ipAddress, uint16_t portNum, SocketMode socketMode )
 {
-	m_clientSocket = m_tcpClients.front()->Connect( ipAddress, portNum, socketMode );
+	m_clientSocket = m_tcpClient->Connect( ipAddress, portNum, socketMode );
 }
 
 
@@ -214,6 +236,10 @@ void NetworkSystem::SendTCPMessage( TCPMessage tcpMessageToSend )
 	if( m_clientSocket.IsValid() )
 	{
 		m_clientSocket.Send( &buffer[0], ( messageHeader.m_size + sizeof( TCPMessageHeader ) ) );
+	}
+	else
+	{
+		g_theConsole->ErrorString( "TCP Message failed to send: Client Socket is invalid" );
 	}
 }
 
@@ -252,47 +278,51 @@ bool NetworkSystem::GetTCPMessage( TCPMessage& out_message )
 
 
 //---------------------------------------------------------------------------------------------------------
-void NetworkSystem::OpenUDPPort( int bindPort, int sendToPort )
+void NetworkSystem::SendReliableMessages()
 {
-	if( m_UDPSocket != nullptr )
+	for( int udpSocketIndex = 0; udpSocketIndex < m_UDPSockets.size(); ++udpSocketIndex )
 	{
-		CloseUDPPort( 48000 );
+		m_UDPSockets[udpSocketIndex]->SendReliableMessages();
 	}
+}
 
-	m_isUDPSocketQuitting = false;
-	m_UDPSocket = new UDPSocket( "127.0.0.1", bindPort );
-	m_UDPSocket->Bind( sendToPort );
 
-	m_UDPReadThread = std::thread( &NetworkSystem::UDPReceiveMessagesJob, this, m_UDPSocket );
-	m_UDPSendThread = std::thread( &NetworkSystem::UDPSendMessagesJob, this, m_UDPSocket );
+//---------------------------------------------------------------------------------------------------------
+UDPSocket* NetworkSystem::OpenUDPPort( std::string const& ipAddress, int bindPort, int sendToPort )
+{
+	CloseUDPPort( bindPort );
+
+	UDPSocket* newSocket = new UDPSocket( this, ipAddress, bindPort, sendToPort );
+	m_UDPSockets.push_back( newSocket );
+
+	return newSocket;
 }
 
 
 //---------------------------------------------------------------------------------------------------------
 void NetworkSystem::CloseUDPPort( int bindPort )
 {
-	UNUSED( bindPort );
+	for( int udpSocketIndex = 0; udpSocketIndex < m_UDPSockets.size(); ++udpSocketIndex )
+	{
+		UDPSocket* udpSocket = m_UDPSockets[udpSocketIndex];
+		if( udpSocket->GetReceivePort() == bindPort )
+		{
+			udpSocket->StopThreads();
 
-	if( m_UDPSocket == nullptr )
-		return;
-
-	m_isUDPSocketQuitting = true;
-
-	delete m_UDPSocket;
-	m_UDPSocket = nullptr;
-
-	m_UDPReadThread.join();
-	m_UDPSendThread.join();
-
+			m_UDPSockets[udpSocketIndex] = m_UDPSockets[m_UDPSockets.size() - 1];
+			m_UDPSockets.pop_back();
+			delete udpSocket;
+		}
+	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void NetworkSystem::SendUDPMessage( UDPMessage const& message )
+void NetworkSystem::SendUDPMessage( UDPSocket* socket, UDPMessage const& message )
 {
-	if( HasValidUDPSocket() )
+	if( socket != nullptr )
 	{
-		m_UDPMessagesToSend.Push( message );
+		socket->SendMessage( message );
 	}
 	else
 	{
@@ -302,10 +332,10 @@ void NetworkSystem::SendUDPMessage( UDPMessage const& message )
 
 
 //---------------------------------------------------------------------------------------------------------
-void NetworkSystem::UDPReadMessages()
+void NetworkSystem::UDPReadMessages( UDPSocket* socket )
 {
 	UDPMessage message;
-	while( m_UDPMessagesToReceive.Pop( message ) )
+	while( socket->ReadMessage( message ) )
 	{
 		m_udpMessages.push_back( message );
 		//g_theConsole->PrintString( Rgba8::GREEN, "%s:%i said: \"%s\"", message.m_header.m_fromAddress, message.m_header.m_port, message.m_data );
@@ -314,16 +344,9 @@ void NetworkSystem::UDPReadMessages()
 
 
 //---------------------------------------------------------------------------------------------------------
-bool NetworkSystem::HasValidUDPSocket()
+void NetworkSystem::GetUDPMessages( UDPSocket* socket, std::deque<UDPMessage>& out_messages )
 {
-	return ( m_UDPSocket != nullptr && m_UDPSocket->IsValid() );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void NetworkSystem::GetUDPMessages( std::deque<UDPMessage>& out_messages )
-{
-	m_UDPMessagesToReceive.Swap( out_messages );
+	socket->GetMessages( out_messages );
 }
 
 
@@ -333,10 +356,10 @@ void NetworkSystem::start_tcp_server( EventArgs* args )
 	int port = args->GetValue( "port", 48000 );
 
 	CreateTCPServer( SocketMode::NONBLOCKING );
-	m_tcpServers.front()->SetListenPort( port );
-	m_tcpServers.front()->SetIsListening( true );
-	m_tcpServers.front()->Bind();
-	m_tcpServers.front()->Listen();
+	m_tcpServer->SetListenPort( port );
+	m_tcpServer->SetIsListening( true );
+	m_tcpServer->Bind();
+	m_tcpServer->Listen();
 
 	m_mode = TCPMODE_SERVER;
 
@@ -349,7 +372,7 @@ void NetworkSystem::stop_tcp_server( EventArgs* args )
 {
 	UNUSED( args );
 
-	g_theConsole->PrintString( Rgba8::GREEN, "TCPServer is no longer listening on port %i", m_tcpServers.front()->GetListenPort() );
+	g_theConsole->PrintString( Rgba8::GREEN, "TCPServer is no longer listening on port %i", m_tcpServer->GetListenPort() );
 	
 	CloseTCPServer();
 }
@@ -410,12 +433,13 @@ void NetworkSystem::client_disconnect( EventArgs* args )
 //---------------------------------------------------------------------------------------------------------
 void NetworkSystem::open_udp_port( EventArgs* args )
 {
+	std::string ipAddress = args->GetValue( "ip", "127.0.0.1" );
 	int bindPort = args->GetValue( "bindPort", 48000 );
 	int sendToPort = args->GetValue( "sendToPort", 48001 );
 
 	g_theConsole->PrintString( Rgba8::GREEN, "Opening UDP Port on %i and sending to on %i...", bindPort, sendToPort );
 
-	OpenUDPPort( bindPort, sendToPort );
+	OpenUDPPort( ipAddress, bindPort, sendToPort );
 }
 
 
@@ -426,14 +450,14 @@ void NetworkSystem::send_udp_message( EventArgs* args )
 
 	g_theConsole->PrintString( Rgba8::GREEN, "Sending Message..." );
 
-	std::string hostData = m_UDPSocket->GetHostData();
-	uint16_t sendToPort = static_cast<uint16_t>( m_UDPSocket->GetSendToPort() );
+	std::string hostData = m_UDPSockets[0]->GetHostData();
+	uint16_t sendToPort = static_cast<uint16_t>( m_UDPSockets[0]->GetSendToPort() );
 	
 	UDPMessage messageToSend;
 	messageToSend.m_header.m_port = sendToPort;
 	memcpy( messageToSend.m_header.m_fromAddress, &hostData, 16 );
 	memcpy(messageToSend.m_data, &message, message.size());
-	SendUDPMessage( messageToSend );
+	SendUDPMessage( m_UDPSockets[0], messageToSend );
 }
 
 
@@ -445,51 +469,4 @@ void NetworkSystem::close_udp_port( EventArgs* args )
 	g_theConsole->PrintString( Rgba8::GREEN, "Closing port on %i...", bindPort );
 
 	CloseUDPPort( bindPort );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void NetworkSystem::UDPReceiveMessagesJob( UDPSocket* socket )
-{
-	while( !m_isUDPSocketQuitting )
-	{
-		int length = 0;
-
-		length = socket->Receive();
-
-		if( length > 0 )
-		{
-			auto& buffer = socket->ReceiveBuffer();
-
-			UDPMessage messageToReceive;
-			messageToReceive = *reinterpret_cast<UDPMessage*>( &buffer[0] );
-			//memcpy( &messageToReceive, &buffer[0], MAX_UDP_MESSAGE_SIZE );
-			m_UDPMessagesToReceive.Push( messageToReceive );
-		}
-		else
-		{
-			std::this_thread::sleep_for( std::chrono::microseconds(10) );
-		}
-	}
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void NetworkSystem::UDPSendMessagesJob( UDPSocket* socket )
-{
-	while( !m_isUDPSocketQuitting )
-	{
-		UDPMessage messageToSend;
-		if( m_UDPMessagesToSend.Pop( messageToSend ) )
-		{
-			Buffer& buffer = socket->SendBuffer();
-			buffer = *reinterpret_cast<Buffer*>( &messageToSend );
-			//memcpy( &buffer[0], &messageToSend, MAX_UDP_MESSAGE_SIZE );
-			socket->Send( MAX_UDP_MESSAGE_SIZE );
-		}
-		else
-		{
-			std::this_thread::sleep_for( std::chrono::microseconds(10) );
-		}
-	}
 }

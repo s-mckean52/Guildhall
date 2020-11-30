@@ -13,4 +13,6 @@ public:
 	void EndFrame()		override;
 	void Update()		override;
 	void Render()		override;
+
+	void SendReliableWorldData() override;
 };

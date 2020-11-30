@@ -1,7 +1,8 @@
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Network/UDPSocket.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/StringUtils.hpp"
+#include "Engine/Network/UDPSocket.hpp"
+#include "Engine/Network/NetworkSystem.hpp"
 
 #define TEST_MODE
 #ifdef TEST_MODE
@@ -12,12 +13,14 @@
 
 
 //---------------------------------------------------------------------------------------------------------
-UDPSocket::UDPSocket( std::string const& host, int port )
+UDPSocket::UDPSocket( NetworkSystem* owner, std::string const& host, int receivePort, int sendToPort )
 {
-	m_receivePort = static_cast<uint16_t>( port );
+	m_owner = owner;
+
+	m_receivePort = static_cast<uint16_t>( receivePort );
 
 	m_toAddress.sin_family = AF_INET;
-	m_toAddress.sin_port = htons( (u_short)port );
+	m_toAddress.sin_port = htons( (u_short)receivePort );
 	m_toAddress.sin_addr.s_addr = inet_addr( host.c_str() );
 
 	m_socket = ::socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
@@ -26,6 +29,11 @@ UDPSocket::UDPSocket( std::string const& host, int port )
 		LOG_ERROR( "Socket instantiation failed, error = '%i'", WSAGetLastError() );
 		return;
 	}
+
+	Bind( sendToPort );
+
+	m_readThread = std::thread( &UDPSocket::UDPReceiveMessagesJob, this );
+	m_sendThread = std::thread( &UDPSocket::UDPSendMessagesJob, this );
 }
 
 
@@ -33,6 +41,58 @@ UDPSocket::UDPSocket( std::string const& host, int port )
 UDPSocket::~UDPSocket()
 {
 	Close();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void UDPSocket::SendMessage( UDPMessage const& message, bool isOldMessage )
+{
+	m_UDPMessagesToSend.Push( message );
+
+	if( message.m_header.m_isReliable && !isOldMessage )
+	{
+		if( m_reliableMessages.size() >= 200 )
+		{
+			m_reliableMessages.erase( m_reliableMessages.cbegin() );
+		}
+		m_reliableMessages.push_back( message );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+bool UDPSocket::ReadMessage( UDPMessage& message )
+{
+	return m_UDPMessagesToReceive.Pop( message );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void UDPSocket::GetMessages( std::deque<UDPMessage>& out_messages )
+{
+	m_UDPMessagesToReceive.Swap( out_messages );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void UDPSocket::SendReliableMessages()
+{
+	for( int reliableMessageIndex = 0; reliableMessageIndex < m_reliableMessages.size(); ++reliableMessageIndex )
+	{
+		SendMessage( m_reliableMessages[reliableMessageIndex], true );
+	}
+}
+
+//---------------------------------------------------------------------------------------------------------
+void UDPSocket::RemoveReliableMessage( UDPMessage const& message )
+{
+	for( int reliableMessageIndex = 0; reliableMessageIndex < m_reliableMessages.size(); ++reliableMessageIndex )
+	{
+		if( m_reliableMessages[reliableMessageIndex] == message )
+		{
+			m_reliableMessages.erase( m_reliableMessages.cbegin() + reliableMessageIndex );
+		}
+	}
 }
 
 
@@ -48,6 +108,16 @@ void UDPSocket::Close()
 		LOG_ERROR( "Socket close failed, error = '%i'", WSAGetLastError() );
 	}
 	m_socket = INVALID_SOCKET;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void UDPSocket::StopThreads()
+{
+	m_isUDPSocketQuitting = true;
+
+	m_readThread.join();
+	m_sendThread.join();
 }
 
 
@@ -108,4 +178,51 @@ std::string UDPSocket::GetHostData()
     hostent* host = ::gethostbyname( hostName.data() );
     memcpy( hostName.data(), inet_ntoa( *( struct in_addr* ) host->h_addr_list[ 0 ] ), size );
     return std::string( hostName.data() );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void UDPSocket::UDPReceiveMessagesJob()
+{
+	while( !m_isUDPSocketQuitting )
+	{
+		int length = 0;
+
+		length = Receive();
+
+		if( length > 0 )
+		{
+			auto& buffer = ReceiveBuffer();
+
+			UDPMessage messageToReceive;
+			messageToReceive = *reinterpret_cast<UDPMessage*>( &buffer[0] );
+			//memcpy( &messageToReceive, &buffer[0], MAX_UDP_MESSAGE_SIZE );
+			m_UDPMessagesToReceive.Push( messageToReceive );
+		}
+		else
+		{
+			std::this_thread::sleep_for( std::chrono::microseconds(10) );
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void UDPSocket::UDPSendMessagesJob()
+{
+	while( !m_isUDPSocketQuitting )
+	{
+		UDPMessage messageToSend;
+		if( m_UDPMessagesToSend.Pop( messageToSend ) )
+		{
+			Buffer& buffer = SendBuffer();
+			buffer = *reinterpret_cast<Buffer*>( &messageToSend );
+			//memcpy( &buffer[0], &messageToSend, MAX_UDP_MESSAGE_SIZE );
+			Send( MAX_UDP_MESSAGE_SIZE );
+		}
+		else
+		{
+			std::this_thread::sleep_for( std::chrono::microseconds(10) );
+		}
+	}
 }

@@ -1,6 +1,3 @@
-#include "Game/Entity.hpp"
-#include "Game/Game.hpp"
-#include "Game/GameCommon.hpp"
 #include "Engine/Core/EngineCommon.hpp"
 #include "Engine/Core/DebugRender.hpp"
 #include "Engine/Core/DevConsole.hpp"
@@ -9,7 +6,15 @@
 #include "Engine/Renderer/SpriteSheet.hpp"
 #include "Engine/Renderer/MeshUtils.hpp"
 #include "Engine/Math/Mat44.hpp"
+#include "Game/Entity.hpp"
+#include "Game/Game.hpp"
+#include "Game/App.hpp"
+#include "Game/GameCommon.hpp"
+#include "Game/Map.hpp"
+#include "Game/Projectile.hpp"
 
+
+STATIC int Entity::s_entityID = 0;
 
 //---------------------------------------------------------------------------------------------------------
 Entity::Entity( Game* theGame, World* theWorld, Map* theMap, EntityDef const& entityDef, XmlElement const& element )
@@ -18,6 +23,8 @@ Entity::Entity( Game* theGame, World* theWorld, Map* theMap, EntityDef const& en
 	m_theGame = theGame;
 	m_theWorld = theWorld;
 	m_theMap = theMap;
+
+	m_id = s_entityID++;
 
 	Vec2 spriteDimensions = m_entityDef.GetSize();
 	m_bottomLeft	= Vec3( 0.f, -spriteDimensions.x * 0.5f, 0.f );
@@ -104,9 +111,75 @@ void Entity::Render() const
 		g_theRenderer->DrawVertexArray( vertexArray );
 	}
 
+	RenderHealthBar();
+
 	if( g_isDebugDraw )
 	{
 		DebugRender();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Entity::RenderHealthBar() const
+{
+	float healthHeight = 0.2f;
+	float padding = 0.1f;
+	float height = GetHeight();
+	float radius = GetPhysicsRadius();
+	float width = radius * 2.f;
+
+	float healthSectionWidth = width / 10.f;
+
+	Vec3 backgroundBottomLeft = Vec3( 0.f, -radius, height + padding );
+	Vec3 backgroundBottomRight = Vec3( 0.f, radius, height + padding );
+	Vec3 backgroundTopLeft = backgroundBottomLeft + Vec3( 0.f, 0.f, healthHeight );
+	Vec3 backgroundTopRight = backgroundBottomRight + Vec3( 0.f, 0.f, healthHeight );
+
+	Mat44 billboardTransform = GetBillboardTransformMatrix( *m_theGame->GetPlayerCamera(), m_position, BillboardType::CAMERA_FACING_XY );
+	Vec3 t_backgroundBottomLeft		= billboardTransform.TransformPosition3D( backgroundBottomLeft );
+	Vec3 t_backgroundBottomRight	= billboardTransform.TransformPosition3D( backgroundBottomRight );
+	Vec3 t_backgroundTopRight		= billboardTransform.TransformPosition3D( backgroundTopRight );
+	Vec3 t_backgroundTopLeft		= billboardTransform.TransformPosition3D( backgroundTopLeft );
+
+	std::vector<Vertex_PCU> vertexArray;
+	vertexArray.push_back( Vertex_PCU( t_backgroundBottomLeft,	Rgba8::GRAY ) );
+	vertexArray.push_back( Vertex_PCU( t_backgroundBottomRight, Rgba8::GRAY ) );
+	vertexArray.push_back( Vertex_PCU( t_backgroundTopRight,	Rgba8::GRAY ) );
+	vertexArray.push_back( Vertex_PCU( t_backgroundBottomLeft,	Rgba8::GRAY ) );
+	vertexArray.push_back( Vertex_PCU( t_backgroundTopRight,	Rgba8::GRAY ) );
+	vertexArray.push_back( Vertex_PCU( t_backgroundTopLeft,		Rgba8::GRAY ) );
+	
+	g_theRenderer->BindTexture( nullptr );
+	g_theRenderer->BindShaderByPath( "Data/Shaders/WorldOpaque.hlsl" );
+
+	g_theRenderer->DrawVertexArray( vertexArray );
+
+	std::vector<Vertex_PCU> healthSegments;
+	for( int healthBarIndex = 0; healthBarIndex < m_currentHealth; ++healthBarIndex )
+	{
+		float segmentPadding = 0.01f;
+		Vec3 segmentBottomLeft = backgroundBottomLeft + Vec3( 0.01f, ( healthSectionWidth * healthBarIndex ) + segmentPadding, segmentPadding );
+		Vec3 segmentBottomRight = segmentBottomLeft + Vec3( 0.f, healthSectionWidth - ( segmentPadding * 2.f ), 0.f );
+		Vec3 segmentTopLeft = segmentBottomLeft + Vec3( 0.f, 0.f, healthHeight - ( segmentPadding * 2.f ) );
+		Vec3 segmentTopRight = segmentBottomRight + Vec3( 0.f, 0.f, healthHeight - ( segmentPadding * 2.f ) );
+
+		Vec3 t_segmentBottomLeft	= billboardTransform.TransformPosition3D( segmentBottomLeft );
+		Vec3 t_segmentBottomRight	= billboardTransform.TransformPosition3D( segmentBottomRight );
+		Vec3 t_segmentTopRight		= billboardTransform.TransformPosition3D( segmentTopRight );
+		Vec3 t_segmentTopLeft		= billboardTransform.TransformPosition3D( segmentTopLeft );
+
+		healthSegments.push_back( Vertex_PCU( t_segmentBottomLeft,	Rgba8::GREEN ) );
+		healthSegments.push_back( Vertex_PCU( t_segmentBottomRight,	Rgba8::GREEN ) );
+		healthSegments.push_back( Vertex_PCU( t_segmentTopRight,	Rgba8::GREEN ) );
+		healthSegments.push_back( Vertex_PCU( t_segmentBottomLeft,	Rgba8::GREEN ) );
+		healthSegments.push_back( Vertex_PCU( t_segmentTopRight,	Rgba8::GREEN ) );
+		healthSegments.push_back( Vertex_PCU( t_segmentTopLeft,		Rgba8::GREEN ) );
+	}
+
+	if( healthSegments.size() > 0 )
+	{
+		g_theRenderer->DrawVertexArray( healthSegments );
 	}
 }
 
@@ -178,6 +251,8 @@ void Entity::SetValuesFromEntityData( EntityData const& entityData )
 	m_canBePushedByEntities	= entityData.m_canBePushedByEntities;
 	m_canPushEntities		= entityData.m_canPushEntities;
 	m_mass					= entityData.m_mass;
+	m_isDead				= entityData.m_isDead;
+	m_currentHealth			= entityData.m_currentHealth;
 
 	m_position			= entityData.m_position;
 	m_forwardDirection	= entityData.m_forwardDirection;
@@ -236,11 +311,15 @@ EntityData Entity::GetEntityData() const
 	entityData.m_canBePushedByEntities	= m_canBePushedByEntities;
 	entityData.m_canPushEntities		= m_canPushEntities;
 	entityData.m_mass					= m_mass;
+	entityData.m_isDead					= m_isDead;
+	entityData.m_currentHealth			= m_currentHealth;
 
 	entityData.m_position = m_position;
 	entityData.m_forwardDirection = m_forwardDirection;
 	entityData.m_yaw				= m_yaw;
 	memcpy( &entityData.m_actionState[0], &m_actionState[0], m_actionState.size() );
+	std::string entityDefName = m_entityDef.GetName();
+	memcpy( &entityData.m_entityDefName[0], &entityDefName[0], entityDefName.size() );
 
 	return entityData;
 }
@@ -307,6 +386,13 @@ void Entity::SetPosition( Vec3 const& position )
 
 
 //---------------------------------------------------------------------------------------------------------
+void Entity::SetForward( Vec2 const& forward )
+{
+	m_forwardDirection = forward;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Entity::SetYaw( float yaw )
 {
 	m_yaw = yaw;
@@ -338,4 +424,29 @@ void Entity::SetIsPossessed( bool isPossesed )
 void Entity::SetMap( Map* map )
 {
 	m_theMap = map;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Entity::TakeDamage( int damageToTake )
+{
+	m_currentHealth -= damageToTake;
+	if( m_currentHealth <= 0 )
+	{
+		m_isDead = true;
+		g_theApp->SendReliableUpdate();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Entity::Shoot()
+{
+	EntityDef* bulletDef = EntityDef::GetEntityDefByName( "Plasma Bolt" );
+	Projectile* newBullet = new Projectile( m_theGame, m_theWorld, m_theMap, *bulletDef );
+	newBullet->SetPosition( m_position + Vec3( 0.f, 0.f, GetEyeHeight() ) + ( Vec3( m_forwardDirection, 0.f ) * ( GetPhysicsRadius() + newBullet->GetPhysicsRadius() + 0.01f ) ) );
+	newBullet->SetForward( m_forwardDirection );
+	m_theMap->AddEntityToMap( newBullet );
+
+	g_theApp->SendReliableUpdate();
 }

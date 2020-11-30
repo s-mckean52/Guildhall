@@ -74,8 +74,8 @@ void App::StartUp()
 
 	g_theEventSystem->SubscribeEventCallbackFunction( "quit", QuitRequested );
 	g_theEventSystem->SubscribeEventCallbackFunction( "help", HelpCommand );
-	g_theEventSystem->SubscribeEventCallbackMethod( "start_multiplayer_server", this, &App::start_multiplayer_server );
-	g_theEventSystem->SubscribeEventCallbackMethod( "connect_to_multiplayer_server", this, &App::connect_to_mulitplayer_server );
+	g_theEventSystem->SubscribeEventCallbackMethod( "Host", this, &App::start_multiplayer_server );
+	g_theEventSystem->SubscribeEventCallbackMethod( "Connect", this, &App::connect_to_mulitplayer_server );
 
 	m_devConsoleCamera = new Camera( g_theRenderer );
 	m_devConsoleCamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
@@ -176,6 +176,13 @@ void App::connect_to_mulitplayer_server( EventArgs* args )
 	m_theServer = new RemoteServer( ipAddress, port );
 	m_theServer->StartUp( MULTI_PLAYER_GAME );
 	new PlayerClient( m_theServer );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void App::SendReliableUpdate()
+{
+	m_theServer->SendReliableUpdates();
 }
 
 

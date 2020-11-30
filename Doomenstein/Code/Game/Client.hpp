@@ -1,7 +1,8 @@
 #pragma once
 #include "Engine/Math/Vec3.hpp"
+#include "Game/Server.hpp"
 
-class Server;
+struct UDPMessage;
 
 struct CameraData
 {
@@ -21,7 +22,20 @@ public:
 	virtual void EndFrame()		= 0;
 	virtual void Update()		= 0;
 	virtual void Render()		= 0;
+	virtual void SendReliableWorldData() = 0;
+
+	bool IsDisconnecting() const { return m_isDisconnecting; }
+
+	void SetFrameNum( int frameNum ) { m_frameNum = frameNum; }
+
+	void UnpackUDPMessage( UDPMessage const& message );
+
+	
 
 protected:
-	Server* m_owner;
+	bool m_isDisconnecting = false;
+
+	Server*		m_owner;
+	int			m_frameNum = 0;
+	UDPPacket	m_packets[NUM_MESSAGE_ID] = {};
 };

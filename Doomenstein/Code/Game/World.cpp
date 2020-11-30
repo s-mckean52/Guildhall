@@ -51,6 +51,16 @@ World::~World()
 
 
 //---------------------------------------------------------------------------------------------------------
+void World::BeginFrame()
+{
+	if( m_currentMap == nullptr )
+		return;
+
+	m_currentMap->BeginFrame();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void World::Update()
 {
 	if( m_currentMap == nullptr )
@@ -208,7 +218,7 @@ ConnectionData World::GetConnectionData()
 	ConnectionData connectionData;
 	std::string currentMapName = m_currentMap->GetMapName();
 	memcpy( &connectionData.m_currentMapByName[0], &currentMapName[0], currentMapName.size() );
-	//memcpy( &connectionData.m_entityData, &m_currentMap->GetEntitySpawnData(), sizeof( SpawnData ) );
+	memcpy( &connectionData.m_entityData, &m_currentMap->GetEntitySpawnData(), sizeof( SpawnData ) );
 	return connectionData;
 }
 
@@ -217,9 +227,9 @@ ConnectionData World::GetConnectionData()
 void World::SpawnEntitiesFromSpawnData( SpawnData const& spawnData )
 {
 	m_currentMap->DeleteAllEntities();
-	for( int i = 0; i < 30; ++i )
+	for( int i = 0; i < 50; ++i )
 	{
-		if( spawnData.m_entitiesToSpawn->m_isUsed )
+		if( spawnData.m_entitiesToSpawn[i].m_isUsed )
 		{
 			m_currentMap->SpawnEntityFromSpawnData( spawnData.m_entitiesToSpawn[i] );
 		}

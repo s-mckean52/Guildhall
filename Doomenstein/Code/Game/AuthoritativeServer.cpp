@@ -55,13 +55,13 @@ void AuthoritativeServer::ShutDown()
 void AuthoritativeServer::BeginFrame()
 {
 	m_frameNum++;
-
 	ProcessTCPMessages();
-	ProcessUDPMessages();
 	for( int clientIndex = 0; clientIndex < m_clients.size(); ++clientIndex )
 	{
+		m_clients[clientIndex]->SetFrameNum( m_frameNum );
 		m_clients[clientIndex]->BeginFrame();
 	}
+	g_theGame->BeginFrame();
 }
 
 
@@ -70,7 +70,12 @@ void AuthoritativeServer::EndFrame()
 {
 	for( int clientIndex = 0; clientIndex < m_clients.size(); ++clientIndex )
 	{
-		SendWorldDataToClient( m_clients[clientIndex] );
+		if( m_clients[clientIndex]->IsDisconnecting() )
+		{
+			delete m_clients[clientIndex];
+			m_clients[clientIndex] = m_clients[m_clients.size() - 1];
+			m_clients.pop_back();
+		}
 		m_clients[clientIndex]->EndFrame();
 	}
 }
@@ -90,14 +95,14 @@ void AuthoritativeServer::Update()
 //---------------------------------------------------------------------------------------------------------
 void AuthoritativeServer::OpenUDPSocket( TCPMessage const& message )
 {
-	std::string udpSocketData = message.m_message;
-
-	m_udpSendPort = static_cast<uint16_t>( atoi( udpSocketData.c_str() ) );
-	m_udpListenPort = m_udpSendPort + 1;
-	g_theNetworkSystem->OpenUDPPort( m_udpListenPort, m_udpSendPort );
+	int udpSendPort = g_RNG->RollRandomIntInRange( 48000, 49000 );
+	int udpListenPort = udpSendPort + 1;
+	std::string connectionData = g_theNetworkSystem->GetTCPSocketAddress();
+	std::string connectionAddress = SplitStringOnDelimiter( connectionData, ':' )[0];
+	UDPSocket* udpSocket = g_theNetworkSystem->OpenUDPPort( connectionAddress, udpListenPort, udpSendPort );
 
 	TCPMessage udpConnectMessage;
-	udpConnectMessage.m_message = Stringf( "%s:%i", "127.0.0.1", m_udpListenPort ); 
+	udpConnectMessage.m_message = Stringf( "%i-%i", udpSendPort, udpListenPort ); 
 
 	udpConnectMessage.m_header.m_id = MESSAGE_ID_UDP_SOCKET;
 	udpConnectMessage.m_header.m_key = m_identifier;
@@ -105,92 +110,6 @@ void AuthoritativeServer::OpenUDPSocket( TCPMessage const& message )
 
 	g_theNetworkSystem->SendTCPMessage( udpConnectMessage );
 
-	g_theConsole->PrintString( Rgba8::GREEN, "key: %i listen: %i send: %i", m_identifier, m_udpListenPort, m_udpSendPort );
-	new RemoteClient( this );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void AuthoritativeServer::ProcessInputData( UDPMessage const& message )
-{
-	if( !IsValidMessage( message.m_header.m_key ) )
-		return;
-
-	UnpackUDPMessage( message );
-
-	UDPPacket inputPacket( m_packets[MESSAGE_ID_INPUT_DATA] );
-	InputState newInputState;
-	if( inputPacket.IsReadyToRead() )
-	{
-		memcpy( &newInputState, &inputPacket.m_data[0], sizeof( InputState ) );
-		static_cast<RemoteClient*>( m_clients[1] )->SetInputFromInputState( newInputState );
-	}
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void AuthoritativeServer::ProcessEntityData( UDPMessage const& message )
-{
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void AuthoritativeServer::ProcessConnectionData( UDPMessage const& message )
-{
-	SendSetupMessage( nullptr );
-	SendWorldDataToClient( nullptr );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void AuthoritativeServer::ProcessCameraData( UDPMessage const& message )
-{
-	if( !IsValidMessage( message.m_header.m_key ) )
-		return;
-
-	UnpackUDPMessage( message );
-
-	UDPPacket cameraPacket( m_packets[MESSAGE_ID_CAMERA_DATA] );
-	CameraData cameraData;
-	if( cameraPacket.IsReadyToRead() )
-	{
-		memcpy( &cameraData, &cameraPacket.m_data[0], sizeof( CameraData ) );
-		static_cast<RemoteClient*>( m_clients[1] )->SetCameraFromCameraData( cameraData );
-	}
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void AuthoritativeServer::SendWorldDataToClient( Client* client )
-{
-	if( !g_theNetworkSystem->HasValidUDPSocket() )
-		return;
-	
-	if( m_frameNum % 6 == 0 )
-	{
-		WorldData entityData = g_theGame->GetWorldData();
-		SendLargeUDPData( m_connectionIP, m_udpSendPort, &entityData, sizeof( entityData ), MESSAGE_ID_ENTITY_DATA, m_frameNum );
-	}
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void AuthoritativeServer::SendSetupMessage( Client* client )
-{
-	if( !g_theNetworkSystem->HasValidUDPSocket() )
-		return;
-	
-	ConnectionData setupData = g_theGame->GetConnectionData();
-	SendLargeUDPData( m_connectionIP, m_udpSendPort, &setupData, sizeof( setupData ), MESSAGE_ID_CONNECTION_DATA, m_frameNum );
-}
-
-
-//---------------------------------------------------------------------------------------------------------
-void AuthoritativeServer::SendCameraData( Client* client )
-{
-	if( !g_theNetworkSystem->HasValidUDPSocket() )
-		return;
-	
-	CameraData cameraDataToSend = static_cast<RemoteClient*>( client )->GetCameraData();
-	SendLargeUDPData( m_connectionIP, m_udpSendPort, &cameraDataToSend, sizeof( CameraData ), MESSAGE_ID_CAMERA_DATA, m_frameNum );
+	g_theConsole->PrintString( Rgba8::GREEN, "key: %i listen: %i send: %i", m_identifier, udpListenPort, udpSendPort );
+	new RemoteClient( this, udpSocket );
 }

@@ -22,6 +22,7 @@ public:
 
 	void start_multiplayer_server( EventArgs* args );
 	void connect_to_mulitplayer_server( EventArgs* args );
+	void SendReliableUpdate();
 
 	static void HelpCommand( EventArgs* args );
 	static void QuitRequested( EventArgs* args );

@@ -3,6 +3,7 @@
 #include "Engine/Network/TCPClient.hpp"
 #include "Engine/Core/NamedProperties.hpp"
 #include <ws2tcpip.h>
+#include <array>
 
 
 //---------------------------------------------------------------------------------------------------------

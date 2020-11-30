@@ -6,7 +6,6 @@
 #include <ws2tcpip.h>
 #include <winsock2.h>
 #include <string>
-#include <thread>
 #include <vector>
 
 enum TCPMode
@@ -38,6 +37,7 @@ public:
 	void	CreateTCPClient();
 	void	DisconnectTCPClient();
 	void	CloseTCPServer();
+	std::string		GetTCPSocketAddress();
 	void	ConnectTCPClient( std::string const& ipAddress, uint16_t portNum, SocketMode socketMode = SocketMode::NONBLOCKING );
 	void	SendTCPMessage( TCPMessage tcpMessageToSend );
 	void	SendDisconnectMessage();
@@ -45,12 +45,12 @@ public:
 	bool	GetTCPMessage( TCPMessage& out_message );
 
 	//UDP
-	void	OpenUDPPort( int bindPort, int sendToPort );
-	void	CloseUDPPort( int bindPort );
-	void	SendUDPMessage( UDPMessage const& message );
-	void	UDPReadMessages();
-	bool	HasValidUDPSocket();
-	void	GetUDPMessages( std::deque<UDPMessage>& out_messages );
+	void		SendReliableMessages();
+	UDPSocket*	OpenUDPPort( std::string const& ipAddress, int bindPort, int sendToPort );
+	void		CloseUDPPort( int bindPort );
+	void		SendUDPMessage( UDPSocket* socket, UDPMessage const& message );
+	void		UDPReadMessages( UDPSocket* socket );
+	void		GetUDPMessages( UDPSocket* socket, std::deque<UDPMessage>& out_messages );
 	
 public:
 	void start_tcp_server( EventArgs* args );
@@ -64,21 +64,14 @@ public:
 	void close_udp_port( EventArgs* args );
 
 private:
-	void UDPReceiveMessagesJob( UDPSocket* socket );
-	void UDPSendMessagesJob( UDPSocket* socket );
-
-private:
 	TCPMode m_mode = TCPMODE_INVALID;
 	TCPSocket m_clientSocket;
 	std::deque<TCPMessage> m_tcpMessages;
 	std::deque<UDPMessage> m_udpMessages;
-	std::vector<TCPServer*> m_tcpServers;
-	std::vector<TCPClient*> m_tcpClients;
+	TCPServer* m_tcpServer;
+	TCPClient* m_tcpClient;
+	//std::vector<TCPServer*> m_tcpServers;
+	//std::vector<TCPClient*> m_tcpClients;
 
-	bool m_isUDPSocketQuitting		= true;
-	UDPSocket* m_UDPSocket			= nullptr;
-	std::thread m_UDPReadThread;
-	std::thread m_UDPSendThread;
-	SynchronizedNonBlockingQueue<UDPMessage> m_UDPMessagesToReceive;
-	SynchronizedNonBlockingQueue<UDPMessage> m_UDPMessagesToSend;
+	std::vector<UDPSocket*> m_UDPSockets;
 };

@@ -22,6 +22,7 @@ struct TCPMessage
 //---------------------------------------------------------------------------------------------------------
 struct UDPMessageHeader
 {
+	bool		m_isReliable = false;
 	int			m_key = 0;
 	uint16_t	m_id = 0;
 	int			m_frameNum = 0;
@@ -30,6 +31,8 @@ struct UDPMessageHeader
 	uint16_t	m_numMessages = 0;
 	uint16_t	m_size = 0;
 	char		m_fromAddress[16];
+
+	bool operator==( UDPMessageHeader const& header );
 };
 constexpr uint MAX_UDP_DATA_SIZE = MAX_UDP_MESSAGE_SIZE - sizeof( UDPMessageHeader );
 
@@ -42,6 +45,8 @@ public:
 
 	UDPMessage() = default;
 	~UDPMessage() {};
+
+	bool operator==( UDPMessage const& message );
 };
 
 

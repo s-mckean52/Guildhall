@@ -134,7 +134,7 @@ void TCPSocket::ShutDown()
 		g_theConsole->ErrorString( "Call to shutdown failed %i", WSAGetLastError() );
 		Close();
 	}
-	m_socket = INVALID_SOCKET;
+	//m_socket = INVALID_SOCKET;
 }
 
 

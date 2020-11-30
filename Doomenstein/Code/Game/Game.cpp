@@ -163,6 +163,17 @@ void Game::ShutDown()
 
 
 //---------------------------------------------------------------------------------------------------------
+void Game::BeginFrame()
+{
+	if( m_possessedEntity != nullptr && m_possessedEntity->GetIsDead() )
+	{
+		m_possessedEntity = nullptr;
+	}
+	m_world->BeginFrame();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::Render()
 {
 	UpdateCameraView( m_worldCamera );
@@ -519,6 +530,14 @@ void Game::UpdateFromInput( float deltaSeconds )
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
 	{
 		m_isQuitting = true;
+	}
+
+	if( g_theInput->WasMouseButtonJustPressed( MOUSE_BUTTON_LEFT ) )
+	{
+		if( m_possessedEntity != nullptr )
+		{
+			m_possessedEntity->Shoot();
+		}
 	}
 
 	if( g_theInput->WasKeyJustPressed( 'O' ) )

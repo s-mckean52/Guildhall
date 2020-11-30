@@ -127,31 +127,31 @@ namespace NetworkUnitTest
 
 		TEST_METHOD(UDPSocketTest)
 		{
-			Logger::WriteMessage("Starting UDP Socket Test");
-
-			UDPSocket socketOne("127.0.0.1", 48000);
-			socketOne.Bind(48001);
-
-			UDPSocket socketTwo("127.0.0.1", 48001);
-			socketTwo.Bind(48000);
-
-			TextArray readMessageOne;
-			TextArray readMessageTwo;
-
-			std::thread writerOne(&SocketTestCase::writer, std::ref(socketOne), std::cref(messages));
-
-			std::thread readerOne(&SocketTestCase::reader, std::ref(socketOne), std::ref(readMessageOne));
-			std::thread readerTwo(&SocketTestCase::reader, std::ref(socketTwo), std::ref(readMessageTwo));
-
-			std::thread writerTwo(&SocketTestCase::writer, std::ref(socketTwo), std::cref(messages));
-
-			writerOne.join();
-			writerTwo.join();
-			readerOne.join();
-			readerTwo.join();
-
-			Assert::IsTrue(text == readMessageOne);
-			Assert::IsTrue(text == readMessageTwo);
+// 			Logger::WriteMessage("Starting UDP Socket Test");
+// 
+// 			UDPSocket socketOne("127.0.0.1", 48000);
+// 			socketOne.Bind(48001);
+// 
+// 			UDPSocket socketTwo("127.0.0.1", 48001);
+// 			socketTwo.Bind(48000);
+// 
+// 			TextArray readMessageOne;
+// 			TextArray readMessageTwo;
+// 
+// 			std::thread writerOne(&SocketTestCase::writer, std::ref(socketOne), std::cref(messages));
+// 
+// 			std::thread readerOne(&SocketTestCase::reader, std::ref(socketOne), std::ref(readMessageOne));
+// 			std::thread readerTwo(&SocketTestCase::reader, std::ref(socketTwo), std::ref(readMessageTwo));
+// 
+// 			std::thread writerTwo(&SocketTestCase::writer, std::ref(socketTwo), std::cref(messages));
+// 
+// 			writerOne.join();
+// 			writerTwo.join();
+// 			readerOne.join();
+// 			readerTwo.join();
+// 
+// 			Assert::IsTrue(text == readMessageOne);
+// 			Assert::IsTrue(text == readMessageTwo);
 		}
 
 		TEST_METHOD_CLEANUP(DeInitUDPSocketTest)

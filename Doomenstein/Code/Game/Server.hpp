@@ -31,12 +31,11 @@ public:
 
 	void AddClient( Client* remoteClient );
 	bool IsValidMessage( int identifierToCompare ) { return m_identifier == identifierToCompare; }
-	void SendLargeUDPData( std::string const& ipAddress, int sendToPort, void const* data, uint dataSize, MessageID messageType, uint frameNum );
-	void UnpackUDPMessage( UDPMessage const& message );
-	void ProcessUDPMessages();
-	void ProcessUDPMessage( UDPMessage const& message );
+	void SendLargeUDPData( UDPSocket* socket, std::string const& ipAddress, int sendToPort, void const* data, uint dataSize, MessageID messageType, uint frameNum, bool isReliable = false );
 	void ProcessTCPMessages();
 	void ProcessTCPMessage( TCPMessage const& message );
+
+	void SendReliableUpdates();
 
 	virtual void StartUp( GameType gameType )	= 0;
 	virtual void ShutDown()						= 0;
@@ -45,18 +44,10 @@ public:
 	virtual void Update()						= 0;
 
 	virtual void OpenUDPSocket( TCPMessage const& message )			= 0;
-	virtual void ProcessInputData( UDPMessage const& message )		= 0;
-	virtual void ProcessEntityData( UDPMessage const& message )		= 0;
-	virtual void ProcessConnectionData( UDPMessage const& message )	= 0;
-	virtual void ProcessCameraData( UDPMessage const& message )		= 0;	
 
 protected:
 	int m_frameNum = 0;
 	int m_identifier = 0;
-	uint16_t	m_udpListenPort = 48000;
-	uint16_t	m_udpSendPort	= 48001;
-	std::string m_connectionIP	= "127.0.0.1";
 	
 	std::vector<Client*> m_clients;
-	UDPPacket m_packets[NUM_MESSAGE_ID] = {};
 };

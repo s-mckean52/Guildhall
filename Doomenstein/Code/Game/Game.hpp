@@ -42,6 +42,7 @@ public:
 	//Basic Game
 	virtual void StartUp();
 	virtual void ShutDown();
+	virtual void BeginFrame();
 	virtual void Render();
 	virtual void Update();
 

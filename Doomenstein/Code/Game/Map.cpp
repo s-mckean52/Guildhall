@@ -29,7 +29,14 @@ Map::~Map()
 	delete m_mapMesh;
 	m_mapMesh = nullptr;
 
-	//DeleteEntites();
+	DeleteAllEntities();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Map::BeginFrame()
+{
+	CleanUpDeadEntities();
 }
 
 
@@ -47,14 +54,18 @@ MapData Map::GetMapData()
 SpawnData Map::GetEntitySpawnData()
 {
 	SpawnData spawnData;
-	for( int entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
+	for( int entityIndex = 0; entityIndex < Min( m_entities.size(), 50 ); ++entityIndex )
 	{
 		EntitySpawnData& entitySpawnData = spawnData.m_entitiesToSpawn[entityIndex];
-		entitySpawnData.m_isUsed = true;
-		entitySpawnData.m_data = m_entities[entityIndex]->GetEntityData();
 
-		std::string entityName = m_entities[entityIndex]->GetEntityName();
-		memcpy( &entitySpawnData.m_entityDefName[0], &entityName[0], entityName.size() );
+		if( m_entities[entityIndex] != nullptr )
+		{
+			entitySpawnData.m_isUsed = true;
+			entitySpawnData.m_data = m_entities[entityIndex]->GetEntityData();
+
+			std::string entityName = m_entities[entityIndex]->GetEntityName();
+			memcpy( &entitySpawnData.m_entityDefName[0], &entityName[0], entityName.size() );
+		}
 	}
 	return spawnData;
 }
@@ -65,7 +76,10 @@ void Map::GetEntityDataFromArray( EntityData entityData[], std::vector<Entity*> 
 {
 	for( int entityIndex = 0; entityIndex < entities.size(); ++entityIndex )
 	{
-		entityData[entityIndex] = entities[entityIndex]->GetEntityData();
+		if( entities[entityIndex] != nullptr )
+		{
+			entityData[entityIndex] = entities[entityIndex]->GetEntityData();
+		}
 	}
 }
 
@@ -99,7 +113,33 @@ void Map::UpdateEntitiesFromMapData( MapData const& mapData )
 {
 	for( int entityIndex = 0; entityIndex < mapData.m_numEntities; ++ entityIndex )
 	{
-		m_entities[entityIndex]->SetValuesFromEntityData( mapData.m_entities[entityIndex] );
+		if( ( entityIndex < m_entities.size() && m_entities[entityIndex] == nullptr ) || entityIndex >= m_entities.size() )
+		{
+			if( !IsStringEqual( mapData.m_entities[entityIndex].m_entityDefName, "" ) )
+			{
+				EntityDef* entityDef = EntityDef::GetEntityDefByName( mapData.m_entities[entityIndex].m_entityDefName );
+				EntityType entityType = entityDef->GetEntityType();
+				Entity* spawnedEntity = nullptr;
+				switch( entityType )
+				{
+				case ENTITY_TYPE_ENTITY:		spawnedEntity = new Entity(		m_game, m_world, this, *entityDef ); break;
+				case ENTITY_TYPE_ACTOR:			spawnedEntity = new Actor(		m_game, m_world, this, *entityDef ); break;
+				case ENTITY_TYPE_PROJECTILE:	spawnedEntity = new Projectile(	m_game, m_world, this, *entityDef ); break;
+				case ENTITY_TYPE_PORTAL:		spawnedEntity = new Portal(		m_game, m_world, this, *entityDef ); break;
+				default:
+					ERROR_AND_DIE( "Tried to spawn an unsupported entity on map" )
+						break;
+				}
+				AddEntityToMap( spawnedEntity );
+				spawnedEntity->SetValuesFromEntityData( mapData.m_entities[entityIndex] );
+			}
+			continue;
+		}
+
+		if( entityIndex < m_entities.size() )
+		{
+			m_entities[entityIndex]->SetValuesFromEntityData( mapData.m_entities[entityIndex] );
+		}
 	}
 }
 
@@ -182,6 +222,21 @@ Entity* Map::SpawnNewEntityOfType( EntityDef const& entityDef, XmlElement const&
 
 
 //---------------------------------------------------------------------------------------------------------
+void Map::CleanUpDeadEntities()
+{
+	for( int entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
+	{
+		Entity* entity = m_entities[entityIndex];
+		if( entity != nullptr && entity->GetIsDead() )
+		{
+			RemoveEntityFromMap( entity );
+			delete entity;
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Map::AddEntityToMap( Entity* entityToAdd )
 {
 	entityToAdd->SetMap( this );
@@ -232,8 +287,12 @@ void Map::DeleteAllEntities()
 	for( int entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
 	{
 		Entity* entityToDelete = m_entities[entityIndex];
-		RemoveEntityFromMap( entityToDelete );
-		delete entityToDelete;
+		if( entityToDelete != nullptr )
+		{
+			RemoveEntityFromMap( entityToDelete );
+			delete entityToDelete;
+			m_entities[entityIndex] = nullptr;
+		}
 	}
 }
 
@@ -288,6 +347,7 @@ void Map::RemoveEntityFromList( std::vector<Entity*>& listToRemoveFrom, Entity* 
 	{
 		if( listToRemoveFrom[ listIndex ] == entityToRemove )
 		{
+			//listToRemoveFrom.erase( listToRemoveFrom->cbe + listIndex );
 			listToRemoveFrom[ listIndex ] = nullptr;
 			return;
 		}
@@ -419,5 +479,50 @@ void Map::HandlePortalVEntityCollision( Entity* portalEntity, Entity* entity )
 	{
 		Portal* portal = static_cast<Portal*>( portalEntity );
 		portal->UsePortal( entity );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Map::HandleProjectileVEntityCollisions()
+{
+	for( int projectileIndex = 0; projectileIndex < m_projectiles.size(); ++projectileIndex )
+	{
+		Entity* projectileToUseAsEntity = m_projectiles[projectileIndex];
+		if( projectileToUseAsEntity != nullptr && !projectileToUseAsEntity->GetIsDead() )
+		{
+			for( int entityIndex = 0; entityIndex < m_entities.size(); ++entityIndex )
+			{
+				Entity* entityToCheck = m_entities[entityIndex];
+				if( entityToCheck != nullptr && !entityToCheck->GetIsDead() )
+				{
+					HandleProjectileVEntityCollision( projectileToUseAsEntity, entityToCheck );
+				}
+			}
+		}
+
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Map::HandleProjectileVEntityCollision( Entity* projectileEntity, Entity* entity )
+{
+	if( dynamic_cast<Projectile*>( entity ) != nullptr )
+		return;
+
+	Vec3 projectilePosition = projectileEntity->GetPosition();
+	Vec3 entityPosition = entity->GetPosition();
+
+	Vec2 projectilePositionXY = Vec2( projectilePosition.x, projectilePosition.y );
+	Vec2 entityPositionXY = Vec2( entityPosition.x, entityPosition.y );
+
+	float portalRadius = projectileEntity->GetPhysicsRadius();
+	float entityRadius = entity->GetPhysicsRadius();
+
+	if( DoDiscsOverlap( projectilePositionXY, portalRadius, entityPositionXY, entityRadius ) )
+	{
+		entity->TakeDamage( 1 );
+		projectileEntity->TakeDamage( 100 );
 	}
 }

@@ -18,7 +18,7 @@ struct WorldData
 struct ConnectionData
 {
 	char m_currentMapByName[50] = "";
-	//SpawnData m_entityData;
+	SpawnData m_entityData;
 };
 
 class World
@@ -27,6 +27,7 @@ public:
 	World( Game* theGame );
 	~World();
 
+	void BeginFrame();
 	void Update();
 	void Render() const;
 
