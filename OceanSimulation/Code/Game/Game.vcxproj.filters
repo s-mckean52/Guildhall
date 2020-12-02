@@ -57,6 +57,9 @@
     <ClCompile Include="WaterObject.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
+    <ClCompile Include="TextureCube.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -90,6 +93,9 @@
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="WaterObject.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureCube.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>

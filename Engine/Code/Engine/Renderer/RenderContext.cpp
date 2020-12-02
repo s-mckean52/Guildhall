@@ -902,11 +902,13 @@ bool RenderContext::CreateTextureFromFile( const char* imageFilePath )
 	ID3D11Texture2D* texHandle = nullptr;
 	m_device->CreateTexture2D( &desc, &initialData, &texHandle );
 
+	Texture* newTexture = new Texture( imageFilePath, this, texHandle );
+	newTexture->SetPixelData( imageTexelSizeX * imageTexelSizeY * 4, imageData );
+	m_loadedTextures.push_back( newTexture );
+
 // 	// Free the raw image texel data now that we've sent a copy of it down to the GPU to be stored in video memory
 	stbi_image_free( imageData );
 
-	Texture* newTexture = new Texture( imageFilePath, this, texHandle );
-	m_loadedTextures.push_back( newTexture );
 	return true;
 }
 

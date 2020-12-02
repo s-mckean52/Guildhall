@@ -1,9 +1,9 @@
 Controls:
 	Movement:
-		'W' - Move Relative Forward on XY-Plane
-		'A' - Move Relative Left on XY-Plane
-		'S' - Move Relative Backward on XY-Plane
-		'D' - Move Relative Right on XY-Plane
+		'W' - Move Relative Forward
+		'A' - Move Relative Left 
+		'S' - Move Relative Backward
+		'D' - Move Relative Right
 		'Q' - Move Up
 		'E' - Move Down
 		'Arrow Keys' - To Move White Cube
@@ -14,6 +14,8 @@ Controls:
 		'C' - Toggle Wave Choppiness
 		'O' - Set Position and Rotations to 0
 		'F' - Toggle Wire Frame Rendering
+		'F1' - Will reload the currently loaded XML
 
 Notes:
-	Simulation is now loaded through a file at Data/SimulationSettings. File is hard coded to Test.xml for now.
+	Simulation is now loaded through a file at Data/SimulationSettings. Initially Test.xml
+	Can set the file during runtime via "fft_xml file=<XMLFileName>" ex: "fft_xml file=Test.xml"

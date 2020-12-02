@@ -7,7 +7,7 @@
 
 #include <d3dcompiler.h>
 
-#define DEBUG_SHADERS
+//#define DEBUG_SHADERS
 //---------------------------------------------------------------------------------------------------------
 static char const* GetDefaultEntryPointForStage( ShaderType type )
 {

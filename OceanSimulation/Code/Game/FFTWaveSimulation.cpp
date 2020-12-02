@@ -41,7 +41,7 @@ void FFTWaveSimulation::Simulate()
 {
 	float elapsedTime = static_cast<float>( m_simulationClock->GetTotalElapsedSeconds() );
 	float deltaSeconds = static_cast<float>( m_simulationClock->GetLastDeltaSeconds() );
-	for( int positionIndex = 0; positionIndex < m_initialSurfacePositions.size(); ++positionIndex )
+	for( int positionIndex = 0; positionIndex < m_waveSurfaceVerts.size(); ++positionIndex )
 	{
 // 		int m = positionIndex / m_numSamples;
 // 		int n = positionIndex - ( m * m_numSamples );
@@ -69,7 +69,7 @@ void FFTWaveSimulation::Simulate()
 // 		CalculateFFT( m_slopeY, m_slopeY, m_numSamples, nIndex );
 	}
 
-	for( uint positionIndex = 0; positionIndex < m_initialSurfacePositions.size(); ++positionIndex )
+	for( uint positionIndex = 0; positionIndex < m_waveSurfaceVerts.size(); ++positionIndex )
 	{
 // 		int m = positionIndex / m_numSamples;
 // 		int n = positionIndex - ( m * m_numSamples );
@@ -105,10 +105,34 @@ void FFTWaveSimulation::Simulate()
 	{
 		m_iWave->Update( deltaSeconds );
 	}
-	for( uint positionIndex = 0; positionIndex < m_initialSurfacePositions.size(); ++positionIndex )
+	for( uint positionIndex = 0; positionIndex < m_surfaceVerts.size(); ++positionIndex )
 	{
+		int mPlus1 = positionIndex / ( m_numSamples + 1 );
+		int nPlus1 = positionIndex - mPlus1 * ( m_numSamples + 1 );
+
 		Vertex_PCUTBN& currentVert = m_surfaceVerts[positionIndex];
-		m_waveSurfaceVerts[positionIndex].SetVertexPositionAndNormal( currentVert );
+		if( mPlus1 != m_numSamples && nPlus1 != m_numSamples )
+		{
+			int waveIndex = mPlus1 * m_numSamples + nPlus1;
+			m_waveSurfaceVerts[waveIndex].SetVertexPositionAndNormal( currentVert );
+		}
+		else if( mPlus1 == m_numSamples && nPlus1 == m_numSamples )
+		{
+			m_waveSurfaceVerts[ 0 ].SetVertexPositionAndNormal( currentVert, true );
+			currentVert.m_position += m_initialSurfacePositions[positionIndex];
+		}
+		else if( nPlus1 == m_numSamples )
+		{
+			int firstIndexInRow = mPlus1 * m_numSamples;
+			m_waveSurfaceVerts[ firstIndexInRow ].SetVertexPositionAndNormal( currentVert, true );
+			currentVert.m_position += m_initialSurfacePositions[positionIndex];
+		}
+		else if( mPlus1 == m_numSamples )
+		{
+			int firstIndexInCol = nPlus1;
+			m_waveSurfaceVerts[firstIndexInCol].SetVertexPositionAndNormal( currentVert, true );
+			currentVert.m_position += m_initialSurfacePositions[positionIndex];
+		}
 	}
 
 	//MeshGenerateTangents( m_surfaceVerts );
@@ -152,7 +176,7 @@ void FFTWaveSimulation::InitializeValues()
 
 	m_hTilde0Data.resize( m_numSamples * m_numSamples );
 	m_waveSurfaceVerts.resize( m_numSamples * m_numSamples );
-	for( int i = 0; i < m_initialSurfacePositions.size(); ++i )
+	for( int i = 0; i < m_hTilde0Data.size(); ++i )
 	{	
 		int m = i / m_numSamples;
 		int n = i - ( m * m_numSamples );

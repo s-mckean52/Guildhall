@@ -35,6 +35,7 @@
 #include "Game/IWave.hpp"
 #include "Game/WaveSimulation.hpp"
 #include "Game/WaterObject.hpp"
+#include "Game/TextureCube.hpp"
 #include <string>
 
 
@@ -59,9 +60,6 @@ Game::Game()
 //---------------------------------------------------------------------------------------------------------
 void Game::StartUp()
 {
-	float configAspect = g_gameConfigBlackboard.GetValue( "windowAspect", 0.f );
-	g_theConsole->PrintString( Rgba8::MAGENTA, Stringf( "Game Config File Aspect: %.3f", configAspect ) );
-
 	g_RNG = new RandomNumberGenerator();
 	g_RNG->Reset(100);
 
@@ -73,6 +71,7 @@ void Game::StartUp()
 	g_theEventSystem->SubscribeEventCallbackFunction( "GainFocus", GainFocus );
 	g_theEventSystem->SubscribeEventCallbackFunction( "LoseFocus", LoseFocus );
 	g_theEventSystem->SubscribeEventCallbackMethod( "new_fft_sim", this, &Game::create_new_fft_simulation );
+	g_theEventSystem->SubscribeEventCallbackMethod( "fft_xml", this, &Game::fft_from_xml );
 
 	g_theInput->SetCursorMode( MOUSE_MODE_RELATIVE );
 
@@ -100,7 +99,7 @@ void Game::StartUp()
 	Vec2 dimensions = Vec2( 64.f, 64.f );
 	float wind = 37.f;
 	m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples, wind );
-	m_FFTWaveSimulation = dynamic_cast<FFTWaveSimulation*>( WaveSimulation::CreateWaveSimulation( "Data/SimulationSettings/Test.xml" ) );
+	LoadSimulationFromXML( "Test.xml" );
 	//CreateNewFFTSimulation( samples, dimensions, wind );
 	//m_FFTWaveSimulation->SetPosition( Vec3( dimensions.x, 0.f, 0.f ) );
 // 	for( int i = 0; i < -1; ++i )
@@ -121,6 +120,17 @@ void Game::StartUp()
 	m_testShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/WorldOpaque.hlsl" );
 
 	m_testSound = g_theAudio->CreateOrGetSound( "Data/Audio/TestSound.mp3" );
+
+	Texture* skyboxTexture = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/miramar_large_flipped.png" );
+	m_skyBox = new TextureCube( g_theRenderer );
+	m_skyBox->MakeFromImage( *skyboxTexture );
+
+	std::vector<uint> index;
+	std::vector<Vertex_PCUTBN> verts;
+	float skyboxHalfSize = 0.5f;
+	AddTestCubeToIndexVertexArray( verts, index, AABB3( Vec3( -skyboxHalfSize ), Vec3( skyboxHalfSize ) ), Rgba8::WHITE );
+	
+	m_skyCube = new GPUMesh( g_theRenderer, verts, index );
 }
 
 
@@ -144,6 +154,12 @@ void Game::ShutDown()
 	
 	delete m_DFTWaveSimulation;
 	m_DFTWaveSimulation = nullptr;
+
+	delete m_skyBox;
+	m_skyBox = nullptr;
+
+	delete m_skyCube;
+	m_skyCube = nullptr;
 }
 
 
@@ -155,6 +171,15 @@ void Game::Render()
 	//Render worldCamera
 	g_theRenderer->BeginCamera( *m_worldCamera );
 
+	//RenderSkyBox
+	g_theRenderer->BindSampler( g_theRenderer->m_samplerLinear );
+	g_theRenderer->SetCullMode( CULL_MODE_NONE );
+	g_theRenderer->SetDepthTest( COMPARE_FUNC_ALWAYS, false );
+	g_theRenderer->SetModelUBO( Mat44::IDENTITY );//Mat44::CreateTranslationXYZ( m_worldCamera->GetPosition() ) );
+	g_theRenderer->BindTexture( m_skyBox );
+	g_theRenderer->BindShaderByPath( "Data/Shaders/Skybox.hlsl" );
+	g_theRenderer->DrawMesh( m_skyCube );
+	
 	g_theRenderer->BindSampler( nullptr );
 	g_theRenderer->SetCullMode( CULL_MODE_NONE );
 	g_theRenderer->SetDepthTest( COMPARE_FUNC_LEQUAL, true );
@@ -162,8 +187,10 @@ void Game::Render()
 	g_theRenderer->DisableAllLights();
 	g_theRenderer->SetAmbientLight( m_ambientColor, m_ambientIntensity );
 	EnableLightsForRendering();
+	
 
 	RenderWorld();
+
 
 	g_theRenderer->EndCamera( *m_worldCamera );
 
@@ -214,6 +241,7 @@ void Game::RenderWorld() const
 	DebugAddWorldArrow( m_theSun.position, m_theSun.position + m_theSun.direction, Rgba8::WHITE, 0.f, DEBUG_RENDER_ALWAYS );
 
 	//m_DFTWaveSimulation->Render();
+	g_theRenderer->BindMaterialTexture( 8, m_skyBox );
 	m_FFTWaveSimulation->Render();
 	m_testCube->Render();
 }
@@ -395,6 +423,28 @@ void Game::CreateNewFFTSimulation( int samples, Vec2 const& dimensions, float wi
 	}
 	m_FFTWaveSimulation = new FFTWaveSimulation( dimensions, samples, windSpeed );
 	m_FFTWaveSimulation->SetTilingDimensions( 1 );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::LoadSimulationFromXML( char const* filepath )
+{
+	std::string simulationFolderPath = "Data/SimulationSettings/";
+	if( m_FFTWaveSimulation != nullptr )
+	{
+		delete m_FFTWaveSimulation;
+		m_FFTWaveSimulation = nullptr;
+	}
+
+	m_FFTWaveSimulation = dynamic_cast<FFTWaveSimulation*>( WaveSimulation::CreateWaveSimulation( simulationFolderPath + filepath ) );
+	m_currentXML = filepath;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::ReloadCurrentXML()
+{
+	LoadSimulationFromXML( m_currentXML );
 }
 
 
@@ -581,10 +631,10 @@ void Game::UpdateFromInput( float deltaSeconds )
 		m_worldCamera->SetPitchYawRollRotationDegrees( 0.f, 0.f, 0.0f );
 	}
 
-// 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F1 ) )
-// 	{
-// 		PlayTestSound();
-// 	}
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_F1 ) )
+	{
+		ReloadCurrentXML();
+	}
 }
 
 
@@ -627,10 +677,14 @@ void Game::MoveWorldCamera( float deltaSeconds )
 		upMoveAmount -= moveSpeed;
 	}
 
-	Vec3 cameraForwardXY0 = Vec3( CosDegrees( m_worldCamera->GetYawDegrees() ), SinDegrees( m_worldCamera->GetYawDegrees() ), 0.f );
-	Vec3 cameraLeftXY0 = Vec3( -SinDegrees( m_worldCamera->GetYawDegrees() ), CosDegrees( m_worldCamera->GetYawDegrees() ), 0.f );
-	Vec3 cameraTranslation = ( cameraForwardXY0 * forwardMoveAmount ) + ( cameraLeftXY0 * leftMoveAmount );
-	cameraTranslation.z = upMoveAmount;
+// 	Vec3 cameraForwardXY0 = Vec3( CosDegrees( m_worldCamera->GetYawDegrees() ), SinDegrees( m_worldCamera->GetYawDegrees() ), 0.f );
+// 	Vec3 cameraLeftXY0 = Vec3( -SinDegrees( m_worldCamera->GetYawDegrees() ), CosDegrees( m_worldCamera->GetYawDegrees() ), 0.f );
+	Mat44 cameraView = m_worldCamera->GetViewMatrix();
+	MatrixInvertOrthoNormal( cameraView );
+	Vec3 cameraForward = cameraView.TransformVector3D( Vec3::UNIT_POSITIVE_X );
+	Vec3 cameraLeft = cameraView.TransformVector3D( Vec3::UNIT_POSITIVE_Y );
+	Vec3 cameraTranslation = ( cameraForward * forwardMoveAmount ) + ( cameraLeft * leftMoveAmount );
+	cameraTranslation.z += upMoveAmount;
 	m_worldCamera->Translate( cameraTranslation );
 }
 
@@ -668,6 +722,14 @@ void Game::create_new_fft_simulation( EventArgs* args )
 	g_theConsole->PrintString( Rgba8::YELLOW, "   Wind Speed: %.2f", windSpeed );
 
 	CreateNewFFTSimulation( samples, dimensions, windSpeed );
+}
+
+//---------------------------------------------------------------------------------------------------------
+void Game::fft_from_xml( EventArgs* args )
+{
+	std::string filepath = args->GetValue( "file", "Test.xml" );
+
+	LoadSimulationFromXML( filepath.c_str() );
 }
 
 //---------------------------------------------------------------------------------------------------------

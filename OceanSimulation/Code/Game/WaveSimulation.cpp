@@ -91,7 +91,7 @@ WaveSimulation::WaveSimulation( Vec2 const& dimensions, uint samples, float wind
 	m_simulationClock = new Clock( g_theGame->GetGameClock() );
 	m_transform = new Transform();
 
-	GenerateSurface( Vec3::ZERO, Rgba8::WHITE, dimensions, IntVec2( samples - 1, samples - 1 ) );
+	GenerateSurface( Vec3::ZERO, Rgba8::WHITE, dimensions, IntVec2( samples, samples ) );
 	m_surfaceMesh = new GPUMesh( g_theRenderer, m_surfaceVerts, m_surfaceIndicies );
 }
 
@@ -113,7 +113,7 @@ WaveSimulation::WaveSimulation( XmlElement const& element )
 	XmlElement const& defaultsElement = *element.FirstChildElement( "RuntimeDefaults" );
 	SetRuntimeDefaults( defaultsElement ); 
 
-	GenerateSurface( Vec3::ZERO, Rgba8::WHITE, m_dimensions, IntVec2( m_numSamples - 1, m_numSamples - 1 ) );
+	GenerateSurface( Vec3::ZERO, Rgba8::WHITE, m_dimensions, IntVec2( m_numSamples, m_numSamples ) );
 	m_surfaceMesh = new GPUMesh( g_theRenderer, m_surfaceVerts, m_surfaceIndicies );
 }
 
@@ -127,7 +127,6 @@ void WaveSimulation::Simulate()
 //---------------------------------------------------------------------------------------------------------
 void WaveSimulation::Render() const
 {
-	
 	Rgba8 renderColor =  Rgba8::MakeFromFloats( 0.f, 0.412f, 0.58f );
 	if( m_isWireFrame ) 
 	{ 
@@ -146,14 +145,15 @@ void WaveSimulation::Render() const
 	//g_theRenderer->BindShaderByPath( "Data/Shaders/Normals.hlsl" );
 	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 
+	Vec3 startPosition = -Vec3( m_dimensions, 0.f ) * ( ( static_cast<float>( m_tilingDimensions ) * 0.5f ) - 0.5f );
 	uint tilingDimSquared = m_tilingDimensions * m_tilingDimensions;
 	for( uint i = 0; i < tilingDimSquared; ++i )
 	{
 		Transform newTransform = *m_transform;
-		Vec3 newPosition = Vec3::ZERO;
-		newPosition.x = m_dimensions.x * ( i / m_tilingDimensions );
-		newPosition.y = m_dimensions.y * ( i % m_tilingDimensions );
-		newTransform.Translate( newPosition );
+		Vec3 newPosition = startPosition;
+		newPosition.x += m_dimensions.x * ( i / m_tilingDimensions );
+		newPosition.y += m_dimensions.y * ( i % m_tilingDimensions );
+		newTransform.SetPosition( newPosition );
 
 		g_theRenderer->SetModelUBO( newTransform.ToMatrix(), renderColor, 0.0f, 256.f );
 		g_theRenderer->DrawMesh( m_surfaceMesh );

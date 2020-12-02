@@ -17,6 +17,12 @@ Texture::~Texture()
 	delete m_depthStencilView;
 	m_depthStencilView = nullptr;
 
+// 	if( m_pixelData != nullptr )
+// 	{
+// 		delete[] m_pixelData;
+// 		m_pixelData = nullptr;
+// 	}
+
 	DX_SAFE_RELEASE( m_handle );
 }
 
@@ -37,6 +43,14 @@ Texture::Texture( const char* filePath, RenderContext* owner, ID3D11Texture2D* h
 	: Texture( owner, handle )
 {
 	m_imageFilePath = filePath;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Texture::SetPixelData( int size, unsigned char* pixelData )
+{
+	m_pixelData = new unsigned char[size];
+	memcpy( m_pixelData, pixelData, size );
 }
 
 

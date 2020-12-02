@@ -23,7 +23,7 @@ WaterObject::WaterObject( Vec3 const& m_halfDimensions, Vec3 const& initialPosit
 //---------------------------------------------------------------------------------------------------------
 void WaterObject::Update()
 {
-	float deltaSeconds = g_theGame->GetGameClock()->GetLastDeltaSeconds();
+	float deltaSeconds = static_cast<float>( g_theGame->GetGameClock()->GetLastDeltaSeconds() );
 
 	Vec3 tempPosition = m_transform.GetPosition();
 

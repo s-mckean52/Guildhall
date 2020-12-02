@@ -23,6 +23,7 @@ class FFTWaveSimulation;
 class WaterObject;
 struct Vertex_PCUTBN;
 struct AABB3;
+struct TextureCube;
 
 enum CameraViewOrientation
 {
@@ -67,17 +68,25 @@ public:
 	Clock* GetGameClock() const { return m_gameClock; }
 	void AddTestCubeToIndexVertexArray( std::vector<Vertex_PCUTBN>& vertexArray, std::vector<uint>& indexArray, AABB3 const& box, Rgba8 const& color );
 	void CreateNewFFTSimulation( int samples, Vec2 const& dimensions, float windSpeed );
+	void LoadSimulationFromXML( char const* filepath );
+	void ReloadCurrentXML();
 
 	//Commands
 	static void GainFocus( EventArgs* args );
 	static void LoseFocus( EventArgs* args );
 	void create_new_fft_simulation( EventArgs* args );
+	void fft_from_xml( EventArgs* args );
 
 	bool IsQuitting() const { return m_isQuitting; }
 	void PlayTestSound();
 
 private:
+	TextureCube* m_skyBox = nullptr;
+	GPUMesh* m_skyCube = nullptr;
+
 	WaterObject* m_testCube = nullptr;
+
+	char const* m_currentXML = "";
 
 	WaveSimulation* m_DFTWaveSimulation = nullptr;
 	FFTWaveSimulation* m_FFTWaveSimulation = nullptr;

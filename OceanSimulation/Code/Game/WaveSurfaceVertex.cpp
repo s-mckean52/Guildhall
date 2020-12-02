@@ -68,7 +68,7 @@ ComplexFloat WaveSurfaceVertex::CalculateHTilde0( bool doesNegateK )
 
 
 //---------------------------------------------------------------------------------------------------------
-void WaveSurfaceVertex::SetVertexPositionAndNormal( Vertex_PCUTBN& vertexToModify )
+void WaveSurfaceVertex::SetVertexPositionAndNormal( Vertex_PCUTBN& vertexToModify, bool isTiledVert )
 {
  	float sign = 1.f - ( 2.f * PositiveMod( m_translatedCoord.x + m_translatedCoord.y, 2 ) );
 // 
@@ -88,10 +88,15 @@ void WaveSurfaceVertex::SetVertexPositionAndNormal( Vertex_PCUTBN& vertexToModif
 	m_surfaceNormal = ( Vec3::UNIT_POSITIVE_Z - m_surfaceNormal ) / sqrtf( 1.f + DotProduct3D( m_surfaceNormal, m_surfaceNormal ) );
 	//normal.Normalize();
 
-	vertexToModify.m_position = m_initialPosition + translation;
+	if( isTiledVert )
+	{
+		vertexToModify.m_position = translation;
+	}
+	else
+	{
+		vertexToModify.m_position = m_initialPosition + translation;
+	}
 	vertexToModify.m_normal = m_surfaceNormal;
-	vertexToModify.m_tangent = CrossProduct3D( Vec3::UNIT_POSITIVE_Y, m_surfaceNormal );
-	vertexToModify.m_bitangent = CrossProduct3D( m_surfaceNormal, vertexToModify.m_tangent );
 }
 
 

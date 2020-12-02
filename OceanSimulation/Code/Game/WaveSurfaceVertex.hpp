@@ -36,7 +36,7 @@ public:
 	WaveSurfaceVertex( WaveSimulation* owner, int xSamplePosition, int ySamplePosition, IntVec2 const& sampleDimensions, Vec2 const& dimensions );
 	~WaveSurfaceVertex() {};
 
-	void SetVertexPositionAndNormal( Vertex_PCUTBN& vertexToModify );
+	void SetVertexPositionAndNormal( Vertex_PCUTBN& vertexToModify, bool isTiledVert = false );
 
 	Vec2 const&	GetK() const	{ return m_k; }
 

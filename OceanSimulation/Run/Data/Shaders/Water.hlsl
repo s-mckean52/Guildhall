@@ -82,6 +82,7 @@ cbuffer light_constants : register(b3)
 
 Texture2D <float4> tDiffuse	: register(t0);
 Texture2D <float4> tNormal	: register(t1);
+TextureCube<float4> tSkybox : register(t8);
 SamplerState sSampler		: register(s0);
 
 
@@ -148,7 +149,25 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 {
 	float3 upwelling = float3( 0.f, 0.2f, 0.3f );
 	float3 sky = float3( 0.69f, 0.84f, 1.f );
-	float3 air = float3( 0.1f, 0.1f, 0.1f );
+
+	float3 incident = normalize( input.world_position - CAMERA_POSITION );
+	float3 reflection = reflect(incident, input.world_normal);
+
+	float4x4 rotation_on_x = float4x4(
+		float4( 1.f, 0.f, 0.f, 0.f ),
+		float4( 0.f, 0.f, 1.f, 0.f ),
+		float4( 0.f, -1.f, 0.f, 0.f ),
+		float4( 0.f, 0.f, 0.f, 1.f ) );
+
+	float4x4 rotation_on_z = float4x4(
+		float4( 0.f, 1.f, 0.f, 0.f ),
+		float4( -1.f, 0.f, 0.f, 0.f ),
+		float4( 0.f, 0.f, 1.f, 0.f ),
+		float4( 0.f, 0.f, 0.f, 1.f ) );
+	reflection = mul( rotation_on_x, mul( rotation_on_z, reflection ) );
+	float4 sky_color = tSkybox.Sample(sSampler, reflection);
+	float3 air = sky_color.xyz;
+
 	float nSnell = 1.34f;
 	float kDiffuse = 0.91f;
 	
