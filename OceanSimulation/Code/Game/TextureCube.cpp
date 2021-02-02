@@ -73,7 +73,7 @@ bool TextureCube::MakeFromImage( Texture const &src )
 	// Setup our cubemap desc
 	D3D11_TEXTURE2D_DESC cube_desc;
 	cube_desc.Width				= width;
-	cube_desc.Height			= width;
+	cube_desc.Height			= height;
 	cube_desc.MipLevels			= mip_levels;
 	cube_desc.ArraySize			= TEXCUBE_SIDE_COUNT; // 6
 	cube_desc.Format			= DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -108,10 +108,10 @@ bool TextureCube::MakeFromImage( Texture const &src )
       uint offsets[] = {
          (1 * row) + (2 * pitch),    // right
          (1 * row) + (0 * pitch),    // left
-         (2 * row) + (1 * pitch),    // top
-         (0 * row) + (1 * pitch),    // bottom
-         (1 * row) + (3 * pitch),    // back
+         (0 * row) + (1 * pitch),    // top
+         (2 * row) + (1 * pitch),    // bottom
          (1 * row) + (1 * pitch),    // front
+         (1 * row) + (3 * pitch),    // back
       };
       
       for (uint i = 0; i < TEXCUBE_SIDE_COUNT; ++i) {

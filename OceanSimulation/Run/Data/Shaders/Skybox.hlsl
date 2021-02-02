@@ -122,7 +122,7 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 
 	// sphere of glass
 	float3 incident = normalize( input.world_position );
-	float3 reflection = reflect(incident, input.world_normal);
+	float3 reflection = incident;// reflect(incident, input.world_normal);
 
 	float4x4 rotation_on_x = float4x4(
 		float4( 1.f, 0.f, 0.f, 0.f ),

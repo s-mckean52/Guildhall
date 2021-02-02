@@ -121,6 +121,7 @@ void Game::StartUp()
 
 	m_testSound = g_theAudio->CreateOrGetSound( "Data/Audio/TestSound.mp3" );
 
+	//Texture* skyboxTexture = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/skybox_flipped.png" );
 	Texture* skyboxTexture = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/miramar_large_flipped.png" );
 	m_skyBox = new TextureCube( g_theRenderer );
 	m_skyBox->MakeFromImage( *skyboxTexture );
@@ -173,7 +174,7 @@ void Game::Render()
 
 	//RenderSkyBox
 	g_theRenderer->BindSampler( g_theRenderer->m_samplerLinear );
-	g_theRenderer->SetCullMode( CULL_MODE_NONE );
+	g_theRenderer->SetCullMode( CULL_MODE_FRONT );
 	g_theRenderer->SetDepthTest( COMPARE_FUNC_ALWAYS, false );
 	g_theRenderer->SetModelUBO( Mat44::IDENTITY );//Mat44::CreateTranslationXYZ( m_worldCamera->GetPosition() ) );
 	g_theRenderer->BindTexture( m_skyBox );

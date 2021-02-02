@@ -166,7 +166,7 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 		float4( 0.f, 0.f, 0.f, 1.f ) );
 	reflection = mul( rotation_on_x, mul( rotation_on_z, reflection ) );
 	float4 sky_color = tSkybox.Sample(sSampler, reflection);
-	float3 air = sky_color.xyz;
+	float3 air = sky_color.xyz * 0.2f;
 
 	float nSnell = 1.34f;
 	float kDiffuse = 0.91f;
