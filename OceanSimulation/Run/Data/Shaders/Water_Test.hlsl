@@ -13,17 +13,17 @@
 // The semantic and internal names can be whatever you want, 
 // but know that semantics starting with SV_* usually denote special 
 // inputs/outputs, so probably best to avoid that naming.
-struct vs_input_t 
+struct vs_input_t
 {
-   // we are not defining our own input data; 
-   float3 position      : POSITION; 
-   float4 color         : COLOR; 
-   float2 uv            : TEXCOORD;
+	// we are not defining our own input data; 
+	float3 position      : POSITION;
+	float4 color         : COLOR;
+	float2 uv            : TEXCOORD;
 
-   float3 tangent		: TANGENT;
-   float3 bitangent		: BITANGENT;
-   float3 normal		: NORMAL;
-}; 
+	float3 tangent		: TANGENT;
+	float3 bitangent		: BITANGENT;
+	float3 normal		: NORMAL;
+};
 
 struct light_t
 {
@@ -82,6 +82,7 @@ cbuffer light_constants : register(b3)
 
 Texture2D <float4> tDiffuse	: register(t0);
 Texture2D <float4> tNormal	: register(t1);
+TextureCube<float4> tSkybox : register(t8);
 SamplerState sSampler		: register(s0);
 
 
@@ -91,19 +92,19 @@ SamplerState sSampler		: register(s0);
 
 //--------------------------------------------------------------------------------------
 // for passing data from vertex to fragment (v-2-f)
-struct v2f_t 
+struct v2f_t
 {
-   float4 position : SV_POSITION; 
-   float4 color : COLOR; 
-   float2 uv : UV; 
+	float4 position : SV_POSITION;
+	float4 color : COLOR;
+	float2 uv : UV;
 
-   float3 world_position : POSITION;
-   float3 world_normal : NORMAL;
-   float3 world_tangent : TANGENT;
-   float3 world_bitangent : BITANGENT;
-}; 
+	float3 world_position : POSITION;
+	float3 world_normal : NORMAL;
+	float3 world_tangent : TANGENT;
+	float3 world_bitangent : BITANGENT;
+};
 
-float RangeMap( float val, float inMin, float inMax, float outMin, float outMax )
+float RangeMap(float val, float inMin, float inMax, float outMin, float outMax)
 {
 	float domain = inMax - inMin;
 	float range = outMax - outMin;
@@ -112,31 +113,31 @@ float RangeMap( float val, float inMin, float inMax, float outMin, float outMax 
 
 //--------------------------------------------------------------------------------------
 // Vertex Shader
-v2f_t VertexFunction( vs_input_t input )
+v2f_t VertexFunction(vs_input_t input)
 {
-   v2f_t v2f = (v2f_t)0;
+	v2f_t v2f = (v2f_t)0;
 
-   float4 local_position = float4( input.position, 1.0f );
-   float4 world_position = mul( MODEL, local_position );
-   float4 camera_position = mul( VIEW, world_position );
-   float4 clip_position = mul( PROJECTION, camera_position );
+	float4 local_position = float4(input.position, 1.0f);
+	float4 world_position = mul(MODEL, local_position);
+	float4 camera_position = mul(VIEW, world_position);
+	float4 clip_position = mul(PROJECTION, camera_position);
 
-   float4 local_normal = float4( input.normal, 0.0f );
-   float4 local_tangent = float4( input.tangent, 0.0f );
-   float4 local_bitangent = float4( input.bitangent, 0.0f );
-   float4 world_normal = mul( MODEL, local_normal );
-   float4 world_tangent = mul( MODEL, local_tangent );
-   float4 world_bitangent = mul( MODEL, local_bitangent );
+	float4 local_normal = float4(input.normal, 0.0f);
+	float4 local_tangent = float4(input.tangent, 0.0f);
+	float4 local_bitangent = float4(input.bitangent, 0.0f);
+	float4 world_normal = mul(MODEL, local_normal);
+	float4 world_tangent = mul(MODEL, local_tangent);
+	float4 world_bitangent = mul(MODEL, local_bitangent);
 
-   v2f.position = clip_position;
-   v2f.color = input.color * TINT;
-   v2f.uv = input.uv;
-   v2f.world_position = world_position.xyz;
-   v2f.world_normal = world_normal.xyz;
-   v2f.world_tangent = world_tangent.xyz;
-   v2f.world_bitangent = world_bitangent.xyz;
+	v2f.position = clip_position;
+	v2f.color = input.color * TINT;
+	v2f.uv = input.uv;
+	v2f.world_position = world_position.xyz;
+	v2f.world_normal = world_normal.xyz;
+	v2f.world_tangent = world_tangent.xyz;
+	v2f.world_bitangent = world_bitangent.xyz;
 
-   return v2f;
+	return v2f;
 }
 
 //--------------------------------------------------------------------------------------
@@ -144,73 +145,59 @@ v2f_t VertexFunction( vs_input_t input )
 // 
 // SV_Target0 at the end means the float4 being returned
 // is being drawn to the first bound color target.
-float4 FragmentFunction( v2f_t input ) : SV_Target0
+float4 FragmentFunction(v2f_t input) : SV_Target0
 {
-	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
+	//Rotation Matricies for converting skybox to game basis
+	float4x4 rotation_on_x = float4x4(
+		float4(1.f, 0.f, 0.f, 0.f),
+		float4(0.f, 0.f, 1.f, 0.f),
+		float4(0.f, -1.f, 0.f, 0.f),
+		float4(0.f, 0.f, 0.f, 1.f));
+	float4x4 rotation_on_z = float4x4(
+		float4( 0.f, 1.f, 0.f, 0.f),
+		float4(-1.f, 0.f, 0.f, 0.f),
+		float4( 0.f, 0.f, 1.f, 0.f),
+		float4( 0.f, 0.f, 0.f, 1.f));
 
-	float3 normal = normalize( input.world_normal );
-	float3 tangent = normalize( input.world_tangent );
-	float3 bitangent = normalize( input.world_bitangent );
-	float3x3 tbn = float3x3( tangent, bitangent, normal );
+	//Water Constants
+	float3 upwelling =	float3( 0.f, 0.2f, 0.3f );
+	float3 sky =		float3( 0.69f, 0.84f, 1.f );
+	float3 air =		float3( 0.1f, 0.1f, 0.1f );
+	float nSnell	= 1.34f;
+	float kDiffuse	= 0.91f;
 
-	float4 texture_color = tDiffuse.Sample( sSampler, input.uv );
+	//Skybox Sample
+	float3	incident	= normalize(input.world_position - CAMERA_POSITION);
+	float3	reflection	= reflect(incident, input.world_normal);
+			reflection	= mul(rotation_on_x, mul(rotation_on_z, reflection));
+	float4	sky_color	= tSkybox.Sample(sSampler, reflection);
 
-	float3 surface_color = pow( texture_color.xyz, GAMMA.xxx );
-	surface_color *= input.color.xyz;
-	float surface_alpha = ( input.color.a * texture_color.a );
 
-	//float3 surface_normal = ( normal_color.xyz * float3( 2.0f, 2.0f, 1.0f ) ) - float3( 1.0f, 1.0f, 0.0f );
-	float3 world_normal = normalize( mul( normal, tbn ) );
-
-	float3 diffuse = AMBIENT.xyz * AMBIENT.w;
-	float3 specular_color = float3( 0.0f, 0.0f, 0.0f );
-	//return float4( world_normal, 1.f );
-
-	for (int i = 0; i < 8; ++i)
 	{
-		light_t light = LIGHTS[i];
-		float3 light_color = light.color.xyz;
-		float3 light_position = light.world_position;
-		float3 light_direction = normalize( light.direction );
-
-		float3 vec_to_light = light_position - input.world_position;
-		float dist_to_light_position = length( vec_to_light );
-		float directional_distance = dot( -vec_to_light, light_direction );
-
-		float3 dir_to_light = lerp( normalize( vec_to_light ), -light_direction, light.is_directional );
-		float dist_to_light = lerp( dist_to_light_position, directional_distance, light.is_directional );
-
-		float cos_angle_to_light_dir = dot( -dir_to_light, light_direction );
-		float att_factor = smoothstep( light.cos_outter_half_angle, light.cos_inner_half_angle, cos_angle_to_light_dir );
-
-		float3 att_vec = float3( 1.0f, dist_to_light, dist_to_light * dist_to_light );
-		float diffuse_att = ( light.intensity / dot( att_vec, light.attenuation ) ) * att_factor;
-		float specular_att = ( light.intensity / dot( att_vec, light.spec_attenuation ) ) * att_factor;
-
-		//Diffuse
-		float dot3 = max( 0.0f, dot( dir_to_light, world_normal ) );
-		float facing = smoothstep( -0.5, 0.0f, dot( dir_to_light, world_normal ) );
-
-		//Specular
-		//Phong
-		//float3 dir_to_light_reflect = reflect( -dir_to_light, world_normal );
-		//float specular = max( 0.0f, dot( dir_to_light_reflect, dir_to_eye ) );
-
-		//Blinn-Phong
-		float3 half_vector = normalize( dir_to_light + dir_to_eye );
-		float specular = max( 0.0f, dot( world_normal, half_vector ) );
-		specular = SPECULAR_FACTOR * pow( specular, SPECULAR_POWER );
-		specular *= specular_att;
-
-		specular *= facing;
-
-		diffuse += dot3 * diffuse_att * light_color;
-		specular_color += light_color * specular;
+		float reflectivity;
+		float3 incident_normal = normalize( incident );
+		float3 world_normal = normalize( input.world_normal );
+		float costhetai = abs( dot( incident_normal, world_normal ) );
+		float thetai = acos( costhetai );
+		float sinthetat = sin( thetai ) / nSnell;
+		float thetat = asin(sinthetat);
+		if (thetai == 0.0)
+		{
+			reflectivity = (nSnell - 1) / (nSnell + 1);
+			reflectivity = reflectivity * reflectivity;
+		}
+		else
+		{
+			float fs = sin(thetat - thetai) / sin(thetat + thetai);
+			float ts = tan(thetat - thetai)	/ tan(thetat + thetai);
+			reflectivity = 0.5 * (fs * fs + ts * ts);
+		}
+		float3 dPE = CAMERA_POSITION - input.world_position;
+		float dist = length(dPE) * 0.1f * kDiffuse;
+		dist = exp(-dist);
+		float3 Ci = dist * ( reflectivity * sky_color
+							 + (1 - reflectivity) * upwelling)
+							 + (1 - dist) * air;
+		return float4( Ci, 1.f );
 	}
-
-	diffuse = saturate( diffuse );
-
-	float3 final_color = diffuse * surface_color + specular_color;
-	final_color = pow(final_color.xyz, INVERSE_GAMMA);
-	return float4( final_color, surface_alpha );
 }

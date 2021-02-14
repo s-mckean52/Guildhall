@@ -176,7 +176,7 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
 	float3 dPE = CAMERA_POSITION - input.world_position;
 	float dist = length(dPE) * kDiffuse;
-	dist = 1.f;
+	//dist = 1.f;
 	dist = input.position.z;
 	dist *= kDiffuse;
 	dist = exp(-dist);
@@ -256,7 +256,7 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 		specular *= facing;
 
 		//diffuse += dot3 * diffuse_att * light_color;
-		diffuse += ( dist * (reflectivity * sky + (1 - reflectivity) * upwelling) + (1 - dist) * air ) * diffuse_att;
+		diffuse += ( dist * (reflectivity * sky_color + (1 - reflectivity) * upwelling) + (1 - dist) * air ) * diffuse_att;
 		specular_color += light_color * specular;
 	}
 

@@ -127,7 +127,7 @@ void WaveSimulation::Simulate()
 //---------------------------------------------------------------------------------------------------------
 void WaveSimulation::Render() const
 {
-	Rgba8 renderColor =  Rgba8::MakeFromFloats( 0.f, 0.412f, 0.58f );
+	Rgba8 renderColor = Rgba8::WHITE;// Rgba8::MakeFromFloats(0.f, 0.412f, 0.58f);
 	if( m_isWireFrame ) 
 	{ 
 		g_theRenderer->BindTexture( nullptr );
@@ -141,7 +141,7 @@ void WaveSimulation::Render() const
 		g_theRenderer->SetFillMode( FILL_MODE_SOLID );
 	}
 
-	g_theRenderer->BindShaderByPath( "Data/Shaders/Water.hlsl" );
+	g_theRenderer->BindShaderByPath( "Data/Shaders/Water_Test.hlsl" );
 	//g_theRenderer->BindShaderByPath( "Data/Shaders/Normals.hlsl" );
 	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 
@@ -155,7 +155,7 @@ void WaveSimulation::Render() const
 		newPosition.y += m_dimensions.y * ( i % m_tilingDimensions );
 		newTransform.SetPosition( newPosition );
 
-		g_theRenderer->SetModelUBO( newTransform.ToMatrix(), renderColor, 0.0f, 256.f );
+		g_theRenderer->SetModelUBO( newTransform.ToMatrix(), renderColor, 0.0f, 1.f );
 		g_theRenderer->DrawMesh( m_surfaceMesh );
 	}
 }

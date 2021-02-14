@@ -87,7 +87,7 @@ void Game::StartUp()
 	m_UICamera = new Camera( g_theRenderer );
 	m_UICamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
-	m_theSun.direction = Vec3( -0.5f, -0.5f, -0.5 ).GetNormalize();
+	m_theSun.direction = Vec3( 0.f, 0.f, -1.f ).GetNormalize();
 	m_theSun.position = Vec3( 10.f, 10.f, 10.f );
 	m_theSun.color = Rgba8::WHITE.GetValuesAsFractionsVec3();//Rgba8(255, 184, 19).GetValuesAsFractionsVec3();
 	m_theSun.intensity = 1.f;

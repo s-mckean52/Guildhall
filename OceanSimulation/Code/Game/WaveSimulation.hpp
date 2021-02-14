@@ -75,8 +75,8 @@ public:
 	float		GetDeepDispersion( Vec2 const& k );
 	float		PhillipsEquation( Vec2 const& k );
 
-	bool	IsIWaveEnabled() const { return m_isIWaveEnabled; }
-	bool	IsChoppyWater() const { return m_isChoppyWater; }
+	bool	IsIWaveEnabled() const					{ return m_isIWaveEnabled; }
+	bool	IsChoppyWater() const					{ return m_isChoppyWater; }
 	void	SetIWaveEnabled( bool isEnabled );
 	void	SetIsChoppyWater( bool isChoppyWater );
 	
