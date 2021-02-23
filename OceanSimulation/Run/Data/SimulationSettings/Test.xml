@@ -5,10 +5,10 @@
                     waveSuppression="0.3f">
   </PhillipsSpectrum>
   
-  <RuntimeDefaults choppinessEnabled="false"
+  <RuntimeDefaults choppinessEnabled="true"
                    iWaveEnabled="false"
                    wireFrameEnabled="false"
                    dispersionRelation="deep"
-                   tilingSize="1">
+                   tilingSize="4">
   </RuntimeDefaults>
 </WaveSimulation>

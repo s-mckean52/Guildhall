@@ -128,6 +128,7 @@ void WaveSimulation::Simulate()
 void WaveSimulation::Render() const
 {
 	Rgba8 renderColor = Rgba8::WHITE;// Rgba8::MakeFromFloats(0.f, 0.412f, 0.58f);
+	g_theRenderer->BindMaterialByPath( "Data/Shaders/Water.material" );
 	if( m_isWireFrame ) 
 	{ 
 		g_theRenderer->BindTexture( nullptr );
@@ -141,7 +142,7 @@ void WaveSimulation::Render() const
 		g_theRenderer->SetFillMode( FILL_MODE_SOLID );
 	}
 
-	g_theRenderer->BindShaderByPath( "Data/Shaders/Water_Test.hlsl" );
+	//g_theRenderer->BindShaderByPath( "Data/Shaders/Water_Test.hlsl" );
 	//g_theRenderer->BindShaderByPath( "Data/Shaders/Normals.hlsl" );
 	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 

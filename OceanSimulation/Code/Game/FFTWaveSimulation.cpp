@@ -59,9 +59,9 @@ void FFTWaveSimulation::Simulate()
 	//m_fftTimer.StartTimer();
 	for( uint mIndex = 0; mIndex < m_numSamples; ++mIndex )
 	{
-		g_theJobSystem->PostJob( new FFTJob( this, m_waveSurfaceVerts, 1, mIndex * m_numSamples ) );
+		//g_theJobSystem->PostJob( new FFTJob( this, m_waveSurfaceVerts, 1, mIndex * m_numSamples ) );
 
-		//CalculateFFT( m_waveSurfaceVerts, 1, mIndex * m_numSamples );
+		CalculateFFT( m_waveSurfaceVerts, 1, mIndex * m_numSamples );
 // 		CalculateFFT( m_hTilde, m_hTilde, 1, mIndex * m_numSamples );
 // 		CalculateFFT( m_hTilde_dx, m_hTilde_dx, 1, mIndex * m_numSamples );
 // 		CalculateFFT( m_hTilde_dy, m_hTilde_dy, 1, mIndex * m_numSamples );
@@ -70,8 +70,8 @@ void FFTWaveSimulation::Simulate()
 	}
 	for( uint nIndex = 0; nIndex < m_numSamples; ++nIndex )
 	{
-		g_theJobSystem->PostJob( new FFTJob( this, m_waveSurfaceVerts, m_numSamples, nIndex ) );
-		//CalculateFFT( m_waveSurfaceVerts, m_numSamples, nIndex );
+		//g_theJobSystem->PostJob( new FFTJob( this, m_waveSurfaceVerts, m_numSamples, nIndex ) );
+		CalculateFFT( m_waveSurfaceVerts, m_numSamples, nIndex );
 // 		CalculateFFT( m_hTilde, m_hTilde, m_numSamples, nIndex );
 // 		CalculateFFT( m_hTilde_dx, m_hTilde_dx, m_numSamples, nIndex );
 // 		CalculateFFT( m_hTilde_dy, m_hTilde_dy, m_numSamples, nIndex );
