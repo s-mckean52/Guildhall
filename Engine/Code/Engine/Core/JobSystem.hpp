@@ -58,6 +58,7 @@ public:
 	void PostJob( Job* job );
 	void OnJobCompleted( Job* job );
 	Job* GetBestAvailableJob();
+	void WaitForAllJobs();
 	void ClaimAndDeleteAllCompletedJobs();
 
 private:

@@ -1,13 +1,16 @@
 #pragma once
 #include "Game/WaveSimulation.hpp"
+#include "Engine/Core/ProfileTimer.hpp"
 
-struct WavePoint;
-struct HTilde0Data;
-struct WaveSurfaceVertex;
-class IWave;
+struct	WavePoint;
+struct	HTilde0Data;
+struct	WaveSurfaceVertex;
+class	IWave;
 
 class FFTWaveSimulation : public WaveSimulation
 {
+	friend class FFTJob;
+
 public:
 	~FFTWaveSimulation();
 	FFTWaveSimulation( Vec2 const& dimensions, uint samples, float windSpeed );
@@ -27,11 +30,13 @@ public:
 	void CalculateFFT( std::vector<ComplexFloat>& data_in, std::vector<ComplexFloat>& data_out, int stride, int offset );
 	void CalculateFFT( std::vector<WaveSurfaceVertex>& data, int stride, int offset );
 
-
+public:
 	IWave* m_iWave = nullptr;
+	ProfileTimer m_fftTimer					= ProfileTimer( "FFT_FFTTimer" );
+	ProfileTimer m_simulateTimer			= ProfileTimer( "FFT_SimulateTimer" );
+	ProfileTimer m_pointCalculationTimer	= ProfileTimer( "FFT_PointTimer" );
+
 protected:
-
-
 	uint m_log2N = 0;
 	float m_pi2 = 0.f;
 	uint which = 0;

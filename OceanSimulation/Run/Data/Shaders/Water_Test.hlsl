@@ -194,7 +194,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 		}
 		float3 dPE = CAMERA_POSITION - input.world_position;
 		float dist = length(dPE) * 0.1f * kDiffuse;
-		dist = exp(-dist);
+		dist = 1.f;//exp(-dist);
 		float3 Ci = dist * ( reflectivity * sky_color
 							 + (1 - reflectivity) * upwelling)
 							 + (1 - dist) * air;

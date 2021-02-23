@@ -29,6 +29,7 @@
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Renderer/ShaderState.hpp"
 #include "Engine/Renderer/Material.hpp"
+#include "Engine/Core/JobSystem.hpp"
 #include "Game/GerstnerWaveSimulation.hpp"
 #include "Game/FFTWaveSimulation.hpp"
 #include "Game/DFTWaveSimulation.hpp"
@@ -62,6 +63,8 @@ void Game::StartUp()
 {
 	g_RNG = new RandomNumberGenerator();
 	g_RNG->Reset(100);
+
+	g_theJobSystem->CreateWorkerThreads(6);
 
 	EnableDebugRendering();
 
@@ -98,7 +101,7 @@ void Game::StartUp()
 	uint samples = 256;
 	Vec2 dimensions = Vec2( 64.f, 64.f );
 	float wind = 37.f;
-	m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples, wind );
+	//m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples, wind );
 	LoadSimulationFromXML( "Test.xml" );
 	//CreateNewFFTSimulation( samples, dimensions, wind );
 	//m_FFTWaveSimulation->SetPosition( Vec3( dimensions.x, 0.f, 0.f ) );
@@ -266,7 +269,7 @@ void Game::RenderUI() const
 	Mat44 cameraView = m_worldCamera->GetViewMatrix();
 	MatrixInvertOrthoNormal( cameraView );
 
-	Wave* selectedWave = m_DFTWaveSimulation->GetWaveAtIndex( m_selectedWaveIndex );
+	Wave* selectedWave = m_FFTWaveSimulation->GetWaveAtIndex( m_selectedWaveIndex );
 
 	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "FPS: %.2f", fps ) ) );
 	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Wave Simulation: FFT" ) ) );
@@ -276,6 +279,10 @@ void Game::RenderUI() const
 	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Samples: %i", m_FFTWaveSimulation->GetNumSamples() ) ) );
 	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Dimensions: %.2f, %.2f", m_FFTWaveSimulation->GetGridDimensions().x, m_FFTWaveSimulation->GetGridDimensions().y ) ) );
 	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Wind Speed: %.2f", m_FFTWaveSimulation->GetWindSpeed() ) ) );
+
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Data In: %.4f(ms)", m_FFTWaveSimulation->m_simulateTimer.GetAvgTimeMilliseconds() ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "FFT computation: %.4f(ms)", m_FFTWaveSimulation->m_pointCalculationTimer.GetAvgTimeMilliseconds() ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Data Out: %.4f(ms)", m_FFTWaveSimulation->m_fftTimer.GetAvgTimeMilliseconds() ) ) );
 
 	
 	if( selectedWave != nullptr )
@@ -488,7 +495,7 @@ void Game::UpdateSimulationFromInput()
 
 	if( g_theInput->WasKeyJustPressed( 'F' ) )
 	{
-		m_DFTWaveSimulation->ToggleWireFrameMode();
+		//m_DFTWaveSimulation->ToggleWireFrameMode();
 		m_FFTWaveSimulation->ToggleWireFrameMode();
 	}
 
@@ -498,7 +505,7 @@ void Game::UpdateSimulationFromInput()
 		m_FFTWaveSimulation->ToggleSimulationClockPause();
 	}
 
-	int numWaves = m_DFTWaveSimulation->GetNumWaves();
+	int numWaves = m_FFTWaveSimulation->GetNumWaves();
 	if( numWaves <= 0 )
 		return;
 

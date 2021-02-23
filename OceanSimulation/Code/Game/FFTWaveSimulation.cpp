@@ -6,11 +6,13 @@
 #include "Engine/Core/DebugRender.hpp"
 #include "Engine/Renderer/MeshUtils.hpp"
 #include "Engine/Input/InputSystem.hpp"
+#include "Engine/Core/JobSystem.hpp"
 #include "Game/DFTWaveSimulation.hpp"
 #include "Game/FFTWaveSimulation.hpp"
 #include "Game/IWave.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/Game.hpp"
+#include "Game/FFTJob.hpp"
 
 
 //---------------------------------------------------------------------------------------------------------
@@ -39,8 +41,11 @@ FFTWaveSimulation::~FFTWaveSimulation()
 //---------------------------------------------------------------------------------------------------------
 void FFTWaveSimulation::Simulate()
 {
+	//m_simulateTimer.StartTimer();
 	float elapsedTime = static_cast<float>( m_simulationClock->GetTotalElapsedSeconds() );
 	float deltaSeconds = static_cast<float>( m_simulationClock->GetLastDeltaSeconds() );
+
+	//m_pointCalculationTimer.StartTimer();
 	for( int positionIndex = 0; positionIndex < m_waveSurfaceVerts.size(); ++positionIndex )
 	{
 // 		int m = positionIndex / m_numSamples;
@@ -49,10 +54,14 @@ void FFTWaveSimulation::Simulate()
 // 		GetHeightAtPosition( n, m, elapsedTime );
 		m_waveSurfaceVerts[positionIndex].CalculateValuesAtTime( elapsedTime );
 	}
+	//m_pointCalculationTimer.StopTimer();
 
+	//m_fftTimer.StartTimer();
 	for( uint mIndex = 0; mIndex < m_numSamples; ++mIndex )
 	{
-		CalculateFFT( m_waveSurfaceVerts, 1, mIndex * m_numSamples );
+		g_theJobSystem->PostJob( new FFTJob( this, m_waveSurfaceVerts, 1, mIndex * m_numSamples ) );
+
+		//CalculateFFT( m_waveSurfaceVerts, 1, mIndex * m_numSamples );
 // 		CalculateFFT( m_hTilde, m_hTilde, 1, mIndex * m_numSamples );
 // 		CalculateFFT( m_hTilde_dx, m_hTilde_dx, 1, mIndex * m_numSamples );
 // 		CalculateFFT( m_hTilde_dy, m_hTilde_dy, 1, mIndex * m_numSamples );
@@ -61,13 +70,18 @@ void FFTWaveSimulation::Simulate()
 	}
 	for( uint nIndex = 0; nIndex < m_numSamples; ++nIndex )
 	{
-		CalculateFFT( m_waveSurfaceVerts, m_numSamples, nIndex );
+		g_theJobSystem->PostJob( new FFTJob( this, m_waveSurfaceVerts, m_numSamples, nIndex ) );
+		//CalculateFFT( m_waveSurfaceVerts, m_numSamples, nIndex );
 // 		CalculateFFT( m_hTilde, m_hTilde, m_numSamples, nIndex );
 // 		CalculateFFT( m_hTilde_dx, m_hTilde_dx, m_numSamples, nIndex );
 // 		CalculateFFT( m_hTilde_dy, m_hTilde_dy, m_numSamples, nIndex );
 // 		CalculateFFT( m_slopeX, m_slopeX, m_numSamples, nIndex );
 // 		CalculateFFT( m_slopeY, m_slopeY, m_numSamples, nIndex );
 	}
+	//m_fftTimer.StopTimer();
+	
+	g_theJobSystem->WaitForAllJobs();
+	g_theJobSystem->ClaimAndDeleteAllCompletedJobs();
 
 	for( uint positionIndex = 0; positionIndex < m_waveSurfaceVerts.size(); ++positionIndex )
 	{
@@ -145,6 +159,7 @@ void FFTWaveSimulation::Simulate()
 // 	}
 
 	m_surfaceMesh->UpdateVerticies( static_cast<uint>( m_surfaceVerts.size() ), &m_surfaceVerts[0] );
+	//m_simulateTimer.StopTimer();
 }
 
 
@@ -181,8 +196,8 @@ void FFTWaveSimulation::InitializeValues()
 		int m = i / m_numSamples;
 		int n = i - ( m * m_numSamples );
 		
-		m_hTilde0Data[i].m_htilde0 = hTilde0(n, m);
-		m_hTilde0Data[i].m_htilde0Conj = std::conj( hTilde0(n, m, true) );
+// 		m_hTilde0Data[i].m_htilde0 = hTilde0(n, m);
+// 		m_hTilde0Data[i].m_htilde0Conj = std::conj( hTilde0(n, m, true) );
 
 		m_waveSurfaceVerts[i] = WaveSurfaceVertex( this, n, m, IntVec2( m_numSamples, m_numSamples ), m_dimensions );
 	}
@@ -294,23 +309,26 @@ void FFTWaveSimulation::CalculateFFT( std::vector<ComplexFloat>& data_in, std::v
 
 void FFTWaveSimulation::CalculateFFT( std::vector<WaveSurfaceVertex>& data, int stride, int offset )
 {
+	m_simulateTimer.StartTimer();
 	for( uint sampleIndex = 0; sampleIndex < m_numSamples; ++sampleIndex )
 	{
 		int dataIndex = m_bitReversedIndices[sampleIndex] * stride + offset;
 		m_switchArray[which][sampleIndex] = data[ dataIndex ];
 	}
+	m_simulateTimer.StopTimer();
 
 	int w_ = 0;
 	int numLoops = m_numSamples >> 1;
 	int currentIterationSize = 2;
 	int lastIterationSize = 1;
 
-	for( uint i = 0; i < m_log2N; ++i )
+	m_pointCalculationTimer.StartTimer();
+	for( uint i = 0; i < m_log2N; ++i )//512 = 9 loops
 	{
 		which ^= 1;
-		for( int j = 0; j < numLoops; ++j )
+		for( int j = 0; j < numLoops; ++j )//256, 128, 64, 32, 16, 8, 4, 2, 1 loops
 		{
-			for( int k = 0; k < lastIterationSize; ++k )
+			for( int k = 0; k < lastIterationSize; ++k )//1, 2, 4, 8, 16, 32, ...
 			{
 				int jSizePlusK = ( j * currentIterationSize ) + k;
 				WaveSurfaceVertex& waveStorage = m_switchArray[which][jSizePlusK];
@@ -345,7 +363,9 @@ void FFTWaveSimulation::CalculateFFT( std::vector<WaveSurfaceVertex>& data, int 
 		lastIterationSize		<<= 1;
 		++w_;
 	}
+	m_pointCalculationTimer.StopTimer();
 
+	m_fftTimer.StartTimer();
 	for( uint sampleIndex = 0; sampleIndex < m_numSamples; ++sampleIndex )
 	{
 		int dataIndex = sampleIndex * stride + offset;
@@ -357,6 +377,7 @@ void FFTWaveSimulation::CalculateFFT( std::vector<WaveSurfaceVertex>& data, int 
 		vertexDataTo.m_surfaceSlope[0] = vertexDataFrom.m_surfaceSlope[0];
 		vertexDataTo.m_surfaceSlope[1] = vertexDataFrom.m_surfaceSlope[1];
 	}
+	m_fftTimer.StopTimer();
 }
 
 
@@ -366,19 +387,20 @@ void FFTWaveSimulation::GetHeightAtPosition( int n, int m, float time )
 	int index = m * m_numSamples + n;
 
 	Vec2 k = GetK( n, m );
-	
+	float kLength = k.GetLength();
+
 	m_hTilde[index] = hTilde( n, m, time );
 	m_slopeX[index] = m_hTilde[index] * ComplexFloat( 0.f, k.x );
 	m_slopeY[index] = m_hTilde[index] * ComplexFloat( 0.f, k.y );
-	if( k.GetLength() < 0.000001f )
+	if( kLength < 0.000001f )
 	{
 		m_hTilde_dx[index] = ComplexFloat( 0.f, 0.f );
 		m_hTilde_dy[index] = ComplexFloat( 0.f, 0.f );
 	}
 	else
 	{
-		m_hTilde_dx[index] = m_hTilde[index] * ComplexFloat( 0.f, -k.x / k.GetLength() );
-		m_hTilde_dy[index] = m_hTilde[index] * ComplexFloat( 0.f, -k.y / k.GetLength() );
+		m_hTilde_dx[index] = m_hTilde[index] * ComplexFloat( 0.f, -k.x / kLength );
+		m_hTilde_dy[index] = m_hTilde[index] * ComplexFloat( 0.f, -k.y / kLength );
 	}
 }
 

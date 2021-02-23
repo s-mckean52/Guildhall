@@ -223,3 +223,21 @@ Job* JobSystem::GetBestAvailableJob()
 
 	return job;
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+void JobSystem::WaitForAllJobs()
+{
+	bool isWaitingForJobs = true;
+	while( isWaitingForJobs )
+	{
+		m_jobsQueuedMutex.lock();
+		if( m_jobsQueued.size() <= 0 )
+		{
+			isWaitingForJobs = false;
+		}
+		m_jobsQueuedMutex.unlock();
+		std::this_thread::sleep_for( std::chrono::microseconds(10) );
+	}
+}
+

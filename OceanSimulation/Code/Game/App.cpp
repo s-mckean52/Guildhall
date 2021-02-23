@@ -10,11 +10,13 @@
 #include "Engine/Audio/AudioSystem.hpp"
 #include "Engine/Core/DevConsole.hpp"
 //#include "Engine/Core/EventSystem.hpp"
+#include "Engine/Core/JobSystem.hpp"
 #include "Engine/Platform/Window.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/DebugRender.hpp"
 
 
+JobSystem*		g_theJobSystem		= nullptr;
 EventSystem*	g_theEventSystem	= nullptr;
 RenderContext*	g_theRenderer		= nullptr;
 InputSystem*	g_theInput			= nullptr;
@@ -28,12 +30,13 @@ void App::StartUp()
 {
 	Clock::SystemStartUp();
 
-	g_theEventSystem = new EventSystem();
-	g_theRenderer = new RenderContext();
-	g_theInput = new InputSystem();
-	g_theAudio = new AudioSystem();
-	g_theConsole = new DevConsole();
-	g_theGame = new Game();
+	g_theJobSystem		= new JobSystem();
+	g_theEventSystem	= new EventSystem();
+	g_theRenderer		= new RenderContext();
+	g_theInput			= new InputSystem();
+	g_theAudio			= new AudioSystem();
+	g_theConsole		= new DevConsole();
+	g_theGame			= new Game();
 
 	g_theEventSystem->StartUp();
 	g_theRenderer->StartUp( g_theWindow );
@@ -81,6 +84,10 @@ void App::ShutDown()
 	g_theConsole->ShutDown();
 	delete g_theConsole;
 	g_theConsole = nullptr;
+
+	g_theJobSystem->ShutDown();
+	delete g_theJobSystem;
+	g_theJobSystem = nullptr;
 
 	Clock::SystemShutdown();
 

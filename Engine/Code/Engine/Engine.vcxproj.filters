@@ -307,6 +307,9 @@
     <ClCompile Include="Network\NetworkMessages.cpp">
       <Filter>Network</Filter>
     </ClCompile>
+    <ClCompile Include="Core\ProfileTimer.cpp">
+      <Filter>Core\Time</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -593,6 +596,9 @@
     </ClInclude>
     <ClInclude Include="Network\NetworkMessages.hpp">
       <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\ProfileTimer.hpp">
+      <Filter>Core\Time</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

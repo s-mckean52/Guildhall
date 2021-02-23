@@ -18,6 +18,7 @@ WaveSurfaceVertex::WaveSurfaceVertex( WaveSimulation* owner, int xSamplePosition
 	m_initialPosition.z = 0.f;
 
 	CalculateK( sampleDimensions, dimensions );
+	m_dispersionRelation = m_owner->GetDeepDispersion( m_kLength );
 
 	m_hTilde0 = CalculateHTilde0();
 	m_hTilde0Conj = std::conj( CalculateHTilde0( true ) );
@@ -27,8 +28,8 @@ WaveSurfaceVertex::WaveSurfaceVertex( WaveSimulation* owner, int xSamplePosition
 //---------------------------------------------------------------------------------------------------------
 void WaveSurfaceVertex::CalculateHTildeAtTime( float time )
 {
-	float dispersionRelation = m_owner->GetDeepDispersion( m_k );
-	float dispersionTime = dispersionRelation * time * 10.f;
+	//float dispersionRelation = m_owner->GetDeepDispersion( m_kLength );
+	float dispersionTime = m_dispersionRelation * time * 10.f;
 
 	float cosDispersionTime = cos( dispersionTime );
 	float sinDispersionTime = sin( dispersionTime );
@@ -63,7 +64,7 @@ ComplexFloat WaveSurfaceVertex::CalculateHTilde0( bool doesNegateK )
 
 	std::complex<float> guassianComplex( gRand1, gRand2 );
 	
-	return inverse_sqrt_2 * guassianComplex * sqrt( m_owner->PhillipsEquation( k ) ); 
+	return inverse_sqrt_2 * guassianComplex * sqrt( m_owner->PhillipsEquation( k, m_kLength ) ); 
 }
 
 
@@ -74,7 +75,7 @@ void WaveSurfaceVertex::SetVertexPositionAndNormal( Vertex_PCUTBN& vertexToModif
 // 
 // 	m_height = m_hTilde.real() * sign;
 
-	float choppiness = m_owner->IsChoppyWater();
+	float choppiness = m_owner->IsChoppyWater() * 1.f;
 
 	Vec3 translation;
 	translation.x = -m_position[0].real() * sign * choppiness;
@@ -103,20 +104,18 @@ void WaveSurfaceVertex::SetVertexPositionAndNormal( Vertex_PCUTBN& vertexToModif
 //---------------------------------------------------------------------------------------------------------
 void WaveSurfaceVertex::CalculateValuesAtTime( float time )
 {
-	float kLength = m_k.GetLength();
-
 	CalculateHTildeAtTime( time );
 	m_surfaceSlope[0] = m_hTilde * ComplexFloat( 0.f, m_k.x );
 	m_surfaceSlope[1] = m_hTilde * ComplexFloat( 0.f, m_k.y );
-	if( kLength < 0.000001f )
+	if( m_kLength < 0.000001f )
 	{
 		m_position[0] = ComplexFloat( 0.f, 0.f );
 		m_position[1] = ComplexFloat( 0.f, 0.f );
 	}
 	else
 	{
-		m_position[0] = m_hTilde * ComplexFloat( 0.f, -m_k.x / kLength );
-		m_position[1] = m_hTilde * ComplexFloat( 0.f, -m_k.y / kLength );
+		m_position[0] = m_hTilde * ComplexFloat( 0.f, -m_k.x / m_kLength );
+		m_position[1] = m_hTilde * ComplexFloat( 0.f, -m_k.y / m_kLength );
 	}
 }
 
@@ -139,6 +138,8 @@ void WaveSurfaceVertex::CalculateK( IntVec2 const& sampleDimensions, Vec2 const&
 
 	m_k.x = ( PI_VALUE * 2.f * static_cast<float>( m_translatedCoord.x ) ) / dimensions.x;
 	m_k.y = ( PI_VALUE * 2.f * static_cast<float>( m_translatedCoord.y ) ) / dimensions.y;
+
+	m_kLength = m_k.GetLength();
 }
 
 
