@@ -74,11 +74,11 @@ void WaveSurfaceVertex::SetVertexPositionAndNormal( Vertex_PCUTBN& vertexToModif
 // 
 // 	m_height = m_hTilde.real() * sign;
 
-	float choppiness = m_owner->IsChoppyWater();
+	float choppiness = m_owner->GetChoppyWaterValue();
 
 	Vec3 translation;
-	translation.x = -m_position[0].real() * sign * choppiness;
-	translation.y = -m_position[1].real() * sign * choppiness;
+	translation.x = m_position[0].real() * sign * choppiness;
+	translation.y = m_position[1].real() * sign * choppiness;
 	translation.z = m_height;
 
 	m_surfaceNormal.x = m_surfaceSlope[0].real() * sign;

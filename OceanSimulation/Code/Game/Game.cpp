@@ -271,7 +271,7 @@ void Game::RenderUI() const
 	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "FPS: %.2f", fps ) ) );
 	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Wave Simulation: FFT" ) ) );
 	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[I] - iWave: %s", ( m_FFTWaveSimulation->IsIWaveEnabled() ? "Enabled" : "Disabled" ) ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[C] - Choppiness: %s", ( m_FFTWaveSimulation->IsChoppyWater() ? "Enabled" : "Disabled" ) ) ) );
+	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[C,V] - Choppiness: %.2f", m_FFTWaveSimulation->GetChoppyWaterValue() ) ) );
 
 	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Samples: %i", m_FFTWaveSimulation->GetNumSamples() ) ) );
 	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Dimensions: %.2f, %.2f", m_FFTWaveSimulation->GetGridDimensions().x, m_FFTWaveSimulation->GetGridDimensions().y ) ) );
@@ -465,15 +465,21 @@ void Game::UpdateBasedOnMouseMovement()
 void Game::UpdateSimulationFromInput()
 {
 	const float updateSpeed = 1.f;
+	float deltaSeconds = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
 
 	if( g_theInput->WasKeyJustPressed( 'I' ) )
 	{
 		m_FFTWaveSimulation->SetIWaveEnabled( !m_FFTWaveSimulation->IsIWaveEnabled() );
 	}
 
-	if( g_theInput->WasKeyJustPressed( 'C' ) )
+	if( g_theInput->IsKeyPressed( 'C' ) )
 	{
-		m_FFTWaveSimulation->SetIsChoppyWater( !m_FFTWaveSimulation->IsChoppyWater() );
+		m_FFTWaveSimulation->AddChoppyWaterValue( -updateSpeed * deltaSeconds );
+	}
+
+	if( g_theInput->IsKeyPressed( 'V' ) )
+	{
+		m_FFTWaveSimulation->AddChoppyWaterValue( updateSpeed * deltaSeconds );
 	}
 
 	if( g_theInput->WasKeyJustPressed( 'M' ) )
@@ -502,7 +508,6 @@ void Game::UpdateSimulationFromInput()
 	if( numWaves <= 0 )
 		return;
 
-	float deltaSeconds = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
 
 	//Change Wave
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_LEFT_ARROW ) )

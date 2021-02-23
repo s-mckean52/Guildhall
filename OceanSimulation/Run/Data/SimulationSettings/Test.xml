@@ -5,7 +5,7 @@
                     waveSuppression="0.5f">
   </PhillipsSpectrum>
   
-  <RuntimeDefaults choppinessEnabled="false"
+  <RuntimeDefaults choppiness="-1.f"
                    iWaveEnabled="false"
                    wireFrameEnabled="false"
                    dispersionRelation="deep"

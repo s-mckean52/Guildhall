@@ -297,7 +297,7 @@ void WaveSimulation::SetPhillipsSpectrumValues( XmlElement const& element )
 //---------------------------------------------------------------------------------------------------------
 void WaveSimulation::SetRuntimeDefaults( XmlElement const& element )
 {
-	m_isChoppyWater		= ParseXmlAttribute( element, "choppinessEnabled", false );
+	m_choppyWaterValue	= ParseXmlAttribute( element, "choppiness", 0.f );
 	m_isIWaveEnabled	= ParseXmlAttribute( element, "iWaveEnabled", false );
 	m_isWireFrame		= ParseXmlAttribute( element, "wireFrameEnabled", false );
 	m_tilingDimensions	= ParseXmlAttribute( element, "tilingSize", 1 );
@@ -453,7 +453,14 @@ void WaveSimulation::SetIWaveEnabled( bool isEnabled)
 
 
 //---------------------------------------------------------------------------------------------------------
-void WaveSimulation::SetIsChoppyWater( bool isChoppyWater )
+void WaveSimulation::SetChoppyWaterValue( float choppyWaterValue )
 {
-	m_isChoppyWater = isChoppyWater;
+	m_choppyWaterValue = choppyWaterValue;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::AddChoppyWaterValue( float choppyWaterValueToAdd )
+{
+	m_choppyWaterValue += choppyWaterValueToAdd;
 }

@@ -76,9 +76,10 @@ public:
 	float		PhillipsEquation( Vec2 const& k );
 
 	bool	IsIWaveEnabled() const					{ return m_isIWaveEnabled; }
-	bool	IsChoppyWater() const					{ return m_isChoppyWater; }
+	float	GetChoppyWaterValue() const				{ return m_choppyWaterValue; }
 	void	SetIWaveEnabled( bool isEnabled );
-	void	SetIsChoppyWater( bool isChoppyWater );
+	void	SetChoppyWaterValue( float choppyWaterValue );
+	void	AddChoppyWaterValue( float choppyWaterValueToAdd );
 	
 	ComplexFloat hTilde( int n, int m, float time );
 	ComplexFloat hTilde0( int n, int m, bool doesNegateK = false );
@@ -105,7 +106,7 @@ protected:
 	Clock*				m_simulationClock		= nullptr;
 	WaveSimulationMode	m_waveSimulationMode	= FFT_WAVE_SIMULATION;
 	bool				m_isIWaveEnabled		= false;
-	bool				m_isChoppyWater			= true;
+	float				m_choppyWaterValue		= 0.f;
 
 	uint				m_tilingDimensions = 1;
 	bool				m_isWireFrame	= true;
