@@ -18,6 +18,8 @@ WaveSurfaceVertex::WaveSurfaceVertex( WaveSimulation* owner, int xSamplePosition
 	m_initialPosition.z = 0.f;
 
 	CalculateK( sampleDimensions, dimensions );
+	m_kLength = m_k.GetLength();
+	m_dispersionRelation = m_owner->GetDeepDispersion( m_kLength );
 
 	m_hTilde0 = CalculateHTilde0();
 	m_hTilde0Conj = std::conj( CalculateHTilde0( true ) );
@@ -27,8 +29,8 @@ WaveSurfaceVertex::WaveSurfaceVertex( WaveSimulation* owner, int xSamplePosition
 //---------------------------------------------------------------------------------------------------------
 void WaveSurfaceVertex::CalculateHTildeAtTime( float time )
 {
-	float dispersionRelation = m_owner->GetDeepDispersion( m_k );
-	float dispersionTime = dispersionRelation * time * 10.f;
+	//float dispersionRelation = m_owner->GetDeepDispersion( m_k );
+	float dispersionTime = m_dispersionRelation * time * 10.f;
 
 	float cosDispersionTime = cos( dispersionTime );
 	float sinDispersionTime = sin( dispersionTime );
@@ -63,7 +65,7 @@ ComplexFloat WaveSurfaceVertex::CalculateHTilde0( bool doesNegateK )
 
 	std::complex<float> guassianComplex( gRand1, gRand2 );
 	
-	return inverse_sqrt_2 * guassianComplex * sqrt( m_owner->PhillipsEquation( k ) ); 
+	return inverse_sqrt_2 * guassianComplex * sqrt( m_owner->PhillipsEquation( k, m_kLength ) ); 
 }
 
 

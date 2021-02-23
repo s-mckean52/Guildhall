@@ -80,8 +80,8 @@ void FFTWaveSimulation::Simulate()
 	}
 	//m_fftTimer.StopTimer();
 	
-	g_theJobSystem->WaitForAllJobs();
-	g_theJobSystem->ClaimAndDeleteAllCompletedJobs();
+// 	g_theJobSystem->WaitForAllJobs();
+// 	g_theJobSystem->ClaimAndDeleteAllCompletedJobs();
 
 	for( uint positionIndex = 0; positionIndex < m_waveSurfaceVerts.size(); ++positionIndex )
 	{
