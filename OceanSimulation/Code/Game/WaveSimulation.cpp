@@ -128,6 +128,7 @@ void WaveSimulation::Simulate()
 void WaveSimulation::Render() const
 {
 	Rgba8 renderColor = Rgba8::WHITE;// Rgba8::MakeFromFloats(0.f, 0.412f, 0.58f);
+	g_theRenderer->BindMaterialByPath( "Data/Shaders/Water.material" );
 	if( m_isWireFrame ) 
 	{ 
 		g_theRenderer->BindTexture( nullptr );
@@ -141,7 +142,7 @@ void WaveSimulation::Render() const
 		g_theRenderer->SetFillMode( FILL_MODE_SOLID );
 	}
 
-	g_theRenderer->BindShaderByPath( "Data/Shaders/Water_Test.hlsl" );
+	//g_theRenderer->BindShaderByPath( "Data/Shaders/Water_Test.hlsl" );
 	//g_theRenderer->BindShaderByPath( "Data/Shaders/Normals.hlsl" );
 	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 
@@ -359,20 +360,19 @@ void WaveSimulation::GenerateSurface( Vec3 const& origin, Rgba8 const& color, Ve
 
 
 //---------------------------------------------------------------------------------------------------------
-float WaveSimulation::GetDeepDispersion( Vec2 const& k )
+float WaveSimulation::GetDeepDispersion( float kLength )
 {
 	constexpr float w0 = 2.f * 3.14159f / 200.f;
-	float wk = sqrtf( GRAVITY * k.GetLength() );
+	float wk = sqrtf( GRAVITY * kLength );
 	return RoundDownToInt( wk ) * w0;
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-float WaveSimulation::PhillipsEquation( Vec2 const& k )
+float WaveSimulation::PhillipsEquation( Vec2 const& k, float lengthK )
 {
 	// A * e^( -1 / ( k * L )^2 ) / k^4 * ( Dot( k, w )^2 )
 
-	float lengthK = k.GetLength();
 	if( lengthK <= m_waveSuppression )
 		return 0.f;
 
@@ -396,6 +396,7 @@ float WaveSimulation::PhillipsEquation( Vec2 const& k )
 //---------------------------------------------------------------------------------------------------------
 ComplexFloat WaveSimulation::hTilde( int n, int m, float time )
 {
+	ERROR_AND_DIE( "WaveSimulation::hTilde deprecated - Use WaveSurfaceVertex::hTilde" );
 	// 	int halfSamples = static_cast<int>( m_numSamples * 0.5 );
 	// 	int index = ( ( m + halfSamples ) * m_numSamples ) + ( n + halfSamples );
 	int index = ( m * m_numSamples ) + n;
@@ -405,7 +406,7 @@ ComplexFloat WaveSimulation::hTilde( int n, int m, float time )
 	ComplexFloat htilde0 = m_hTilde0Data[index].m_htilde0;
 	ComplexFloat htilde0Conj = m_hTilde0Data[index].m_htilde0Conj;
 
-	float dispersionRelation = GetDeepDispersion( k );
+	float dispersionRelation = GetDeepDispersion( k.GetLength() );
 	float dispersionTime = dispersionRelation * time * 10.f;
 
 	float cosDispersionTime = cos( dispersionTime );
@@ -421,6 +422,7 @@ ComplexFloat WaveSimulation::hTilde( int n, int m, float time )
 //---------------------------------------------------------------------------------------------------------
 ComplexFloat WaveSimulation::hTilde0( int n, int m, bool doesNegateK )
 {
+	ERROR_AND_DIE( "WaveSimulation::hTilde0 deprecated - Use WaveSurfaceVertex::hTilde0" );
 	Vec2 k = GetK( n, m );
 	if( doesNegateK )
 	{
@@ -441,7 +443,7 @@ ComplexFloat WaveSimulation::hTilde0( int n, int m, bool doesNegateK )
 
 	std::complex<float> guassianComplex( gRand1, gRand2 );
 	
-	return inverse_sqrt_2 * guassianComplex * sqrt( PhillipsEquation( k ) ); 
+	return inverse_sqrt_2 * guassianComplex * sqrt( PhillipsEquation( k, k.GetLength() ) ); 
 }
 
 

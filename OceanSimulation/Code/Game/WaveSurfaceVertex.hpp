@@ -21,7 +21,10 @@ public:
 	ComplexFloat	m_hTilde0			= ComplexFloat( 0.f, 0.f );
 	ComplexFloat	m_hTilde0Conj		= ComplexFloat( 0.f, 0.f );
 
-	Vec2			m_k					= Vec2::ZERO;
+	Vec2			m_k						= Vec2::ZERO;
+	float			m_kLength				= 0.f;
+	float			m_dispersionRelation	= 0.f;
+
 	ComplexFloat	m_hTilde			= ComplexFloat( 0.f, 0.f );
 	float			m_height			= 0.f;
 

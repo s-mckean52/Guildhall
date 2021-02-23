@@ -198,6 +198,7 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="DFTWaveSimulation.cpp" />
+    <ClCompile Include="FFTJob.cpp" />
     <ClCompile Include="FFTWaveSimulation.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameCommon.cpp" />
@@ -213,6 +214,7 @@
     <ClInclude Include="App.hpp" />
     <ClInclude Include="DFTWaveSimulation.hpp" />
     <ClInclude Include="EngineBuildPreferences.hpp" />
+    <ClInclude Include="FFTJob.hpp" />
     <ClInclude Include="FFTWaveSimulation.hpp" />
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="GameCommon.hpp" />

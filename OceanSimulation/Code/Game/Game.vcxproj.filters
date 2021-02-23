@@ -60,6 +60,9 @@
     <ClCompile Include="TextureCube.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
+    <ClCompile Include="FFTJob.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.hpp">
@@ -96,6 +99,9 @@
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="TextureCube.hpp">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="FFTJob.hpp">
       <Filter>Framework</Filter>
     </ClInclude>
   </ItemGroup>

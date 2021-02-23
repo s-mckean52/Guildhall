@@ -16,6 +16,7 @@ class	GPUMesh;
 class	Clock;
 
 
+//---------------------------------------------------------------------------------------------------------
 enum WaveSimulationMode
 {
 	FFT_WAVE_SIMULATION,
@@ -29,6 +30,7 @@ struct HTilde0Data
 	ComplexFloat m_htilde0;
 	ComplexFloat m_htilde0Conj;
 };
+
 
 //---------------------------------------------------------------------------------------------------------
 struct Wave
@@ -72,8 +74,8 @@ public:
 	Vec2 const& GetGridDimensions() const	{ return m_dimensions; }
 	float		GetWindSpeed() const		{ return m_windSpeed; }
 	Wave*		GetWaveAtIndex( int index ) const;
-	float		GetDeepDispersion( Vec2 const& k );
-	float		PhillipsEquation( Vec2 const& k );
+	float		GetDeepDispersion( float kLength );
+	float		PhillipsEquation( Vec2 const& k, float lengthK );
 
 	bool	IsIWaveEnabled() const					{ return m_isIWaveEnabled; }
 	float	GetChoppyWaterValue() const				{ return m_choppyWaterValue; }
