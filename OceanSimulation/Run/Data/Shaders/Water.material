@@ -1,15 +1,10 @@
 <Material   name="Water">
     <ShaderState        filepath="Data/Shaders/Water.shaderstate"/>
     <Tint               value="255,255,255"/>
-    <SpecularFactor     value="0.0"/>
-    <SpecularPower      value="1.0"/>
-    <NormalTexture      filepath="Data/Images/waterNM1.png"/>
-    <MaterialSampler    type="linear"/>
-
-    <!--Material Data-->
-    <!--   UNUSED    -->
-    <float  name="amount"           value="0.5"/>
-    <float  name="edgeRange"        value="0.1"/>
-    <Vec3   name="edgeStartColor"   value="1.0,1.0,0.0"/>
-    <Vec3   name="edgeEndColor"     value="1.0,0.0,0.0"/>
+    <SpecularFactor     value="0.55f"/>
+    <SpecularPower      value="125.0f"/>
+    <!--<MaterialTexture    filepath="Data/Images/miramar_large_flipped.png"/>-->
+    <MaterialTexture    filepath="Data/Images/waterNM1.png"/>
+    <MaterialTexture    filepath="Data/Images/waterNM2.png"/>
+    <MaterialSampler    type="linear" wrap="wrap"/>
 </Material>

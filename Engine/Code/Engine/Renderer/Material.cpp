@@ -201,13 +201,22 @@ void Material::ParseMaterialTexture( XmlElement const& element )
 void Material::ParseMaterialSampler( XmlElement const& element )
 {
 	SamplerType samplerType;
-	std::string type = ParseXmlAttribute( element, "type", "" );
+	TextureAddressMode wrapMode;
 
-	if( type == "linear" )		{ samplerType = SAMPLER_BILINEAR; }
-	else if( type == "point" )	{ samplerType = SAMPLER_POINT; }
+	std::string sampleType	= ParseXmlAttribute( element, "type", "" );
+	std::string wrapType	= ParseXmlAttribute( element, "wrap", "clamp" );
+
+	if( sampleType == "linear" )		{ samplerType = SAMPLER_BILINEAR; }
+	else if( sampleType == "point" )	{ samplerType = SAMPLER_POINT; }
 	else { return; }
 
-	AddSampler( m_context->GetOrCreateSampler( samplerType ) );
+	if( wrapType == "border" )		{ wrapMode = TextureAddressMode::TEXTURE_ADDRESS_BORDER; }
+	else if (wrapType == "clamp")	{ wrapMode = TextureAddressMode::TEXTURE_ADDRESS_CLAMP; }
+	else if( wrapType == "mirror" ) { wrapMode = TextureAddressMode::TEXTURE_ADDRESS_MIRROR; }
+	else if( wrapType == "wrap" )	{ wrapMode = TextureAddressMode::TEXTURE_ADDRESS_WRAP; }
+	else { return; }
+
+	AddSampler( m_context->GetOrCreateSampler( samplerType, wrapMode ) );
 }
 
 

@@ -33,6 +33,19 @@ FFTWaveSimulation::FFTWaveSimulation( XmlElement const& element )
 
 
 //---------------------------------------------------------------------------------------------------------
+FFTWaveSimulation::FFTWaveSimulation( Vec2 const& dimensions, uint samples, float windSpeed, Vec2 const& windDir, float aConstant, float waveSuppression )
+	: WaveSimulation( dimensions, samples, windSpeed )
+{
+	m_windDirection = windDir;
+	m_A = aConstant;
+	m_waveSuppression = waveSuppression;
+
+
+	InitializeValues();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 FFTWaveSimulation::~FFTWaveSimulation()
 {
 }

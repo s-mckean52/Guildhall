@@ -156,7 +156,7 @@ void WaveSimulation::Render() const
 		newPosition.y += m_dimensions.y * ( i % m_tilingDimensions );
 		newTransform.SetPosition( newPosition );
 
-		g_theRenderer->SetModelUBO( newTransform.ToMatrix(), renderColor, 0.0f, 1.f );
+		g_theRenderer->SetModelMatrix( newTransform.ToMatrix() );
 		g_theRenderer->DrawMesh( m_surfaceMesh );
 	}
 }
@@ -190,6 +190,13 @@ Wave* WaveSimulation::GetWaveAtIndex( int index ) const
 void WaveSimulation::ToggleWireFrameMode()
 {
 	m_isWireFrame = !m_isWireFrame;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::SetIsWireFrame( bool isWireFrame )
+{
+	m_isWireFrame = isWireFrame;
 }
 
 
@@ -396,7 +403,7 @@ float WaveSimulation::PhillipsEquation( Vec2 const& k, float lengthK )
 //---------------------------------------------------------------------------------------------------------
 ComplexFloat WaveSimulation::hTilde( int n, int m, float time )
 {
-	ERROR_AND_DIE( "WaveSimulation::hTilde deprecated - Use WaveSurfaceVertex::hTilde" );
+	//ERROR_AND_DIE( "WaveSimulation::hTilde deprecated - Use WaveSurfaceVertex::hTilde" );
 	// 	int halfSamples = static_cast<int>( m_numSamples * 0.5 );
 	// 	int index = ( ( m + halfSamples ) * m_numSamples ) + ( n + halfSamples );
 	int index = ( m * m_numSamples ) + n;
@@ -422,7 +429,7 @@ ComplexFloat WaveSimulation::hTilde( int n, int m, float time )
 //---------------------------------------------------------------------------------------------------------
 ComplexFloat WaveSimulation::hTilde0( int n, int m, bool doesNegateK )
 {
-	ERROR_AND_DIE( "WaveSimulation::hTilde0 deprecated - Use WaveSurfaceVertex::hTilde0" );
+	//ERROR_AND_DIE( "WaveSimulation::hTilde0 deprecated - Use WaveSurfaceVertex::hTilde0" );
 	Vec2 k = GetK( n, m );
 	if( doesNegateK )
 	{

@@ -1,3 +1,5 @@
+Perforce Path: //depot/C29/Students/smckean/OceanSimulation/
+
 Controls:
 	Movement:
 		'W' - Move Relative Forward
@@ -11,11 +13,8 @@ Controls:
 	Other:
 		'~' - Open the dev console
 		'I' - Toggle iWave
-		'C' - Toggle Wave Choppiness
+		'C,V' - Wave Choppiness value
 		'O' - Set Position and Rotations to 0
 		'F' - Toggle Wire Frame Rendering
 		'F1' - Will reload the currently loaded XML
-
-Notes:
-	Simulation is now loaded through a file at Data/SimulationSettings. Initially Test.xml
-	Can set the file during runtime via "fft_xml file=<XMLFileName>" ex: "fft_xml file=Test.xml"
+		'F9' - Quick Reload Shaders
