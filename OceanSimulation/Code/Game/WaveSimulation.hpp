@@ -70,13 +70,19 @@ public:
 	virtual void AddWave( Wave* waveToAdd );
 
 	int			GetNumWaves() const;
+	uint		GetNumTiles() const			{ return m_tilingDimensions; }
 	int			GetNumSamples() const		{ return m_numSamples; }
 	Vec2 const& GetGridDimensions() const	{ return m_dimensions; }
 	float		GetWindSpeed() const		{ return m_windSpeed; }
+	float		GetAConstant() const		{ return m_A; }
+	float		GetWaveSuppression() const	{ return m_waveSuppression; }
+	Vec2 const&	GetWindDirection() const	{ return m_windDirection; }
+
 	Wave*		GetWaveAtIndex( int index ) const;
 	float		GetDeepDispersion( float kLength );
 	float		PhillipsEquation( Vec2 const& k, float lengthK );
 
+	bool	IsWireFrameEnabled() const				{ return m_isWireFrame; }
 	bool	IsIWaveEnabled() const					{ return m_isIWaveEnabled; }
 	float	GetChoppyWaterValue() const				{ return m_choppyWaterValue; }
 	void	SetIWaveEnabled( bool isEnabled );
@@ -86,6 +92,7 @@ public:
 	ComplexFloat hTilde( int n, int m, float time );
 	ComplexFloat hTilde0( int n, int m, bool doesNegateK = false );
 	void		ToggleWireFrameMode();
+	void		SetIsWireFrame( bool isWireFrame );
 
 	bool		IsValidNumSamples( uint numSamples );
 	Vec2		GetK( int n, int m );

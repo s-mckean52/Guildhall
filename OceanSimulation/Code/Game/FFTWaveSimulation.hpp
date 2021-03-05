@@ -14,6 +14,7 @@ class FFTWaveSimulation : public WaveSimulation
 public:
 	~FFTWaveSimulation();
 	FFTWaveSimulation( Vec2 const& dimensions, uint samples, float windSpeed );
+	FFTWaveSimulation( Vec2 const& dimensions, uint samples, float windSpeed, Vec2 const& windDir, float aConstant, float waveSuppression );
 	FFTWaveSimulation( XmlElement const& element );
 
 	void Simulate() override;

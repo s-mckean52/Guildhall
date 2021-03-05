@@ -90,7 +90,7 @@ void Game::StartUp()
 	m_UICamera = new Camera( g_theRenderer );
 	m_UICamera->SetOrthoView( Vec2( -HALF_SCREEN_X, -HALF_SCREEN_Y ), Vec2( HALF_SCREEN_X, HALF_SCREEN_Y ) );
 
-	m_theSun.direction = Vec3( 0.f, 0.f, -1.f ).GetNormalize();
+	m_theSun.direction = Vec3( -1.f, -1.f, -1.f ).GetNormalize();
 	m_theSun.position = Vec3( 10.f, 10.f, 10.f );
 	m_theSun.color = Rgba8::WHITE.GetValuesAsFractionsVec3();//Rgba8(255, 184, 19).GetValuesAsFractionsVec3();
 	m_theSun.intensity = 1.f;
@@ -236,7 +236,7 @@ void Game::RenderWorld() const
 	cameraTransformMatrix.ScaleNonUniform3D( m_worldCamera->GetScale() );
 
 	Vec3 compasStartPosition = m_worldCamera->GetPosition();
-	compasStartPosition += cameraTransformMatrix.TransformVector3D( Vec3( 0.1f, 0.f, 0.f ) );
+	compasStartPosition += cameraTransformMatrix.TransformVector3D( Vec3( 0.1f, 0.085f, -0.045f ) );
 
 	Mat44 cameraBasisMatrix = Mat44::CreateUniformScaleXYZ( 0.01f );
 	cameraBasisMatrix.SetTranslation3D( compasStartPosition );
@@ -245,7 +245,7 @@ void Game::RenderWorld() const
 	DebugAddWorldArrow( m_theSun.position, m_theSun.position + m_theSun.direction, Rgba8::WHITE, 0.f, DEBUG_RENDER_ALWAYS );
 
 	//m_DFTWaveSimulation->Render();
-	g_theRenderer->BindMaterialTexture( 8, m_skyBox );
+	g_theRenderer->BindMaterialTexture( 7, m_skyBox );
 	m_FFTWaveSimulation->Render();
 	m_testCube->Render();
 }
@@ -258,7 +258,8 @@ void Game::RenderUI() const
 	const float paddingFromLeft = 0.015f;
 	const float paddingFromTop = 0.05f;
 
-	std::vector<ColorString> strings;
+	std::vector<ColorString> runtimeStrings;
+	std::vector<ColorString> precomputeStrings;
 	std::vector<Vertex_PCU> textVerts;
 
 	float fps = 1.f / static_cast<float>( m_gameClock->GetLastDeltaSeconds() * m_gameClock->GetScale() );
@@ -271,42 +272,65 @@ void Game::RenderUI() const
 
 	Wave* selectedWave = m_FFTWaveSimulation->GetWaveAtIndex( m_selectedWaveIndex );
 
-	strings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "FPS: %.2f", fps ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Wave Simulation: FFT" ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[I] - iWave: %s", ( m_FFTWaveSimulation->IsIWaveEnabled() ? "Enabled" : "Disabled" ) ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[C,V] - Choppiness: %.2f", m_FFTWaveSimulation->GetChoppyWaterValue() ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "FPS: %.2f", fps ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Wave Simulation: FFT" ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Number of Tiles: %i", m_FFTWaveSimulation->GetNumTiles() * m_FFTWaveSimulation->GetNumTiles() ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[I] - iWave: %s", ( m_FFTWaveSimulation->IsIWaveEnabled() ? "Enabled" : "Disabled" ) ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[F] - Wire Frame: %s", ( m_FFTWaveSimulation->IsWireFrameEnabled() ? "Enabled" : "Disabled" ) ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[C,V] - Choppiness: %.2f", m_FFTWaveSimulation->GetChoppyWaterValue() ) ) );
 
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Samples: %i", m_FFTWaveSimulation->GetNumSamples() ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Dimensions: %.2f, %.2f", m_FFTWaveSimulation->GetGridDimensions().x, m_FFTWaveSimulation->GetGridDimensions().y ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Wind Speed: %.2f", m_FFTWaveSimulation->GetWindSpeed() ) ) );
 
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Data In: %.4f(ms)", m_FFTWaveSimulation->m_simulateTimer.GetAvgTimeMilliseconds() ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "FFT computation: %.4f(ms)", m_FFTWaveSimulation->m_pointCalculationTimer.GetAvgTimeMilliseconds() ) ) );
-	strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Data Out: %.4f(ms)", m_FFTWaveSimulation->m_fftTimer.GetAvgTimeMilliseconds() ) ) );
+// 	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Data In: %.4f(ms)", m_FFTWaveSimulation->m_simulateTimer.GetAvgTimeMilliseconds() ) ) );
+// 	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "FFT computation: %.4f(ms)", m_FFTWaveSimulation->m_pointCalculationTimer.GetAvgTimeMilliseconds() ) ) );
+// 	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Data Out: %.4f(ms)", m_FFTWaveSimulation->m_fftTimer.GetAvgTimeMilliseconds() ) ) );
 
-	
+	Vec2 const& simDimensions = m_FFTWaveSimulation->GetGridDimensions();
+	Vec2 const& windDir = m_FFTWaveSimulation->GetWindDirection();
+
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[F2] - Recalculate Values <current>(new)" ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[Y,U] - Samples: %i(%i)", m_FFTWaveSimulation->GetNumSamples(), m_tempSamples ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[-,+] - Dimensions: %.2f(%.2f), %.2f(%.2f)", simDimensions.x, m_tempDimensions.x, simDimensions.y, m_tempDimensions.y ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[H,J] - Global Wave Amplitude: %.4f(%.4f)", m_FFTWaveSimulation->GetAConstant(), m_tempGloabalWaveAmp ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[K,L] - Wave Suppression Height: %.4f(%.4f)", m_FFTWaveSimulation->GetWaveSuppression(), m_tempWaveSuppression ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[N,M] - Wind Speed: %.2f(%.2f)", m_FFTWaveSimulation->GetWindSpeed(), m_tempWindSpeed ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[<,>] - Wind Direction: %.2f(%.2f), %.2f(%.2f)", windDir.x, m_tempWindDir.x, windDir.y, m_tempWindDir.y ) ) );
+
+
 	if( selectedWave != nullptr )
 	{
-		strings.push_back( ColorString( Rgba8::BLUE,	Stringf( " " ) ) );
-		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[LEFT, RIGHT] - Wave: %i", m_selectedWaveIndex ) ) );
-		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[UP, DOWN]    - Direction: ( %.2f, %.2f )", selectedWave->m_directionNormal.x, selectedWave->m_directionNormal.y ) ) );
-		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[{, }]        - Size:      %.2f", selectedWave->m_directionNormal.GetLength() ) ) );
-		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[-, +]        - Amplitude: %.2f", selectedWave->m_amplitude ) ) );
-		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[;, ']        - Phase:     %.2f", selectedWave->m_phase ) ) );
-		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Frequency: %.2f", selectedWave->m_frequency ) ) );
-		strings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Magnitude: %.2f", selectedWave->m_magnitude ) ) );
+		runtimeStrings.push_back( ColorString( Rgba8::BLUE,	Stringf( " " ) ) );
+		runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[LEFT, RIGHT] - Wave: %i", m_selectedWaveIndex ) ) );
+		runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[UP, DOWN]    - Direction: ( %.2f, %.2f )", selectedWave->m_directionNormal.x, selectedWave->m_directionNormal.y ) ) );
+		runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[{, }]        - Size:      %.2f", selectedWave->m_directionNormal.GetLength() ) ) );
+		runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[-, +]        - Amplitude: %.2f", selectedWave->m_amplitude ) ) );
+		runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[;, ']        - Phase:     %.2f", selectedWave->m_phase ) ) );
+		runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Frequency: %.2f", selectedWave->m_frequency ) ) );
+		runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Magnitude: %.2f", selectedWave->m_magnitude ) ) );
 	}
 
-	Vec2 cameraTopLeft = Vec2( m_UICamera->GetOrthoBottomLeft().x, m_UICamera->GetOrthoTopRight().y );
-	Vec2 textStartPos = cameraTopLeft + Vec2( paddingFromLeft, -paddingFromTop - textHeight );
-	for( int stringIndex = 0; stringIndex < strings.size(); ++stringIndex )
+	Vec3 cameraTopRight = m_UICamera->GetOrthoTopRight();
+	Vec2 cameraTopRightXY = Vec2( cameraTopRight.x, cameraTopRight.y );
+	Vec2 cameraTopLeft = Vec2( m_UICamera->GetOrthoBottomLeft().x, cameraTopRight.y );
+	Vec2 leftTextStartPos = cameraTopLeft + Vec2( paddingFromLeft, -paddingFromTop - textHeight );
+
+	Vec2 longestStingDim = g_devConsoleFont->GetDimensionsForText2D( textHeight, precomputeStrings[4].m_text );
+	Vec2 rightTextStartPos = cameraTopRightXY + Vec2( -longestStingDim.x - paddingFromLeft, -paddingFromTop - textHeight );
+
+	for( int stringIndex = 0; stringIndex < runtimeStrings.size(); ++stringIndex )
 	{
-		ColorString& coloredString = strings[ stringIndex ];
-		g_devConsoleFont->AddVertsForText2D( textVerts, textStartPos, textHeight, coloredString.m_text, coloredString.m_color );
-		textStartPos -= Vec2( 0.f, textHeight + paddingFromTop );
+		ColorString& coloredString = runtimeStrings[ stringIndex ];
+		g_devConsoleFont->AddVertsForText2D( textVerts, leftTextStartPos, textHeight, coloredString.m_text, coloredString.m_color );
+		leftTextStartPos -= Vec2( 0.f, textHeight + paddingFromTop );
 	}
 
-	g_theRenderer->BindShader( (Shader*)nullptr );
+	for( int precomputeStringIndex = 0; precomputeStringIndex < precomputeStrings.size(); ++precomputeStringIndex )
+	{
+		ColorString& coloredString = precomputeStrings[ precomputeStringIndex ];
+		g_devConsoleFont->AddVertsForText2D( textVerts, rightTextStartPos, textHeight, coloredString.m_text, coloredString.m_color );
+		rightTextStartPos -= Vec2( 0.f, textHeight + paddingFromTop );
+	}
+
+	g_theRenderer->BindShader( nullptr );
 	g_theRenderer->BindTexture( g_devConsoleFont->GetTexture() );
 	g_theRenderer->SetModelUBO( Mat44::IDENTITY );
 	g_theRenderer->DrawVertexArray( textVerts );
@@ -446,6 +470,8 @@ void Game::LoadSimulationFromXML( char const* filepath )
 
 	m_FFTWaveSimulation = dynamic_cast<FFTWaveSimulation*>( WaveSimulation::CreateWaveSimulation( simulationFolderPath + filepath ) );
 	m_currentXML = filepath;
+
+	SetTempValues();
 }
 
 
@@ -453,6 +479,37 @@ void Game::LoadSimulationFromXML( char const* filepath )
 void Game::ReloadCurrentXML()
 {
 	LoadSimulationFromXML( m_currentXML );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::SetTempValues()
+{
+	m_tempSamples = m_FFTWaveSimulation->GetNumSamples();
+	m_tempDimensions = m_FFTWaveSimulation->GetGridDimensions();
+	m_tempWindDir = m_FFTWaveSimulation->GetWindDirection();
+	m_tempWindSpeed = m_FFTWaveSimulation->GetWindSpeed();
+	m_tempWaveSuppression = m_FFTWaveSimulation->GetWaveSuppression();
+	m_tempGloabalWaveAmp = m_FFTWaveSimulation->GetAConstant();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::LoadCurrentTempValues()
+{
+	bool tempWireFrame = m_FFTWaveSimulation->IsWireFrameEnabled();
+	bool tempIWave = m_FFTWaveSimulation->IsIWaveEnabled();
+	float tempChoppiness = m_FFTWaveSimulation->GetChoppyWaterValue();
+	uint tilingSize = m_FFTWaveSimulation->GetNumTiles();
+
+	delete m_FFTWaveSimulation;
+	m_FFTWaveSimulation = nullptr;
+
+	m_FFTWaveSimulation = new FFTWaveSimulation( m_tempDimensions, m_tempSamples, m_tempWindSpeed, m_tempWindDir, m_tempGloabalWaveAmp, m_tempWaveSuppression );
+	m_FFTWaveSimulation->SetIsWireFrame( tempWireFrame );
+	m_FFTWaveSimulation->SetIWaveEnabled( tempIWave );
+	m_FFTWaveSimulation->SetChoppyWaterValue( tempChoppiness );
+	m_FFTWaveSimulation->SetTilingDimensions( tilingSize );
 }
 
 
@@ -507,8 +564,62 @@ void Game::UpdateSimulationFromInput()
 
 	if( g_theInput->WasKeyJustPressed( 'P' ) )
 	{
-		m_DFTWaveSimulation->ToggleSimulationClockPause();
+		//m_DFTWaveSimulation->ToggleSimulationClockPause();
 		m_FFTWaveSimulation->ToggleSimulationClockPause();
+	}
+
+	if( g_theInput->WasKeyJustPressed( 'U' ) )
+	{
+		IncreaseSamples();
+	}
+	if( g_theInput->WasKeyJustPressed( 'Y' ) )
+	{
+		DecreaseSamples();
+	}
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_PLUS ) )
+	{
+		AddUniformDimensions( updateSpeed * deltaSeconds );
+	}
+	if( g_theInput->IsKeyPressed( KEY_CODE_MINUS ) )
+	{
+		AddUniformDimensions( -updateSpeed * deltaSeconds );
+	}
+
+	if( g_theInput->IsKeyPressed( 'H' ) )
+	{
+		AddGlobalWaveAmp( -0.01f * deltaSeconds );
+	}
+	if( g_theInput->IsKeyPressed( 'J' ) )
+	{
+		AddGlobalWaveAmp( 0.01f * deltaSeconds );
+	}
+
+	if( g_theInput->IsKeyPressed( 'K' ) )
+	{
+		AddWaveSuppression( -0.1f * deltaSeconds );
+	}
+	if( g_theInput->IsKeyPressed( 'L' ) )
+	{
+		AddWaveSuppression( 0.1f * deltaSeconds );
+	}
+
+	if( g_theInput->IsKeyPressed( 'N' ) )
+	{
+		AddWindSpeed( -updateSpeed * deltaSeconds );
+	}
+	if( g_theInput->IsKeyPressed( 'M' ) )
+	{
+		AddWindSpeed( updateSpeed * deltaSeconds );
+	}
+
+	if( g_theInput->IsKeyPressed( KEY_CODE_COMMA ) )
+	{
+		RotateWindDirByDegrees( 30.f * deltaSeconds );
+	}
+	if( g_theInput->IsKeyPressed( KEY_CODE_PERIOD ) )
+	{
+		RotateWindDirByDegrees( 30.f * deltaSeconds );
 	}
 
 	int numWaves = m_FFTWaveSimulation->GetNumWaves();
@@ -582,6 +693,64 @@ void Game::UpdateSimulationFromInput()
 
 
 //---------------------------------------------------------------------------------------------------------
+void Game::IncreaseSamples()
+{
+	m_tempSamples <<= 1;
+	if( m_tempSamples > 2048 )
+	{
+		m_tempSamples = 2048;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::DecreaseSamples()
+{
+	m_tempSamples >>= 1;
+	if( m_tempSamples < 4 )
+	{
+		m_tempSamples = 4;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddUniformDimensions( float dimensionsToAdd )
+{
+	m_tempDimensions.x += dimensionsToAdd;
+	m_tempDimensions.y += dimensionsToAdd;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddGlobalWaveAmp( float ampToAdd )
+{
+	m_tempGloabalWaveAmp += ampToAdd;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddWaveSuppression( float suppressionToAdd )
+{
+	m_tempWaveSuppression += suppressionToAdd;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddWindSpeed( float windSpeedToAdd )
+{
+	m_tempWindSpeed += windSpeedToAdd;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::RotateWindDirByDegrees( float degreesToRotateBy )
+{
+	m_tempWindDir.RotateDegrees( degreesToRotateBy );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::UpdateCameraProjection( Camera* camera )
 {
 	float mat[] = {
@@ -647,6 +816,10 @@ void Game::UpdateFromInput( float deltaSeconds )
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F1 ) )
 	{
 		ReloadCurrentXML();
+	}
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_F2 ) )
+	{
+		LoadCurrentTempValues();
 	}
 }
 

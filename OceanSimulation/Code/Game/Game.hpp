@@ -57,6 +57,14 @@ public:
 	void UpdateBasedOnMouseMovement();
 	void UpdateSimulationFromInput();
 
+	void IncreaseSamples();
+	void DecreaseSamples();
+	void AddUniformDimensions( float dimensionsToAdd );
+	void AddGlobalWaveAmp( float ampToAdd );
+	void AddWaveSuppression( float suppressionToAdd );
+	void AddWindSpeed( float windSpeedToAdd );
+	void RotateWindDirByDegrees( float degreesToRotateBy );
+
 	//Rendering
 	void UpdateCameraProjection( Camera* camera );
 	void UpdateCameraView( Camera* camera, CameraViewOrientation viewOrientation = RIGHT_HAND_X_FORWARD_Y_LEFT );
@@ -70,6 +78,8 @@ public:
 	void CreateNewFFTSimulation( int samples, Vec2 const& dimensions, float windSpeed );
 	void LoadSimulationFromXML( char const* filepath );
 	void ReloadCurrentXML();
+	void LoadCurrentTempValues();
+	void SetTempValues();
 
 	//Commands
 	static void GainFocus( EventArgs* args );
@@ -117,4 +127,11 @@ private:
 	bool m_isFogEnabled = true;
 
 	int m_selectedWaveIndex = 0;
+
+	Vec2	m_tempWindDir;
+	Vec2	m_tempDimensions;
+	uint	m_tempSamples			= 0;
+	float	m_tempWindSpeed			= 0.f;
+	float	m_tempGloabalWaveAmp	= 0.f;
+	float	m_tempWaveSuppression	= 0.f;
 };
