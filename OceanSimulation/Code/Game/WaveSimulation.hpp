@@ -14,7 +14,7 @@ struct	IntVec2;
 class	Transform;
 class	GPUMesh;
 class	Clock;
-
+struct Texture;
 
 //---------------------------------------------------------------------------------------------------------
 enum WaveSimulationMode
@@ -100,6 +100,8 @@ public:
 	void		SetPosition( Vec3 const& newPosition );
 	void		SetTilingDimensions( uint tilingDimenisions );
 	void		ToggleSimulationClockPause();
+
+	Texture*	GenerateNormalMap();
 
 public:
 	static	WaveSimulation*		CreateWaveSimulation( std::string filePath );

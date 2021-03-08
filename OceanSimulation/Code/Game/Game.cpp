@@ -129,12 +129,17 @@ void Game::StartUp()
 	m_skyBox = new TextureCube( g_theRenderer );
 	m_skyBox->MakeFromImage( *skyboxTexture );
 
-	std::vector<uint> index;
-	std::vector<Vertex_PCUTBN> verts;
+	std::vector<uint> skyBoxIndex;
+	std::vector<Vertex_PCUTBN> skyBoxVerts;
 	float skyboxHalfSize = 0.5f;
-	AddTestCubeToIndexVertexArray( verts, index, AABB3( Vec3( -skyboxHalfSize ), Vec3( skyboxHalfSize ) ), Rgba8::WHITE );
+	AddTestCubeToIndexVertexArray( skyBoxVerts, skyBoxIndex, AABB3( Vec3( -skyboxHalfSize ), Vec3( skyboxHalfSize ) ), Rgba8::WHITE );
+	m_skyCube = new GPUMesh( g_theRenderer, skyBoxVerts, skyBoxIndex );
 	
-	m_skyCube = new GPUMesh( g_theRenderer, verts, index );
+	std::vector<uint> landIndex;
+	std::vector<Vertex_PCUTBN> landVerts;
+	Vec3 landHalfDimensions = Vec3( 100.f, 100.f, 0.5f );
+	AddTestCubeToIndexVertexArray( landVerts, landIndex, AABB3( -landHalfDimensions, landHalfDimensions ), Rgba8::WHITE ); 
+	m_landMesh = new GPUMesh( g_theRenderer, landVerts, landIndex );
 }
 
 
@@ -179,6 +184,7 @@ void Game::Render()
 	g_theRenderer->BindSampler( g_theRenderer->m_samplerLinear );
 	g_theRenderer->SetCullMode( CULL_MODE_FRONT );
 	g_theRenderer->SetDepthTest( COMPARE_FUNC_ALWAYS, false );
+	
 	g_theRenderer->SetModelUBO( Mat44::IDENTITY );//Mat44::CreateTranslationXYZ( m_worldCamera->GetPosition() ) );
 	g_theRenderer->BindTexture( m_skyBox );
 	g_theRenderer->BindShaderByPath( "Data/Shaders/Skybox.hlsl" );
@@ -244,10 +250,32 @@ void Game::RenderWorld() const
 	
 	DebugAddWorldArrow( m_theSun.position, m_theSun.position + m_theSun.direction, Rgba8::WHITE, 0.f, DEBUG_RENDER_ALWAYS );
 
-	//m_DFTWaveSimulation->Render();
-	g_theRenderer->BindMaterialTexture( 7, m_skyBox );
-	m_FFTWaveSimulation->Render();
+	g_theRenderer->BindShader( nullptr );
+	g_theRenderer->BindTextureByPath( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
+	g_theRenderer->SetModelUBO( Mat44::CreateTranslationXYZ( Vec3( 0.f, 0.f, -10.f ) ) );
+	g_theRenderer->DrawMesh( m_landMesh );
+
 	m_testCube->Render();
+	
+	
+	Texture* depthStencil = m_worldCamera->GetDepthStencilTarget();
+	
+	Texture* backBuffer = g_theRenderer->GetBackBuffer();
+	Texture* backBufferCopy = g_theRenderer->AcquireRenderTargetMatching( backBuffer );
+	Texture* depthStencilCopy = g_theRenderer->AcquireRenderTargetMatching( depthStencil );
+
+	g_theRenderer->CopyTexture( backBufferCopy, backBuffer );
+	g_theRenderer->CopyTexture( depthStencilCopy, depthStencil );
+	g_theRenderer->BindMaterialTexture( 5, m_skyBox );
+	g_theRenderer->BindMaterialTexture( 6, backBufferCopy );
+	g_theRenderer->BindMaterialTexture( 7, depthStencilCopy );
+	
+	//m_DFTWaveSimulation->Render();
+	m_FFTWaveSimulation->Render();
+	
+	g_theRenderer->ReleaseRenderTarget( backBufferCopy );
+	g_theRenderer->ReleaseRenderTarget( depthStencilCopy );
+	
 }
 
 

@@ -38,6 +38,12 @@ public:
 	Vec3 direction = Vec3::UNIT_POSITIVE_X;
 };
 
+// struct water_t
+// {
+// public:
+// 
+// };
+
 
 class Game
 {
@@ -93,6 +99,7 @@ public:
 private:
 	TextureCube* m_skyBox = nullptr;
 	GPUMesh* m_skyCube = nullptr;
+	GPUMesh* m_landMesh = nullptr;
 
 	WaterObject* m_testCube = nullptr;
 

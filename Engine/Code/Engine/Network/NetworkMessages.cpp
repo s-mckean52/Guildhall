@@ -10,7 +10,7 @@ UDPPacket::UDPPacket()
 UDPPacket::UDPPacket( UDPMessageHeader const& messageHeader, uint size )
 {
 	m_header = messageHeader;
-	m_size = size;
+	m_size = static_cast<uint16_t>( size );
 	m_data = new unsigned char[size];
 }
 

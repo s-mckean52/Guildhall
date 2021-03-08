@@ -1126,7 +1126,7 @@ STATIC void Game::LoseFocus( EventArgs* args )
 //---------------------------------------------------------------------------------------------------------
 STATIC void Game::light_set_ambient_color( EventArgs* args )
 {
-	Vec3 defaultAmbientColor = Vec3::UNIT;
+	Vec3 defaultAmbientColor = Vec3::ONES;
 	Vec3 ambientColor = args->GetValue( "color", defaultAmbientColor );
 
 	Rgba8 ambientRGBA8 = Rgba8::MakeFromFloats( ambientColor.x, ambientColor.y, ambientColor.z, 0.f );
@@ -1138,7 +1138,7 @@ STATIC void Game::light_set_ambient_color( EventArgs* args )
 STATIC void Game::light_set_color( EventArgs* args )
 {
 	int defaultLightIndex = 0;
-	Vec3 defaultPointLightColor = Vec3::UNIT;
+	Vec3 defaultPointLightColor = Vec3::ONES;
 
 	int lightIndex = args->GetValue( "index", defaultLightIndex );
 	Vec3 pointLightColor = args->GetValue( "color", defaultPointLightColor );

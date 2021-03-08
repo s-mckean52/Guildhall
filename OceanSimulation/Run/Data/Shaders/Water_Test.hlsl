@@ -43,8 +43,6 @@ struct light_t
 	float padding;
 };
 
-static float SHIFT = 0.75f;
-
 cbuffer time_constants : register(b0)
 {
 	float SYSTEM_TIME_SECONDS;
@@ -82,7 +80,9 @@ cbuffer light_constants : register(b3)
 
 Texture2D<float4>	tDiffuse			: register(t0);
 Texture2D<float4>	tNormal				: register(t1);
-TextureCube<float4> tSkybox				: register(t7);
+TextureCube<float4> tSkybox				: register(t5);
+Texture2D<float4>	tBackBuffer			: register(t6);
+Texture2D<float4>	tDepthStencil		: register(t7);
 Texture2D<float4>	tScrollingNormal1	: register(t8);
 Texture2D<float4>	tScrollingNormal2	: register(t9);
 
@@ -130,6 +130,7 @@ float3x3 GetVertexTBN( v2f_t input )
 	float3x3 tbn = float3x3( tangent, bitangent, normal );
 	return tbn;
 }
+
 
 //--------------------------------------------------------------------------------------
 // Vertex Shader
@@ -182,7 +183,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 
 	float2 normal_scroll_uv1 = input.uv + SYSTEM_TIME_SECONDS * normalmap_scroll.xy * normalmap_scroll_speed.x;
 	float2 normal_scroll_uv2 = input.uv + SYSTEM_TIME_SECONDS * normalmap_scroll.zw * normalmap_scroll_speed.y;
-
+	
 	float4 normal_color1 = tScrollingNormal1.Sample(sSampler, normal_scroll_uv1);
 	float4 normal_color2 = tScrollingNormal2.Sample(sSampler, normal_scroll_uv2);
 
@@ -196,6 +197,15 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	world_normal = normalize( world_normal );
 
 	world_normal = input.world_normal;
+	float2 backBufferDim;
+	tBackBuffer.GetDimensions( backBufferDim.x, backBufferDim.y );
+
+	float2 landColorSampleUV;
+	float3 screenSpace = input.position.xyz;
+	landColorSampleUV.x = RangeMap( screenSpace.x + 20.f * cos( SYSTEM_TIME_SECONDS ), 0.f, backBufferDim.x, 0.f, 1.f );
+	landColorSampleUV.y = RangeMap( screenSpace.y + 20.f * sin( SYSTEM_TIME_SECONDS ), 0.f, backBufferDim.y, 0.f, 1.f );
+	float4 landColorAtPixel = tBackBuffer.Sample( sSampler, landColorSampleUV.xy );
+	return float4( landColorAtPixel.xyz, 1.f ) * float4( 1.f, 0.5f, 0.5f, 1.f );
 
 	//Rotation Matricies for converting skybox to game basis
 	float3x3 rotation_on_x = float3x3(
