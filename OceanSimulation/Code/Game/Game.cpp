@@ -254,9 +254,6 @@ void Game::RenderWorld() const
 	g_theRenderer->BindTextureByPath( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
 	g_theRenderer->SetModelUBO( Mat44::CreateTranslationXYZ( Vec3( 0.f, 0.f, -10.f ) ) );
 	g_theRenderer->DrawMesh( m_landMesh );
-
-	m_testCube->Render();
-	
 	
 	Texture* depthStencil = m_worldCamera->GetDepthStencilTarget();
 	
@@ -276,6 +273,7 @@ void Game::RenderWorld() const
 	g_theRenderer->ReleaseRenderTarget( backBufferCopy );
 	g_theRenderer->ReleaseRenderTarget( depthStencilCopy );
 	
+	m_testCube->Render();
 }
 
 

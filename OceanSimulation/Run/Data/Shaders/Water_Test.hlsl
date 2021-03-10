@@ -196,16 +196,16 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	world_normal += normalize( mul( normal2, tbn ) );
 	world_normal = normalize( world_normal );
 
-	world_normal = input.world_normal;
+	//world_normal = input.world_normal;
 	float2 backBufferDim;
 	tBackBuffer.GetDimensions( backBufferDim.x, backBufferDim.y );
 
 	float2 landColorSampleUV;
 	float3 screenSpace = input.position.xyz;
-	landColorSampleUV.x = RangeMap( screenSpace.x + 20.f * cos( SYSTEM_TIME_SECONDS ), 0.f, backBufferDim.x, 0.f, 1.f );
-	landColorSampleUV.y = RangeMap( screenSpace.y + 20.f * sin( SYSTEM_TIME_SECONDS ), 0.f, backBufferDim.y, 0.f, 1.f );
-	float4 landColorAtPixel = tBackBuffer.Sample( sSampler, landColorSampleUV.xy );
-	return float4( landColorAtPixel.xyz, 1.f ) * float4( 1.f, 0.5f, 0.5f, 1.f );
+	landColorSampleUV.x = RangeMap( screenSpace.x /*+ 20.f * cos( SYSTEM_TIME_SECONDS )*/, 0.f, backBufferDim.x, 0.f, 1.f );
+	landColorSampleUV.y = RangeMap( screenSpace.y /*+ 20.f * sin( SYSTEM_TIME_SECONDS )*/, 0.f, backBufferDim.y, 0.f, 1.f );
+	//float4 landColorAtPixel = tBackBuffer.Sample( sSampler, landColorSampleUV.xy );
+	//return float4( landColorAtPixel.xyz, 1.f ) * float4( 1.f, 0.5f, 0.5f, 1.f );
 
 	//Rotation Matricies for converting skybox to game basis
 	float3x3 rotation_on_x = float3x3(
@@ -251,6 +251,23 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 						 + (1 - dist) * air;
 	//return float4( water_color, 1.f );
 	//light water
+	float backBufferDepth = tDepthStencil.Sample( sSampler, landColorSampleUV );
+	float pixelDepth = RangeMap( input.position.z, 0.f, 1.f, -0.9f, -100.f );
+	backBufferDepth = RangeMap( backBufferDepth, 0.f, 1.f, 0.1f, 100.f );
+
+	float depthDiff = pixelDepth - backBufferDepth;
+	float surfaceHeight = depthDiff * costhetai;
+	float floorLength = depthDiff * sin( thetai );
+	float refractionLength = surfaceHeight * tan( thetat );
+
+	float4 xyDisplacement = mul( transpose(PROJECTION), float4( floorLength - refractionLength, 0.f, 0.f, 0.f ) );
+	float4 screenDir = mul( PROJECTION, mul( VIEW, float4( incident, 0.f ) ) );
+	float uDisplacement = dot( screenDir.xyz, xyDisplacement.xyz );
+	//uDisplacement = xyDisplacement.x;
+	landColorSampleUV.y += RangeMap( uDisplacement, 0.f, backBufferDim.y, 0.f, 1.f );
+	float4 floor_color = tBackBuffer.Sample( sSampler, landColorSampleUV );
+	return float4( floor_color.xyz, 1.f ) * float4( water_color, 1.f );
+
 	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
 
 	light_t light = LIGHTS[0];
@@ -286,6 +303,6 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 
 	diffuse = saturate( diffuse );
 
-	float3 final_color = diffuse * water_color + specular_color;
+	float3 final_color = diffuse * water_color /* floor_color*/ + specular_color;
 	return float4( final_color, 1.f );
 }
