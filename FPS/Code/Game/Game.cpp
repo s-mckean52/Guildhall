@@ -643,6 +643,7 @@ void Game::Update()
 	UpdateLightPositions();
 
 	//ChangeClearColor( deltaSeconds );
+	m_worldCamera->UpdateViewMatrix();
 }
 
 
