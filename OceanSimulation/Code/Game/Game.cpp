@@ -811,7 +811,6 @@ void Game::UpdateCameraView( Camera* camera, CameraViewOrientation cameraOrienta
 		viewMatrix.RotateXDegrees( camera->GetPitchDegrees() );
 		viewMatrix.RotateZDegrees( camera->GetRollDegrees() );
 		break;
-
 	}
 
 	viewMatrix.ScaleNonUniform3D( camera->GetScale() );
