@@ -17,6 +17,11 @@ public:
 
 	void				SetPixelData( int size, unsigned char* pixelData );
 
+	bool				AreViewsMatching(Texture* textureToCompare) const;
+	bool				IsRenderTarget()	const { return m_renderTargetView != nullptr; }
+	bool				IsShaderResourse()	const { return m_shaderResourceView != nullptr; }
+	bool				IsDepthStencil()	const { return m_depthStencilView != nullptr; }
+
 	int					GetTextureID()		const { return m_textureID; }
 	IntVec2				GetImageTexelSize() const { return m_imageTexelSize; }
 	int					GetNumComponents()	const { return m_numComponents; }

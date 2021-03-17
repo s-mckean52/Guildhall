@@ -131,6 +131,15 @@ float3x3 GetVertexTBN( v2f_t input )
 	return tbn;
 }
 
+//--------------------------------------------------------------------------------------
+float LinearizeDepth(float depth)
+{
+	float near = -0.9f;
+	float far = -100.f;
+	float z = depth * 2.f - 1.f;
+	return ( 2.f * near * far ) / ( far + near - z * ( far - near ) );
+}
+
 
 //--------------------------------------------------------------------------------------
 // Vertex Shader
@@ -179,6 +188,9 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float3 air =		float3( 0.1f, 0.1f, 0.1f );
 	float nSnell	= 1.34f;
 	float kDiffuse	= 0.91f;
+	float MAX_DEPTH = 35.f;
+	float waterFalloff = 1.f / MAX_DEPTH;
+
 	//------------------------------------------------------------------------------
 
 	float2 normal_scroll_uv1 = input.uv + SYSTEM_TIME_SECONDS * normalmap_scroll.xy * normalmap_scroll_speed.x;
@@ -251,22 +263,26 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 						 + (1 - dist) * air;
 	//return float4( water_color, 1.f );
 	//light water
-	float backBufferDepth = tDepthStencil.Sample( sSampler, landColorSampleUV );
-	float pixelDepth = RangeMap( input.position.z, 0.f, 1.f, -0.9f, -100.f );
-	backBufferDepth = RangeMap( backBufferDepth, 0.f, 1.f, 0.1f, 100.f );
+	float backBufferDepth = tDepthStencil.Sample( sSampler, landColorSampleUV ).x;
+	float pixelDepth = -LinearizeDepth( input.position.z );
+	backBufferDepth = -LinearizeDepth( backBufferDepth );
 
-	float depthDiff = pixelDepth - backBufferDepth;
+	float depthDiff = backBufferDepth - pixelDepth;
 	float surfaceHeight = depthDiff * costhetai;
 	float floorLength = depthDiff * sin( thetai );
 	float refractionLength = surfaceHeight * tan( thetat );
+	float refractionDepth = surfaceHeight / sinthetat;
 
 	float4 xyDisplacement = mul( transpose(PROJECTION), float4( floorLength - refractionLength, 0.f, 0.f, 0.f ) );
 	float4 screenDir = mul( PROJECTION, mul( VIEW, float4( incident, 0.f ) ) );
-	float uDisplacement = dot( screenDir.xyz, xyDisplacement.xyz );
+	float vDisplacement = dot( screenDir.xyz, xyDisplacement.xyz );
 	//uDisplacement = xyDisplacement.x;
-	landColorSampleUV.y += RangeMap( uDisplacement, 0.f, backBufferDim.y, 0.f, 1.f );
+	landColorSampleUV.y -= RangeMap( vDisplacement, 0.f, backBufferDim.y, 0.f, 1.f );
 	float4 floor_color = tBackBuffer.Sample( sSampler, landColorSampleUV );
-	return float4( floor_color.xyz, 1.f ) * float4( water_color, 1.f );
+	float depthFraction = saturate( refractionDepth * waterFalloff );
+	floor_color = lerp( floor_color, float4( 1.f, 1.f, 1.f, 1.f ), depthFraction.xxxx );
+	float4 tinted_color = float4( floor_color.xyz, 1.f ) * float4( water_color, 1.f );
+	//return tinted_color;
 
 	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
 
@@ -303,6 +319,6 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 
 	diffuse = saturate( diffuse );
 
-	float3 final_color = diffuse * water_color /* floor_color*/ + specular_color;
+	float3 final_color = diffuse * tinted_color.xyz + specular_color;
 	return float4( final_color, 1.f );
 }

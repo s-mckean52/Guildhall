@@ -101,7 +101,6 @@ public:
 	void		SetTilingDimensions( uint tilingDimenisions );
 	void		ToggleSimulationClockPause();
 
-	Texture*	GenerateNormalMap();
 
 public:
 	static	WaveSimulation*		CreateWaveSimulation( std::string filePath );

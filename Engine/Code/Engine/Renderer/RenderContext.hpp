@@ -181,7 +181,7 @@ public:
 	Shader*		GetOrCreateShader( char const* filename );
 	Shader*		CreateShaderFromSourceCode( char const* sourceCode );
 	Texture*	CreateTextureFromColor( Rgba8 const& color );
-	Texture*	CreateDepthStencilBuffer( IntVec2 const& imageDimensions );
+	Texture*	CreateDepthStencilBuffer( IntVec2 const& imageDimensions, bool addToLoadedTexturePool = true );
 
 	Texture*	CreateRenderTarget( IntVec2 const& imageTexelDimensions );
 	Texture*	AcquireRenderTargetMatching( Texture* textureToMatch );

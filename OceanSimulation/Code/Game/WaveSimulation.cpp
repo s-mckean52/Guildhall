@@ -244,14 +244,6 @@ void WaveSimulation::ToggleSimulationClockPause()
 
 
 //---------------------------------------------------------------------------------------------------------
-Texture* WaveSimulation::GenerateNormalMap()
-{
-	//Normal map flat Rgba8( 0.5f, 0.5f, 1.f );
-
-}
-
-
-//---------------------------------------------------------------------------------------------------------
 STATIC WaveSimulation* WaveSimulation::CreateWaveSimulation( std::string filePath )
 {
 	XmlDocument waveSimulationFile = new XmlDocument();

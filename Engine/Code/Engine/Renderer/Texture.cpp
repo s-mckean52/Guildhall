@@ -55,6 +55,18 @@ void Texture::SetPixelData( int size, unsigned char* pixelData )
 
 
 //---------------------------------------------------------------------------------------------------------
+bool Texture::AreViewsMatching( Texture* textureToCompare ) const
+{
+	if( ( IsRenderTarget() && textureToCompare->IsRenderTarget() )		&&
+		( IsShaderResourse() && textureToCompare->IsShaderResourse() )	&&
+		( IsDepthStencil() && textureToCompare->IsDepthStencil() )			)
+	{
+		return true;
+	}
+	return false;
+}
+
+//---------------------------------------------------------------------------------------------------------
 float Texture::GetAspect() const
 {
 	return static_cast<float>( m_imageTexelSize.x ) / static_cast<float>( m_imageTexelSize.y );
@@ -105,7 +117,21 @@ TextureView* Texture::GetOrCreateShaderResourceView()
 
 	ID3D11Device* device = m_owner->m_device;
 	ID3D11ShaderResourceView* srv = nullptr;
-	device->CreateShaderResourceView( m_handle, nullptr, &srv );
+
+	if( m_depthStencilView != nullptr )
+	{
+		D3D11_SHADER_RESOURCE_VIEW_DESC sr_desc;
+		sr_desc.Format						= DXGI_FORMAT_R32_FLOAT;
+		sr_desc.ViewDimension				= D3D11_SRV_DIMENSION_TEXTURE2D;
+		sr_desc.Texture2D.MostDetailedMip	= 0;
+		sr_desc.Texture2D.MipLevels			= 1;
+
+		device->CreateShaderResourceView( m_handle, &sr_desc, &srv );
+	}
+	else
+	{
+		device->CreateShaderResourceView( m_handle, nullptr, &srv );
+	}
 
 	if( srv != nullptr )
 	{
@@ -127,7 +153,14 @@ TextureView* Texture::GetOrCreateDepthStencilView()
 
 	ID3D11Device* device = m_owner->m_device;
 	ID3D11DepthStencilView* dsv = nullptr;
-	device->CreateDepthStencilView( m_handle, nullptr, &dsv );
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc;
+	dsv_desc.Flags = 0;
+	dsv_desc.Format = DXGI_FORMAT_D32_FLOAT;
+	dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	dsv_desc.Texture2D.MipSlice = 0;
+
+	device->CreateDepthStencilView( m_handle, &dsv_desc, &dsv );
 
 	if( dsv != nullptr )
 	{
