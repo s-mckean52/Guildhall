@@ -1304,26 +1304,44 @@ bool RenderContext::CreateBitmapFontFromFile( const char* fontFilePath )
 
 
 //---------------------------------------------------------------------------------------------------------
-Texture* RenderContext::CreateDepthStencilBuffer( IntVec2 const& imageTexelDimensions )
+Texture* RenderContext::CreateDepthStencilBuffer( IntVec2 const& imageTexelDimensions, bool addToLoadedTexturePool )
 {
 	D3D11_TEXTURE2D_DESC depthDesc;
+
+// 	depthDesc.Width = static_cast<unsigned int>( imageTexelDimensions.x );
+// 	depthDesc.Height = static_cast<unsigned int>( imageTexelDimensions.y );
+// 	depthDesc.MipLevels = 1;
+// 	depthDesc.ArraySize = 1;
+// 	depthDesc.Format = DXGI_FORMAT_D32_FLOAT;
+// 	depthDesc.SampleDesc.Count = 1;
+// 	depthDesc.SampleDesc.Quality = 0;
+// 	depthDesc.Usage = D3D11_USAGE_DEFAULT;
+// 	depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+// 	depthDesc.CPUAccessFlags = 0;
+// 	depthDesc.MiscFlags = 0;
 
 	depthDesc.Width = static_cast<unsigned int>( imageTexelDimensions.x );
 	depthDesc.Height = static_cast<unsigned int>( imageTexelDimensions.y );
 	depthDesc.MipLevels = 1;
 	depthDesc.ArraySize = 1;
-	depthDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	depthDesc.Format = DXGI_FORMAT_R32_TYPELESS;
 	depthDesc.SampleDesc.Count = 1;
 	depthDesc.SampleDesc.Quality = 0;
 	depthDesc.Usage = D3D11_USAGE_DEFAULT;
-	depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 	depthDesc.CPUAccessFlags = 0;
 	depthDesc.MiscFlags = 0;
 
 	ID3D11Texture2D* textureHandle = nullptr;
 	m_device->CreateTexture2D( &depthDesc, nullptr, &textureHandle );
 	Texture* newTexture = new Texture( this, textureHandle );
-	m_loadedTextures.push_back( newTexture );
+
+	if( addToLoadedTexturePool )
+	{
+		m_loadedTextures.push_back( newTexture );
+	}
+
+	newTexture->GetOrCreateDepthStencilView();
 	return newTexture;
 }
 
@@ -1331,22 +1349,22 @@ Texture* RenderContext::CreateDepthStencilBuffer( IntVec2 const& imageTexelDimen
 //---------------------------------------------------------------------------------------------------------
 Texture* RenderContext::CreateRenderTarget( IntVec2 const& imageTexelDimensions )
 {
-	D3D11_TEXTURE2D_DESC depthDesc;
+	D3D11_TEXTURE2D_DESC renderDesc;
 
-	depthDesc.Width = static_cast<unsigned int>( imageTexelDimensions.x );
-	depthDesc.Height = static_cast<unsigned int>( imageTexelDimensions.y );
-	depthDesc.MipLevels = 1;
-	depthDesc.ArraySize = 1;
-	depthDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	depthDesc.SampleDesc.Count = 1;
-	depthDesc.SampleDesc.Quality = 0;
-	depthDesc.Usage = D3D11_USAGE_DEFAULT;
-	depthDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-	depthDesc.CPUAccessFlags = 0;
-	depthDesc.MiscFlags = 0;
+	renderDesc.Width = static_cast<unsigned int>( imageTexelDimensions.x );
+	renderDesc.Height = static_cast<unsigned int>( imageTexelDimensions.y );
+	renderDesc.MipLevels = 1;
+	renderDesc.ArraySize = 1;
+	renderDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	renderDesc.SampleDesc.Count = 1;
+	renderDesc.SampleDesc.Quality = 0;
+	renderDesc.Usage = D3D11_USAGE_DEFAULT;
+	renderDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	renderDesc.CPUAccessFlags = 0;
+	renderDesc.MiscFlags = 0;
 
 	ID3D11Texture2D* textureHandle = nullptr;
-	m_device->CreateTexture2D( &depthDesc, nullptr, &textureHandle );
+	m_device->CreateTexture2D( &renderDesc, nullptr, &textureHandle );
 	Texture* newTexture = new Texture( this, textureHandle );
 	return newTexture;
 }
@@ -1362,6 +1380,12 @@ Texture* RenderContext::AcquireRenderTargetMatching( Texture* textureToMatch )
 		Texture* renderTarget = m_renderTargetPool[ renderTargetIndex ];
 		if( renderTarget->GetImageTexelSize() == textureTexelSize )
 		{
+			if( ( !renderTarget->IsDepthStencil() && textureToMatch->IsDepthStencil() ) ||
+				( !textureToMatch->IsDepthStencil() && renderTarget->IsDepthStencil() ) )
+			{
+				continue;
+			}
+
 			m_renderTargetPool[ renderTargetIndex ] = m_renderTargetPool[ m_renderTargetPool.size() - 1 ];
 			m_renderTargetPool.pop_back();
 			return renderTarget;
@@ -1369,7 +1393,15 @@ Texture* RenderContext::AcquireRenderTargetMatching( Texture* textureToMatch )
 	}
 
 	++m_totalRenderTargetsMade;
-	Texture* newRenderTarget = CreateRenderTarget( textureTexelSize );
+	Texture* newRenderTarget = nullptr;
+	if( textureToMatch->IsDepthStencil() )
+	{
+		newRenderTarget = CreateDepthStencilBuffer( textureTexelSize, false );
+	}
+	else
+	{
+		newRenderTarget = CreateRenderTarget( textureTexelSize );
+	}
 	return newRenderTarget;
 }
 

@@ -263,6 +263,7 @@ void Game::RenderWorld() const
 
 	g_theRenderer->CopyTexture( backBufferCopy, backBuffer );
 	g_theRenderer->CopyTexture( depthStencilCopy, depthStencil );
+
 	g_theRenderer->BindMaterialTexture( 5, m_skyBox );
 	g_theRenderer->BindMaterialTexture( 6, backBufferCopy );
 	g_theRenderer->BindMaterialTexture( 7, depthStencilCopy );
