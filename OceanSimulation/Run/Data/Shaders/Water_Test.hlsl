@@ -188,7 +188,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float3 air =		float3( 0.1f, 0.1f, 0.1f );
 	float nSnell	= 1.34f;
 	float kDiffuse	= 0.91f;
-	float MAX_DEPTH = 35.f;
+	float MAX_DEPTH = 100.f;
 	float waterFalloff = 1.f / MAX_DEPTH;
 
 	//------------------------------------------------------------------------------
@@ -277,12 +277,12 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float4 screenDir = mul( PROJECTION, mul( VIEW, float4( incident, 0.f ) ) );
 	float vDisplacement = dot( screenDir.xyz, xyDisplacement.xyz );
 	//uDisplacement = xyDisplacement.x;
-	landColorSampleUV.y -= RangeMap( vDisplacement, 0.f, backBufferDim.y, 0.f, 1.f );
+	landColorSampleUV.y -= RangeMap( abs( vDisplacement ), 0.f, backBufferDim.y, 0.f, 1.f );
 	float4 floor_color = tBackBuffer.Sample( sSampler, landColorSampleUV );
 	float depthFraction = saturate( refractionDepth * waterFalloff );
 	floor_color = lerp( floor_color, float4( 1.f, 1.f, 1.f, 1.f ), depthFraction.xxxx );
 	float4 tinted_color = float4( floor_color.xyz, 1.f ) * float4( water_color, 1.f );
-	//return tinted_color;
+	return tinted_color;
 
 	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
 

@@ -1146,10 +1146,18 @@ void RenderContext::BindMaterial( Material* material )
 		{
 			BindTexture( material->m_diffuseTexture );
 		}
+		else
+		{
+			BindTexture( nullptr );
+		}
 
 		if( material->m_normalTexture != nullptr )
 		{
 			BindNormalTexture( material->m_normalTexture );
+		}
+		else
+		{
+			BindNormalTexture( nullptr );
 		}
 		
 		std::vector<Texture*>& texturesToBind = material->m_materialTexturesPerSlot;

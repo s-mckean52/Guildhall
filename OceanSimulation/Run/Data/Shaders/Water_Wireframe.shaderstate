@@ -1,0 +1,11 @@
+<!-- lit Shader State XML -->
+
+<ShaderState Name="Water"
+             Shader       =""
+             BlendMode    ="Alpha"
+             CullMode     ="Back"
+             FillMode     ="Wireframe"
+             CompareMode  ="LessThanOrEqual"
+             WriteOnDepth ="true"
+             CounterClockwiseWindOrder ="true">
+</ShaderState>
