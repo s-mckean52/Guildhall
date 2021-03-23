@@ -202,9 +202,9 @@ void FFTWaveSimulation::InitializeValues()
 	CreateBitReversedIndicies();
 	CalculateTForIndices();
 
-	m_hTilde0Data.resize( m_numSamples * m_numSamples );
-	m_waveSurfaceVerts.resize( m_numSamples * m_numSamples );
-	for( int i = 0; i < m_hTilde0Data.size(); ++i )
+	m_hTilde0Data.resize( samplesSquared );
+	m_waveSurfaceVerts.resize( samplesSquared );
+	for( int i = 0; i < samplesSquared; ++i )
 	{	
 		int m = i / m_numSamples;
 		int n = i - ( m * m_numSamples );
@@ -270,7 +270,7 @@ void FFTWaveSimulation::CalculateTForIndices()
 //---------------------------------------------------------------------------------------------------------
 ComplexFloat FFTWaveSimulation::GetTCalculation( uint x, uint samplesAtDimension )
 {
-	float value = ( m_pi2 * x ) / samplesAtDimension;
+	float value = ( -m_pi2 * x ) / samplesAtDimension;
 	return ComplexFloat( cos( value ), sin( value ) );
 }
 
@@ -285,15 +285,23 @@ void FFTWaveSimulation::CalculateFFT( std::vector<ComplexFloat>& data_in, std::v
 	}
 
 	int w_ = 0;
-	int numLoops = m_numSamples >> 1;
+	int numLoops = m_numSamples >> 1; //n / 2
 	int currentIterationSize = 2;
 	int lastIterationSize = 1;
 
+	//for( int s = 1; s <= m_log2N; s++ )
+	//{
+	//		m = currentIterationSize;
+	//		m2 = lastIterationSize;
+	//		m = 1 << s;
+	//		m2 = m >> s;
+	//}
 	for( uint i = 0; i < m_log2N; ++i )
 	{
 		which ^= 1;
 		for( int j = 0; j < numLoops; ++j )
 		{
+			//for( int k = j; k < m_numSamples; k+=m )
 			for( int k = 0; k < lastIterationSize; ++k )
 			{
 				int jSizePlusK = ( j * currentIterationSize ) + k;
@@ -306,9 +314,9 @@ void FFTWaveSimulation::CalculateFFT( std::vector<ComplexFloat>& data_in, std::v
 				m_c[which][jSizePlusK] = m_c[which ^ 1][jSizePlusK - lastIterationSize] - m_c[which ^ 1][jSizePlusK] * m_Ts[w_][k - lastIterationSize];
 			}
 		}
-		numLoops	>>= 1;
-		currentIterationSize		<<= 1;
-		lastIterationSize	<<= 1;
+		numLoops				>>= 1;
+		currentIterationSize	<<= 1;
+		lastIterationSize		<<= 1;
 		++w_;
 	}
 
