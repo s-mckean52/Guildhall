@@ -200,7 +200,7 @@ Vertex_PCUTBN CreateObjVertFromString( std::vector<Vec3> const& positions, std::
 			newVertex.m_uvTexCoords = uvs[ lastIndiciesData.lastUVIndexUsed ];
 	}
 
-	if( faceIndiciesAsText[2] != "" ) {
+	if( faceIndiciesAsText.size() >= 3 && faceIndiciesAsText[2] != "" ) {
 		normalIndex = atoi( faceIndiciesAsText[2].c_str() );
 		if( normalIndex < 0 )
 		{
@@ -222,7 +222,7 @@ Vertex_PCUTBN CreateObjVertFromString( std::vector<Vec3> const& positions, std::
 
 
 //---------------------------------------------------------------------------------------------------------
-bool ReadAndParseObjFile( std::string const& filepath, std::vector<Vertex_PCUTBN>& verticies )
+bool ReadAndParseObjFile( std::string const& filepath, std::vector<Vertex_PCUTBN>& verticies, std::vector<uint>* vertOffsets )
 {
 	GUARANTEE_OR_DIE( IsObjFile( filepath ), "Tried to parse something other than a .obj file" );
 
@@ -255,6 +255,15 @@ bool ReadAndParseObjFile( std::string const& filepath, std::vector<Vertex_PCUTBN
 		else if( identifier == "f" )
 		{
 			AppendFace( verticies, positions, normals, uvs, currentLine, stringIndex );
+		}
+		//else if( identifier = 'o' )
+		else if( identifier == "g" )
+		{
+			if( vertOffsets != nullptr )
+			{
+				uint groupOffset = static_cast<uint>( verticies.size() );
+				vertOffsets->push_back( groupOffset );
+			}
 		}
 	}
 

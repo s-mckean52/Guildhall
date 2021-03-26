@@ -1,0 +1,9 @@
+<Material   name="shark_eye">
+    <ShaderState        filepath="Data/Shaders/Shark.shaderstate"/>
+    <Tint               value="255,255,255"/>
+    <SpecularFactor     value="1.0"/>
+    <SpecularPower      value="32.0"/>
+    <MaterialSampler    type="linear" wrap="wrap"/>
+    <DiffuseTexture     filepath="Data/Images/greatwhiteshark_Eye.tga"/>
+    <NormalTexture      filepath="Data/Images/greatwhiteshark_Eye_n.tga"/>
+</Material>

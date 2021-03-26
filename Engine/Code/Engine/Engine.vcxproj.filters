@@ -310,6 +310,9 @@
     <ClCompile Include="Core\ProfileTimer.cpp">
       <Filter>Core\Time</Filter>
     </ClCompile>
+    <ClCompile Include="Renderer\GPUSubMesh.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Math\Vec2.hpp">
@@ -599,6 +602,9 @@
     </ClInclude>
     <ClInclude Include="Core\ProfileTimer.hpp">
       <Filter>Core\Time</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\GPUSubMesh.hpp">
+      <Filter>Renderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

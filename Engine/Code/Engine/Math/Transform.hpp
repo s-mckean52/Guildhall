@@ -17,6 +17,7 @@ public:
 	void SetPosition( Vec3 const& position );
 	void SetYawDegrees( float yawDegrees );
 	void SetRotationFromPitchYawRollDegrees( float pitchDegrees, float yawDegrees, float rollDegrees );
+	void SetUniformScale( float uniformScale );
 
 	void AddRotationPitchYawRollDegrees( float pitchDegrees, float yawDegrees, float rollDegrees );
 

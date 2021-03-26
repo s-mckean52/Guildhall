@@ -240,6 +240,7 @@
     <ClCompile Include="Renderer\Camera.cpp" />
     <ClCompile Include="Renderer\D3D11Common.cpp" />
     <ClCompile Include="Renderer\GPUMesh.cpp" />
+    <ClCompile Include="Renderer\GPUSubMesh.cpp" />
     <ClCompile Include="Renderer\IndexBuffer.cpp" />
     <ClCompile Include="Renderer\Light.cpp" />
     <ClCompile Include="Renderer\Material.cpp" />
@@ -338,6 +339,7 @@
     <ClInclude Include="Renderer\Camera.hpp" />
     <ClInclude Include="Renderer\D3D11Common.hpp" />
     <ClInclude Include="Renderer\GPUMesh.hpp" />
+    <ClInclude Include="Renderer\GPUSubMesh.hpp" />
     <ClInclude Include="Renderer\IndexBuffer.hpp" />
     <ClInclude Include="Renderer\Light.hpp" />
     <ClInclude Include="Renderer\Material.hpp" />

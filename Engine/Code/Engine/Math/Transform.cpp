@@ -62,6 +62,12 @@ void Transform::SetRotationFromPitchYawRollDegrees( float pitchDegrees, float ya
 
 
 //---------------------------------------------------------------------------------------------------------
+void Transform::SetUniformScale( float uniformScale )
+{
+	m_scale = Vec3( uniformScale );
+}
+
+//---------------------------------------------------------------------------------------------------------
 void Transform::AddRotationPitchYawRollDegrees( float pitchDegrees, float yawDegrees, float rollDegrees )
 {
 	m_rotationPitchYawRollDegrees.x += pitchDegrees;

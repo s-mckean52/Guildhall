@@ -6,34 +6,110 @@
 //---------------------------------------------------------------------------------------------------------
 GPUMesh::GPUMesh( RenderContext* context )
 {
-	m_vertexBuffer = new VertexBuffer( context, MEMORY_HINT_DYNAMIC, Vertex_Master::LAYOUT );
-	m_indexBuffer = new IndexBuffer( context, MEMORY_HINT_DYNAMIC );
+	AddSubMesh( context );
 }
 
 //---------------------------------------------------------------------------------------------------------
 GPUMesh::~GPUMesh()
 {
-	delete m_vertexBuffer;
-	m_vertexBuffer = nullptr;
-
-	delete m_indexBuffer;
-	m_indexBuffer = nullptr;
+	for( int subMeshIndex = 0; subMeshIndex < m_subMeshes.size(); ++subMeshIndex )
+	{
+		delete m_subMeshes[subMeshIndex];
+		m_subMeshes[subMeshIndex] = nullptr;
+	}
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void GPUMesh::UpdateVerticies( unsigned int vertexCount, void const* vertexData, unsigned int vertexStride, buffer_attribute_t const* layout )
+bool GPUMesh::IsValidSubMeshIndex( uint subMeshIndex ) const
 {
-	m_vertexCount = vertexCount;
-	unsigned int byteSize = vertexCount * vertexStride;
-	m_vertexBuffer->Update( vertexData, byteSize, vertexStride );
-	m_vertexBuffer->m_boundBufferAttribute = layout;
+	if( m_subMeshes.size() > 0 && subMeshIndex < m_subMeshes.size() )
+		return true;
+
+	return false;
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void GPUMesh::UpdateIndicies( unsigned int indexCount, unsigned int const* indicies )
+VertexBuffer* GPUMesh::GetVertexBuffer( uint subMeshIndex ) const
 {
-	m_indexCount = indexCount;
-	m_indexBuffer->Update( indexCount, indicies );
+	if( !IsValidSubMeshIndex( subMeshIndex ) )
+		return nullptr;
+
+	return m_subMeshes[subMeshIndex]->GetVertexBuffer();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+IndexBuffer* GPUMesh::GetIndexBuffer( uint subMeshIndex ) const
+{
+	if( !IsValidSubMeshIndex( subMeshIndex ) )
+		return nullptr;
+
+	return m_subMeshes[subMeshIndex]->GetIndexBuffer();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+int GPUMesh::GetIndexCount( uint subMeshIndex ) const
+{
+	if( IsValidSubMeshIndex( subMeshIndex ) )
+		return 0;
+
+	return m_subMeshes[subMeshIndex]->GetIndexCount();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+int GPUMesh::GetVertexCount( uint subMeshIndex ) const
+{
+	if( !IsValidSubMeshIndex( subMeshIndex ) )
+		return 0;
+
+	return m_subMeshes[subMeshIndex]->GetVertexCount();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+uint GPUMesh::GetSubMeshCount() const
+{
+	return static_cast<uint>( m_subMeshes.size() );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+GPUSubMesh* GPUMesh::GetSubMesh( uint subMeshIndex ) const
+{
+	if( !IsValidSubMeshIndex( subMeshIndex ) )
+		return nullptr;
+
+	return m_subMeshes[subMeshIndex];
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+GPUSubMesh* GPUMesh::AddSubMesh( RenderContext* context )
+{
+	GPUSubMesh* newSubMesh = new GPUSubMesh( context );
+	m_subMeshes.push_back( newSubMesh );
+	return newSubMesh;
+}
+
+//---------------------------------------------------------------------------------------------------------
+void GPUMesh::UpdateVerticies( uint vertexCount, void const* vertexData, uint vertexStride, buffer_attribute_t const* layout, uint subMeshIndex )
+{
+	if( !IsValidSubMeshIndex( subMeshIndex ) )
+		return;
+
+	m_subMeshes[subMeshIndex]->UpdateVerticies( vertexCount, vertexData, vertexStride, layout );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void GPUMesh::UpdateIndicies( uint indexCount, uint const* indicies, uint subMeshIndex )
+{
+	if( !IsValidSubMeshIndex( subMeshIndex ) )
+		return;
+
+	m_subMeshes[subMeshIndex]->UpdateIndicies( indexCount, indicies );
 }

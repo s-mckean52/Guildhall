@@ -1,0 +1,11 @@
+<!-- lit Shader State XML -->
+
+<ShaderState Name="lit"
+             Shader       =""
+             BlendMode    ="Alpha"
+             CullMode     ="Back"
+             FillMode     ="Solid"
+             CompareMode  ="LessThanOrEqual"
+             WriteOnDepth ="true"
+             CounterClockwiseWindOrder ="true">
+</ShaderState>

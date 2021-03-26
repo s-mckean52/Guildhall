@@ -24,6 +24,7 @@
 #include "Engine/Renderer/BuiltInShader.hpp"
 #include "Engine/Renderer/IndexBuffer.hpp"
 #include "Engine/Renderer/GPUMesh.hpp"
+#include "Engine/Renderer/GPUSubMesh.hpp"
 #include "Engine/Renderer/ShaderState.hpp"
 #include "Engine/Renderer/Material.hpp"
 #include "Engine/Core/Vertex_Master.hpp"
@@ -600,19 +601,40 @@ void RenderContext::DrawVertexArray( const std::vector<Vertex_PCU>& vertexArray 
 //---------------------------------------------------------------------------------------------------------
 void RenderContext::DrawMesh( GPUMesh* mesh )
 {
-	BindVertexInput( mesh->GetVertexBuffer() );
-	UpdateCurrentLayout( mesh->GetVertexBuffer()->m_boundBufferAttribute );
+	for( uint subMeshIndex = 0; subMeshIndex < mesh->GetSubMeshCount(); ++subMeshIndex )
+	{
+		DrawSubMesh( mesh->GetSubMesh( subMeshIndex ) );
+	}
+}
 
-	bool hasIndicies = mesh->GetIndexCount() > 0;
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::DrawMeshWithMaterials( GPUMesh* mesh, Material** subMeshMaterials )
+{
+	for( uint subMeshIndex = 0; subMeshIndex < mesh->GetSubMeshCount(); ++subMeshIndex )
+	{
+		BindMaterial( subMeshMaterials[subMeshIndex] );
+		DrawSubMesh( mesh->GetSubMesh( subMeshIndex ) );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void RenderContext::DrawSubMesh( GPUSubMesh* subMesh )
+{
+	BindVertexInput( subMesh->GetVertexBuffer() );
+	UpdateCurrentLayout( subMesh->GetVertexBuffer()->m_boundBufferAttribute );
+
+	bool hasIndicies = subMesh->GetIndexCount() > 0;
 
 	if( hasIndicies )
 	{
-		BindIndexBuffer( mesh->GetIndexBuffer() );
-		DrawIndexed( mesh->GetIndexCount() );
+		BindIndexBuffer( subMesh->GetIndexBuffer() );
+		DrawIndexed( subMesh->GetIndexCount() );
 	}
 	else
 	{
-		Draw( mesh->GetVertexCount() );
+		Draw( subMesh->GetVertexCount() );
 	}
 }
 

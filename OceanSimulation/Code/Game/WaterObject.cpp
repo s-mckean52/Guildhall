@@ -5,6 +5,8 @@
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/DebugRender.hpp"
+#include "Engine/Core/FileUtils.hpp"
+//#include "Engine/Core/"
 #include "Game/GameCommon.hpp"
 #include "Game/WaterObject.hpp"
 #include "Game/Game.hpp"
@@ -16,7 +18,16 @@ WaterObject::WaterObject( Vec3 const& m_halfDimensions, Vec3 const& initialPosit
 {
 	m_bounds = AABB3( -m_halfDimensions, m_halfDimensions );
 	m_transform.SetPosition( initialPosition );
-	CreateMesh();
+	//m_transform.SetRotationFromPitchYawRollDegrees( -90.f, 0.f, 0.f );
+	//m_transform.SetUniformScale( 0.1f );
+	//CreateMesh();
+
+	std::vector<Vertex_PCUTBN> verts;
+	std::vector<uint> vertOffsets;
+	//m_mesh = new GPUMesh( g_theRenderer );
+	ReadAndParseObjFile( "Data/Models/Shark.obj", verts, &vertOffsets );
+	//m_mesh->UpdateVerticies( verts.size(), &verts[0], );
+	m_mesh = new GPUMesh( g_theRenderer, verts, vertOffsets, 3 );
 }
 
 
@@ -51,9 +62,12 @@ void WaterObject::Update()
 //---------------------------------------------------------------------------------------------------------
 void WaterObject::Render() const
 {
-	g_theRenderer->BindMaterial( nullptr );
-	g_theRenderer->SetModelMatrix( m_transform.ToMatrix() );
-	g_theRenderer->DrawMesh( m_mesh );
+	std::vector<Material*> materials;
+	materials.push_back( g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Shark_body.material" ) );
+	materials.push_back( g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Shark_teeth.material" ) );
+	materials.push_back( g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Shark_eye.material" ) );
+	g_theRenderer->SetModelUBO( m_transform.ToMatrix() );
+	g_theRenderer->DrawMeshWithMaterials( m_mesh, &materials[0] );
 }
 
 

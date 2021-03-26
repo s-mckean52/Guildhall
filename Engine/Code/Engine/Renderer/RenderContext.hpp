@@ -23,6 +23,7 @@ class VertexBuffer;
 class IndexBuffer;
 class Transform;
 class GPUMesh;
+class GPUSubMesh;
 class Clock;
 class ShaderState;
 class Material;
@@ -146,6 +147,8 @@ public:
 	void DrawVertexArray( int numVerticies, const Vertex_PCU* verticies );
 	void DrawVertexArray( const std::vector<Vertex_PCU>& vertexArray );
 	void DrawMesh( GPUMesh* mesh );
+	void DrawMeshWithMaterials( GPUMesh* mesh, Material** subMeshMaterials );
+	void DrawSubMesh( GPUSubMesh* subMesh );
 	void UpdateCurrentLayout( buffer_attribute_t const* newLayout );
 
 	void		UpdateModelUBO();
