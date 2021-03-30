@@ -1,7 +1,7 @@
 #pragma once
 #include "Engine/Math/Vec2.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-#include "Engine/Core/Vertex_PCUTBN.hpp"
+#include "Game/Vertex_OCEAN.hpp"
 #include "Engine/Core/XmlUtils.hpp"
 #include "Game/WaveSurfaceVertex.hpp"
 #include "Game/GameCommon.hpp"
@@ -89,10 +89,10 @@ public:
 	void	SetChoppyWaterValue( float choppyWaterValue );
 	void	AddChoppyWaterValue( float choppyWaterValueToAdd );
 	
-	ComplexFloat hTilde( int n, int m, float time );
-	ComplexFloat hTilde0( int n, int m, bool doesNegateK = false );
-	void		ToggleWireFrameMode();
-	void		SetIsWireFrame( bool isWireFrame );
+	ComplexFloat	hTilde( int n, int m, float time );
+	ComplexFloat	hTilde0( int n, int m, bool doesNegateK = false );
+	void			ToggleWireFrameMode();
+	void			SetIsWireFrame( bool isWireFrame );
 
 	bool		IsValidNumSamples( uint numSamples );
 	Vec2		GetK( int n, int m );
@@ -133,7 +133,7 @@ protected:
 
 	GPUMesh*					m_surfaceMesh		= nullptr; 
 	std::vector<uint>			m_surfaceIndicies;
-	std::vector<Vertex_PCUTBN>	m_surfaceVerts;
+	std::vector<Vertex_OCEAN>	m_surfaceVerts;
 	std::vector<Vec3>			m_initialSurfacePositions;
 
 	std::vector<HTilde0Data> m_hTilde0Data;

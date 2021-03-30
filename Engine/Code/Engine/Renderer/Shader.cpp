@@ -256,11 +256,17 @@ ID3D11InputLayout* Shader::GetOrCreateInputLayout( buffer_attribute_t const* att
 
 		switch( currentAttribute->type )
 		{
-		case BUFFER_FORMAT_VEC3:
-			newVertexAttribute.Format = DXGI_FORMAT_R32G32B32_FLOAT;
+		case BUFFER_FORMAT_FLOAT:
+			newVertexAttribute.Format = DXGI_FORMAT_R32_FLOAT;
 			break;
 		case BUFFER_FORMAT_VEC2:
 			newVertexAttribute.Format = DXGI_FORMAT_R32G32_FLOAT;
+			break;
+		case BUFFER_FORMAT_VEC3:
+			newVertexAttribute.Format = DXGI_FORMAT_R32G32B32_FLOAT;
+			break;
+		case BUFFER_FORMAT_VEC4:
+			newVertexAttribute.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
 			break;
 		case BUFFER_FORMAT_R8G8B8A8_UNORM:
 			newVertexAttribute.Format = DXGI_FORMAT_R8G8B8A8_UNORM;

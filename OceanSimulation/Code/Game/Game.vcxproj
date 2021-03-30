@@ -206,6 +206,7 @@
     <ClCompile Include="IWave.cpp" />
     <ClCompile Include="Main_Windows.cpp" />
     <ClCompile Include="TextureCube.cpp" />
+    <ClCompile Include="Vertex_Ocean.cpp" />
     <ClCompile Include="WaterObject.cpp" />
     <ClCompile Include="WaveSimulation.cpp" />
     <ClCompile Include="WaveSurfaceVertex.cpp" />
@@ -221,6 +222,7 @@
     <ClInclude Include="GerstnerWaveSimulation.hpp" />
     <ClInclude Include="IWave.hpp" />
     <ClInclude Include="TextureCube.hpp" />
+    <ClInclude Include="Vertex_Ocean.hpp" />
     <ClInclude Include="WaterObject.hpp" />
     <ClInclude Include="WaveSimulation.hpp" />
     <ClInclude Include="WaveSurfaceVertex.hpp" />

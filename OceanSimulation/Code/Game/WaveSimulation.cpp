@@ -337,7 +337,7 @@ void WaveSimulation::GenerateSurface( Vec3 const& origin, Rgba8 const& color, Ve
 			Vec2 uv = Vec2( u, v );
 
 			m_initialSurfacePositions.push_back( currentPosition );
-			m_surfaceVerts.push_back( Vertex_PCUTBN( currentPosition, color, Vec3::UNIT_POSITIVE_X, Vec3::UNIT_POSITIVE_Y, Vec3::UNIT_POSITIVE_Z, uv ) );
+			m_surfaceVerts.push_back( Vertex_OCEAN( currentPosition, color, Vec3::UNIT_POSITIVE_X, Vec3::UNIT_POSITIVE_Y, Vec3::UNIT_POSITIVE_Z, uv ) );
 			currentX += xStepAmount;
 		}
 		currentY += yStepAmount;

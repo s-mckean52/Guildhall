@@ -21,8 +21,10 @@ struct vs_input_t
 	float2 uv            : TEXCOORD;
 
 	float3 tangent		: TANGENT;
-	float3 bitangent		: BITANGENT;
+	float3 bitangent	: BITANGENT;
 	float3 normal		: NORMAL;
+
+	float4 jacobian		: JACOBIAN;
 };
 
 struct light_t
@@ -105,6 +107,8 @@ struct v2f_t
 	float3 world_normal : NORMAL;
 	float3 world_tangent : TANGENT;
 	float3 world_bitangent : BITANGENT;
+
+	float4 jacobian : JACOBIAN;
 };
 
 //--------------------------------------------------------------------------------------
@@ -166,6 +170,7 @@ v2f_t VertexFunction(vs_input_t input)
 	v2f.world_normal = world_normal.xyz;
 	v2f.world_tangent = world_tangent.xyz;
 	v2f.world_bitangent = world_bitangent.xyz;
+	v2f.jacobian = input.jacobian;
 
 	return v2f;
 }
@@ -190,8 +195,9 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float kDiffuse	= 0.91f;
 	float MAX_DEPTH = 100.f;
 	float waterFalloff = 1.f / MAX_DEPTH;
-
 	//------------------------------------------------------------------------------
+
+	//return float4(  float3( 1.f, 1.f, 1.f ) - float3(input.jacobian.xxx) * 0.5f, 1.f );
 
 	float2 normal_scroll_uv1 = input.uv + SYSTEM_TIME_SECONDS * normalmap_scroll.xy * normalmap_scroll_speed.x;
 	float2 normal_scroll_uv2 = input.uv + SYSTEM_TIME_SECONDS * normalmap_scroll.zw * normalmap_scroll_speed.y;
@@ -282,7 +288,9 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float depthFraction = saturate( refractionDepth * waterFalloff );
 	floor_color = lerp( floor_color, float4( 1.f, 1.f, 1.f, 1.f ), depthFraction.xxxx );
 	float4 tinted_color = float4( floor_color.xyz, 1.f ) * float4( water_color, 1.f );
-	return tinted_color;
+	float3 foam_color = float3( 1.f, 1.f, 1.f ) * ( 1.f - input.jacobian.x );
+	foam_color = saturate( foam_color );
+	return tinted_color + float4(foam_color, 0.f);
 
 	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
 

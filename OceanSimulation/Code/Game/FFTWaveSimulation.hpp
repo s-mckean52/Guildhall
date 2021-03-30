@@ -31,6 +31,8 @@ public:
 	void CalculateFFT( std::vector<ComplexFloat>& data_in, std::vector<ComplexFloat>& data_out, int stride, int offset );
 	void CalculateFFT( std::vector<WaveSurfaceVertex>& data, int stride, int offset );
 
+	float	CalculateJacobianForVertexAtIndex( int vertIndex );
+
 public:
 	IWave* m_iWave = nullptr;
 	ProfileTimer m_fftTimer					= ProfileTimer( "FFT_FFTTimer" );

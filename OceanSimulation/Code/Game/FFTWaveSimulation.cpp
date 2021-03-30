@@ -7,6 +7,7 @@
 #include "Engine/Renderer/MeshUtils.hpp"
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/JobSystem.hpp"
+#include "Game/WaveSurfaceVertex.hpp"
 #include "Game/DFTWaveSimulation.hpp"
 #include "Game/FFTWaveSimulation.hpp"
 #include "Game/IWave.hpp"
@@ -137,28 +138,33 @@ void FFTWaveSimulation::Simulate()
 		int mPlus1 = positionIndex / ( m_numSamples + 1 );
 		int nPlus1 = positionIndex - mPlus1 * ( m_numSamples + 1 );
 
-		Vertex_PCUTBN& currentVert = m_surfaceVerts[positionIndex];
+
+		Vertex_OCEAN& currentVert = m_surfaceVerts[positionIndex];
 		if( mPlus1 != m_numSamples && nPlus1 != m_numSamples )
 		{
 			int waveIndex = mPlus1 * m_numSamples + nPlus1;
 			m_waveSurfaceVerts[waveIndex].SetVertexPositionAndNormal( currentVert );
+			currentVert.m_jacobian.x = CalculateJacobianForVertexAtIndex( waveIndex );
 		}
 		else if( mPlus1 == m_numSamples && nPlus1 == m_numSamples )
 		{
 			m_waveSurfaceVerts[ 0 ].SetVertexPositionAndNormal( currentVert, true );
 			currentVert.m_position += m_initialSurfacePositions[positionIndex];
+			currentVert.m_jacobian.x = CalculateJacobianForVertexAtIndex( 0 );
 		}
 		else if( nPlus1 == m_numSamples )
 		{
 			int firstIndexInRow = mPlus1 * m_numSamples;
 			m_waveSurfaceVerts[ firstIndexInRow ].SetVertexPositionAndNormal( currentVert, true );
 			currentVert.m_position += m_initialSurfacePositions[positionIndex];
+			currentVert.m_jacobian.x = CalculateJacobianForVertexAtIndex( firstIndexInRow );
 		}
 		else if( mPlus1 == m_numSamples )
 		{
 			int firstIndexInCol = nPlus1;
 			m_waveSurfaceVerts[firstIndexInCol].SetVertexPositionAndNormal( currentVert, true );
 			currentVert.m_position += m_initialSurfacePositions[positionIndex];
+			currentVert.m_jacobian.x = CalculateJacobianForVertexAtIndex( firstIndexInCol );
 		}
 	}
 
@@ -270,7 +276,7 @@ void FFTWaveSimulation::CalculateTForIndices()
 //---------------------------------------------------------------------------------------------------------
 ComplexFloat FFTWaveSimulation::GetTCalculation( uint x, uint samplesAtDimension )
 {
-	float value = ( -m_pi2 * x ) / samplesAtDimension;
+	float value = ( m_pi2 * x ) / samplesAtDimension;
 	return ComplexFloat( cos( value ), sin( value ) );
 }
 
@@ -399,6 +405,42 @@ void FFTWaveSimulation::CalculateFFT( std::vector<WaveSurfaceVertex>& data, int 
 		vertexDataTo.m_surfaceSlope[1] = vertexDataFrom.m_surfaceSlope[1];
 	}
 	m_fftTimer.StopTimer();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float FFTWaveSimulation::CalculateJacobianForVertexAtIndex( int vertIndex )
+{
+	int totalVerts = m_numSamples * m_numSamples;
+	int northIndex = vertIndex + m_numSamples;
+	int southIndex = vertIndex - m_numSamples;
+	int eastIndex = vertIndex + 1;
+	int westIndex = vertIndex - 1;
+	if( southIndex < 0 )
+	{
+		southIndex = totalVerts - -southIndex;
+	}
+	if( northIndex > totalVerts - 1)
+	{
+		northIndex -= totalVerts - 1;
+	}
+	if( eastIndex > totalVerts - 1)
+	{
+		eastIndex = 0;
+	}
+	if( westIndex < 0 )
+	{
+		westIndex = totalVerts - 1;
+	}
+	WaveSurfaceVertex& northVert = m_waveSurfaceVerts[northIndex];
+	WaveSurfaceVertex& southVert = m_waveSurfaceVerts[southIndex];
+	WaveSurfaceVertex& eastVert = m_waveSurfaceVerts[eastIndex];
+	WaveSurfaceVertex& westVert = m_waveSurfaceVerts[westIndex];
+
+	Vec2 dDx = ( eastVert.GetHorizontalTranslation() + westVert.GetHorizontalTranslation() ) * 0.5f;
+	Vec2 dDy = ( northVert.GetHorizontalTranslation() + southVert.GetHorizontalTranslation() ) * 0.5f;
+
+	return ( ( 1.f + dDx.x ) * ( 1.f + dDy.y ) ) - ( dDx.y * dDy.x );
 }
 
 

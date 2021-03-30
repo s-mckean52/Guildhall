@@ -4,7 +4,7 @@
 #include "Game/GameCommon.hpp"
 #include <vector>
 
-struct Vertex_PCUTBN;
+struct Vertex_OCEAN;
 struct WaveSurfaceVertex;
 class WaveSimulation;
 
@@ -39,7 +39,8 @@ public:
 	WaveSurfaceVertex( WaveSimulation* owner, int xSamplePosition, int ySamplePosition, IntVec2 const& sampleDimensions, Vec2 const& dimensions );
 	~WaveSurfaceVertex() {};
 
-	void SetVertexPositionAndNormal( Vertex_PCUTBN& vertexToModify, bool isTiledVert = false );
+	Vec2 GetHorizontalTranslation();
+	void SetVertexPositionAndNormal( Vertex_OCEAN& vertexToModify, bool isTiledVert = false );
 
 	Vec2 const&	GetK() const	{ return m_k; }
 

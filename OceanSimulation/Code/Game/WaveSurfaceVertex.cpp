@@ -1,6 +1,6 @@
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Math/MathUtils.hpp"
-#include "Engine/Core/Vertex_PCUTBN.hpp"
+#include "Game/Vertex_OCEAN.hpp"
 #include "Game/WaveSurfaceVertex.hpp"
 #include "Game/WaveSimulation.hpp"
 #include "Game/FFTWaveSimulation.hpp"
@@ -70,17 +70,31 @@ ComplexFloat WaveSurfaceVertex::CalculateHTilde0( bool doesNegateK )
 
 
 //---------------------------------------------------------------------------------------------------------
-void WaveSurfaceVertex::SetVertexPositionAndNormal( Vertex_PCUTBN& vertexToModify, bool isTiledVert )
+Vec2 WaveSurfaceVertex::GetHorizontalTranslation()
 {
- 	float sign = 1.f - ( 2.f * PositiveMod( m_translatedCoord.x + m_translatedCoord.y, 2 ) );
+	float sign = 1.f - ( 2.f * PositiveMod( m_translatedCoord.x + m_translatedCoord.y, 2 ) );
+	float choppiness = m_owner->GetChoppyWaterValue();
+
+	Vec2 horizontalTranslation;
+	horizontalTranslation.x = m_position[0].real() * sign * choppiness;
+	horizontalTranslation.y = m_position[1].real() * sign * choppiness;
+	return horizontalTranslation;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSurfaceVertex::SetVertexPositionAndNormal( Vertex_OCEAN& vertexToModify, bool isTiledVert )
+{
+	float sign = 1.f - ( 2.f * PositiveMod( m_translatedCoord.x + m_translatedCoord.y, 2 ) );
+ 
 // 
 // 	m_height = m_hTilde.real() * sign;
 
-	float choppiness = m_owner->GetChoppyWaterValue();
+	Vec2 horizontalTranslation = GetHorizontalTranslation();
 
 	Vec3 translation;
-	translation.x = m_position[0].real() * sign * choppiness;
-	translation.y = m_position[1].real() * sign * choppiness;
+	translation.x = horizontalTranslation.x;
+	translation.y = horizontalTranslation.y;
 	translation.z = m_height;
 
 	m_surfaceNormal.x = m_surfaceSlope[0].real() * sign;
