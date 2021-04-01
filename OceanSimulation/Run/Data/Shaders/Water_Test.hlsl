@@ -288,9 +288,9 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float depthFraction = saturate( refractionDepth * waterFalloff );
 	floor_color = lerp( floor_color, float4( 1.f, 1.f, 1.f, 1.f ), depthFraction.xxxx );
 	float4 tinted_color = float4( floor_color.xyz, 1.f ) * float4( water_color, 1.f );
-	float3 foam_color = float3( 1.f, 1.f, 1.f ) * ( 1.f - input.jacobian.x );
-	foam_color = saturate( foam_color );
-	return tinted_color + float4(foam_color, 0.f);
+	float turbulance = max( 2.0f - input.jacobian.x + dot( 0.3f * normalize( world_normal.xy ), float2( 1.2f, 1.2f ) ), 0.f );
+	float foam_color = 1.f + 3.0f * smoothstep( 1.2f, 1.8f, turbulance );
+	return /*tinted_color */ float4( (foam_color - 1.2f).xxx , 1.f );
 
 	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
 
