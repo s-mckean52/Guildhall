@@ -126,6 +126,12 @@ float3 GetNormalFromColor( float3 sampledColor )
 }
 
 //--------------------------------------------------------------------------------------
+float3 GetColorFromNormalDir( float3 normalizedDir )
+{
+	return ( normalizedDir + float3( 1.f, 1.f, 1.f ) ) * float3( 0.5f, 0.5f, 0.5f );
+}
+
+//--------------------------------------------------------------------------------------
 float3x3 GetVertexTBN( v2f_t input )
 {
 	float3 normal = normalize( input.world_normal );
@@ -136,14 +142,145 @@ float3x3 GetVertexTBN( v2f_t input )
 }
 
 //--------------------------------------------------------------------------------------
-float LinearizeDepth(float depth)
+float LinearizeDepth( float depth, float nearPlaneDepth, float farPlaneDepth )
 {
-	float near = -0.9f;
-	float far = -100.f;
+	float near = nearPlaneDepth;
+	float far = farPlaneDepth;
 	float z = depth * 2.f - 1.f;
 	return ( 2.f * near * far ) / ( far + near - z * ( far - near ) );
 }
 
+
+//--------------------------------------------------------------------------------------
+// By Morgan McGuire and Michael Mara at Williams College 2014
+// Released as open source under the BSD 2-Clause License
+// http://opensource.org/licenses/BSD-2-Clause
+
+float distanceSquared(float2 a, float2 b) { a -= b; return dot(a, a); }
+
+// Returns true if the ray hit something
+bool traceScreenSpaceRay1(
+	float3 csOrig,
+	float3 csDir,
+	float4x4 proj,
+	Texture2D csZBuffer,
+	float2 csZBufferSize,
+	float zThickness,
+	float nearPlaneZ,
+	float stride,
+	float jitter,
+	const float maxSteps,
+	float maxDistance,
+	out float2 hitPixel,
+	out float3 hitPoint)
+{
+	hitPixel = float2( -1.f, -1.f );
+	hitPoint = float3( 0.f, 0.f, 0.f );
+	// Clip to the near plane  
+	float maxZPos = csOrig.z + csDir.z * maxDistance;
+	float rayLength;
+	if (maxZPos > nearPlaneZ)
+	{
+		rayLength = (nearPlaneZ - csOrig.z) / csDir.z;
+	}
+	else
+	{
+		rayLength = maxDistance;
+	}
+	float3 csEndPoint = csOrig + csDir * rayLength;
+
+	// Project into homogeneous clip space
+	float4 clipSpaceStartPos = mul( proj, float4(csOrig, 1.0) );
+	float4 clipSpaceEndPos = mul( proj, float4(csEndPoint, 1.0) );
+	float k0 = 1.0 / clipSpaceStartPos.w;
+	float k1 = 1.0 / clipSpaceEndPos.w;
+
+	// The interpolated homogeneous version of the camera-space points  
+	float3 homogenousStartPos = csOrig * k0;
+	float3 homogenousEndPos = csEndPoint * k1;
+
+	// Screen-space endpoints
+	float2 screenSpaceStartPos = clipSpaceStartPos.xy * k0;
+	float2 screenSpaceEndPos = clipSpaceEndPos.xy * k1;
+//	screenSpaceStartPos.x = RangeMap( screenSpaceStartPos.x, -1.f, 1.f, 0.f, csZBufferSize.x );
+//	screenSpaceStartPos.y = RangeMap( screenSpaceStartPos.y, -1.f, 1.f, 0.f, csZBufferSize.y );
+//	screenSpaceEndPos.x = RangeMap( screenSpaceEndPos.x, -1.f, 1.f, 0.f, csZBufferSize.x );
+//	screenSpaceEndPos.y = RangeMap( screenSpaceEndPos.y, -1.f, 1.f, 0.f, csZBufferSize.y );
+
+	// If the line is degenerate, make it cover at least one pixel
+	// to avoid handling zero-pixel extent as a special case later
+	screenSpaceEndPos += ( ( distanceSquared( screenSpaceStartPos, screenSpaceEndPos ) < 0.0001f ) ? float2( 0.01f, 0.01f ) : float2( 0.0f, 0.0f ) );
+	float2 delta = screenSpaceEndPos - screenSpaceStartPos;
+
+	// Permute so that the primary iteration is in x to collapse
+	// all quadrant-specific DDA cases later
+	bool permute = false;
+	if (abs(delta.x) < abs(delta.y)) {
+		// This is a more-vertical line
+		permute = true;
+		delta = delta.yx;
+		screenSpaceStartPos = screenSpaceStartPos.yx;
+		screenSpaceEndPos = screenSpaceEndPos.yx;
+	}
+
+	float stepDir = sign(delta.x);
+	float invdx = stepDir / delta.x;
+
+	// Track the derivatives of Q and k
+	float3  dQ = (homogenousEndPos - homogenousStartPos) * invdx;
+	float	dk = (k1 - k0) * invdx;
+	float2  dP = float2(stepDir, delta.y * invdx);
+
+	// Scale derivatives by the desired pixel stride and then
+	// offset the starting values by the jitter fraction
+	dP *= stride;
+	dQ *= stride;
+	dk *= stride;
+	screenSpaceStartPos += dP * jitter;
+	homogenousStartPos += dQ * jitter;
+	k0 += dk * jitter;
+
+	// Slide P from P0 to P1, (now-homogeneous) Q from Q0 to Q1, k from k0 to k1
+	float3 Q = homogenousStartPos;
+
+	// Adjust end condition for iteration direction
+	float  end = screenSpaceEndPos.x * stepDir;
+
+	float k = k0;
+	float stepCount = 0.0;
+	float prevZMaxEstimate = csOrig.z;
+	float rayZMin = prevZMaxEstimate;
+	float rayZMax = prevZMaxEstimate;
+	float sceneZMax = rayZMax + 1000.f;
+	for (float2 P = screenSpaceStartPos;
+		((P.x * stepDir) <= end) && (stepCount < maxSteps) &&
+		((rayZMax < sceneZMax - zThickness) || (rayZMin > sceneZMax)) &&
+		(sceneZMax != 0);
+		P += dP, Q.z += dQ.z, k += dk, ++stepCount) {
+
+		rayZMin = prevZMaxEstimate;
+		rayZMax = (dQ.z * 0.5f + Q.z) / (dk * 0.5f + k);
+		prevZMaxEstimate = rayZMax;
+		if (rayZMin > rayZMax) {
+			float t = rayZMin;
+			rayZMin = rayZMax;
+			rayZMax = t;
+		}
+
+		hitPixel = permute ? P.yx : P;
+		hitPixel.y = csZBufferSize.y - hitPixel.y;
+		// You may need hitPixel.y = csZBufferSize.y - hitPixel.y; here if your vertical axis
+		// is different than ours in screen space
+		sceneZMax = csZBuffer.Load( int3( hitPixel, 0 ) ).x;
+		sceneZMax = LinearizeDepth( sceneZMax, nearPlaneZ, nearPlaneZ - zThickness );
+	}
+
+	// Advance Q based on the number of steps
+	Q.xy += dQ.xy * stepCount;
+	hitPoint = Q * (1.0f / k);
+	//return float4(screenSpaceStartPos / csZBufferSize, 0.f, 1.f);
+	return (rayZMax >= sceneZMax - zThickness) && (rayZMin < sceneZMax);
+}
 
 //--------------------------------------------------------------------------------------
 // Vertex Shader
@@ -188,16 +325,17 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	const float2 normalmap_scroll_speed = float2( 0.01f, 0.01f );
 	
 	//Water Constants
+	float NEAR_PLANE = -0.9f;
+	float FAR_PLANE = -100.f;
 	float3 upwelling =	float3( 0.f, 0.2f, 0.3f );
 	float3 sky =		float3( 0.69f, 0.84f, 1.f );
 	float3 air =		float3( 0.1f, 0.1f, 0.1f );
 	float nSnell	= 1.34f;
 	float kDiffuse	= 0.91f;
-	float MAX_DEPTH = 100.f;
+	float MAX_DEPTH = 35.f;
 	float waterFalloff = 1.f / MAX_DEPTH;
 	//------------------------------------------------------------------------------
 
-	//return float4(  float3( 1.f, 1.f, 1.f ) - float3(input.jacobian.xxx) * 0.5f, 1.f );
 
 	float2 normal_scroll_uv1 = input.uv + SYSTEM_TIME_SECONDS * normalmap_scroll.xy * normalmap_scroll_speed.x;
 	float2 normal_scroll_uv2 = input.uv + SYSTEM_TIME_SECONDS * normalmap_scroll.zw * normalmap_scroll_speed.y;
@@ -213,17 +351,15 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float3 world_normal = normalize( mul( normal1, tbn ) );
 	world_normal += normalize( mul( normal2, tbn ) );
 	world_normal = normalize( world_normal );
+	world_normal = input.world_normal.xyz;
 
-	//world_normal = input.world_normal;
 	float2 backBufferDim;
 	tBackBuffer.GetDimensions( backBufferDim.x, backBufferDim.y );
 
-	float2 landColorSampleUV;
-	float3 screenSpace = input.position.xyz;
-	landColorSampleUV.x = RangeMap( screenSpace.x /*+ 20.f * cos( SYSTEM_TIME_SECONDS )*/, 0.f, backBufferDim.x, 0.f, 1.f );
-	landColorSampleUV.y = RangeMap( screenSpace.y /*+ 20.f * sin( SYSTEM_TIME_SECONDS )*/, 0.f, backBufferDim.y, 0.f, 1.f );
-	//float4 landColorAtPixel = tBackBuffer.Sample( sSampler, landColorSampleUV.xy );
-	//return float4( landColorAtPixel.xyz, 1.f ) * float4( 1.f, 0.5f, 0.5f, 1.f );
+//	float2 landColorSampleUV;
+//	float3 screenSpace = input.position.xyz;
+//	landColorSampleUV.x = RangeMap( screenSpace.x, 0.f, backBufferDim.x, 0.f, 1.f );
+//	landColorSampleUV.y = RangeMap( screenSpace.y, 0.f, backBufferDim.y, 0.f, 1.f );
 
 	//Rotation Matricies for converting skybox to game basis
 	float3x3 rotation_on_x = float3x3(
@@ -239,59 +375,122 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	//Skybox Sample
 	float3	incident	= normalize(input.world_position - CAMERA_POSITION);
 	float3	reflection	= reflect(incident, world_normal);
-			reflection	= mul( inverseView, reflection );
-			//reflection	= mul(rotation_on_x, mul(rotation_on_z, reflection));
+			//reflection	= mul( inverseView, reflection );
+			reflection	= mul(rotation_on_x, mul(rotation_on_z, reflection));
 	float4	sky_color	= tSkybox.Sample(sSampler, reflection);
+	sky_color = float4( sky, 1.f );
 
 
 	float reflectivity;
-	float3 incident_normal = normalize( incident );
-	float costhetai = abs( dot( incident_normal, world_normal ) );
-	float thetai = acos( costhetai );
-	float sinthetat = sin( thetai ) / nSnell;
-	float thetat = asin(sinthetat);
-	if (thetai == 0.0)
+	float cos_theta_incident = abs( dot( incident, world_normal ) );
+	float theta_incident = acos( cos_theta_incident );
+	float sin_theta_transmission = sin( theta_incident ) / nSnell;
+	float theta_transmission = asin( sin_theta_transmission );
+	if( theta_incident == 0.0f )
 	{
-		reflectivity = (nSnell - 1) / (nSnell + 1);
+		reflectivity = ( nSnell - 1 ) / ( nSnell + 1 );
 		reflectivity = reflectivity * reflectivity;
 	}
 	else
 	{
-		float fs = sin(thetat - thetai) / sin(thetat + thetai);
-		float ts = tan(thetat - thetai)	/ tan(thetat + thetai);
-		reflectivity = 0.5 * (fs * fs + ts * ts);
+		float fs = sin( theta_transmission - theta_incident ) / sin( theta_transmission + theta_incident );
+		float ts = tan( theta_transmission - theta_incident ) / tan( theta_transmission + theta_incident );
+		reflectivity = 0.5 * ( fs * fs + ts * ts );
 	}
+	float transmissivity = 1.f - reflectivity;
+
 	float3 dPE = CAMERA_POSITION - input.world_position;
-	float dist = length(dPE) * 0.1f * kDiffuse;
-	dist = 1.f;//exp(-dist);
-	float3 water_color = dist * ( reflectivity * sky_color
-						 + (1 - reflectivity) * upwelling)
-						 + (1 - dist) * air;
-	//return float4( water_color, 1.f );
-	//light water
-	float backBufferDepth = tDepthStencil.Sample( sSampler, landColorSampleUV ).x;
-	float pixelDepth = -LinearizeDepth( input.position.z );
-	backBufferDepth = -LinearizeDepth( backBufferDepth );
+	float dist = length(dPE) * kDiffuse;
+	dist = exp(-dist);
 
-	float depthDiff = backBufferDepth - pixelDepth;
-	float surfaceHeight = depthDiff * costhetai;
-	float floorLength = depthDiff * sin( thetai );
-	float refractionLength = surfaceHeight * tan( thetat );
-	float refractionDepth = surfaceHeight / sinthetat;
+	//Depth Sample
+	float c2 = sqrt( 1.f - ( nSnell * nSnell * ( 1.f - cos_theta_incident ) * ( 1.f - cos_theta_incident ) ) );
+	float3 transmission_dir = ( nSnell * ( incident + world_normal * cos_theta_incident ) ) - ( c2 * world_normal );
+	transmission_dir = float3( 0.f, 0.f, -1.f );
+	float3 rayStartPos = mul( VIEW, float4( input.world_position.xyz, 1.f ) ).xyz;
+	float3 rayDir = normalize( mul( VIEW, float4( transmission_dir, 0.f ) ).xyz );
+	//return float4( GetColorFromNormalDir( rayDir ), 1.f );
 
-	float4 xyDisplacement = mul( transpose(PROJECTION), float4( floorLength - refractionLength, 0.f, 0.f, 0.f ) );
-	float4 screenDir = mul( PROJECTION, mul( VIEW, float4( incident, 0.f ) ) );
-	float vDisplacement = dot( screenDir.xyz, xyDisplacement.xyz );
-	//uDisplacement = xyDisplacement.x;
-	landColorSampleUV.y -= RangeMap( abs( vDisplacement ), 0.f, backBufferDim.y, 0.f, 1.f );
-	float4 floor_color = tBackBuffer.Sample( sSampler, landColorSampleUV );
-	float depthFraction = saturate( refractionDepth * waterFalloff );
-	floor_color = lerp( floor_color, float4( 1.f, 1.f, 1.f, 1.f ), depthFraction.xxxx );
-	float4 tinted_color = float4( floor_color.xyz, 1.f ) * float4( water_color, 1.f );
-	float turbulance = max( 2.0f - input.jacobian.x + dot( 0.3f * normalize( world_normal.xy ), float2( 1.2f, 1.2f ) ), 0.f );
-	float foam_color = 1.f + 3.0f * smoothstep( 1.2f, 1.8f, turbulance );
-	return /*tinted_color */ float4( (foam_color - 1.2f).xxx , 1.f );
+	float2 halfBufferDim = backBufferDim * 0.5f;
+	float2 rangeFraction = -1.f * backBufferDim * 0.5f;
+	float4x4 rangeMap = float4x4(
+		float4( halfBufferDim.x,	0.f,				0.f,	-rangeFraction.x ),
+		float4( 0.f,				halfBufferDim.y,	0.f,	-rangeFraction.y ),
+		float4( 0.f,				0.f,				0.f,	0.f ),
+		float4( 0.f,				0.f,				0.f,	1.f )
+		);
 
+	float2 hitPixel;
+	float3 hitPoint;
+	bool rayHit = traceScreenSpaceRay1(
+		rayStartPos,
+		rayDir,
+		mul(rangeMap, PROJECTION),
+		tDepthStencil,
+		backBufferDim,
+		abs(FAR_PLANE - NEAR_PLANE),
+		NEAR_PLANE,
+		4.0f,
+		0.1f,
+		100.f,
+		100.f,
+		hitPixel,
+		hitPoint );
+	float3 floor_color;
+	if( !rayHit )
+	{
+		float3 rotatedTransmissionDir = mul( rotation_on_x, mul( rotation_on_z, transmission_dir ) );
+		floor_color = tSkybox.Sample( sSampler, rotatedTransmissionDir );
+		floor_color *= float3(1.f, 0.2f, 0.2f);
+	}
+	else
+	{
+		floor_color = tBackBuffer.Load(int3(hitPixel, 0)).xyz;
+		floor_color *= upwelling;
+	}
+
+//	float backBufferDepth = tDepthStencil.Load( int3( input.position.xy, 0 ) ).x;
+//	float pixelDepth = -LinearizeDepth( input.position.z, NEAR_PLANE, FAR_PLANE );
+//	backBufferDepth = -LinearizeDepth( backBufferDepth, NEAR_PLANE, FAR_PLANE );
+//
+//	float depthDiff = backBufferDepth - pixelDepth;
+//	float surfaceHeight = depthDiff * cos_theta_incident;
+//	float floorLength = depthDiff * sin( theta_incident );
+//	float refractionLength = surfaceHeight * tan( theta_transmission );
+//	float refractionDepth = surfaceHeight / cos( theta_transmission );
+//
+//	float4 xyDisplacement = mul( transpose(PROJECTION), float4( floorLength - refractionLength, 0.f, 0.f, 0.f ) );
+//	//float4 screenDir = mul( PROJECTION, mul( VIEW, float4( incident, 0.f ) ) );
+//	float vDisplacement = dot( transpose(VIEW)[1].xyz, xyDisplacement.xyz );
+//	float2 displacement = mul( PROJECTION, float4( 0.f, vDisplacement, 0.f, 0.f ) ).xy;
+//	float2 signD = sign(displacement);
+//	displacement.x = RangeMap( abs(displacement.x), -1.f, 1.f, 0.f, backBufferDim.x ) * signD.x;
+//	displacement.x = RangeMap( abs(displacement.y), -1.f, 1.f, 0.f, backBufferDim.y ) * signD.y;
+//
+//	float2 hitPixel = input.position.xy + displacement;
+//	floor_color = tBackBuffer.Load(int3(hitPixel, 0)).xyz;
+//	float depthFraction = saturate( refractionDepth * waterFalloff );
+//	floor_color = lerp( floor_color, float3( 1.f, 1.f, 1.f ), depthFraction.xxx );
+//	floor_color *= upwelling;
+	return float4(floor_color, 1.f);
+
+	//Water Color
+	float3 reflection_color = reflectivity * sky_color.xyz;
+	float3 transmission_color = transmissivity * floor_color;
+	float3 fog_color = (1.f - dist) * air;
+	float3 water_color = dist * (reflection_color + transmission_color) + fog_color;
+	return float4(water_color, 1.f);
+
+
+	//Jacobian Foam
+	float turbulance = max(2.0f - input.jacobian.x + dot(0.3f * normalize(world_normal.xy), float2(1.2f, 1.2f)), 0.f);
+	float foam_color = 1.f + 3.0f * smoothstep(1.2f, 1.8f, turbulance);
+	water_color += float3((foam_color - 1.2f).xxx);
+	//return float4( water_color, 1.f);
+
+
+	//Bling Phong Lighting -- Unnecessary?
+	/*
 	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
 
 	light_t light = LIGHTS[0];
@@ -327,6 +526,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 
 	diffuse = saturate( diffuse );
 
-	float3 final_color = diffuse * tinted_color.xyz + specular_color;
+	float3 final_color = diffuse * water_color.xyz + specular_color;
 	return float4( final_color, 1.f );
-}
+	*/
+	}

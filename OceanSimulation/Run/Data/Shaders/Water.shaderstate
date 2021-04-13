@@ -3,7 +3,7 @@
 <ShaderState Name="Water"
              Shader       ="Data/Shaders/Water_Test.hlsl"
              BlendMode    ="Alpha"
-             CullMode     ="Back"
+             CullMode     ="None"
              FillMode     ="Solid"
              CompareMode  ="LessThanOrEqual"
              WriteOnDepth ="true"

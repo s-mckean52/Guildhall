@@ -773,10 +773,10 @@ const Mat44 Mat44::CreateOrthographicProjection( const Vec3& min, const Vec3& ma
 	Vec3 sum = max + min;
 
 	float mat[] = {
-		2.0f / diff.x,		0.0f,				0.0f,				0.0f,
-		0.0f,				2.0f / diff.y,		0.0f,				0.0f,
-		0.0f,				0.0f,				1.0f / diff.z,		0.0f,
-		-sum.x / diff.x,	-sum.y / diff.y,	-min.z / diff.z,	1.0f
+		2.0f / diff.x,		0.0f,				0.0f,				-sum.x / diff.x,
+		0.0f,				2.0f / diff.y,		0.0f,				-sum.y / diff.y,
+		0.0f,				0.0f,				1.0f / diff.z,		-min.z / diff.z,
+		0.0f,				0.0f,				0.0f,				1.0f
 	};
 
 	return Mat44( mat );

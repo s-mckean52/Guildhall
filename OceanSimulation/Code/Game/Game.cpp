@@ -274,7 +274,7 @@ void Game::RenderWorld() const
 	g_theRenderer->ReleaseRenderTarget( backBufferCopy );
 	g_theRenderer->ReleaseRenderTarget( depthStencilCopy );
 	
-	m_testCube->Render();
+	//m_testCube->Render();
 }
 
 
