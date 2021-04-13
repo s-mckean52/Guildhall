@@ -336,20 +336,20 @@ void FFTWaveSimulation::CalculateFFT( std::vector<ComplexFloat>& data_in, std::v
 
 void FFTWaveSimulation::CalculateFFT( std::vector<WaveSurfaceVertex>& data, int stride, int offset )
 {
-	m_simulateTimer.StartTimer();
+	m_simulateTimer.Start();
 	for( uint sampleIndex = 0; sampleIndex < m_numSamples; ++sampleIndex )
 	{
 		int dataIndex = m_bitReversedIndices[sampleIndex] * stride + offset;
 		m_switchArray[which][sampleIndex] = data[ dataIndex ];
 	}
-	m_simulateTimer.StopTimer();
+	m_simulateTimer.Stop();
 
 	int w_ = 0;
 	int numLoops = m_numSamples >> 1;
 	int currentIterationSize = 2;
 	int lastIterationSize = 1;
 
-	m_pointCalculationTimer.StartTimer();
+	m_pointCalculationTimer.Start();
 	for( uint i = 0; i < m_log2N; ++i )//512 = 9 loops
 	{
 		which ^= 1;
@@ -390,9 +390,9 @@ void FFTWaveSimulation::CalculateFFT( std::vector<WaveSurfaceVertex>& data, int 
 		lastIterationSize		<<= 1;
 		++w_;
 	}
-	m_pointCalculationTimer.StopTimer();
+	m_pointCalculationTimer.Stop();
 
-	m_fftTimer.StartTimer();
+	m_fftTimer.Start();
 	for( uint sampleIndex = 0; sampleIndex < m_numSamples; ++sampleIndex )
 	{
 		int dataIndex = sampleIndex * stride + offset;
@@ -404,7 +404,7 @@ void FFTWaveSimulation::CalculateFFT( std::vector<WaveSurfaceVertex>& data, int 
 		vertexDataTo.m_surfaceSlope[0] = vertexDataFrom.m_surfaceSlope[0];
 		vertexDataTo.m_surfaceSlope[1] = vertexDataFrom.m_surfaceSlope[1];
 	}
-	m_fftTimer.StopTimer();
+	m_fftTimer.Stop();
 }
 
 

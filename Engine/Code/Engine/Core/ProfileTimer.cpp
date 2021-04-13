@@ -16,14 +16,14 @@ ProfileTimer::~ProfileTimer()
 
 
 //---------------------------------------------------------------------------------------------------------
-void ProfileTimer::StartTimer()
+void ProfileTimer::Start()
 {
 	m_startTimeSeconds = GetCurrentTimeSeconds();
 }
 
 
 //---------------------------------------------------------------------------------------------------------
-void ProfileTimer::StopTimer()
+void ProfileTimer::Stop()
 {
 	m_endTimeSeconds = GetCurrentTimeSeconds();
 	m_lastCheckDurationSeconds = m_endTimeSeconds - m_startTimeSeconds;
@@ -31,6 +31,17 @@ void ProfileTimer::StopTimer()
 	double currentTotal = m_avgTimeSeconds * m_samples;
 	m_samples++;
 	m_avgTimeSeconds = ( currentTotal + m_lastCheckDurationSeconds ) / m_samples; 
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void ProfileTimer::Reset()
+{
+	m_startTimeSeconds			= 0.0;
+	m_endTimeSeconds			= 0.0;
+	m_avgTimeSeconds			= 0.0;
+	m_lastCheckDurationSeconds	= 0.0;
+	m_samples					= 0.0;
 }
 
 

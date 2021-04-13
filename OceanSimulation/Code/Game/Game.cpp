@@ -140,6 +140,7 @@ void Game::StartUp()
 	Vec3 landHalfDimensions = Vec3( 100.f, 100.f, 0.5f );
 	AddTestCubeToIndexVertexArray( landVerts, landIndex, AABB3( -landHalfDimensions, landHalfDimensions ), Rgba8::WHITE ); 
 	m_landMesh = new GPUMesh( g_theRenderer, landVerts, landIndex );
+	GenerateTerrainVerts( m_landMesh, IntVec2( 20, 20 ), Vec2( 50.f, 50.f ), -10.f, 3.f ); 
 }
 
 
@@ -224,7 +225,7 @@ void Game::Update()
 		m_testCube->Update();
 		UpdateFromInput( deltaSeconds );
 		//m_DFTWaveSimulation->Simulate();
-		m_FFTWaveSimulation->m_iWave->AddWaterObject( m_testCube );
+		//m_FFTWaveSimulation->m_iWave->AddWaterObject( m_testCube );
 		m_FFTWaveSimulation->Simulate();
 	}
 }
@@ -252,7 +253,7 @@ void Game::RenderWorld() const
 
 	g_theRenderer->BindShader( nullptr );
 	g_theRenderer->BindTextureByPath( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
-	g_theRenderer->SetModelUBO( Mat44::CreateTranslationXYZ( Vec3( 0.f, 0.f, -10.f ) ) );
+	g_theRenderer->SetModelUBO( Mat44::CreateTranslationXYZ( Vec3( 0.f, 0.f, 0.f ) ) );
 	g_theRenderer->DrawMesh( m_landMesh );
 	
 	Texture* depthStencil = m_worldCamera->GetDepthStencilTarget();
@@ -518,6 +519,76 @@ void Game::SetTempValues()
 	m_tempWindSpeed = m_FFTWaveSimulation->GetWindSpeed();
 	m_tempWaveSuppression = m_FFTWaveSimulation->GetWaveSuppression();
 	m_tempGloabalWaveAmp = m_FFTWaveSimulation->GetAConstant();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::GenerateTerrainVerts( GPUMesh* meshToModify, IntVec2 const& vertDimensions, Vec2 const& dimensions, float minHeight, float maxHeight )
+{
+	std::vector<Vertex_PCUTBN> terrainVerts;
+	
+	Vec2 halfDimensions = dimensions * 0.5f;
+
+	float xMin = -halfDimensions.x;
+	float yMin = -halfDimensions.y;
+
+	float xStepAmount = dimensions.x / static_cast<float>( vertDimensions.x );
+	float yStepAmount = dimensions.y / static_cast<float>( vertDimensions.y );
+
+	Vec3 xStepDisplacement = Vec3( xStepAmount, 0.f, 0.f );
+	Vec3 yStepDisplacement = Vec3( 0.f, yStepAmount, 0.f );
+
+	float currentY = yMin;
+	for( unsigned int yStep = 0; yStep < vertDimensions.y + 1; ++yStep )
+	{
+		float currentX = xMin;
+		for( unsigned int xStep = 0; xStep < vertDimensions.x + 1; ++xStep )
+		{
+			Vec3 currentPosition = Vec3::ZERO;
+			currentPosition.x += currentX;// * xStepDisplacement;
+			currentPosition.y += currentY;// * yStepDisplacement;
+
+			float percent = currentPosition.GetLength() / halfDimensions.GetLength();
+			SmoothStep3( percent );
+			currentPosition.z = Lerp( minHeight, maxHeight, percent );
+
+			float u = RangeMapFloat( xMin, halfDimensions.x, 0.f, 1.f, currentX );
+			float v = RangeMapFloat( yMin, halfDimensions.y, 0.f, 1.f, currentY );
+			Vec2 uv = Vec2( u, v  );
+
+			terrainVerts.push_back( Vertex_PCUTBN( currentPosition, Rgba8::WHITE, Vec3::UNIT_POSITIVE_X, Vec3::UNIT_POSITIVE_Y, Vec3::UNIT_POSITIVE_Z, uv ) );
+			currentX += xStepAmount;
+		}
+		currentY += yStepAmount;
+	}
+
+	std::vector<uint> indices;
+	uint xSteps = vertDimensions.x;
+	uint ySteps = vertDimensions.y;
+
+	for( unsigned int yIndex = 0; yIndex < ySteps; ++yIndex )
+	{
+		for( unsigned int xIndex = 0; xIndex < xSteps; ++xIndex )
+		{
+			unsigned int currentVertIndex = xIndex + ( ( xSteps + 1 ) * yIndex);
+
+			unsigned int bottomLeft = currentVertIndex;
+			unsigned int bottomRight = currentVertIndex + 1;
+			unsigned int topLeft = currentVertIndex + xSteps + 1;
+			unsigned int topRight = currentVertIndex + xSteps + 2;
+
+			indices.push_back( bottomLeft );
+			indices.push_back( bottomRight );
+			indices.push_back( topRight );
+
+			indices.push_back( bottomLeft );
+			indices.push_back( topRight );
+			indices.push_back( topLeft );
+		}
+	}
+
+	meshToModify->UpdateVerticies( static_cast<uint>( terrainVerts.size() ), &terrainVerts[0] );
+	meshToModify->UpdateIndicies( static_cast<uint>( indices.size() ), &indices[0] );
 }
 
 

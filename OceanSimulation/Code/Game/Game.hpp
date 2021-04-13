@@ -87,6 +87,8 @@ public:
 	void LoadCurrentTempValues();
 	void SetTempValues();
 
+	void GenerateTerrainVerts( GPUMesh* meshToModify, IntVec2 const& vertDimensions, Vec2 const& dimensions, float minHeight, float maxHeight );
+
 	//Commands
 	static void GainFocus( EventArgs* args );
 	static void LoseFocus( EventArgs* args );

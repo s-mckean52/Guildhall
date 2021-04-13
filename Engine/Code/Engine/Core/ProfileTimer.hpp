@@ -7,8 +7,10 @@ public:
 	ProfileTimer( char const* name );
 	~ProfileTimer();
 
-	void StartTimer();
-	void StopTimer();
+	void Start();
+	void Stop();
+	void Reset();
+
 
 	char const* GetName() const						{ return m_name; }
 	float GetLastCheckDurationSeconds() const;
