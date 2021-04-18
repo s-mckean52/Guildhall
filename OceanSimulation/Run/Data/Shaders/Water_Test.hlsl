@@ -449,6 +449,8 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float3 floor_color;
 	//rayHit = true;
 	//hitPixel = input.position.xy;
+    rayHit = true;
+    hitPixel = input.position.xy;
 	if( !rayHit )
 	{
 		floor_color = tSkybox.Sample( sSampler, rotatedTransmissionDir );
@@ -464,7 +466,6 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
     floor_color = GetPerturbedColor( world_normal.xy, 25.f * cos_theta_incident, input.position.xy, tBackBuffer, backBufferDim, perturbedPixel );
 	//floor_color *= upwelling;
 
-	
 	float backBufferDepth = tDepthStencil.Load( int3( perturbedPixel, 0 ) ).x;
 	float pixelDepth = -LinearizeDepth( input.position.z, NEAR_PLANE, FAR_PLANE );
 	backBufferDepth = -LinearizeDepth( backBufferDepth, NEAR_PLANE, FAR_PLANE );
@@ -472,6 +473,38 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float depthFraction = saturate( refractionDepth * waterFalloff );
 	floor_color = lerp( floor_color, float3( 1.f, 1.f, 1.f ), depthFraction.xxx );
 	floor_color *= upwelling;
+
+    float3 dir_to_eye = normalize(CAMERA_POSITION - input.world_position);
+    light_t light = LIGHTS[0];
+    float3 light_color = light.color.xyz;
+    float3 light_position = light.world_position;
+    float3 light_direction = normalize(light.direction);
+
+    float3 pos_to_light = light_position - input.world_position;
+    float dist_to_light_position = length(pos_to_light);
+    float directional_distance = dot(-pos_to_light, light_direction);
+
+    float3 dir_to_light = lerp(normalize(pos_to_light), -light_direction, light.is_directional);
+    float dist_to_light = lerp(dist_to_light_position, directional_distance, light.is_directional);
+
+    float cos_angle_to_light_dir = dot(-dir_to_light, light_direction);
+    float att_factor = smoothstep(light.cos_outter_half_angle, light.cos_inner_half_angle, cos_angle_to_light_dir);
+
+    float3 att_vec = float3(1.0f, dist_to_light, dist_to_light * dist_to_light);
+    float diffuse_att = (light.intensity / dot(att_vec, light.attenuation)) * att_factor;
+    float specular_att = (light.intensity / dot(att_vec, light.spec_attenuation)) * att_factor;
+
+    float dot3 = max(0.0f, dot(dir_to_light, world_normal));
+    float facing = smoothstep(-0.5, 0.0f, dot(dir_to_light, world_normal));
+
+    float3 half_vector = normalize(dir_to_light + dir_to_eye);
+    float specular = max(0.0f, dot(world_normal, half_vector));
+    specular = SPECULAR_FACTOR * pow(specular, SPECULAR_POWER);
+    specular *= specular_att;
+    specular *= facing;
+//	float backBufferDepth = tDepthStencil.Load( int3( input.position.xy, 0 ) ).x;
+//	float pixelDepth = -LinearizeDepth( input.position.z, NEAR_PLANE, FAR_PLANE );
+//	backBufferDepth = -LinearizeDepth( backBufferDepth, NEAR_PLANE, FAR_PLANE );
 //
 //	float depthDiff = backBufferDepth - pixelDepth;
 //	float surfaceHeight = depthDiff * cos_theta_incident;
@@ -489,24 +522,32 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 //
 	//return float4(floor_color, 1.f);
 
+    float3 diffuse = dot3 * diffuse_att * light_color;
+    float3 specular_color = light_color * specular;
+    
 	//Water Color
 	float3 reflection_color = reflectivity * sky_color.xyz;
 	float3 transmission_color = transmissivity * floor_color;
-	dist = 1.f;
+    dist = 1.f;
+	//float3 reflection_color = reflectivity * sky_color.xyz;
+	//float3 transmission_color = transmissivity * floor_color;
+    float3 reflection_color = reflectivity * sky_color.xyz;
+    float3 transmission_color = transmissivity * floor_color;
 	float3 fog_color = (1.f - dist) * air;
-	float3 water_color = dist * (reflection_color + transmission_color) + fog_color;
+	float3 water_color = dist * (reflection_color + transmission_color);// + fog_color;
+    water_color += specular_color;
 	return float4(water_color, 1.f);
 
 
 	//Jacobian Foam
 	float turbulance = max(2.0f - input.jacobian.x + dot(0.3f * normalize(world_normal.xy), float2(1.2f, 1.2f)), 0.f);
 	float foam_color = 1.f + 3.0f * smoothstep(1.2f, 1.8f, turbulance);
-	water_color += float3((foam_color - 1.2f).xxx);
-	//return float4( water_color, 1.f);
+    water_color += saturate(float3((foam_color - 1.2f).xxx));
+	return float4( water_color, 1.f);
 
 
 	//Bling Phong Lighting -- Unnecessary?
-	/*
+/*	
 	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
 
 	light_t light = LIGHTS[0];
@@ -536,13 +577,13 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	specular = SPECULAR_FACTOR * pow( specular, SPECULAR_POWER );
 	specular *= specular_att;
 	specular *= facing;
-
 	float3 diffuse = dot3 * diffuse_att * light_color;
 	float3 specular_color = light_color * specular;
+*/
 
-	diffuse = saturate( diffuse );
+	//diffuse = saturate( diffuse );
 
 	float3 final_color = diffuse * water_color.xyz + specular_color;
 	return float4( final_color, 1.f );
-	*/
+	
 	}
