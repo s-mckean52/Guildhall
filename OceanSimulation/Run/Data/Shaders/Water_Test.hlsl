@@ -144,10 +144,8 @@ float3x3 GetVertexTBN( v2f_t input )
 //--------------------------------------------------------------------------------------
 float LinearizeDepth( float depth, float nearPlaneDepth, float farPlaneDepth )
 {
-	float near = nearPlaneDepth;
-	float far = farPlaneDepth;
-	float z = depth * 2.f - 1.f;
-	return ( 2.f * near * far ) / ( far + near - z * ( far - near ) );
+    float zRange = farPlaneDepth - nearPlaneDepth;
+    return -( nearPlaneDepth * farPlaneDepth ) / ( ( depth * zRange ) - farPlaneDepth );
 }
 
 
@@ -227,21 +225,21 @@ bool traceScreenSpaceRay1(
 	float invdx = stepDir / delta.x;
 
 	// Track the derivatives of Q and k
-	float3  dQ = (homogenousEndPos - homogenousStartPos) * invdx;
+	float3  dHomogenous = (homogenousEndPos - homogenousStartPos) * invdx;
 	float	dk = (k1 - k0) * invdx;
-	float2  dP = float2(stepDir, delta.y * invdx);
+	float2  dScreenSpace = float2(stepDir, delta.y * invdx);
 
 	// Scale derivatives by the desired pixel stride and then
 	// offset the starting values by the jitter fraction
-	dP *= stride;
-	dQ *= stride;
+	dScreenSpace *= stride;
+	dHomogenous *= stride;
 	dk *= stride;
-	screenSpaceStartPos += dP * jitter;
-	homogenousStartPos += dQ * jitter;
+	screenSpaceStartPos += dScreenSpace * jitter;
+	homogenousStartPos += dHomogenous * jitter;
 	k0 += dk * jitter;
 
 	// Slide P from P0 to P1, (now-homogeneous) Q from Q0 to Q1, k from k0 to k1
-	float3 Q = homogenousStartPos;
+	float3 homogenousPos = homogenousStartPos;
 
 	// Adjust end condition for iteration direction
 	float  end = screenSpaceEndPos.x * stepDir;
@@ -252,14 +250,14 @@ bool traceScreenSpaceRay1(
 	float rayZMin = prevZMaxEstimate;
 	float rayZMax = prevZMaxEstimate;
 	float sceneZMax = rayZMax + 1000.f;
-	for (float2 P = screenSpaceStartPos;
-		((P.x * stepDir) <= end) && (stepCount < maxSteps) &&
+	for (float2 screenSpacePos = screenSpaceStartPos;
+		((screenSpacePos.x * stepDir) <= end) && (stepCount < maxSteps) &&
 		((rayZMax < sceneZMax - zThickness) || (rayZMin > sceneZMax)) &&
 		(sceneZMax != 0);
-		P += dP, Q.z += dQ.z, k += dk, ++stepCount) {
+		screenSpacePos += dScreenSpace, homogenousPos.z += dHomogenous.z, k += dk, ++stepCount) {
 
 		rayZMin = prevZMaxEstimate;
-		rayZMax = (dQ.z * 0.5f + Q.z) / (dk * 0.5f + k);
+		rayZMax = (dHomogenous.z * 0.5f + homogenousPos.z) / (dk * 0.5f + k);
 		prevZMaxEstimate = rayZMax;
 		if (rayZMin > rayZMax) {
 			float t = rayZMin;
@@ -267,19 +265,28 @@ bool traceScreenSpaceRay1(
 			rayZMax = t;
 		}
 
-		hitPixel = permute ? P.yx : P;
+		hitPixel = permute ? screenSpacePos.yx : screenSpacePos;
 		hitPixel.y = csZBufferSize.y - hitPixel.y;
 		// You may need hitPixel.y = csZBufferSize.y - hitPixel.y; here if your vertical axis
 		// is different than ours in screen space
 		sceneZMax = csZBuffer.Load( int3( hitPixel, 0 ) ).x;
-		sceneZMax = LinearizeDepth( sceneZMax, nearPlaneZ, nearPlaneZ - zThickness );
+		sceneZMax = LinearizeDepth( sceneZMax, nearPlaneZ, 100.f );
 	}
 
 	// Advance Q based on the number of steps
-	Q.xy += dQ.xy * stepCount;
-	hitPoint = Q * (1.0f / k);
+	homogenousPos.xy += dHomogenous.xy * stepCount;
+	hitPoint = homogenousPos * (1.0f / k);
 	//return float4(screenSpaceStartPos / csZBufferSize, 0.f, 1.f);
 	return (rayZMax >= sceneZMax - zThickness) && (rayZMin < sceneZMax);
+}
+
+
+//--------------------------------------------------------------------------------------
+float3 GetPerturbedColor( float2 dirToPerturb, float perturbationFactor, float2 pixelPosition, Texture2D backBuffer, float2 backBufferDim, out float2 perturbedPixel )
+{
+    float2 offset = dirToPerturb * perturbationFactor;
+    perturbedPixel = pixelPosition + offset;
+    return backBuffer.Sample( sSampler, perturbedPixel / backBufferDim );
 }
 
 //--------------------------------------------------------------------------------------
@@ -332,7 +339,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float3 air =		float3( 0.1f, 0.1f, 0.1f );
 	float nSnell	= 1.34f;
 	float kDiffuse	= 0.91f;
-	float MAX_DEPTH = 35.f;
+	float MAX_DEPTH = 1000.f;
 	float waterFalloff = 1.f / MAX_DEPTH;
 	//------------------------------------------------------------------------------
 
@@ -351,7 +358,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float3 world_normal = normalize( mul( normal1, tbn ) );
 	world_normal += normalize( mul( normal2, tbn ) );
 	world_normal = normalize( world_normal );
-	world_normal = input.world_normal.xyz;
+	//world_normal = input.world_normal.xyz;
 
 	float2 backBufferDim;
 	tBackBuffer.GetDimensions( backBufferDim.x, backBufferDim.y );
@@ -406,9 +413,10 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	//Depth Sample
 	float c2 = sqrt( 1.f - ( nSnell * nSnell * ( 1.f - cos_theta_incident ) * ( 1.f - cos_theta_incident ) ) );
 	float3 transmission_dir = ( nSnell * ( incident + world_normal * cos_theta_incident ) ) - ( c2 * world_normal );
-	transmission_dir = float3( 0.f, 0.f, -1.f );
+	transmission_dir = float3( 1.f, 0.f, 0.f );
 	float3 rayStartPos = mul( VIEW, float4( input.world_position.xyz, 1.f ) ).xyz;
-	float3 rayDir = normalize( mul( VIEW, float4( transmission_dir, 0.f ) ).xyz );
+    float3 rotatedTransmissionDir = normalize(mul(PROJECTION, float4(transmission_dir, 0.f)).xyz);
+	float3 rayDir = normalize( mul( VIEW, float4( rotatedTransmissionDir, 0.f ) ).xyz );
 	//return float4( GetColorFromNormalDir( rayDir ), 1.f );
 
 	float2 halfBufferDim = backBufferDim * 0.5f;
@@ -416,30 +424,33 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float4x4 rangeMap = float4x4(
 		float4( halfBufferDim.x,	0.f,				0.f,	-rangeFraction.x ),
 		float4( 0.f,				halfBufferDim.y,	0.f,	-rangeFraction.y ),
-		float4( 0.f,				0.f,				0.f,	0.f ),
+		float4( 0.f,				0.f,				1.f,	0.f ),
 		float4( 0.f,				0.f,				0.f,	1.f )
 		);
 
 	float2 hitPixel;
 	float3 hitPoint;
+	int2 pixelCoord = int2(input.position.x, +input.position.y);
 	bool rayHit = traceScreenSpaceRay1(
 		rayStartPos,
 		rayDir,
 		mul(rangeMap, PROJECTION),
 		tDepthStencil,
 		backBufferDim,
-		abs(FAR_PLANE - NEAR_PLANE),
+		1.f,//abs(FAR_PLANE - NEAR_PLANE),
 		NEAR_PLANE,
-		4.0f,
-		0.1f,
-		100.f,
+		1.0f,
+		0.f,//float((pixelCoord.x + pixelCoord.y) & 1) * 0.5f,
+		150.f,
 		100.f,
 		hitPixel,
 		hitPoint );
+	//return float4(normalize(hitPoint), RangeMap(length(hitPoint), 0.f, 100.f, 0.f, 1.f));
 	float3 floor_color;
+	//rayHit = true;
+	//hitPixel = input.position.xy;
 	if( !rayHit )
 	{
-		float3 rotatedTransmissionDir = mul( rotation_on_x, mul( rotation_on_z, transmission_dir ) );
 		floor_color = tSkybox.Sample( sSampler, rotatedTransmissionDir );
 		floor_color *= float3(1.f, 0.2f, 0.2f);
 	}
@@ -448,10 +459,19 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 		floor_color = tBackBuffer.Load(int3(hitPixel, 0)).xyz;
 		floor_color *= upwelling;
 	}
+    
+    float2 perturbedPixel;
+    floor_color = GetPerturbedColor( world_normal.xy, 25.f * cos_theta_incident, input.position.xy, tBackBuffer, backBufferDim, perturbedPixel );
+	//floor_color *= upwelling;
 
-//	float backBufferDepth = tDepthStencil.Load( int3( input.position.xy, 0 ) ).x;
-//	float pixelDepth = -LinearizeDepth( input.position.z, NEAR_PLANE, FAR_PLANE );
-//	backBufferDepth = -LinearizeDepth( backBufferDepth, NEAR_PLANE, FAR_PLANE );
+	
+	float backBufferDepth = tDepthStencil.Load( int3( perturbedPixel, 0 ) ).x;
+	float pixelDepth = -LinearizeDepth( input.position.z, NEAR_PLANE, FAR_PLANE );
+	backBufferDepth = -LinearizeDepth( backBufferDepth, NEAR_PLANE, FAR_PLANE );
+    float refractionDepth = backBufferDepth - pixelDepth;
+	float depthFraction = saturate( refractionDepth * waterFalloff );
+	floor_color = lerp( floor_color, float3( 1.f, 1.f, 1.f ), depthFraction.xxx );
+	floor_color *= upwelling;
 //
 //	float depthDiff = backBufferDepth - pixelDepth;
 //	float surfaceHeight = depthDiff * cos_theta_incident;
@@ -467,16 +487,12 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 //	displacement.x = RangeMap( abs(displacement.x), -1.f, 1.f, 0.f, backBufferDim.x ) * signD.x;
 //	displacement.x = RangeMap( abs(displacement.y), -1.f, 1.f, 0.f, backBufferDim.y ) * signD.y;
 //
-//	float2 hitPixel = input.position.xy + displacement;
-//	floor_color = tBackBuffer.Load(int3(hitPixel, 0)).xyz;
-//	float depthFraction = saturate( refractionDepth * waterFalloff );
-//	floor_color = lerp( floor_color, float3( 1.f, 1.f, 1.f ), depthFraction.xxx );
-//	floor_color *= upwelling;
-	return float4(floor_color, 1.f);
+	//return float4(floor_color, 1.f);
 
 	//Water Color
 	float3 reflection_color = reflectivity * sky_color.xyz;
 	float3 transmission_color = transmissivity * floor_color;
+	dist = 1.f;
 	float3 fog_color = (1.f - dist) * air;
 	float3 water_color = dist * (reflection_color + transmission_color) + fog_color;
 	return float4(water_color, 1.f);
