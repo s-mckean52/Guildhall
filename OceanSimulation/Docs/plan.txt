@@ -1,0 +1,7 @@
+draw water buffer - 1 for water, 0 for no water
+draw to aboveWaterTexture
+draw to belowWaterTexture
+draw water with shader
+  color
+  reflection from aboveWaterTexture
+  transmission from belowWaterTexture
