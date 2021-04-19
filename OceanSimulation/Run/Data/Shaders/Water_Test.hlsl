@@ -378,11 +378,6 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float2 backBufferDim;
 	tBackBuffer.GetDimensions( backBufferDim.x, backBufferDim.y );
 
-//	float2 landColorSampleUV;
-//	float3 screenSpace = input.position.xyz;
-//	landColorSampleUV.x = RangeMap( screenSpace.x, 0.f, backBufferDim.x, 0.f, 1.f );
-//	landColorSampleUV.y = RangeMap( screenSpace.y, 0.f, backBufferDim.y, 0.f, 1.f );
-
 	//Rotation Matricies for converting skybox to game basis
 	float3x3 rotation_on_x = float3x3(
 		float3(1.f,  0.f, 0.f),
@@ -393,7 +388,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 		float3(-1.f, 0.f, 0.f),
 		float3( 0.f, 0.f, 1.f));
 
-	float4x4 inverseView = transpose( VIEW );
+
 	//Skybox Sample
 	float3	incident	= normalize(input.world_position - CAMERA_POSITION);
 	float3	reflection	= reflect(incident, world_normal);
@@ -421,19 +416,16 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	}
 	float transmissivity = 1.f - reflectivity;
 
-	float3 dPE = CAMERA_POSITION - input.world_position;
-	float dist = length(dPE) * kDiffuse;
-	dist = exp(-dist);
-
-	//Depth Sample
-	float c2 = sqrt( 1.f - ( nSnell * nSnell * ( 1.f - cos_theta_incident ) * ( 1.f - cos_theta_incident ) ) );
-	float3 transmission_dir = ( nSnell * ( incident + world_normal * cos_theta_incident ) ) - ( c2 * world_normal );
-	transmission_dir = float3( 1.f, 0.f, 0.f );
-	float3 rayStartPos = mul( VIEW, float4( input.world_position.xyz, 1.f ) ).xyz;
-    float3 rotatedTransmissionDir = normalize(mul(PROJECTION, float4(transmission_dir, 0.f)).xyz);
-	float3 rayDir = normalize( mul( VIEW, float4( rotatedTransmissionDir, 0.f ) ).xyz );
+	//Depth Sample ( real transmission/refractance )
+	//float c2 = sqrt( 1.f - ( nSnell * nSnell * ( 1.f - cos_theta_incident ) * ( 1.f - cos_theta_incident ) ) );
+	//float3 transmission_dir = ( nSnell * ( incident + world_normal * cos_theta_incident ) ) - ( c2 * world_normal );
+	//transmission_dir = float3( 1.f, 0.f, 0.f );
+	//float3 rayStartPos = mul( VIEW, float4( input.world_position.xyz, 1.f ) ).xyz;
+    //float3 rotatedTransmissionDir = normalize(mul(PROJECTION, float4(transmission_dir, 0.f)).xyz);
+	//float3 rayDir = normalize( mul( VIEW, float4( rotatedTransmissionDir, 0.f ) ).xyz );
 	//return float4( GetColorFromNormalDir( rayDir ), 1.f );
 
+    /*
 	float2 halfBufferDim = backBufferDim * 0.5f;
 	float2 rangeFraction = -1.f * backBufferDim * 0.5f;
 	float4x4 rangeMap = float4x4(
@@ -461,9 +453,9 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 		hitPixel,
 		hitPoint );
 	//return float4(normalize(hitPoint), RangeMap(length(hitPoint), 0.f, 100.f, 0.f, 1.f));
-	float3 floor_color;
 	//rayHit = true;
 	//hitPixel = input.position.xy;
+	float3 floor_color;
     rayHit = true;
     hitPixel = input.position.xy;
 	if( !rayHit )
@@ -476,82 +468,57 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 		floor_color = tBackBuffer.Load(int3(hitPixel, 0)).xyz;
 		floor_color *= upwelling;
 	}
+*/
     
     float2 perturbedPixel;
-    floor_color = GetPerturbedColor( world_normal.xy, 25.f * cos_theta_incident, input.position.xy, tBackBuffer, backBufferDim, perturbedPixel );
+    float3 floor_color = GetPerturbedColor(world_normal.xy, 25.f * cos_theta_incident, input.position.xy, tBackBuffer, backBufferDim, perturbedPixel);
 	//floor_color *= upwelling;
 
-	float backBufferDepth = tDepthStencil.Load( int3( perturbedPixel, 0 ) ).x;
-    float pixelDepth = input.camera_position.x;
-    float4 backBufferNDCPosition = float4( 0.f, 0.f, backBufferDepth, 1.f );
+	float backBufferSample = tDepthStencil.Load( int3( perturbedPixel, 0 ) ).x;
+    float4 backBufferNDCPosition = float4( 0.f, 0.f, backBufferSample, 1.f );
     float3 backBufferCameraPosition = NDCToCameraSpace( backBufferNDCPosition, INVERSE_PROJECTION );
-    backBufferDepth = backBufferCameraPosition.x;
+    float backBufferDepth = backBufferCameraPosition.x;
+    float pixelDepth = input.camera_position.x;
 	//backBufferDepth = -LinearizeDepth( backBufferDepth, NEAR_PLANE, FAR_PLANE );
+    
     float refractionDepth = backBufferDepth - pixelDepth;
 	float depthFraction = saturate( refractionDepth * waterFalloff );
     depthFraction = sqrt(sqrt(depthFraction));
 	floor_color = lerp( floor_color, upwelling, depthFraction.xxx );
-	//floor_color *= upwelling;
 
-    float3 dir_to_eye = normalize(CAMERA_POSITION - input.world_position);
+    //Get Specular
+    float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
     light_t light = LIGHTS[0];
-    float3 light_color = light.color.xyz;
-    float3 light_position = light.world_position;
-    float3 light_direction = normalize(light.direction);
+    float3 light_color      = light.color.xyz;
+    float3 light_position   = light.world_position;
+    float3 light_direction  = normalize(light.direction);
 
-    float3 pos_to_light = light_position - input.world_position;
-    float dist_to_light_position = length(pos_to_light);
-    float directional_distance = dot(-pos_to_light, light_direction);
+    float3 pos_to_light             = light_position - input.world_position;
+    float dist_to_light_position    = length(pos_to_light);
+    float directional_distance      = dot(-pos_to_light, light_direction);
 
     float3 dir_to_light = lerp(normalize(pos_to_light), -light_direction, light.is_directional);
     float dist_to_light = lerp(dist_to_light_position, directional_distance, light.is_directional);
 
     float cos_angle_to_light_dir = dot(-dir_to_light, light_direction);
-    float att_factor = smoothstep(light.cos_outter_half_angle, light.cos_inner_half_angle, cos_angle_to_light_dir);
 
-    float3 att_vec = float3(1.0f, dist_to_light, dist_to_light * dist_to_light);
-    float diffuse_att = (light.intensity / dot(att_vec, light.attenuation)) * att_factor;
-    float specular_att = (light.intensity / dot(att_vec, light.spec_attenuation)) * att_factor;
+    float att_factor    = smoothstep(light.cos_outter_half_angle, light.cos_inner_half_angle, cos_angle_to_light_dir);
+    float3 att_vec      = float3(1.0f, dist_to_light, dist_to_light * dist_to_light);
+    float specular_att  = (light.intensity / dot(att_vec, light.spec_attenuation)) * att_factor;
 
-    float dot3 = max(0.0f, dot(dir_to_light, world_normal));
-    float facing = smoothstep(-0.5, 0.0f, dot(dir_to_light, world_normal));
+    float facing        = smoothstep(-0.5, 0.0f, dot(dir_to_light, world_normal));
+    float3 half_vector  = normalize(dir_to_light + dir_to_eye);
+    float specular      = max(0.0f, dot(world_normal, half_vector));
+    specular            = SPECULAR_FACTOR * pow(specular, SPECULAR_POWER);
+    specular            *= specular_att;
+    specular            *= facing;
 
-    float3 half_vector = normalize(dir_to_light + dir_to_eye);
-    float specular = max(0.0f, dot(world_normal, half_vector));
-    specular = SPECULAR_FACTOR * pow(specular, SPECULAR_POWER);
-    specular *= specular_att;
-    specular *= facing;
-//	float backBufferDepth = tDepthStencil.Load( int3( input.position.xy, 0 ) ).x;
-//	float pixelDepth = -LinearizeDepth( input.position.z, NEAR_PLANE, FAR_PLANE );
-//	backBufferDepth = -LinearizeDepth( backBufferDepth, NEAR_PLANE, FAR_PLANE );
-//
-//	float depthDiff = backBufferDepth - pixelDepth;
-//	float surfaceHeight = depthDiff * cos_theta_incident;
-//	float floorLength = depthDiff * sin( theta_incident );
-//	float refractionLength = surfaceHeight * tan( theta_transmission );
-//	float refractionDepth = surfaceHeight / cos( theta_transmission );
-//
-//	float4 xyDisplacement = mul( transpose(PROJECTION), float4( floorLength - refractionLength, 0.f, 0.f, 0.f ) );
-//	//float4 screenDir = mul( PROJECTION, mul( VIEW, float4( incident, 0.f ) ) );
-//	float vDisplacement = dot( transpose(VIEW)[1].xyz, xyDisplacement.xyz );
-//	float2 displacement = mul( PROJECTION, float4( 0.f, vDisplacement, 0.f, 0.f ) ).xy;
-//	float2 signD = sign(displacement);
-//	displacement.x = RangeMap( abs(displacement.x), -1.f, 1.f, 0.f, backBufferDim.x ) * signD.x;
-//	displacement.x = RangeMap( abs(displacement.y), -1.f, 1.f, 0.f, backBufferDim.y ) * signD.y;
-//
-	//return float4(floor_color, 1.f);
-
-    float3 diffuse = dot3 * diffuse_att * light_color;
     float3 specular_color = light_color * specular;
     
 	//Water Color
-    dist = 1.f;
-	//float3 reflection_color = reflectivity * sky_color.xyz;
-	//float3 transmission_color = transmissivity * floor_color;
     float3 reflection_color = reflectivity * sky_color.xyz;
     float3 transmission_color = transmissivity * floor_color;
-	float3 fog_color = (1.f - dist) * air;
-	float3 water_color = dist * (reflection_color + transmission_color);// + fog_color;
+	float3 water_color = reflection_color + transmission_color;
     water_color += specular_color;
 	return float4(water_color, 1.f);
 
@@ -561,46 +528,4 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float foam_color = 1.f + 3.0f * smoothstep(1.2f, 1.8f, turbulance);
     water_color += saturate(float3((foam_color - 1.2f).xxx));
 	return float4( water_color, 1.f);
-
-
-	//Bling Phong Lighting -- Unnecessary?
-/*	
-	float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );
-
-	light_t light = LIGHTS[0];
-	float3 light_color = light.color.xyz;
-	float3 light_position = light.world_position;
-	float3 light_direction = normalize( light.direction );
-
-	float3 pos_to_light = light_position - input.world_position;
-	float dist_to_light_position = length(pos_to_light);
-	float directional_distance = dot( -pos_to_light, light_direction );
-
-	float3 dir_to_light = lerp( normalize( pos_to_light ), -light_direction, light.is_directional );
-	float dist_to_light = lerp( dist_to_light_position, directional_distance, light.is_directional );
-
-	float cos_angle_to_light_dir = dot( -dir_to_light, light_direction );
-	float att_factor = smoothstep( light.cos_outter_half_angle, light.cos_inner_half_angle, cos_angle_to_light_dir );
-
-	float3 att_vec = float3( 1.0f, dist_to_light, dist_to_light * dist_to_light );
-	float diffuse_att = ( light.intensity / dot( att_vec, light.attenuation ) ) * att_factor;
-	float specular_att = ( light.intensity / dot( att_vec, light.spec_attenuation ) ) * att_factor;
-
-	float dot3 = max( 0.0f, dot( dir_to_light, world_normal ) );
-	float facing = smoothstep( -0.5, 0.0f, dot( dir_to_light, world_normal ) );
-
-	float3 half_vector = normalize( dir_to_light + dir_to_eye );
-	float specular = max( 0.0f, dot( world_normal, half_vector ) );
-	specular = SPECULAR_FACTOR * pow( specular, SPECULAR_POWER );
-	specular *= specular_att;
-	specular *= facing;
-	float3 diffuse = dot3 * diffuse_att * light_color;
-	float3 specular_color = light_color * specular;
-*/
-
-	//diffuse = saturate( diffuse );
-
-	float3 final_color = diffuse * water_color.xyz + specular_color;
-	return float4( final_color, 1.f );
-	
-	}
+}
