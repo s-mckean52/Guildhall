@@ -135,8 +135,8 @@ float4 FragmentFunction( v2f_t input ) : SV_Target0
 		float4( -1.f, 0.f, 0.f, 0.f ),
 		float4( 0.f, 0.f, 1.f, 0.f ),
 		float4( 0.f, 0.f, 0.f, 1.f ) );
-	reflection = mul( rotation_on_x, mul( rotation_on_z, reflection ) );
-	float4 color = tSkybox.Sample(sSampler, reflection);
+	reflection = mul( rotation_on_x, mul( rotation_on_z, float4( reflection, 0.f ) ) );
+	float4 color = tSkybox.Sample(sSampler, reflection.xyz);
 	
 	return color;
 }

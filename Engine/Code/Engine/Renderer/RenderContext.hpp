@@ -97,6 +97,8 @@ struct camera_data_t
 	Mat44 model;
 	Vec3 position;
 	float padding;
+
+	Mat44 inverseProjection;
 };
 
 struct model_data_t

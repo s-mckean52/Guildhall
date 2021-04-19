@@ -347,6 +347,10 @@ void Camera::UpdateCameraUBO()
 	cameraData.position = GetPosition();
 	cameraData.view = m_view;
 
+	Mat44 inverseProjection = m_projection;
+	MatrixInvert( inverseProjection );
+	cameraData.inverseProjection = inverseProjection;
+
 	m_uniformBuffer->Update( &cameraData, sizeof( cameraData ), sizeof( cameraData ) );
 }
 

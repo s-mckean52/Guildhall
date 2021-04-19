@@ -55,12 +55,14 @@ cbuffer time_constants : register(b0)
 
 cbuffer camera_constants : register(b1)
 {
-	float4x4 PROJECTION; // CAMERA_TO_CLIP
-	float4x4 VIEW;		//WORLD_TO_CAMERA
+	float4x4 PROJECTION;            // CAMERA_TO_CLIP
+	float4x4 VIEW;		            //WORLD_TO_CAMERA
 
 	float4x4 CAMERA_MODEL;
 	float3 CAMERA_POSITION;
 	float padding_00;
+    
+    float4x4 INVERSE_PROJECTION;    // CLIP_TO_CAMERA
 }
 
 cbuffer model_constants : register(b2)
@@ -100,13 +102,14 @@ SamplerState sSampler					: register(s0);
 struct v2f_t
 {
 	float4 position : SV_POSITION;
-	float4 color : COLOR;
-	float2 uv : UV;
+	float4 color    : COLOR;
+	float2 uv       : UV;
 
-	float3 world_position : POSITION;
-	float3 world_normal : NORMAL;
-	float3 world_tangent : TANGENT;
-	float3 world_bitangent : BITANGENT;
+    float3 camera_position  : POSITION0;
+	float3 world_position   : POSITION1;
+	float3 world_normal     : NORMAL;
+	float3 world_tangent    : TANGENT;
+	float3 world_bitangent  : BITANGENT;
 
 	float4 jacobian : JACOBIAN;
 };
@@ -146,6 +149,16 @@ float LinearizeDepth( float depth, float nearPlaneDepth, float farPlaneDepth )
 {
     float zRange = farPlaneDepth - nearPlaneDepth;
     return -( nearPlaneDepth * farPlaneDepth ) / ( ( depth * zRange ) - farPlaneDepth );
+}
+
+
+//--------------------------------------------------------------------------------------
+float3 NDCToCameraSpace( float4 ndcPosition, float4x4 inverseProjection )
+{
+    float4 cameraPos = mul( inverseProjection, ndcPosition );
+    cameraPos /= cameraPos.w;
+    
+    return cameraPos.xyz;
 }
 
 
@@ -306,10 +319,12 @@ v2f_t VertexFunction(vs_input_t input)
 	float4 world_normal = mul(MODEL, local_normal);
 	float4 world_tangent = mul(MODEL, local_tangent);
 	float4 world_bitangent = mul(MODEL, local_bitangent);
-
+    
 	v2f.position = clip_position;
 	v2f.color = input.color * TINT;
 	v2f.uv = input.uv;
+    
+    v2f.camera_position = camera_position.xyz;
 	v2f.world_position = world_position.xyz;
 	v2f.world_normal = world_normal.xyz;
 	v2f.world_tangent = world_tangent.xyz;
@@ -339,7 +354,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float3 air =		float3( 0.1f, 0.1f, 0.1f );
 	float nSnell	= 1.34f;
 	float kDiffuse	= 0.91f;
-	float MAX_DEPTH = 1000.f;
+	float MAX_DEPTH = 11.f;
 	float waterFalloff = 1.f / MAX_DEPTH;
 	//------------------------------------------------------------------------------
 
@@ -430,7 +445,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 
 	float2 hitPixel;
 	float3 hitPoint;
-	int2 pixelCoord = int2(input.position.x, +input.position.y);
+	int2 pixelCoord = int2(input.position.x, input.position.y);
 	bool rayHit = traceScreenSpaceRay1(
 		rayStartPos,
 		rayDir,
@@ -467,12 +482,16 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	//floor_color *= upwelling;
 
 	float backBufferDepth = tDepthStencil.Load( int3( perturbedPixel, 0 ) ).x;
-	float pixelDepth = -LinearizeDepth( input.position.z, NEAR_PLANE, FAR_PLANE );
-	backBufferDepth = -LinearizeDepth( backBufferDepth, NEAR_PLANE, FAR_PLANE );
+    float pixelDepth = input.camera_position.x;
+    float4 backBufferNDCPosition = float4( 0.f, 0.f, backBufferDepth, 1.f );
+    float3 backBufferCameraPosition = NDCToCameraSpace( backBufferNDCPosition, INVERSE_PROJECTION );
+    backBufferDepth = backBufferCameraPosition.x;
+	//backBufferDepth = -LinearizeDepth( backBufferDepth, NEAR_PLANE, FAR_PLANE );
     float refractionDepth = backBufferDepth - pixelDepth;
 	float depthFraction = saturate( refractionDepth * waterFalloff );
-	floor_color = lerp( floor_color, float3( 1.f, 1.f, 1.f ), depthFraction.xxx );
-	floor_color *= upwelling;
+    depthFraction = sqrt(sqrt(depthFraction));
+	floor_color = lerp( floor_color, upwelling, depthFraction.xxx );
+	//floor_color *= upwelling;
 
     float3 dir_to_eye = normalize(CAMERA_POSITION - input.world_position);
     light_t light = LIGHTS[0];
@@ -526,8 +545,6 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
     float3 specular_color = light_color * specular;
     
 	//Water Color
-	float3 reflection_color = reflectivity * sky_color.xyz;
-	float3 transmission_color = transmissivity * floor_color;
     dist = 1.f;
 	//float3 reflection_color = reflectivity * sky_color.xyz;
 	//float3 transmission_color = transmissivity * floor_color;

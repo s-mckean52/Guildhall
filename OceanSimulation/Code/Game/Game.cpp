@@ -252,7 +252,7 @@ void Game::RenderWorld() const
 	DebugAddWorldArrow( m_theSun.position, m_theSun.position + m_theSun.direction, Rgba8::WHITE, 0.f, DEBUG_RENDER_ALWAYS );
 
 	g_theRenderer->BindShader( nullptr );
-	g_theRenderer->BindTextureByPath( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
+	g_theRenderer->BindTextureByPath( "Data/Images/aerial_beach_01_diff_1k.png" );
 	g_theRenderer->SetModelUBO( Mat44::CreateTranslationXYZ( Vec3( 0.f, 0.f, 0.f ) ) );
 	g_theRenderer->DrawMesh( m_landMesh );
 	

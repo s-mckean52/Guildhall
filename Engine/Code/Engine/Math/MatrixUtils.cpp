@@ -113,7 +113,7 @@ void MatrixInvert( Mat44& matrix )
 	double m[16];
 	unsigned int i;
 
-	MatrixTranspose( matrix );
+	//MatrixTranspose( matrix );
 	float* matData = matrix.GetAsFloatArray();
 
 	for( i = 0; i < 16; ++i ) {
