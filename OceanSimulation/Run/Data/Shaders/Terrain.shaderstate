@@ -1,0 +1,11 @@
+<!-- lit Shader State XML -->
+
+<ShaderState Name="Terrain"
+             Shader       ="Data/Shaders/Terrain.hlsl"
+             BlendMode    ="Alpha"
+             CullMode     ="None"
+             FillMode     ="Solid"
+             CompareMode  ="LessThanOrEqual"
+             WriteOnDepth ="true"
+             CounterClockwiseWindOrder ="true">
+</ShaderState>

@@ -354,7 +354,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float3 air =		float3( 0.1f, 0.1f, 0.1f );
 	float nSnell	= 1.34f;
 	float kDiffuse	= 0.91f;
-	float MAX_DEPTH = 11.f;
+	float MAX_DEPTH = 15.f;
 	float waterFalloff = 1.f / MAX_DEPTH;
 	//------------------------------------------------------------------------------
 
@@ -483,7 +483,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
     
     float refractionDepth = backBufferDepth - pixelDepth;
 	float depthFraction = saturate( refractionDepth * waterFalloff );
-    depthFraction = sqrt(sqrt(depthFraction));
+    depthFraction = sqrt( sqrt( depthFraction ) );
 	floor_color = lerp( floor_color, upwelling, depthFraction.xxx );
 
     //Get Specular

@@ -37,6 +37,8 @@ void MeshLoadToVertexArray( std::vector<Vertex_PCUTBN>& vertices, mesh_import_op
 
 void MeshInvertV( std::vector<Vertex_PCUTBN>& vertices );
 void MeshGenerateNormals( std::vector<Vertex_PCUTBN>& vertices );
+void MeshGenerateNormals( std::vector<Vertex_PCUTBN>& vertices, std::vector<uint> const& indices );
+void AverageNormals( Vec3& currentNormal, Vec3 const& normalToAdd, uint& numAdded );
 void MeshInvertWindingOrder( std::vector<Vertex_PCUTBN>& vertices );
 void MeshInvertIndexWindingOrder( std::vector<unsigned int>& indices );
 void MeshGenerateTangents( std::vector<Vertex_PCUTBN>& vertices );

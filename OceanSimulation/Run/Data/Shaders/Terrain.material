@@ -1,0 +1,10 @@
+<Material   name="Terrain">
+    <ShaderState        filepath="Data/Shaders/Terrain.shaderstate"/>
+    <Tint               value="255,255,255"/>
+    <SpecularFactor     value="0.f"/>
+    <SpecularPower      value="32.0f"/>
+    <DiffuseTexture     filepath="Data/Images/aerial_beach_01_diff_1k.png"/>
+    <MaterialTexture    filepath="Data/Images/aerial_beach_02_diff_1k.png"/>
+    <MaterialTexture    filepath="Data/Images/FourNoiseChannels.png"/>
+    <MaterialSampler    type="linear"/>
+</Material>

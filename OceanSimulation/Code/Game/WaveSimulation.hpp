@@ -67,6 +67,9 @@ public:
 	virtual void Simulate();
 
 	virtual void Render() const;
+	virtual void RenderRefractionMap() const;
+	virtual void RenderBackFaces() const;
+	virtual void DrawMesh() const;
 	virtual void AddWave( Wave* waveToAdd );
 
 	int			GetNumWaves() const;

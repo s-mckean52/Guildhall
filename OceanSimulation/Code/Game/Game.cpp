@@ -30,6 +30,7 @@
 #include "Engine/Renderer/ShaderState.hpp"
 #include "Engine/Renderer/Material.hpp"
 #include "Engine/Core/JobSystem.hpp"
+#include "Engine/Core/Image.hpp"
 #include "Game/GerstnerWaveSimulation.hpp"
 #include "Game/FFTWaveSimulation.hpp"
 #include "Game/DFTWaveSimulation.hpp"
@@ -135,12 +136,7 @@ void Game::StartUp()
 	AddTestCubeToIndexVertexArray( skyBoxVerts, skyBoxIndex, AABB3( Vec3( -skyboxHalfSize ), Vec3( skyboxHalfSize ) ), Rgba8::WHITE );
 	m_skyCube = new GPUMesh( g_theRenderer, skyBoxVerts, skyBoxIndex );
 	
-	std::vector<uint> landIndex;
-	std::vector<Vertex_PCUTBN> landVerts;
-	Vec3 landHalfDimensions = Vec3( 100.f, 100.f, 0.5f );
-	AddTestCubeToIndexVertexArray( landVerts, landIndex, AABB3( -landHalfDimensions, landHalfDimensions ), Rgba8::WHITE ); 
-	m_landMesh = new GPUMesh( g_theRenderer, landVerts, landIndex );
-	GenerateTerrainVerts( m_landMesh, IntVec2( 20, 20 ), Vec2( 50.f, 50.f ), -10.f, 3.f ); 
+	CreateTerrainFromImage( "Data/Images/Terrain.png", Vec2( 60.f, 60.f ), -20.f, 1.f );
 }
 
 
@@ -232,7 +228,7 @@ void Game::Update()
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::RenderWorld() const
+void Game::DrawWorldBasis() const
 {
 	DebugAddWorldBasis( Mat44::IDENTITY, 0.f, DEBUG_RENDER_ALWAYS );
 
@@ -250,15 +246,24 @@ void Game::RenderWorld() const
 	DebugAddWorldBasis( cameraBasisMatrix, 0.f, DEBUG_RENDER_ALWAYS );
 	
 	DebugAddWorldArrow( m_theSun.position, m_theSun.position + m_theSun.direction, Rgba8::WHITE, 0.f, DEBUG_RENDER_ALWAYS );
+}
 
-	g_theRenderer->BindShader( nullptr );
-	g_theRenderer->BindTextureByPath( "Data/Images/aerial_beach_01_diff_1k.png" );
+
+//---------------------------------------------------------------------------------------------------------
+void Game::DrawTerrain() const
+{
+	g_theRenderer->BindMaterialByPath( "Data/Shaders/Terrain.material" );
 	g_theRenderer->SetModelUBO( Mat44::CreateTranslationXYZ( Vec3( 0.f, 0.f, 0.f ) ) );
 	g_theRenderer->DrawMesh( m_landMesh );
-	
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::DrawWater() const
+{
 	Texture* depthStencil = m_worldCamera->GetDepthStencilTarget();
-	
 	Texture* backBuffer = g_theRenderer->GetBackBuffer();
+	
 	Texture* backBufferCopy = g_theRenderer->AcquireRenderTargetMatching( backBuffer );
 	Texture* depthStencilCopy = g_theRenderer->AcquireRenderTargetMatching( depthStencil );
 
@@ -274,6 +279,15 @@ void Game::RenderWorld() const
 	
 	g_theRenderer->ReleaseRenderTarget( backBufferCopy );
 	g_theRenderer->ReleaseRenderTarget( depthStencilCopy );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::RenderWorld() const
+{
+	DrawWorldBasis();
+	DrawTerrain();
+	DrawWater();
 	
 	//m_testCube->Render();
 }
@@ -519,6 +533,78 @@ void Game::SetTempValues()
 	m_tempWindSpeed = m_FFTWaveSimulation->GetWindSpeed();
 	m_tempWaveSuppression = m_FFTWaveSimulation->GetWaveSuppression();
 	m_tempGloabalWaveAmp = m_FFTWaveSimulation->GetAConstant();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::CreateTerrainFromImage( char const* filepath, Vec2 const& meshDimensions, float minHeight, float maxHeight )
+{
+	Image terrainImage = Image( filepath );
+	IntVec2 terrainDimensions = terrainImage.GetDimensions() - IntVec2( 1, 1 );
+
+	std::vector<Vertex_PCUTBN> terrainVerts;
+
+	Vec2 halfDimensions = meshDimensions * 0.5f;
+	float xMin = -halfDimensions.x;
+	float yMin = -halfDimensions.y;
+
+	float xStepAmount = meshDimensions.x / static_cast<float>( terrainDimensions.x );
+	float yStepAmount = meshDimensions.y / static_cast<float>( terrainDimensions.y );
+
+	Vec3 xStepDisplacement = Vec3( xStepAmount, 0.f, 0.f );
+	Vec3 yStepDisplacement = Vec3( 0.f, yStepAmount, 0.f );
+
+	float currentY = yMin;
+	for( unsigned int yStep = 0; yStep < terrainDimensions.y + 1; ++yStep )
+	{
+		float currentX = xMin;
+		for( unsigned int xStep = 0; xStep < terrainDimensions.x + 1; ++xStep )
+		{
+			Vec3 currentPosition = Vec3::ZERO;
+			currentPosition.x += currentX;
+			currentPosition.y += currentY;
+
+			Rgba8 texelColorAtVert = terrainImage.GetTexelColor( xStep, terrainDimensions.y - yStep );
+			Vec3 colorPercents = texelColorAtVert.GetValuesAsFractionsVec3();
+			currentPosition.z = Lerp( minHeight, maxHeight, colorPercents.x );
+
+			float u = RangeMapFloat( xMin, halfDimensions.x, 0.f, 1.f, currentX );
+			float v = RangeMapFloat( yMin, halfDimensions.y, 0.f, 1.f, currentY );
+			Vec2 uv = Vec2( u, v  );
+
+			terrainVerts.push_back( Vertex_PCUTBN( currentPosition, Rgba8::WHITE, Vec3::UNIT_POSITIVE_X, Vec3::UNIT_POSITIVE_Y, Vec3::UNIT_POSITIVE_Z, uv ) );
+			currentX += xStepAmount;
+		}
+		currentY += yStepAmount;
+	}
+
+	std::vector<uint> indices;
+	uint xSteps = terrainDimensions.x;
+	uint ySteps = terrainDimensions.y;
+
+	for( unsigned int yIndex = 0; yIndex < ySteps; ++yIndex )
+	{
+		for( unsigned int xIndex = 0; xIndex < xSteps; ++xIndex )
+		{
+			unsigned int currentVertIndex = xIndex + ( ( xSteps + 1 ) * yIndex);
+
+			unsigned int bottomLeft = currentVertIndex;
+			unsigned int bottomRight = currentVertIndex + 1;
+			unsigned int topLeft = currentVertIndex + xSteps + 1;
+			unsigned int topRight = currentVertIndex + xSteps + 2;
+
+			indices.push_back( bottomLeft );
+			indices.push_back( bottomRight );
+			indices.push_back( topRight );
+
+			indices.push_back( bottomLeft );
+			indices.push_back( topRight );
+			indices.push_back( topLeft );
+		}
+	}
+
+	MeshGenerateNormals( terrainVerts, indices );
+	m_landMesh = new GPUMesh( g_theRenderer, terrainVerts, indices ); 
 }
 
 

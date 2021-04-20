@@ -38,6 +38,13 @@ public:
 	Vec3 direction = Vec3::UNIT_POSITIVE_X;
 };
 
+struct terrain_t
+{
+	float minHeight = 0.f;
+	float maxHeight = 1.f;
+	float padding[2];
+};
+
 // struct water_t
 // {
 // public:
@@ -72,6 +79,9 @@ public:
 	void RotateWindDirByDegrees( float degreesToRotateBy );
 
 	//Rendering
+	void DrawWorldBasis() const;
+	void DrawTerrain() const;
+	void DrawWater() const;
 	void UpdateCameraProjection( Camera* camera );
 	void UpdateCameraView( Camera* camera, CameraViewOrientation viewOrientation = RIGHT_HAND_X_FORWARD_Y_LEFT );
 	void RenderWorld() const;
@@ -87,6 +97,7 @@ public:
 	void LoadCurrentTempValues();
 	void SetTempValues();
 
+	void CreateTerrainFromImage( char const* filepath, Vec2 const& meshDimensions, float minHeight, float maxHeight );
 	void GenerateTerrainVerts( GPUMesh* meshToModify, IntVec2 const& vertDimensions, Vec2 const& dimensions, float minHeight, float maxHeight );
 
 	//Commands

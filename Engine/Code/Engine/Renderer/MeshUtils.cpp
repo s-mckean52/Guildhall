@@ -67,6 +67,49 @@ void MeshGenerateNormals( std::vector<Vertex_PCUTBN>& vertices )
 
 
 //---------------------------------------------------------------------------------------------------------
+void MeshGenerateNormals( std::vector<Vertex_PCUTBN>& vertices, std::vector<uint> const& indices )
+{
+	std::vector<uint> numNormalsPerVert;
+	numNormalsPerVert.resize( vertices.size() );
+	int numFaces = static_cast<int>( indices.size() ) / 3;
+	for( int faceIndex = 0; faceIndex < numFaces; ++faceIndex )
+	{
+		int indexStart = faceIndex * 3 ;
+		int indexSecond = indexStart + 1;
+		int indexThird = indexStart + 2;
+
+		uint vertIndex0 = indices[ indexStart ];
+		uint vertIndex1 = indices[ indexSecond ];
+		uint vertIndex2 = indices[ indexThird ];
+
+		Vertex_PCUTBN& vert0 = vertices[ vertIndex0 ];
+		Vertex_PCUTBN& vert1 = vertices[ vertIndex1 ];
+		Vertex_PCUTBN& vert2 = vertices[ vertIndex2 ];
+
+		Vec3 rightDir	= vert1.m_position - vert0.m_position;
+		Vec3 upDir		= vert2.m_position - vert0.m_position;
+
+		Vec3 normal = CrossProduct3D( rightDir, upDir );
+		normal.Normalize();
+
+		AverageNormals( vert0.m_normal, normal, numNormalsPerVert[ vertIndex0 ] );
+		AverageNormals( vert1.m_normal, normal, numNormalsPerVert[ vertIndex1 ] );
+		AverageNormals( vert2.m_normal, normal, numNormalsPerVert[ vertIndex2 ] );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void AverageNormals( Vec3& currentNormal, Vec3 const& normalToAdd, uint& numAdded )
+{
+	currentNormal *= numAdded;
+	currentNormal += normalToAdd;
+	numAdded++;
+	currentNormal /= numAdded;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void MeshInvertWindingOrder( std::vector<Vertex_PCUTBN>& vertices )
 {
 	int numFaces = static_cast<int>( vertices.size() ) / 3;

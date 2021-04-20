@@ -127,26 +127,46 @@ void WaveSimulation::Simulate()
 //---------------------------------------------------------------------------------------------------------
 void WaveSimulation::Render() const
 {
-	Rgba8 renderColor = Rgba8::WHITE;// Rgba8::MakeFromFloats(0.f, 0.412f, 0.58f);
 	if( m_isWireFrame ) 
 	{ 
 		g_theRenderer->BindMaterialByPath( "Data/Shaders/Water_Wireframe.material" );
-		//g_theRenderer->BindTexture( nullptr );
-		//g_theRenderer->SetCullMode( CULL_MODE_BACK );
-		//g_theRenderer->SetFillMode( FILL_MODE_WIREFRAME );
 	}
 	else
 	{
 		g_theRenderer->BindMaterialByPath( "Data/Shaders/Water.material" );
-		//g_theRenderer->BindTexture( nullptr );
-		//g_theRenderer->SetCullMode( CULL_MODE_BACK );
-		//g_theRenderer->SetFillMode( FILL_MODE_SOLID );
 	}
-
 	g_theRenderer->BindShaderByPath( "Data/Shaders/Water_Test.hlsl" );
-	//g_theRenderer->BindShaderByPath( "Data/Shaders/Normals.hlsl" );
-	//g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
+	DrawMesh();
+}
 
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::RenderRefractionMap() const
+{
+	g_theRenderer->BindShader( nullptr );
+	g_theRenderer->BindTexture( nullptr );
+	g_theRenderer->SetCullMode( CULL_MODE_FRONT );
+	g_theRenderer->SetDepthTest( COMPARE_FUNC_LEQUAL, true );
+	g_theRenderer->SetModelTint( Rgba8( 0, 0, 0, 0 ) );
+	DrawMesh();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::RenderBackFaces() const
+{
+	g_theRenderer->BindShader( nullptr );
+	g_theRenderer->BindTexture( nullptr );
+	g_theRenderer->SetCullMode( CULL_MODE_FRONT );
+	g_theRenderer->SetDepthTest( COMPARE_FUNC_LEQUAL, true );
+	g_theRenderer->SetModelTint( Rgba8( 255, 0, 0, 255 ) );
+	DrawMesh();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::DrawMesh() const
+{
 	Vec3 startPosition = -Vec3( m_dimensions, 0.f ) * ( ( static_cast<float>( m_tilingDimensions ) * 0.5f ) - 0.5f );
 	uint tilingDimSquared = m_tilingDimensions * m_tilingDimensions;
 	for( uint i = 0; i < tilingDimSquared; ++i )
@@ -161,6 +181,7 @@ void WaveSimulation::Render() const
 		g_theRenderer->DrawMesh( m_surfaceMesh );
 	}
 }
+
 
 //---------------------------------------------------------------------------------------------------------
 void WaveSimulation::AddWave( Wave* waveToAdd )
