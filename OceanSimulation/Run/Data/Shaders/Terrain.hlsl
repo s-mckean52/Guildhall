@@ -230,8 +230,8 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
     float3 y_normal = float3( 0.f, 1.f, 0.f );
     float3 z_normal = float3( 0.f, 0.f, 1.f );
     
-	float3x3 x_tbn = float3x3(
-		float3( 0.0f, 0.0f, -1.0f ),
+	/*float3x3 x_tbn = float3x3(
+		float3( 0.0f, 0.0f, 1.0f ),
 		float3( 0.0f, 1.0f, 0.0f ),
 		float3( 1.0f, 0.0f, 0.0f )
 	);
@@ -240,13 +240,13 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 
 	float3x3 y_tbn = float3x3(
 		float3( 1.0f, 0.0f, 0.0f ),
-		float3( 0.0f, 0.0f, -1.0f ),
+		float3( 0.0f, 0.0f, 1.0f ),
 		float3( 0.0f, 1.0f, 0.0f )
 	);
 	y_normal = normalize( mul( y_normal, y_tbn ) );
 	y_normal *= sign( input.world_normal.y );
 
-	z_normal *= sign( input.world_normal.z );
+	z_normal *= sign( input.world_normal.z );*/
 
 	//Final Calculation
 	float3 weights = normalize( input.world_normal.xyz );

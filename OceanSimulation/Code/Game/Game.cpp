@@ -136,7 +136,7 @@ void Game::StartUp()
 	AddTestCubeToIndexVertexArray( skyBoxVerts, skyBoxIndex, AABB3( Vec3( -skyboxHalfSize ), Vec3( skyboxHalfSize ) ), Rgba8::WHITE );
 	m_skyCube = new GPUMesh( g_theRenderer, skyBoxVerts, skyBoxIndex );
 	
-	CreateTerrainFromImage( "Data/Images/Terrain.png", Vec2( 60.f, 60.f ), -20.f, 1.f );
+	CreateTerrainFromImage( "Data/Images/Terrain3.png", Vec2( 50.f, 50.f ), -10.f, 1.f );
 }
 
 
@@ -565,8 +565,8 @@ void Game::CreateTerrainFromImage( char const* filepath, Vec2 const& meshDimensi
 			currentPosition.y += currentY;
 
 			Rgba8 texelColorAtVert = terrainImage.GetTexelColor( xStep, terrainDimensions.y - yStep );
-			Vec3 colorPercents = texelColorAtVert.GetValuesAsFractionsVec3();
-			currentPosition.z = Lerp( minHeight, maxHeight, colorPercents.x );
+			Vec4 colorPercents = texelColorAtVert.GetValuesAsFractions();
+			currentPosition.z = Lerp( minHeight, maxHeight, colorPercents.w );
 
 			float u = RangeMapFloat( xMin, halfDimensions.x, 0.f, 1.f, currentX );
 			float v = RangeMapFloat( yMin, halfDimensions.y, 0.f, 1.f, currentY );
