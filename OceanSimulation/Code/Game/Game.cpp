@@ -285,7 +285,11 @@ void Game::DrawWater() const
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderWorld() const
 {
-	DrawWorldBasis();
+	if( g_isDebugDraw )
+	{
+		DrawWorldBasis();
+	}
+
 	DrawTerrain();
 	DrawWater();
 	
@@ -296,6 +300,9 @@ void Game::RenderWorld() const
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderUI() const
 {
+	if( !g_isDebugDraw )
+		return;
+
 	const float textHeight = 0.15f;
 	const float paddingFromLeft = 0.015f;
 	const float paddingFromTop = 0.05f;
@@ -320,6 +327,7 @@ void Game::RenderUI() const
 	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[I] - iWave: %s", ( m_FFTWaveSimulation->IsIWaveEnabled() ? "Enabled" : "Disabled" ) ) ) );
 	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[F] - Wire Frame: %s", ( m_FFTWaveSimulation->IsWireFrameEnabled() ? "Enabled" : "Disabled" ) ) ) );
 	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[C,V] - Choppiness: %.2f", m_FFTWaveSimulation->GetChoppyWaterValue() ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[Z,X] - Time Factor: %.0f", m_FFTWaveSimulation->GetTimeFactor() ) ) );
 
 
 // 	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Data In: %.4f(ms)", m_FFTWaveSimulation->m_simulateTimer.GetAvgTimeMilliseconds() ) ) );
@@ -806,6 +814,15 @@ void Game::UpdateSimulationFromInput()
 		RotateWindDirByDegrees( 30.f * deltaSeconds );
 	}
 
+	if( g_theInput->WasKeyJustPressed( 'Z' ) )
+	{
+		m_FFTWaveSimulation->AddTimeFactor( -1.f );
+	}
+	if( g_theInput->WasKeyJustPressed( 'X' ) )
+	{
+		m_FFTWaveSimulation->AddTimeFactor( 1.f );
+	}
+
 	int numWaves = m_FFTWaveSimulation->GetNumWaves();
 	if( numWaves <= 0 )
 		return;
@@ -1003,6 +1020,10 @@ void Game::UpdateFromInput( float deltaSeconds )
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F2 ) )
 	{
 		LoadCurrentTempValues();
+	}
+	if( g_theInput->WasKeyJustPressed( KEY_CODE_F11 ) )
+	{
+		g_isDebugDraw = !g_isDebugDraw;
 	}
 }
 

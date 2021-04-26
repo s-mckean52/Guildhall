@@ -80,6 +80,7 @@ public:
 	float		GetAConstant() const		{ return m_A; }
 	float		GetWaveSuppression() const	{ return m_waveSuppression; }
 	Vec2 const&	GetWindDirection() const	{ return m_windDirection; }
+	float		GetTimeFactor() const		{ return m_timeFactor; }
 
 	Wave*		GetWaveAtIndex( int index ) const;
 	float		GetDeepDispersion( float kLength );
@@ -91,6 +92,7 @@ public:
 	void	SetIWaveEnabled( bool isEnabled );
 	void	SetChoppyWaterValue( float choppyWaterValue );
 	void	AddChoppyWaterValue( float choppyWaterValueToAdd );
+	void	AddTimeFactor( float timeFactorToAdd );
 	
 	ComplexFloat	hTilde( int n, int m, float time );
 	ComplexFloat	hTilde0( int n, int m, bool doesNegateK = false );
@@ -117,6 +119,8 @@ private:
 
 protected:
 	Clock*				m_simulationClock		= nullptr;
+	float				m_timeFactor			= 1.f;
+
 	WaveSimulationMode	m_waveSimulationMode	= FFT_WAVE_SIMULATION;
 	bool				m_isIWaveEnabled		= false;
 	float				m_choppyWaterValue		= 0.f;

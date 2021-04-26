@@ -299,7 +299,10 @@ float3 GetPerturbedColor( float2 dirToPerturb, float perturbationFactor, float2 
 {
     float2 offset = dirToPerturb * perturbationFactor;
     perturbedPixel = pixelPosition + offset;
-    return backBuffer.Sample( sSampler, perturbedPixel / backBufferDim );
+    float2 perturbedPixelUV = saturate( perturbedPixel / backBufferDim );
+    perturbedPixel = perturbedPixelUV * ( backBufferDim - float2( 1.f, 1.f ) );
+    
+    return backBuffer.Sample( sSampler, perturbedPixelUV );
 }
 
 //--------------------------------------------------------------------------------------
@@ -373,7 +376,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float3 world_normal = normalize( mul( normal1, tbn ) );
 	world_normal += normalize( mul( normal2, tbn ) );
 	world_normal = normalize( world_normal );
-	//world_normal = input.world_normal.xyz;
+    world_normal = input.world_normal.xyz;
 
 	float2 backBufferDim;
 	tBackBuffer.GetDimensions( backBufferDim.x, backBufferDim.y );
@@ -484,7 +487,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
     float refractionDepth = backBufferDepth - pixelDepth;
 	float depthFraction = saturate( refractionDepth * waterFalloff );
     depthFraction = sqrt( sqrt( depthFraction ) );
-    if( refractionDepth <= 0.1f )
+    if( refractionDepth <= 0.1f && refractionDepth > 0.f )
     {
         return float4( 1.f, 1.f, 1.f, 0.75f );
     }

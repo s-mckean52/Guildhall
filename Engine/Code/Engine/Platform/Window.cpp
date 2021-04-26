@@ -7,7 +7,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
-static TCHAR const* WND_CLASS_NAME = L"SImple Window Class";
+static TCHAR const* WND_CLASS_NAME = L"Simple Window Class";
 
 
 //-----------------------------------------------------------------------------------------------

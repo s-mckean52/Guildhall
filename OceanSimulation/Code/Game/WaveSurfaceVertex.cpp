@@ -30,7 +30,7 @@ WaveSurfaceVertex::WaveSurfaceVertex( WaveSimulation* owner, int xSamplePosition
 void WaveSurfaceVertex::CalculateHTildeAtTime( float time )
 {
 	//float dispersionRelation = m_owner->GetDeepDispersion( m_k );
-	float dispersionTime = m_dispersionRelation * time * 10.f;
+	float dispersionTime = m_dispersionRelation * time;// * 10.f;
 
 	float cosDispersionTime = cos( dispersionTime );
 	float sinDispersionTime = sin( dispersionTime );

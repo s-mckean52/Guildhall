@@ -411,7 +411,10 @@ float WaveSimulation::PhillipsEquation( Vec2 const& k, float lengthK )
 	float exponentOfE = -1 / ( ( lengthK * L ) * ( lengthK * L) );
 	float eComponent = std::exp( exponentOfE );
 
-	float kDotW = DotProduct2D( k, m_windDirection );
+	float kDotW = DotProduct2D( k.GetNormalized(), m_windDirection );
+	if( kDotW <= 0.f )
+		kDotW = 0.f;
+
 	float kDotWSquared = kDotW * kDotW;
 
 	float damperSquared = m_waveSuppression * m_waveSuppression;
@@ -495,3 +498,12 @@ void WaveSimulation::AddChoppyWaterValue( float choppyWaterValueToAdd )
 {
 	m_choppyWaterValue += choppyWaterValueToAdd;
 }
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::AddTimeFactor( float timeFactorToAdd )
+{
+	m_timeFactor += timeFactorToAdd;
+	m_simulationClock->SetScale( static_cast<double>( m_timeFactor ) );
+}
+
