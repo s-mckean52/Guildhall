@@ -527,12 +527,17 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
     float3 transmission_color = transmissivity * floor_color;
 	float3 water_color = reflection_color + transmission_color;
     water_color += specular_color;
-	return float4(water_color, 1.f);
+	//return float4(water_color, 1.f);
 
 
 	//Jacobian Foam
-	float turbulance = max(2.0f - input.jacobian.x + dot(0.3f * normalize(world_normal.xy), float2(1.2f, 1.2f)), 0.f);
-	float foam_color = 1.f + 3.0f * smoothstep(1.2f, 1.8f, turbulance);
-    water_color += saturate(float3((foam_color - 1.2f).xxx));
+	//float turbulance = max(2.0f - input.jacobian.x + dot(0.3f * normalize(world_normal.xy), float2(1.2f, 1.2f)), 0.f);
+	float foam_color = float3( 0.2f, 0.4f, 0.5f );
+    float jacobianSign = sign( input.jacobian.x );
+    float jacobainStep = sqrt( sqrt( saturate(input.jacobian.x) ) );
+    //jacobainStep = abs(jacobainStep);// * jacobianSign;
+    jacobainStep = saturate( jacobainStep );
+    float foam_factor = smoothstep( 1.f, 0.f, jacobainStep );
+    water_color += foam_color * foam_factor;
 	return float4( water_color, 1.f);
 }
