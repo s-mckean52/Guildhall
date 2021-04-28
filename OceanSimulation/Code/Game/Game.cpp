@@ -136,7 +136,7 @@ void Game::StartUp()
 	AddTestCubeToIndexVertexArray( skyBoxVerts, skyBoxIndex, AABB3( Vec3( -skyboxHalfSize ), Vec3( skyboxHalfSize ) ), Rgba8::WHITE );
 	m_skyCube = new GPUMesh( g_theRenderer, skyBoxVerts, skyBoxIndex );
 	
-	CreateTerrainFromImage( "Data/Images/Terrain4.png", Vec2( 51.2f, 51.2f ), -10.f, 1.f );
+	CreateTerrainFromImage( "Data/Images/Terrain4.png", Vec2( 51.6f, 51.6f ), -10.f, 1.f );
 }
 
 
@@ -320,6 +320,8 @@ void Game::RenderWorld() const
 	}
 
 	DrawTerrain();
+	g_theRenderer->BindTextureByPath( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
+	g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 	m_testCube->Render();
 	DrawWater();	
 }

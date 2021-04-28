@@ -4,6 +4,7 @@
     <SpecularFactor     value="10.85f"/>
     <SpecularPower      value="700.0f"/>
     <!--<MaterialTexture    filepath="Data/Images/miramar_large_flipped.png"/>-->
+    <DiffuseTexture     filepath="Data/Images/FourNoiseChannels.png"/>
     <MaterialTexture    filepath="Data/Images/waterNM1.png"/>
     <MaterialTexture    filepath="Data/Images/waterNM2.png"/>
     <MaterialSampler    type="linear" wrap="wrap"/>

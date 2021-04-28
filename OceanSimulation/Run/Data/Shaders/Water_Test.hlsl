@@ -368,6 +368,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float nSnell	= 1.34f;
 	float kDiffuse	= 0.91f;
 	float MAX_DEPTH = 12.f;
+    float FOAM_THICKNESS = 0.5f;
 	float waterFalloff = 1.f / MAX_DEPTH;
 	//------------------------------------------------------------------------------
 
@@ -499,11 +500,22 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
     float refractionDepth = backBufferDepth - pixelDepth;
 	float depthFraction = saturate( refractionDepth * waterFalloff );
     depthFraction = sqrt( sqrt( depthFraction ) );
-    if( refractionDepth <= 0.1f && refractionDepth > 0.f )
-    {
-        return float4( 1.f, 1.f, 1.f, 0.75f );
-    }
 	floor_color = lerp( floor_color, upwelling, depthFraction.xxx );
+    if( refractionDepth <= FOAM_THICKNESS && refractionDepth >= 0.f )
+    {
+        float4 noise = tDiffuse.Sample( sSampler, ( input.uv * 1.5f ) + SYSTEM_TIME_SECONDS * normalize( float2( 1.f, 1.f ) ) * float2( 0.001f, 0.003f ) );
+        float noiseA = noise.w;
+        float noiseG = noise.y;
+        float noiseValue = noiseA * noiseG;
+        noiseValue = clamp( noiseValue, 0.1f, 1.f );
+        noiseValue = 1.f - ( noiseValue * noiseValue );
+        
+        float refractionFactor = RangeMap( refractionDepth, 0.f, FOAM_THICKNESS, 1.0f, 0.f );
+        float3 foam_color = float3( 0.9f, 0.9f, 0.9f );
+        
+        foam_color = lerp( floor_color, foam_color, noiseValue * refractionFactor );
+        return float4( foam_color, 1.f );
+    }
 
     //Get Specular
     float3 dir_to_eye = normalize( CAMERA_POSITION - input.world_position );

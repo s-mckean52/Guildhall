@@ -9,6 +9,6 @@
                    iWaveEnabled="false"
                    wireFrameEnabled="false"
                    dispersionRelation="deep"
-                   tilingSize="10">
+                   tilingSize="4">
   </RuntimeDefaults>
 </WaveSimulation>
