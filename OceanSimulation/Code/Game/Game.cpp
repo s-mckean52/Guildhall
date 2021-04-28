@@ -136,7 +136,7 @@ void Game::StartUp()
 	AddTestCubeToIndexVertexArray( skyBoxVerts, skyBoxIndex, AABB3( Vec3( -skyboxHalfSize ), Vec3( skyboxHalfSize ) ), Rgba8::WHITE );
 	m_skyCube = new GPUMesh( g_theRenderer, skyBoxVerts, skyBoxIndex );
 	
-	CreateTerrainFromImage( "Data/Images/Terrain3.png", Vec2( 50.f, 50.f ), -10.f, 1.f );
+	CreateTerrainFromImage( "Data/Images/Terrain4.png", Vec2( 51.2f, 51.2f ), -10.f, 1.f );
 }
 
 
@@ -518,8 +518,16 @@ void Game::LoadSimulationFromXML( char const* filepath )
 		m_FFTWaveSimulation = nullptr;
 	}
 
-	m_FFTWaveSimulation = dynamic_cast<FFTWaveSimulation*>( WaveSimulation::CreateWaveSimulation( simulationFolderPath + filepath ) );
-	m_currentXML = filepath;
+	WaveSimulation* createdWaveSimulation = WaveSimulation::CreateWaveSimulation( simulationFolderPath + filepath );
+	if( createdWaveSimulation != nullptr )
+	{
+		m_FFTWaveSimulation = dynamic_cast<FFTWaveSimulation*>( createdWaveSimulation );
+		m_currentXML = filepath;
+	}
+	else
+	{
+		g_theConsole->ErrorString( "Failed to load new WaveSimulation" );
+	}
 
 	SetTempValues();
 }
@@ -1117,7 +1125,13 @@ void Game::create_new_fft_simulation( EventArgs* args )
 //---------------------------------------------------------------------------------------------------------
 void Game::fft_from_xml( EventArgs* args )
 {
-	std::string filepath = args->GetValue( "file", "Test.xml" );
+	std::string filepath = args->GetValue( "file", "default" );
+	if( filepath == "default" )
+	{
+		g_theConsole->ErrorString( "Expected a parameter for <file>" );
+		g_theConsole->ErrorString( "  Loading \"Test.xml\"" );
+		filepath = "Test.xml";
+	}
 
 	LoadSimulationFromXML( filepath.c_str() );
 }
