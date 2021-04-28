@@ -362,6 +362,7 @@ void RenderContext::SetDepthTest( CompareFunc compareFunc, bool writeDepthOnPass
 		{
 		case COMPARE_FUNC_NEVER:	desc.DepthFunc = D3D11_COMPARISON_NEVER; break;
 		case COMPARE_FUNC_ALWAYS:	desc.DepthFunc = D3D11_COMPARISON_ALWAYS; break;
+		case COMPARE_FUNC_LESS:		desc.DepthFunc = D3D11_COMPARISON_LESS; break;
 		case COMPARE_FUNC_LEQUAL:	desc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL; break;
 		case COMPARE_FUNC_GEQUAL:	desc.DepthFunc = D3D11_COMPARISON_GREATER_EQUAL; break;
 		case COMPARE_FUNC_EQUAL:	desc.DepthFunc = D3D11_COMPARISON_EQUAL; break;
@@ -505,6 +506,7 @@ bool RenderContext::DoesDepthStateMatch( CompareFunc compareFunc, bool writeDept
 	{
 	case COMPARE_FUNC_NEVER: newFunc = D3D11_COMPARISON_NEVER; break;
 	case COMPARE_FUNC_ALWAYS: newFunc = D3D11_COMPARISON_ALWAYS; break;
+	case COMPARE_FUNC_LESS: newFunc = D3D11_COMPARISON_LESS; break;
 	case COMPARE_FUNC_LEQUAL: newFunc = D3D11_COMPARISON_LESS_EQUAL; break;
 	case COMPARE_FUNC_GEQUAL: newFunc = D3D11_COMPARISON_GREATER_EQUAL; break;
 	case COMPARE_FUNC_EQUAL: newFunc = D3D11_COMPARISON_EQUAL; break;

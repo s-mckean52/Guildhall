@@ -87,6 +87,7 @@ CompareFunc ShaderState::GetCompareModeFromXML( XmlElement const& xmlElement )
 	std::string compareModeAsString = ParseXmlAttribute( xmlElement, "CompareMode", "" );
 
 	if( compareModeAsString == "LessThanOrEqual" )			{ return COMPARE_FUNC_LEQUAL; }
+	else if( compareModeAsString == "LessThan" )			{ return COMPARE_FUNC_LESS; }
 	else if( compareModeAsString == "GreaterThanOrEqual" )	{ return COMPARE_FUNC_GEQUAL; }
 	else if( compareModeAsString == "Always" )				{ return COMPARE_FUNC_ALWAYS; }
 	else if( compareModeAsString == "Equal" )				{ return COMPARE_FUNC_EQUAL; }

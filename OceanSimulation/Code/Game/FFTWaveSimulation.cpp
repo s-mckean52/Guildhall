@@ -469,8 +469,8 @@ void FFTWaveSimulation::GetHeightAtPosition( int n, int m, float time )
 
 
 //---------------------------------------------------------------------------------------------------------
-WaveSurfaceVertex& FFTWaveSimulation::GetWaveVertAtIndex( int index )
+WaveSurfaceVertex* FFTWaveSimulation::GetWaveVertAtIndex( int index )
 {
-	return m_waveSurfaceVerts[index];
+	return &m_waveSurfaceVerts[index];
 }
 

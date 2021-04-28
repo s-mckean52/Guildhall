@@ -59,6 +59,8 @@ public:
 //---------------------------------------------------------------------------------------------------------
 class WaveSimulation
 {
+	friend class IWave;
+
 public:
 	virtual ~WaveSimulation() {};
 	WaveSimulation( XmlElement const& element );

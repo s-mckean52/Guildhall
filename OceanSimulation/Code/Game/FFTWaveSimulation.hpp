@@ -21,7 +21,7 @@ public:
 	void InitializeValues();
 
 	void GetHeightAtPosition( int n, int m, float time );
-	WaveSurfaceVertex& GetWaveVertAtIndex( int index );
+	WaveSurfaceVertex* GetWaveVertAtIndex( int index );
 
 	uint			ReverseBits( uint value );
 	void			CreateBitReversedIndicies();
