@@ -2,6 +2,7 @@
 #include "Engine/Math/AABB3.hpp"
 #include "Engine/Math/Transform.hpp"
 #include "Engine/Core/Rgba8.hpp"
+#include "Engine/Math/Mat44.hpp"
 
 class GPUMesh;
 
@@ -19,6 +20,7 @@ public:
 
 	void CreateMesh();
 
+	Mat44		m_worldOrientation;
 private:
 	float		m_movementSpeed = 1.f;
 	GPUMesh*	m_mesh			= nullptr;

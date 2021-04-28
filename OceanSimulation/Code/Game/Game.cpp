@@ -82,7 +82,7 @@ void Game::StartUp()
 	m_worldCamera = new Camera( g_theRenderer );
 	m_worldCamera->SetProjectionPerspective( 60.f, -0.09f, -100.f );
 	m_worldCamera->SetDepthStencilTarget( g_theRenderer->m_defaultDepthStencil );
-	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, Rgba8::MakeFromFloats( 0.1f, 0.1f, 0.1f ), 1.0f, 0 );
+	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, Rgba8::WHITE, 1.0f, 0 );
 	m_worldCamera->SetPosition( Vec3( -8.f, -8.f, 1.f ) );
 	m_worldCamera->SetPitchYawRollRotationDegrees( 10.f, 90.f, 0.f );
 	UpdateCameraProjection( m_worldCamera );
@@ -136,7 +136,7 @@ void Game::StartUp()
 	AddTestCubeToIndexVertexArray( skyBoxVerts, skyBoxIndex, AABB3( Vec3( -skyboxHalfSize ), Vec3( skyboxHalfSize ) ), Rgba8::WHITE );
 	m_skyCube = new GPUMesh( g_theRenderer, skyBoxVerts, skyBoxIndex );
 	
-	CreateTerrainFromImage( "Data/Images/Terrain3.png", Vec2( 50.f, 50.f ), -10.f, 1.f );
+	CreateTerrainFromImage( "Data/Images/Terrain.png", Vec2( 50.f, 50.f ), -10.f, 1.f );
 }
 
 
@@ -174,6 +174,13 @@ void Game::Render()
 {
 	UpdateCameraView( m_worldCamera );
 
+	Texture* backBuffer = g_theRenderer->GetBackBuffer();
+	Texture* refractionMask = g_theRenderer->AcquireRenderTargetMatching( backBuffer );
+	Texture* colorOutput = g_theRenderer->AcquireRenderTargetMatching( backBuffer );
+
+	m_worldCamera->SetColorTarget( 0, colorOutput );
+	m_worldCamera->SetColorTarget( 1, refractionMask );
+
 	//Render worldCamera
 	g_theRenderer->BeginCamera( *m_worldCamera );
 
@@ -189,20 +196,37 @@ void Game::Render()
 	
 	g_theRenderer->BindSampler( nullptr );
 	g_theRenderer->SetCullMode( CULL_MODE_NONE );
-	g_theRenderer->SetDepthTest( COMPARE_FUNC_LEQUAL, true );
+	g_theRenderer->SetDepthTest( COMPARE_FUNC_LESS, true );
+
 
 	g_theRenderer->DisableAllLights();
 	g_theRenderer->SetAmbientLight( m_ambientColor, m_ambientIntensity );
 	EnableLightsForRendering();
 	
+	//---------------------------------------------------------------------------------------------------------
+	g_theRenderer->BindTexture( nullptr );
+	g_theRenderer->BindShaderByPath( "Data/Shaders/RefractionObject.hlsl" );
+	g_theRenderer->DrawMesh( m_landMesh );
+	m_testCube->Render();
+	g_theRenderer->BindShaderByPath( "Data/Shaders/RefractionStencil.hlsl" );
+	m_FFTWaveSimulation->DrawMesh();
 
+
+
+	//---------------------------------------------------------------------------------------------------------
+	g_theRenderer->SetDepthTest( COMPARE_FUNC_GEQUAL, true );
+	g_theRenderer->ClearDepth( m_worldCamera->GetDepthStencilTarget(), m_worldCamera->GetClearDepth() );
 	RenderWorld();
 
 
+	//---------------------------------------------------------------------------------------------------------
 	g_theRenderer->EndCamera( *m_worldCamera );
 
 	DebugRenderWorldToCamera( m_worldCamera );
 
+	g_theRenderer->CopyTexture( backBuffer, colorOutput );
+	g_theRenderer->ReleaseRenderTarget( colorOutput );
+	g_theRenderer->ReleaseRenderTarget( refractionMask );
 
 	//Render UI
 	g_theRenderer->BeginCamera( *m_UICamera );
@@ -221,7 +245,7 @@ void Game::Update()
 		m_testCube->Update();
 		UpdateFromInput( deltaSeconds );
 		//m_DFTWaveSimulation->Simulate();
-		//m_FFTWaveSimulation->m_iWave->AddWaterObject( m_testCube );
+		m_FFTWaveSimulation->m_iWave->AddWaterObject( m_testCube );
 		m_FFTWaveSimulation->Simulate();
 	}
 }
@@ -262,14 +286,18 @@ void Game::DrawTerrain() const
 void Game::DrawWater() const
 {
 	Texture* depthStencil = m_worldCamera->GetDepthStencilTarget();
-	Texture* backBuffer = g_theRenderer->GetBackBuffer();
+	Texture* colorTarget = m_worldCamera->GetColorTarget( 0 );
+	Texture* refractionStencil = m_worldCamera->GetColorTarget( 1 );
 	
-	Texture* backBufferCopy = g_theRenderer->AcquireRenderTargetMatching( backBuffer );
+	Texture* backBufferCopy = g_theRenderer->AcquireRenderTargetMatching( colorTarget );
+	Texture* refractionStencilCopy = g_theRenderer->AcquireRenderTargetMatching( refractionStencil );
 	Texture* depthStencilCopy = g_theRenderer->AcquireRenderTargetMatching( depthStencil );
 
-	g_theRenderer->CopyTexture( backBufferCopy, backBuffer );
+	g_theRenderer->CopyTexture( backBufferCopy, colorTarget );
+	g_theRenderer->CopyTexture( refractionStencilCopy, refractionStencil );
 	g_theRenderer->CopyTexture( depthStencilCopy, depthStencil );
 
+	g_theRenderer->BindMaterialTexture( 4, refractionStencilCopy );
 	g_theRenderer->BindMaterialTexture( 5, m_skyBox );
 	g_theRenderer->BindMaterialTexture( 6, backBufferCopy );
 	g_theRenderer->BindMaterialTexture( 7, depthStencilCopy );
@@ -279,6 +307,7 @@ void Game::DrawWater() const
 	
 	g_theRenderer->ReleaseRenderTarget( backBufferCopy );
 	g_theRenderer->ReleaseRenderTarget( depthStencilCopy );
+	g_theRenderer->ReleaseRenderTarget( refractionStencilCopy );
 }
 
 
@@ -291,9 +320,8 @@ void Game::RenderWorld() const
 	}
 
 	DrawTerrain();
-	DrawWater();
-	
-	//m_testCube->Render();
+	m_testCube->Render();
+	DrawWater();	
 }
 
 
@@ -738,7 +766,7 @@ void Game::UpdateSimulationFromInput()
 		m_FFTWaveSimulation->AddChoppyWaterValue( updateSpeed * deltaSeconds );
 	}
 
-	if( g_theInput->WasKeyJustPressed( 'M' ) )
+	if( g_theInput->WasKeyJustPressed( '1' ) )
 	{
 		FFTWaveSimulation* fft = dynamic_cast<FFTWaveSimulation*>( m_FFTWaveSimulation );
 		fft->m_iWave->AddSource( 32 * 16 + 16, -0.5f );
@@ -822,74 +850,6 @@ void Game::UpdateSimulationFromInput()
 	{
 		m_FFTWaveSimulation->AddTimeFactor( 1.f );
 	}
-
-	int numWaves = m_FFTWaveSimulation->GetNumWaves();
-	if( numWaves <= 0 )
-		return;
-
-
-	//Change Wave
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_LEFT_ARROW ) )
-	{
-		--m_selectedWaveIndex;
-	}
-	if( g_theInput->WasKeyJustPressed( KEY_CODE_RIGHT_ARROW ) )
-	{
-		++m_selectedWaveIndex;
-	}
-	Clamp( m_selectedWaveIndex, 0, numWaves - 1 );
-	Wave* waveToModify = m_DFTWaveSimulation->GetWaveAtIndex( m_selectedWaveIndex );
-
-	//Change Direction
-	if( g_theInput->IsKeyPressed( KEY_CODE_UP_ARROW ) )
-	{
-		waveToModify->RotateDirectionDegrees( updateSpeed * 3.f * deltaSeconds );
-	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_DOWN_ARROW ) )
-	{
-		waveToModify->RotateDirectionDegrees( -updateSpeed * 3.f * deltaSeconds );
-	}
-
-	//Change Amplitude
-	if( g_theInput->IsKeyPressed( KEY_CODE_PLUS ) )
-	{
-		waveToModify->AddAmplitude( updateSpeed * deltaSeconds );
-	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_MINUS ) )
-	{
-		waveToModify->AddAmplitude( -updateSpeed * deltaSeconds );
-	}
-
-	//Change Frequency
-	if( g_theInput->IsKeyPressed( KEY_CODE_RIGHT_BRACKET ) )
-	{
-		waveToModify->AddMagnitude( updateSpeed * deltaSeconds );
-	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_LEFT_BRACKET ) )
-	{
-		waveToModify->AddMagnitude( -updateSpeed * deltaSeconds );
-	}
-
-	//Change Phase
-	if( g_theInput->IsKeyPressed( KEY_CODE_APOSTROPHE ) )
-	{
-		waveToModify->AddPhase( updateSpeed * deltaSeconds );
-	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_SEMICOLON ) )
-	{
-		waveToModify->AddPhase( -updateSpeed * deltaSeconds );
-	}
-
-	//Change Wave Size
-	if( g_theInput->IsKeyPressed( KEY_CODE_COMMA ) )
-	{
-		//Increase Amplitude
-	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_PERIOD ) )
-	{
-		//Decrease Amplitude
-	}
-
 }
 
 

@@ -1,5 +1,7 @@
 #include "Engine/Math/MathUtils.hpp"
 #include "Engine/Math/AABB2.hpp"
+#include "Engine/Math/Mat44.hpp"
+#include "Engine/Core/DebugRender.hpp"
 #include "Game/IWave.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/FFTWaveSimulation.hpp"
@@ -59,8 +61,8 @@ void IWave::Update( float deltaSeconds )
 //---------------------------------------------------------------------------------------------------------
 void IWave::GetHeightFromSimulation( int index )
 {
-	WaveSurfaceVertex& currentWaveVert = m_owner->GetWaveVertAtIndex( index );
-	m_samplePoints[index].m_height -= currentWaveVert.m_height * ( 1.f - m_obstructions[index] );
+	WaveSurfaceVertex* currentWaveVert = m_owner->GetWaveVertAtIndex( index );
+	m_samplePoints[index].m_height -= currentWaveVert->m_height * ( 1.f - m_obstructions[index] );
 }
 
 
@@ -69,8 +71,8 @@ void IWave::ApplyHeightsToSimulation()
 {
 	for( int index = 0; index < m_samplePoints.size(); ++index )
 	{
-		WaveSurfaceVertex& currentWaveVert = m_owner->GetWaveVertAtIndex( index );
-		currentWaveVert.m_height += m_samplePoints[index].m_height;
+		WaveSurfaceVertex* currentWaveVert = m_owner->GetWaveVertAtIndex( index );
+		currentWaveVert->m_height += m_samplePoints[index].m_height;
 	}
 }
 
@@ -231,8 +233,9 @@ void IWave::AddWaterObject( WaterObject* waterObjectToAdd )
 {
 	Vec3 position = waterObjectToAdd->GetPosition();
 	AABB3 objectBounds = waterObjectToAdd->GetBounds();
-	AABB2 object2DInnerBounds = AABB2( objectBounds.mins.x, objectBounds.mins.y, objectBounds.maxes.x, objectBounds.maxes.y );
 
+	//AABB2 objectCenterBounds = AABB2( -m_deltas, m_deltas );
+	AABB2 object2DInnerBounds = AABB2( objectBounds.mins.x, objectBounds.mins.y, objectBounds.maxes.x, objectBounds.maxes.y );
 
 	Vec2 minOutterBoundsOnGrid;
 	minOutterBoundsOnGrid.x = RoundDownToInt( object2DInnerBounds.mins.x / m_deltas.x ) * m_deltas.x;
@@ -244,19 +247,52 @@ void IWave::AddWaterObject( WaterObject* waterObjectToAdd )
 
 	AABB2 object2DOutterBounds = AABB2( minOutterBoundsOnGrid, maxOutterBoundsOnGrid );
 
+	//objectCenterBounds.Translate( Vec2( position.x, position.y ) );
 	object2DInnerBounds.Translate( Vec2( position.x, position.y ) );
 	object2DOutterBounds.Translate( Vec2( position.x, position.y ) );
 
-
+	int pointsHit = 0;
+	float heightTotal = 0.f;
+	Vec3 tangentTotal = Vec3::ZERO;
+	Vec3 bitangentTotal = Vec3::ZERO;
+	Vec3 normalTotal = Vec3::ZERO;
 	for( int i = 0; i < m_obstructions.size(); ++i )
 	{
+
+		int yGridPos = i / m_gridDimensions.x;
+		int xGridPos = i - yGridPos * m_gridDimensions.x;
+
 		Vec2 samplePointPosition;
-		samplePointPosition.y = static_cast<float>( ( i / m_gridDimensions.x ) - ( m_gridDimensions.x / 2 ) ) * m_deltas.y; 
-		samplePointPosition.x = static_cast<float>( ( i % m_gridDimensions.x ) - ( m_gridDimensions.y / 2 ) ) * m_deltas.x;
+		samplePointPosition.y = static_cast<float>( yGridPos - ( m_gridDimensions.x / 2 ) ) * m_deltas.y; 
+		samplePointPosition.x = static_cast<float>( xGridPos - ( m_gridDimensions.y / 2 ) ) * m_deltas.x;
+
+// 		if( !hasFoundCenter && IsPointInsideAABB2D( samplePointPosition, objectCenterBounds ) )
+// 		{
+// 			WaveSurfaceVertex* waveVertAtPoint = m_owner->GetWaveVertAtIndex( i );
+// 			float height	= waveVertAtPoint->m_height;
+// 
+// 			Vertex_OCEAN& surfaceVertAtPoint = m_owner->m_surfaceVerts[i + yGridPos];
+// 			Vec3 tangent	= surfaceVertAtPoint.m_tangent;
+// 			Vec3 bitangent	= surfaceVertAtPoint.m_bitangent;
+// 			Vec3 normal		= surfaceVertAtPoint.m_normal;
+// 			Mat44 waveVertOrientation = Mat44( tangent, bitangent, normal, Vec3( 0.f, 0.f, height ) );
+// 			waterObjectToAdd->m_worldOrientation = waveVertOrientation;
+// 			DebugAddWorldBasis( waveVertOrientation, 0.f );
+// 			hasFoundCenter = true;
+// 		}
 
 		if( IsPointInsideAABB2D( samplePointPosition, object2DInnerBounds ) )
 		{
 			m_obstructions[i] = 0.f;
+
+			WaveSurfaceVertex* waveVertAtPoint = m_owner->GetWaveVertAtIndex( i );
+			heightTotal += waveVertAtPoint->m_height;
+
+			Vertex_OCEAN& surfaceVertAtPoint = m_owner->m_surfaceVerts[i + yGridPos];
+			tangentTotal		+= surfaceVertAtPoint.m_tangent;
+			bitangentTotal	+= surfaceVertAtPoint.m_bitangent;
+			normalTotal		+= surfaceVertAtPoint.m_normal;
+			pointsHit++;
 		}
 		else if( IsPointInsideAABB2D( samplePointPosition, object2DOutterBounds ) )
 		{
@@ -265,6 +301,17 @@ void IWave::AddWaterObject( WaterObject* waterObjectToAdd )
 			float percent = ( ( displacementToPoint.x / m_deltas.x ) + ( displacementToPoint.y / m_deltas.y ) ) * 0.5f;
 			m_obstructions[i] = 1.f - abs( percent );
 		}
+
 	}
+
+	float inversePointsHit = 1.f / static_cast<float>( pointsHit );
+	float heightAverage = heightTotal * inversePointsHit;
+	Vec3 tangentAverage = tangentTotal * inversePointsHit;
+	Vec3 bitangentAverage = bitangentTotal * inversePointsHit;
+	Vec3 normalAverage = normalTotal * inversePointsHit;
+
+	Mat44 waveVertOrientation = Mat44( tangentAverage, bitangentAverage, normalAverage, Vec3( 0.f, 0.f, heightAverage ) );
+	waterObjectToAdd->m_worldOrientation = waveVertOrientation;
+	DebugAddWorldBasis( waveVertOrientation, 0.f );
 }
 

@@ -112,7 +112,9 @@ void WaveSurfaceVertex::SetVertexPositionAndNormal( Vertex_OCEAN& vertexToModify
 	{
 		vertexToModify.m_position = m_initialPosition + translation;
 	}
-	vertexToModify.m_normal = m_surfaceNormal;
+	vertexToModify.m_normal		= m_surfaceNormal;
+	vertexToModify.m_tangent	= CrossProduct3D( Vec3::UNIT_POSITIVE_Y, m_surfaceNormal );
+	vertexToModify.m_bitangent	= CrossProduct3D( m_surfaceNormal, vertexToModify.m_tangent );
 }
 
 

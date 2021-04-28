@@ -142,7 +142,9 @@ float3x3 GetVertexTBN( v2f_t input )
 	float3 normal = normalize( input.world_normal );
 	float3 tangent = normalize( input.world_tangent );
 	float3 bitangent = normalize( input.world_bitangent );
-	float3x3 tbn = float3x3( tangent, bitangent, normal );
+	float3x3 tbn = float3x3(    tangent,
+                                bitangent, 
+                                normal );
 	return tbn;
 }
 
@@ -188,51 +190,47 @@ v2f_t VertexFunction(vs_input_t input)
 	return v2f;
 }
 
+struct fragment_output_t
+{
+    float4 color        : SV_TARGET0;
+    float4 refraction   : SV_TARGET1;
+};
+
 //--------------------------------------------------------------------------------------
 // Fragment Shader
 // 
 // SV_Target0 at the end means the float4 being returned
 // is being drawn to the first bound color target.
-float4 FragmentFunction(v2f_t input) : SV_Target0
+fragment_output_t FragmentFunction(v2f_t input)
 {   
+    fragment_output_t output;
+    //output.refraction = float4( 0.f, 0.f, 0.f, 1.f );
+    
     //Triplanar
 	float2 x_uv = frac( input.world_position.yz );
 	float2 y_uv = frac( input.world_position.xz );
     y_uv.x = 1.0f - y_uv.x;
 	float2 z_uv = frac( input.world_position.xy );
 
-    float4 x_color;
-    float4 y_color;
-    float4 z_color;
-    
-    if( input.world_position.z < -10.f )
-    {
-	    x_color = tDiffuse1.Sample( sSampler, x_uv );// * float4( 1.f, 0.25f, 0.25f, 1.f );
-	    y_color = tDiffuse1.Sample( sSampler, y_uv );// * float4( 0.25f, 1.f, 0.25f, 1.f );
-	    z_color = tDiffuse0.Sample( sSampler, z_uv );// * float4( 0.25f, 0.25f, 1.f, 1.f );
-    }
-    else
-    {
-	    x_color = tDiffuse1.Sample( sSampler, x_uv );
-	    y_color = tDiffuse1.Sample( sSampler, y_uv );
-	    z_color = tDiffuse0.Sample( sSampler, z_uv );
-    }
 
-	//float3 x_normal = tXNormal.Sample( sSampler, x_uv ).xyz;
-	//float3 y_normal = tYNormal.Sample( sSampler, y_uv ).xyz;
-	//float3 z_normal = tZNormal.Sample( sSampler, z_uv ).xyz;
-    //
-	//x_normal = ( x_normal * float3( 2.0f, 2.0f, 1.0f ) ) - float3( 1.0f, 1.0f, 0.0f );
-	//y_normal = ( y_normal * float3( 2.0f, 2.0f, 1.0f ) ) - float3( 1.0f, 1.0f, 0.0f );
-	//z_normal = ( z_normal * float3( 2.0f, 2.0f, 1.0f ) ) - float3( 1.0f, 1.0f, 0.0f );
+    float4 x_color = tDiffuse1.Sample( sSampler, x_uv );
+    float4 y_color = tDiffuse1.Sample( sSampler, y_uv );
+    float4 z_color = tDiffuse0.Sample( sSampler, z_uv );
 
-    float3 x_normal = float3( 1.f, 0.f, 0.f );
-    float3 y_normal = float3( 0.f, 1.f, 0.f );
-    float3 z_normal = float3( 0.f, 0.f, 1.f );
+
+
+	float3 x_normal = tNormal1.Sample( sSampler, x_uv ).xyz;
+	float3 y_normal = tNormal1.Sample( sSampler, y_uv ).xyz;
+	float3 z_normal = tNormal0.Sample( sSampler, z_uv ).xyz;
     
-	/*float3x3 x_tbn = float3x3(
-		float3( 0.0f, 0.0f, 1.0f ),
+	x_normal = ( x_normal * float3( 2.0f, 2.0f, 1.0f ) ) - float3( 1.0f, 1.0f, 0.0f );
+	y_normal = ( y_normal * float3( 2.0f, 2.0f, 1.0f ) ) - float3( 1.0f, 1.0f, 0.0f );
+	z_normal = ( z_normal * float3( 2.0f, 2.0f, 1.0f ) ) - float3( 1.0f, 1.0f, 0.0f );
+
+    
+	float3x3 x_tbn = float3x3(
 		float3( 0.0f, 1.0f, 0.0f ),
+		float3( 0.0f, 0.0f, 1.0f ),
 		float3( 1.0f, 0.0f, 0.0f )
 	);
 	x_normal = normalize( mul( x_normal, x_tbn ) );
@@ -246,12 +244,12 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	y_normal = normalize( mul( y_normal, y_tbn ) );
 	y_normal *= sign( input.world_normal.y );
 
-	z_normal *= sign( input.world_normal.z );*/
+	z_normal *= sign( input.world_normal.z );
 
 	//Final Calculation
 	float3 weights = normalize( input.world_normal.xyz );
 	weights = weights * weights;
-
+    
 	float4 triplanar_color
 		= weights.x * x_color
 		+ weights.y * y_color
@@ -264,8 +262,9 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 
 	triplanar_normal = normalize( triplanar_normal );
     
-    return triplanar_color;
+    output.color = triplanar_color;
+    return output;
     
     float3 normal = GetColorFromNormalDir( normalize( input.world_normal ) );
-    return float4( normal, 1.f );
+    output.color = float4( normal, 1.f );
 }

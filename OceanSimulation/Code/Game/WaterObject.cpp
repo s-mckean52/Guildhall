@@ -22,12 +22,11 @@ WaterObject::WaterObject( Vec3 const& m_halfDimensions, Vec3 const& initialPosit
 	//m_transform.SetUniformScale( 0.1f );
 	//CreateMesh();
 
-	std::vector<Vertex_PCUTBN> verts;
-	std::vector<uint> vertOffsets;
-	//m_mesh = new GPUMesh( g_theRenderer );
-	ReadAndParseObjFile( "Data/Models/Shark.obj", verts, &vertOffsets );
-	//m_mesh->UpdateVerticies( verts.size(), &verts[0], );
-	m_mesh = new GPUMesh( g_theRenderer, verts, vertOffsets, 3 );
+	//std::vector<Vertex_PCUTBN> verts;
+	//std::vector<uint> vertOffsets;
+	CreateMesh();
+	//ReadAndParseObjFile( "Data/Models/Shark.obj", verts, &vertOffsets );
+	//m_mesh = new GPUMesh( g_theRenderer, verts, vertOffsets, 3 );
 }
 
 
@@ -62,12 +61,15 @@ void WaterObject::Update()
 //---------------------------------------------------------------------------------------------------------
 void WaterObject::Render() const
 {
-	std::vector<Material*> materials;
-	materials.push_back( g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Shark_body.material" ) );
-	materials.push_back( g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Shark_teeth.material" ) );
-	materials.push_back( g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Shark_eye.material" ) );
-	g_theRenderer->SetModelUBO( m_transform.ToMatrix() );
-	g_theRenderer->DrawMeshWithMaterials( m_mesh, &materials[0] );
+// 	std::vector<Material*> materials;
+// 	materials.push_back( g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Shark_body.material" ) );
+// 	materials.push_back( g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Shark_teeth.material" ) );
+// 	materials.push_back( g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Shark_eye.material" ) );
+	Mat44 modelMatrix = m_worldOrientation;
+	modelMatrix.TransformBy( m_transform.ToMatrix() );
+ 	g_theRenderer->SetModelUBO( modelMatrix );
+// 	g_theRenderer->DrawMeshWithMaterials( m_mesh, &materials[0] );
+	g_theRenderer->DrawMesh( m_mesh );
 }
 
 
