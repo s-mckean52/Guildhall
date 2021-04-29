@@ -19,7 +19,7 @@ private:
 	FFTWaveSimulation* m_owner = nullptr;
 
 	//Simulation Data
-	int		m_numSamples	= 0;
+	uint	m_numSamples	= 0;
 	uint	m_log2N			= 0;
 	uint	which			= 0;
 

@@ -120,13 +120,13 @@ void IWave::CreateKernel( int kernelSize )
 
 
 		float g = 0.f;
-		float r = sqrtf( ( xPos * xPos ) + ( yPos * yPos ) );
+		float r = sqrtf( static_cast<float>( ( xPos * xPos ) + ( yPos * yPos ) ) );
 		for( int n = 0; n < 10000; ++n )
 		{
 			float q = n * deltaQ;
 			float q2 = q * q;
 			float eQ = q2 * std::exp(-q2);
-			g += ::_j0( q * r ) * eQ;
+			g += static_cast<float>( ::_j0( q * r ) ) * eQ;
 		}
 		m_kernelValuesLookUp[index] = g / g0;
 	}
@@ -213,12 +213,12 @@ float IWave::GetHeightAtIndex( int index )
 {
 	if( index < 0 )
 	{
-		int tiledIndex = index + m_samplePoints.size() - 1;
+		int tiledIndex = index + static_cast<int>( m_samplePoints.size() - 1 );
 		return m_samplePoints[tiledIndex].m_height;
 	}
 	else if( index > m_samplePoints.size() - 1 )
 	{
-		int tiledIndex = index - ( m_samplePoints.size() - 1 );
+		int tiledIndex = index - static_cast<int>( m_samplePoints.size() - 1 );
 		return m_samplePoints[tiledIndex].m_height;
 	}
 	else

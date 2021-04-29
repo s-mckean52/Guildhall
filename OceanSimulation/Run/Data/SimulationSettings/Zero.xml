@@ -1,0 +1,14 @@
+<WaveSimulation type="FFT" samples="32" dimensions="12.8f,12.8f">
+  <PhillipsSpectrum aConstant="0.00f"
+                    windSpeed="0.f"
+                    windDirection="1.f,0.f"
+                    waveSuppression="0.000f">
+  </PhillipsSpectrum>
+  
+  <RuntimeDefaults choppiness="0.f"
+                   iWaveEnabled="false"
+                   wireFrameEnabled="false"
+                   dispersionRelation="deep"
+                   tilingSize="1">
+  </RuntimeDefaults>
+</WaveSimulation>

@@ -336,21 +336,22 @@ Mat44 WaveSimulation::GetAverageWaterTransformOnGrid( IntVec2 const& gridStartPo
 	Vec3 tangentTotal	= Vec3::ZERO;
 	Vec3 bitangentTotal = Vec3::ZERO;
 	Vec3 normalTotal	= Vec3::ZERO;
-	for( uint yStep = 0; yStep < gridDimToUse.y; ++yStep )
+	for( int yStep = 0; yStep < gridDimToUse.y; ++yStep )
 	{
-		for( uint xStep = 0; xStep < gridDimToUse.x; ++xStep )
+		for( int xStep = 0; xStep < gridDimToUse.x; ++xStep )
 		{
+			int samplesPlus1 = static_cast<int>( m_numSamples + 1 );
 			IntVec2 gridPosition = gridStartPos + IntVec2( xStep, yStep );
-			if( gridPosition.x >= m_numSamples + 1 )
+			if( gridPosition.x >= samplesPlus1 )
 			{
-				gridPosition.x -= m_numSamples + 1;
+				gridPosition.x -= samplesPlus1;
 			}
-			if( gridPosition.y >= m_numSamples + 1 )
+			if( gridPosition.y >= samplesPlus1 )
 			{
-				gridPosition.y -= m_numSamples + 1;
+				gridPosition.y -= samplesPlus1;
 			}
 
-			int gridPositionIndex = gridPosition.x + ( gridPosition.y * ( m_numSamples + 1 ) );
+			int gridPositionIndex = gridPosition.x + ( gridPosition.y * samplesPlus1 );
 			Vertex_OCEAN& vertexToAdd = m_surfaceVerts[gridPositionIndex];
 			positionTotal	+= vertexToAdd.m_position;
 			tangentTotal	+= vertexToAdd.m_tangent;

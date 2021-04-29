@@ -139,27 +139,28 @@ void FFTWaveSimulation::Simulate()
 		int nPlus1 = positionIndex - mPlus1 * ( m_numSamples + 1 );
 
 
+		int numSamplesAsInt = static_cast<int>( m_numSamples );
 		Vertex_OCEAN& currentVert = m_surfaceVerts[positionIndex];
-		if( mPlus1 != m_numSamples && nPlus1 != m_numSamples )
+		if( mPlus1 != numSamplesAsInt && nPlus1 != numSamplesAsInt )
 		{
 			int waveIndex = mPlus1 * m_numSamples + nPlus1;
 			m_waveSurfaceVerts[waveIndex].SetVertexPositionAndNormal( currentVert );
 			currentVert.m_jacobian.x = CalculateJacobianForVertexAtIndex( waveIndex );
 		}
-		else if( mPlus1 == m_numSamples && nPlus1 == m_numSamples )
+		else if( mPlus1 == numSamplesAsInt && nPlus1 == numSamplesAsInt )
 		{
 			m_waveSurfaceVerts[ 0 ].SetVertexPositionAndNormal( currentVert, true );
 			currentVert.m_position += m_initialSurfacePositions[positionIndex];
 			currentVert.m_jacobian.x = CalculateJacobianForVertexAtIndex( 0 );
 		}
-		else if( nPlus1 == m_numSamples )
+		else if( nPlus1 == numSamplesAsInt )
 		{
 			int firstIndexInRow = mPlus1 * m_numSamples;
 			m_waveSurfaceVerts[ firstIndexInRow ].SetVertexPositionAndNormal( currentVert, true );
 			currentVert.m_position += m_initialSurfacePositions[positionIndex];
 			currentVert.m_jacobian.x = CalculateJacobianForVertexAtIndex( firstIndexInRow );
 		}
-		else if( mPlus1 == m_numSamples )
+		else if( mPlus1 == numSamplesAsInt )
 		{
 			int firstIndexInCol = nPlus1;
 			m_waveSurfaceVerts[firstIndexInCol].SetVertexPositionAndNormal( currentVert, true );

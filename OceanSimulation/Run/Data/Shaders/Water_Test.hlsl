@@ -310,9 +310,13 @@ float3 GetPerturbedColor( float2 dirToPerturb, float perturbationFactor, float2 
         perturbedPixel = pixelPosition;
     }
     
-    float2 perturbedPixelUV = saturate( perturbedPixel / backBufferDim );
-    perturbedPixel = perturbedPixelUV * ( backBufferDim - float2( 1.f, 1.f ) );
-    return backBuffer.Sample( sSampler, perturbedPixelUV );
+    perturbedPixel = clamp( perturbedPixel, float2( 0.f, 0.f ), backBufferDim - float2( 1.f, 1.f ) );
+    return backBuffer.Load( int3( perturbedPixel, 0 ) );
+    
+    //Creates artifacts if too close to objects
+//  float2 perturbedPixelUV = saturate( perturbedPixel / backBufferDim );
+//  perturbedPixel = perturbedPixelUV * ( backBufferDim - float2( 1.f, 1.f ) );
+//  return backBuffer.Sample( sSampler, perturbedPixelUV );
 }
 
 //--------------------------------------------------------------------------------------

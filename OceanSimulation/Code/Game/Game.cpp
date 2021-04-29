@@ -98,9 +98,9 @@ void Game::StartUp()
 
 	g_theRenderer->SetAmbientLight( m_ambientColor, m_ambientIntensity );
 
-	uint samples = 256;
-	Vec2 dimensions = Vec2( 64.f, 64.f );
-	float wind = 37.f;
+	//uint samples = 256;
+	//Vec2 dimensions = Vec2( 64.f, 64.f );
+	//float wind = 37.f;
 	//m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples, wind );
 	LoadSimulationFromXML( "Test.xml" );
 	//CreateNewFFTSimulation( samples, dimensions, wind );
@@ -598,10 +598,10 @@ void Game::CreateTerrainFromImage( char const* filepath, Vec2 const& meshDimensi
 	Vec3 yStepDisplacement = Vec3( 0.f, yStepAmount, 0.f );
 
 	float currentY = yMin;
-	for( unsigned int yStep = 0; yStep < terrainDimensions.y + 1; ++yStep )
+	for( int yStep = 0; yStep < terrainDimensions.y + 1; ++yStep )
 	{
 		float currentX = xMin;
-		for( unsigned int xStep = 0; xStep < terrainDimensions.x + 1; ++xStep )
+		for( int xStep = 0; xStep < terrainDimensions.x + 1; ++xStep )
 		{
 			Vec3 currentPosition = Vec3::ZERO;
 			currentPosition.x += currentX;
@@ -668,10 +668,10 @@ void Game::GenerateTerrainVerts( GPUMesh* meshToModify, IntVec2 const& vertDimen
 	Vec3 yStepDisplacement = Vec3( 0.f, yStepAmount, 0.f );
 
 	float currentY = yMin;
-	for( unsigned int yStep = 0; yStep < vertDimensions.y + 1; ++yStep )
+	for( int yStep = 0; yStep < vertDimensions.y + 1; ++yStep )
 	{
 		float currentX = xMin;
-		for( unsigned int xStep = 0; xStep < vertDimensions.x + 1; ++xStep )
+		for( int xStep = 0; xStep < vertDimensions.x + 1; ++xStep )
 		{
 			Vec3 currentPosition = Vec3::ZERO;
 			currentPosition.x += currentX;// * xStepDisplacement;

@@ -102,10 +102,10 @@ void MeshGenerateNormals( std::vector<Vertex_PCUTBN>& vertices, std::vector<uint
 //---------------------------------------------------------------------------------------------------------
 void AverageNormals( Vec3& currentNormal, Vec3 const& normalToAdd, uint& numAdded )
 {
-	currentNormal *= numAdded;
+	currentNormal *= static_cast<float>( numAdded );
 	currentNormal += normalToAdd;
 	numAdded++;
-	currentNormal /= numAdded;
+	currentNormal /= static_cast<float>( numAdded );
 }
 
 
