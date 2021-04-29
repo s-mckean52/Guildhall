@@ -50,7 +50,7 @@ protected:
 	ComplexFloatVector m_slopeX;
 	ComplexFloatVector m_slopeY;
 
-	std::vector<WaveSurfaceVertex> m_waveSurfaceVerts;
+	std::vector<WaveSurfaceVertex>	m_waveSurfaceVerts;
 
 	std::vector<ComplexFloatVector> m_c;
 	std::vector<WaveSurfaceVertexVector> m_switchArray;

@@ -6,7 +6,7 @@
 #include "Engine/Input/InputSystem.hpp"
 #include "Engine/Core/DebugRender.hpp"
 #include "Engine/Core/FileUtils.hpp"
-//#include "Engine/Core/"
+#include "Engine/Renderer/MeshUtils.hpp"
 #include "Game/GameCommon.hpp"
 #include "Game/WaterObject.hpp"
 #include "Game/Game.hpp"
@@ -18,15 +18,16 @@ WaterObject::WaterObject( Vec3 const& m_halfDimensions, Vec3 const& initialPosit
 {
 	m_bounds = AABB3( -m_halfDimensions, m_halfDimensions );
 	m_transform.SetPosition( initialPosition );
-	//m_transform.SetRotationFromPitchYawRollDegrees( -90.f, 0.f, 0.f );
-	//m_transform.SetUniformScale( 0.1f );
 	//CreateMesh();
 
-	//std::vector<Vertex_PCUTBN> verts;
-	//std::vector<uint> vertOffsets;
-	CreateMesh();
-	//ReadAndParseObjFile( "Data/Models/Shark.obj", verts, &vertOffsets );
-	//m_mesh = new GPUMesh( g_theRenderer, verts, vertOffsets, 3 );
+	std::vector<Vertex_PCUTBN> verts;
+	std::vector<uint> vertOffsets;
+	ReadAndParseObjFile( "Data/Models/woodenCrate.obj", verts );
+	m_mesh = new GPUMesh( g_theRenderer );
+	m_mesh->UpdateVerticies( static_cast<uint>( verts.size() ), &verts[0] );
+	m_transform.SetRotationFromPitchYawRollDegrees( -90.f, 0.f, 0.f );
+	m_transform.SetUniformScale( 1.f );
+	m_transform.Translate( Vec3::ZERO );
 }
 
 
@@ -66,10 +67,42 @@ void WaterObject::Render() const
 // 	materials.push_back( g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Shark_teeth.material" ) );
 // 	materials.push_back( g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Shark_eye.material" ) );
 	Mat44 modelMatrix = m_worldOrientation;
-	modelMatrix.TransformBy( m_transform.ToMatrix() );
- 	g_theRenderer->SetModelUBO( modelMatrix );
+	modelMatrix.SetTranslation3D( Vec3::ZERO );
+	Mat44 transformOrientation = m_transform.ToMatrix();
+	transformOrientation.SetTranslation3D( Vec3::ZERO );
+
+	modelMatrix.TransformBy( transformOrientation );
+	modelMatrix.SetTranslation3D( m_worldOrientation.GetTranslation3D() + GetPosition() );
+ 	
+	g_theRenderer->SetModelUBO( modelMatrix );
 // 	g_theRenderer->DrawMeshWithMaterials( m_mesh, &materials[0] );
+	g_theRenderer->BindMaterialByPath( "Data/Shaders/WoodenCrate.material" );
 	g_theRenderer->DrawMesh( m_mesh );
+
+	if( g_isDebugDraw )
+	{
+		std::vector<Vertex_PCU> verts;
+		std::vector<uint> indices;
+		AddBoxToIndexedVertexArray( verts, indices, m_bounds, Rgba8::GREEN );
+
+		g_theRenderer->SetModelUBO( modelMatrix );
+		g_theRenderer->BindTexture( nullptr );
+		g_theRenderer->BindShader( nullptr );
+		g_theRenderer->DrawIndexedVertexArray( verts, indices );
+
+
+		Mat44 debugBasis = m_worldOrientation;
+		debugBasis.Tx = m_transform.GetPosition().x;
+		debugBasis.Ty = m_transform.GetPosition().y;
+		DebugAddWorldBasis( debugBasis, 0.f, DEBUG_RENDER_ALWAYS );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaterObject::SetWorldTransform( Mat44 const& transform )
+{
+	m_worldOrientation = transform;
 }
 
 

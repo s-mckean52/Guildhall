@@ -96,8 +96,7 @@ void Game::StartUp()
 	m_theSun.color = Rgba8::WHITE.GetValuesAsFractionsVec3();//Rgba8(255, 184, 19).GetValuesAsFractionsVec3();
 	m_theSun.intensity = 1.f;
 
-	g_theRenderer->SetAmbientColor( Rgba8::BLACK );
-	g_theRenderer->SetAmbientIntensity( 0.f );
+	g_theRenderer->SetAmbientLight( m_ambientColor, m_ambientIntensity );
 
 	uint samples = 256;
 	Vec2 dimensions = Vec2( 64.f, 64.f );
@@ -120,10 +119,6 @@ void Game::StartUp()
 
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
 	m_test				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Grid.png" );
-
-	m_testShader = g_theRenderer->GetOrCreateShader( "Data/Shaders/WorldOpaque.hlsl" );
-
-	m_testSound = g_theAudio->CreateOrGetSound( "Data/Audio/TestSound.mp3" );
 
 	//Texture* skyboxTexture = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/skybox_flipped.png" );
 	Texture* skyboxTexture = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/miramar_large_flipped.png" );
@@ -247,6 +242,7 @@ void Game::Update()
 		//m_DFTWaveSimulation->Simulate();
 		m_FFTWaveSimulation->m_iWave->AddWaterObject( m_testCube );
 		m_FFTWaveSimulation->Simulate();
+		m_FFTWaveSimulation->TransformByAverageWater( m_testCube );
 	}
 }
 
@@ -320,8 +316,9 @@ void Game::RenderWorld() const
 	}
 
 	DrawTerrain();
-	g_theRenderer->BindTextureByPath( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
 	g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
+	g_theRenderer->BindTextureByPath( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
+	g_theRenderer->BindNormalTexture( nullptr );
 	m_testCube->Render();
 	DrawWater();	
 }
@@ -330,7 +327,7 @@ void Game::RenderWorld() const
 //---------------------------------------------------------------------------------------------------------
 void Game::RenderUI() const
 {
-	if( !g_isDebugDraw )
+	if( !m_isDebugText )
 		return;
 
 	const float textHeight = 0.15f;
@@ -740,6 +737,7 @@ void Game::LoadCurrentTempValues()
 	m_FFTWaveSimulation->SetIWaveEnabled( tempIWave );
 	m_FFTWaveSimulation->SetChoppyWaterValue( tempChoppiness );
 	m_FFTWaveSimulation->SetTilingDimensions( tilingSize );
+	m_FFTWaveSimulation->CreateQuadTree();
 }
 
 
@@ -993,7 +991,14 @@ void Game::UpdateFromInput( float deltaSeconds )
 	}
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F11 ) )
 	{
-		g_isDebugDraw = !g_isDebugDraw;
+		if( m_isDebugText == g_isDebugDraw )
+		{
+			m_isDebugText = !m_isDebugText;
+		}
+		else
+		{
+			g_isDebugDraw = !g_isDebugDraw;
+		}
 	}
 }
 
@@ -1096,13 +1101,4 @@ void Game::fft_from_xml( EventArgs* args )
 	}
 
 	LoadSimulationFromXML( filepath.c_str() );
-}
-
-//---------------------------------------------------------------------------------------------------------
-void Game::PlayTestSound()
-{
-	float volume	= g_RNG->RollRandomFloatInRange(  0.5f,  1.0f );
-	float balance	= g_RNG->RollRandomFloatInRange( -1.0f,  1.0f );
-	float speed		= g_RNG->RollRandomFloatInRange(  0.5f,  2.0f );
-	g_theAudio->PlaySound( m_testSound, false, volume, balance, speed );
 }

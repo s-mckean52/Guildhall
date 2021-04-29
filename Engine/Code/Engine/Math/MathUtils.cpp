@@ -516,6 +516,13 @@ int RoundDownToInt( float valueToRound )
 
 
 //---------------------------------------------------------------------------------------------------------
+int RoundUpToInt( float valueToRound )
+{
+	return static_cast<int>( ceilf( valueToRound ) );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 int RoundToInt( float valueToRound )
 {
 	int valueRoundedDown = RoundDownToInt( valueToRound );

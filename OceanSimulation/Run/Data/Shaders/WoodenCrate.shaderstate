@@ -1,0 +1,11 @@
+<!-- lit Shader State XML -->
+
+<ShaderState Name="WoodenCrate"
+             Shader       ="Data/Shaders/WoodenCrate.hlsl"
+             BlendMode    ="Alpha"
+             CullMode     ="Back"
+             FillMode     ="Solid"
+             CompareMode  ="LessThanOrEqual"
+             WriteOnDepth ="true"
+             CounterClockwiseWindOrder ="true">
+</ShaderState>

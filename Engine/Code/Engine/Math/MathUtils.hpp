@@ -66,6 +66,7 @@ void		TranslateVertexArray	( std::vector<Vertex_PCU>& vertexArray, const Vec3& t
 
 int			PositiveMod						( int numberToMod, int numberToModBy );
 int			RoundDownToInt					( float valueToRound );
+int			RoundUpToInt					( float valueToRound );
 int			RoundToInt						( float valueToRound );
 float		GetShortestAngularDisplacement	( float startAngle, float endAngle );
 float		GetTurnedToward					( float startAngle, float endAngle, float amountToTurnDegrees );

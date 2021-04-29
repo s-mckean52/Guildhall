@@ -18,10 +18,11 @@ public:
 	Vec3	GetPosition() const		{ return m_transform.GetPosition(); }
 	AABB3	GetBounds() const		{ return m_bounds; }
 
+	void SetWorldTransform( Mat44 const& transform );
 	void CreateMesh();
 
-	Mat44		m_worldOrientation;
 private:
+	Mat44		m_worldOrientation;
 	float		m_movementSpeed = 1.f;
 	GPUMesh*	m_mesh			= nullptr;
 	Transform	m_transform		= Transform();

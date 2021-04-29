@@ -1,0 +1,9 @@
+<Material   name="WoodenCrate">
+    <ShaderState        filepath="Data/Shaders/WoodenCrate.shaderstate"/>
+    <Tint               value="255,255,255"/>
+    <SpecularFactor     value="0.0"/>
+    <SpecularPower      value="32.0"/>
+    <MaterialSampler    type="linear"/>
+    <DiffuseTexture     filepath="Data/Images/Crate/crate_BaseColor.png"/>
+    <NormalTexture      filepath="Data/Images/Crate/crate_Normal.png"/>
+</Material>

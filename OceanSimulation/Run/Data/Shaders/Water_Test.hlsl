@@ -506,7 +506,8 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
         float4 noise = tDiffuse.Sample( sSampler, ( input.uv * 1.5f ) + SYSTEM_TIME_SECONDS * normalize( float2( 1.f, 1.f ) ) * float2( 0.001f, 0.003f ) );
         float noiseA = noise.w;
         float noiseG = noise.y;
-        float noiseValue = noiseA * noiseG;
+        float foamPercent = 0.4f;
+        float noiseValue = ( noiseA * foamPercent ) + ( noiseG * ( 1.f - foamPercent ) );
         noiseValue = clamp( noiseValue, 0.1f, 1.f );
         noiseValue = 1.f - ( noiseValue * noiseValue );
         

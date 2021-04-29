@@ -107,7 +107,6 @@ public:
 	void fft_from_xml( EventArgs* args );
 
 	bool IsQuitting() const { return m_isQuitting; }
-	void PlayTestSound();
 
 private:
 	TextureCube* m_skyBox = nullptr;
@@ -126,14 +125,10 @@ private:
 	
 	Light	m_theSun = Light::DIRECTIONAL;
 
-	Rgba8 m_ambientColor = Rgba8( 255, 255, 204 );
-	float m_ambientIntensity = 0.0f;
+	Rgba8 m_ambientColor = Rgba8( 255, 255, 255 );
+	float m_ambientIntensity = 0.45f; //0.6f
 
 	float m_distanceFromCamera = -1.f;;
-
-	Shader* m_testShader	= nullptr;
-
-	SoundID m_testSound;
 
 	float m_specularFactor = 0.f;
 	float m_specularPower = 32.f;
@@ -145,6 +140,7 @@ private:
 	bool	m_isQuitting = false;
 
 	bool m_isFogEnabled = true;
+	bool m_isDebugText = false;
 
 	int m_selectedWaveIndex = 0;
 

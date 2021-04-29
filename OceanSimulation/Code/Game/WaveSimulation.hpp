@@ -1,8 +1,9 @@
 #pragma once
 #include "Engine/Math/Vec2.hpp"
+#include "Engine/Math/AABB2.hpp"
 #include "Engine/Core/EngineCommon.hpp"
-#include "Game/Vertex_OCEAN.hpp"
 #include "Engine/Core/XmlUtils.hpp"
+#include "Game/Vertex_OCEAN.hpp"
 #include "Game/WaveSurfaceVertex.hpp"
 #include "Game/GameCommon.hpp"
 #include <vector>
@@ -11,10 +12,11 @@
 struct	Vec3;
 struct	Rgba8;
 struct	IntVec2;
+struct	Texture;
 class	Transform;
 class	GPUMesh;
 class	Clock;
-struct Texture;
+class	WaterObject;
 
 //---------------------------------------------------------------------------------------------------------
 enum WaveSimulationMode
@@ -108,6 +110,9 @@ public:
 	void		SetTilingDimensions( uint tilingDimenisions );
 	void		ToggleSimulationClockPause();
 
+	void		TransformByAverageWater( WaterObject* waterObjectToModify );
+	bool		GetContainingWaterBoundsForPoint( Vec2 const& positionToCheck, AABB2& out_foundBounds );
+	Mat44		GetAverageWaterTransformOnGrid( IntVec2 const& gridStartPos, IntVec2 const& gridDimToUse, Vec2 const& waterBoundsCenter );
 
 public:
 	static	WaveSimulation*		CreateWaveSimulation( std::string filePath );
@@ -115,9 +120,11 @@ public:
 	static	WaveSimulationMode	GetWaveSimulationModeFromString( std::string waveSimulationMode );
 			void				SetPhillipsSpectrumValues( XmlElement const& element );
 			void				SetRuntimeDefaults( XmlElement const& element );
+	void	CreateQuadTree();
 
 private:
 	void	GenerateSurface( Vec3 const& origin, Rgba8 const& color, Vec2 const& dimensions, IntVec2 const& steps );
+	void	DrawQuadTreeDebug() const;
 
 protected:
 	Clock*				m_simulationClock		= nullptr;
@@ -144,6 +151,7 @@ protected:
 	std::vector<uint>			m_surfaceIndicies;
 	std::vector<Vertex_OCEAN>	m_surfaceVerts;
 	std::vector<Vec3>			m_initialSurfacePositions;
+	std::vector<AABB2>			m_waveGridBounds;
 
 	std::vector<HTilde0Data> m_hTilde0Data;
 };
