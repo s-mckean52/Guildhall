@@ -279,6 +279,62 @@ void WaveSimulation::ToggleSimulationClockPause()
 
 
 //---------------------------------------------------------------------------------------------------------
+bool WaveSimulation::IsPointUnderWater( Vec3 const& position ) const
+{
+	Vec2 positionXY = Vec2( position.x, position.y );
+	AABB2 containingWaterBounds;
+	if( GetContainingWaterBoundsForPoint( positionXY, containingWaterBounds ) )
+	{
+		Vec2 faceitSize = m_dimensions / static_cast<float>( m_numSamples );
+		Vec2 localPos = positionXY - containingWaterBounds.mins;
+		IntVec2 gridPos = IntVec2( RoundUpToInt( localPos.x / faceitSize.x ), RoundUpToInt( localPos.y / faceitSize.y ) );
+
+		int gridPositionIndex = gridPos.x + ( gridPos.y * ( m_numSamples + 1 ) );
+		Vertex_OCEAN const& vertexToAdd = m_surfaceVerts[gridPositionIndex];
+
+		return vertexToAdd.m_position.z >= position.z;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::RecalculateNormals()
+{
+	std::vector<uint> numNormalsPerVert;
+	numNormalsPerVert.resize( m_surfaceVerts.size() );
+	int numFaces = static_cast<int>( m_surfaceIndicies.size() ) / 3;
+	for( int faceIndex = 0; faceIndex < numFaces; ++faceIndex )
+	{
+		int indexStart = faceIndex * 3 ;
+		int indexSecond = indexStart + 1;
+		int indexThird = indexStart + 2;
+
+		uint vertIndex0 = m_surfaceIndicies[ indexStart ];
+		uint vertIndex1 = m_surfaceIndicies[ indexSecond ];
+		uint vertIndex2 = m_surfaceIndicies[ indexThird ];
+
+		Vertex_OCEAN& vert0 = m_surfaceVerts[ vertIndex0 ];
+		Vertex_OCEAN& vert1 = m_surfaceVerts[ vertIndex1 ];
+		Vertex_OCEAN& vert2 = m_surfaceVerts[ vertIndex2 ];
+
+		Vec3 rightDir	= vert1.m_position - vert0.m_position;
+		Vec3 upDir		= vert2.m_position - vert0.m_position;
+
+		Vec3 normal = CrossProduct3D( rightDir, upDir );
+		normal.Normalize();
+
+		AverageNormals( vert0.m_normal, normal, numNormalsPerVert[ vertIndex0 ] );
+		AverageNormals( vert1.m_normal, normal, numNormalsPerVert[ vertIndex1 ] );
+		AverageNormals( vert2.m_normal, normal, numNormalsPerVert[ vertIndex2 ] );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void WaveSimulation::TransformByAverageWater( WaterObject* waterObjectToModify )
 {
 	AABB3 objectBounds = waterObjectToModify->GetBounds();
@@ -314,7 +370,7 @@ void WaveSimulation::TransformByAverageWater( WaterObject* waterObjectToModify )
 
 
 //---------------------------------------------------------------------------------------------------------
-bool WaveSimulation::GetContainingWaterBoundsForPoint( Vec2 const& positionToCheck, AABB2& out_foundBounds )
+bool WaveSimulation::GetContainingWaterBoundsForPoint( Vec2 const& positionToCheck, AABB2& out_foundBounds ) const
 {
 	for( uint waterBoundsIndex = 0; waterBoundsIndex < m_waveGridBounds.size(); ++waterBoundsIndex )
 	{

@@ -109,9 +109,11 @@ public:
 	void		SetPosition( Vec3 const& newPosition );
 	void		SetTilingDimensions( uint tilingDimenisions );
 	void		ToggleSimulationClockPause();
+	bool		IsPointUnderWater( Vec3 const& position ) const;
 
+	void		RecalculateNormals();
 	void		TransformByAverageWater( WaterObject* waterObjectToModify );
-	bool		GetContainingWaterBoundsForPoint( Vec2 const& positionToCheck, AABB2& out_foundBounds );
+	bool		GetContainingWaterBoundsForPoint( Vec2 const& positionToCheck, AABB2& out_foundBounds ) const;
 	Mat44		GetAverageWaterTransformOnGrid( IntVec2 const& gridStartPos, IntVec2 const& gridDimToUse, Vec2 const& waterBoundsCenter );
 
 public:

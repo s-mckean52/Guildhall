@@ -45,11 +45,25 @@ struct terrain_t
 	float padding[2];
 };
 
-// struct water_t
-// {
-// public:
-// 
-// };
+struct water_t
+{
+	Vec2 NORMALS1_SCROLL_DIR = Vec2( 1.f, 0.f );
+	Vec2 NORMALS2_SCROLL_DIR = Vec2( 0.f, 1.f );
+
+	Vec2 NORMALS_SCROLL_SPEED = Vec2( 0.01f, 0.01f );
+	float NEAR_PLANE = -0.9f;
+	float FAR_PLANE = -100.f;
+
+	Vec3 UPWELLING_COLOR = Vec3( 0.f, 0.2f, 0.3f );
+	float SNELL_AIR_TO_WATER = 1.34f;
+
+	float MAX_DEPTH = 25.f;
+	float INVERSE_MAX_DEPTH = 0.04f;
+	float FOAM_THICKNESS = 0.5f;
+	float FOAMINESS = 0.4f;
+
+	Mat44 WORLD_INVERSE_PROJECTION;
+};
 
 
 class Game
@@ -96,6 +110,7 @@ public:
 	void ReloadCurrentXML();
 	void LoadCurrentTempValues();
 	void SetTempValues();
+	void AddIWaveSources();
 
 	void CreateTerrainFromImage( char const* filepath, Vec2 const& meshDimensions, float minHeight, float maxHeight );
 	void GenerateTerrainVerts( GPUMesh* meshToModify, IntVec2 const& vertDimensions, Vec2 const& dimensions, float minHeight, float maxHeight );
@@ -115,7 +130,7 @@ private:
 
 	WaterObject* m_testCube = nullptr;
 
-	char const* m_currentXML = "";
+	std::string m_currentXML = "";
 
 	WaveSimulation* m_DFTWaveSimulation = nullptr;
 	FFTWaveSimulation* m_FFTWaveSimulation = nullptr;
@@ -128,7 +143,7 @@ private:
 	Rgba8 m_ambientColor = Rgba8( 255, 255, 255 );
 	float m_ambientIntensity = 0.45f; //0.6f
 
-	float m_distanceFromCamera = -1.f;;
+	float m_distanceFromCamera = -1.f;
 
 	float m_specularFactor = 0.f;
 	float m_specularPower = 32.f;
@@ -143,6 +158,10 @@ private:
 	bool m_isDebugText = false;
 
 	int m_selectedWaveIndex = 0;
+
+	water_t m_waterInfo;
+	bool m_isUnderWater = false;
+	float m_powerValue = 1.f;
 
 	Vec2	m_tempWindDir;
 	Vec2	m_tempDimensions;

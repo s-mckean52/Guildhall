@@ -106,6 +106,7 @@ void AverageNormals( Vec3& currentNormal, Vec3 const& normalToAdd, uint& numAdde
 	currentNormal += normalToAdd;
 	numAdded++;
 	currentNormal /= static_cast<float>( numAdded );
+	currentNormal.Normalize();
 }
 
 

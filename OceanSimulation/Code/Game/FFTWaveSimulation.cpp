@@ -178,6 +178,10 @@ void FFTWaveSimulation::Simulate()
 // 		DebugAddWorldArrow( currentVert.m_position, currentVert.m_position + currentVert.m_normal, Rgba8::BLUE, 0.f, DEBUG_RENDER_XRAY );
 // 	}
 
+	if( m_isIWaveEnabled )
+	{
+		RecalculateNormals();
+	}
 	m_surfaceMesh->UpdateVerticies( static_cast<uint>( m_surfaceVerts.size() ), &m_surfaceVerts[0] );
 	//m_simulateTimer.StopTimer();
 }

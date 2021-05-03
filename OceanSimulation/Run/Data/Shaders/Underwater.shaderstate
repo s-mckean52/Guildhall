@@ -1,0 +1,11 @@
+<!-- lit Shader State XML -->
+
+<ShaderState Name="Underwater"
+             Shader       ="Data/Shaders/Underwater.hlsl"
+             BlendMode    ="Alpha"
+             CullMode     ="Back"
+             FillMode     ="Solid"
+             CompareMode  ="LessThanOrEqual"
+             WriteOnDepth ="true"
+             CounterClockwiseWindOrder ="true">
+</ShaderState>

@@ -1,85 +1,5 @@
-//--------------------------------------------------------------------------------------
-// Stream Input
-// ------
-// Stream Input is input that is walked by the vertex shader.  
-// If you say "Draw(3,0)", you are telling to the GPU to expect '3' sets, or 
-// elements, of input data.  IE, 3 vertices.  Each call of the VertxShader
-// we be processing a different element. 
-//--------------------------------------------------------------------------------------
-
-// inputs are made up of internal names (ie: uv) and semantic names
-// (ie: TEXCOORD).  "uv" would be used in the shader file, where
-// "TEXCOORD" is used from the client-side (cpp code) to attach ot. 
-// The semantic and internal names can be whatever you want, 
-// but know that semantics starting with SV_* usually denote special 
-// inputs/outputs, so probably best to avoid that naming.
-struct vs_input_t
-{
-	// we are not defining our own input data; 
-	float3 position      : POSITION;
-	float4 color         : COLOR;
-	float2 uv            : TEXCOORD;
-
-	float3 tangent		: TANGENT;
-	float3 bitangent	: BITANGENT;
-	float3 normal		: NORMAL;
-
-	float4 jacobian		: JACOBIAN;
-};
-
-struct light_t
-{
-	float3 world_position;
-	float intensity;
-
-	float3 direction;
-	float cos_inner_half_angle;
-
-	float3 color;
-	float cos_outter_half_angle;
-
-	float3 attenuation;
-	float is_directional;
-
-	float3 spec_attenuation;
-	float padding;
-};
-
-cbuffer time_constants : register(b0)
-{
-	float SYSTEM_TIME_SECONDS;
-	float SYSTEM_TIME_DELTA_SECONDS;
-	float GAMMA;
-	float INVERSE_GAMMA;
-};
-
-cbuffer camera_constants : register(b1)
-{
-	float4x4 PROJECTION;            // CAMERA_TO_CLIP
-	float4x4 VIEW;		            //WORLD_TO_CAMERA
-
-	float4x4 CAMERA_MODEL;
-	float3 CAMERA_POSITION;
-	float padding_00;
-    
-    float4x4 INVERSE_PROJECTION;    // CLIP_TO_CAMERA
-}
-
-cbuffer model_constants : register(b2)
-{
-	float4x4 MODEL;
-	float4 TINT;
-
-	float SPECULAR_FACTOR;
-	float SPECULAR_POWER;
-	float2 padding_01;
-}
-
-cbuffer light_constants : register(b3)
-{
-	float4 AMBIENT;
-	light_t LIGHTS[8];
-}
+#include "Headers/Common.hlsl"
+#include "Headers/OceanUtils.hlsl"
 
 
 Texture2D<float4>	tDiffuse			: register(t0);
@@ -99,231 +19,10 @@ SamplerState sSampler					: register(s0);
 //--------------------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------------------
-// for passing data from vertex to fragment (v-2-f)
-struct v2f_t
-{
-	float4 position : SV_POSITION;
-	float4 color    : COLOR;
-	float2 uv       : UV;
-
-    float3 camera_position  : POSITION0;
-	float3 world_position   : POSITION1;
-	float3 world_normal     : NORMAL;
-	float3 world_tangent    : TANGENT;
-	float3 world_bitangent  : BITANGENT;
-
-	float4 jacobian : JACOBIAN;
-};
-
-//--------------------------------------------------------------------------------------
-float RangeMap( float val, float inMin, float inMax, float outMin, float outMax )
-{
-	float domain = inMax - inMin;
-	float range = outMax - outMin;
-	return ((val - inMin) / domain) * range + outMin;
-}
-
-//--------------------------------------------------------------------------------------
-float3 GetNormalFromColor( float3 sampledColor )
-{
-	return ( sampledColor * float3( 2.0f, 2.0f, 1.0f ) ) - float3( 1.0f, 1.0f, 0.0f );
-}
-
-//--------------------------------------------------------------------------------------
-float3 GetColorFromNormalDir( float3 normalizedDir )
-{
-	return ( normalizedDir + float3( 1.f, 1.f, 1.f ) ) * float3( 0.5f, 0.5f, 0.5f );
-}
-
-//--------------------------------------------------------------------------------------
-float3x3 GetVertexTBN( v2f_t input )
-{
-	float3 normal = normalize( input.world_normal );
-	float3 tangent = normalize( input.world_tangent );
-	float3 bitangent = normalize( input.world_bitangent );
-	float3x3 tbn = float3x3( tangent, bitangent, normal );
-	return tbn;
-}
-
-//--------------------------------------------------------------------------------------
-float LinearizeDepth( float depth, float nearPlaneDepth, float farPlaneDepth )
-{
-    float zRange = farPlaneDepth - nearPlaneDepth;
-    return -( nearPlaneDepth * farPlaneDepth ) / ( ( depth * zRange ) - farPlaneDepth );
-}
-
-
-//--------------------------------------------------------------------------------------
-float3 NDCToCameraSpace( float4 ndcPosition, float4x4 inverseProjection )
-{
-    float4 cameraPos = mul( inverseProjection, ndcPosition );
-    cameraPos /= cameraPos.w;
-    
-    return cameraPos.xyz;
-}
-
-
-//--------------------------------------------------------------------------------------
-// By Morgan McGuire and Michael Mara at Williams College 2014
-// Released as open source under the BSD 2-Clause License
-// http://opensource.org/licenses/BSD-2-Clause
-
-float distanceSquared(float2 a, float2 b) { a -= b; return dot(a, a); }
-
-// Returns true if the ray hit something
-bool traceScreenSpaceRay1(
-	float3 csOrig,
-	float3 csDir,
-	float4x4 proj,
-	Texture2D csZBuffer,
-	float2 csZBufferSize,
-	float zThickness,
-	float nearPlaneZ,
-	float stride,
-	float jitter,
-	const float maxSteps,
-	float maxDistance,
-	out float2 hitPixel,
-	out float3 hitPoint)
-{
-	hitPixel = float2( -1.f, -1.f );
-	hitPoint = float3( 0.f, 0.f, 0.f );
-	// Clip to the near plane  
-	float maxZPos = csOrig.z + csDir.z * maxDistance;
-	float rayLength;
-	if (maxZPos > nearPlaneZ)
-	{
-		rayLength = (nearPlaneZ - csOrig.z) / csDir.z;
-	}
-	else
-	{
-		rayLength = maxDistance;
-	}
-	float3 csEndPoint = csOrig + csDir * rayLength;
-
-	// Project into homogeneous clip space
-	float4 clipSpaceStartPos = mul( proj, float4(csOrig, 1.0) );
-	float4 clipSpaceEndPos = mul( proj, float4(csEndPoint, 1.0) );
-	float k0 = 1.0 / clipSpaceStartPos.w;
-	float k1 = 1.0 / clipSpaceEndPos.w;
-
-	// The interpolated homogeneous version of the camera-space points  
-	float3 homogenousStartPos = csOrig * k0;
-	float3 homogenousEndPos = csEndPoint * k1;
-
-	// Screen-space endpoints
-	float2 screenSpaceStartPos = clipSpaceStartPos.xy * k0;
-	float2 screenSpaceEndPos = clipSpaceEndPos.xy * k1;
-//	screenSpaceStartPos.x = RangeMap( screenSpaceStartPos.x, -1.f, 1.f, 0.f, csZBufferSize.x );
-//	screenSpaceStartPos.y = RangeMap( screenSpaceStartPos.y, -1.f, 1.f, 0.f, csZBufferSize.y );
-//	screenSpaceEndPos.x = RangeMap( screenSpaceEndPos.x, -1.f, 1.f, 0.f, csZBufferSize.x );
-//	screenSpaceEndPos.y = RangeMap( screenSpaceEndPos.y, -1.f, 1.f, 0.f, csZBufferSize.y );
-
-	// If the line is degenerate, make it cover at least one pixel
-	// to avoid handling zero-pixel extent as a special case later
-	screenSpaceEndPos += ( ( distanceSquared( screenSpaceStartPos, screenSpaceEndPos ) < 0.0001f ) ? float2( 0.01f, 0.01f ) : float2( 0.0f, 0.0f ) );
-	float2 delta = screenSpaceEndPos - screenSpaceStartPos;
-
-	// Permute so that the primary iteration is in x to collapse
-	// all quadrant-specific DDA cases later
-	bool permute = false;
-	if (abs(delta.x) < abs(delta.y)) {
-		// This is a more-vertical line
-		permute = true;
-		delta = delta.yx;
-		screenSpaceStartPos = screenSpaceStartPos.yx;
-		screenSpaceEndPos = screenSpaceEndPos.yx;
-	}
-
-	float stepDir = sign(delta.x);
-	float invdx = stepDir / delta.x;
-
-	// Track the derivatives of Q and k
-	float3  dHomogenous = (homogenousEndPos - homogenousStartPos) * invdx;
-	float	dk = (k1 - k0) * invdx;
-	float2  dScreenSpace = float2(stepDir, delta.y * invdx);
-
-	// Scale derivatives by the desired pixel stride and then
-	// offset the starting values by the jitter fraction
-	dScreenSpace *= stride;
-	dHomogenous *= stride;
-	dk *= stride;
-	screenSpaceStartPos += dScreenSpace * jitter;
-	homogenousStartPos += dHomogenous * jitter;
-	k0 += dk * jitter;
-
-	// Slide P from P0 to P1, (now-homogeneous) Q from Q0 to Q1, k from k0 to k1
-	float3 homogenousPos = homogenousStartPos;
-
-	// Adjust end condition for iteration direction
-	float  end = screenSpaceEndPos.x * stepDir;
-
-	float k = k0;
-	float stepCount = 0.0;
-	float prevZMaxEstimate = csOrig.z;
-	float rayZMin = prevZMaxEstimate;
-	float rayZMax = prevZMaxEstimate;
-	float sceneZMax = rayZMax + 1000.f;
-	for (float2 screenSpacePos = screenSpaceStartPos;
-		((screenSpacePos.x * stepDir) <= end) && (stepCount < maxSteps) &&
-		((rayZMax < sceneZMax - zThickness) || (rayZMin > sceneZMax)) &&
-		(sceneZMax != 0);
-		screenSpacePos += dScreenSpace, homogenousPos.z += dHomogenous.z, k += dk, ++stepCount) {
-
-		rayZMin = prevZMaxEstimate;
-		rayZMax = (dHomogenous.z * 0.5f + homogenousPos.z) / (dk * 0.5f + k);
-		prevZMaxEstimate = rayZMax;
-		if (rayZMin > rayZMax) {
-			float t = rayZMin;
-			rayZMin = rayZMax;
-			rayZMax = t;
-		}
-
-		hitPixel = permute ? screenSpacePos.yx : screenSpacePos;
-		hitPixel.y = csZBufferSize.y - hitPixel.y;
-		// You may need hitPixel.y = csZBufferSize.y - hitPixel.y; here if your vertical axis
-		// is different than ours in screen space
-		sceneZMax = csZBuffer.Load( int3( hitPixel, 0 ) ).x;
-		sceneZMax = LinearizeDepth( sceneZMax, nearPlaneZ, 100.f );
-	}
-
-	// Advance Q based on the number of steps
-	homogenousPos.xy += dHomogenous.xy * stepCount;
-	hitPoint = homogenousPos * (1.0f / k);
-	//return float4(screenSpaceStartPos / csZBufferSize, 0.f, 1.f);
-	return (rayZMax >= sceneZMax - zThickness) && (rayZMin < sceneZMax);
-}
-
-
-//--------------------------------------------------------------------------------------
-float3 GetPerturbedColor( float2 dirToPerturb, float perturbationFactor, float2 pixelPosition, Texture2D backBuffer, Texture2D refractionStencil, float2 backBufferDim, out float2 perturbedPixel )
-{
-    float2 offset = dirToPerturb * perturbationFactor;
-    float2 potentialPerturbedPixel = pixelPosition + offset;
-    float4 stencilColor = refractionStencil.Load( int3( potentialPerturbedPixel, 0 ) );
-    if( stencilColor.x == 0.f )
-    {
-        perturbedPixel = potentialPerturbedPixel;
-    }
-    else if( stencilColor.x == 1.f )
-    {
-        perturbedPixel = pixelPosition;
-    }
-    
-    perturbedPixel = clamp( perturbedPixel, float2( 0.f, 0.f ), backBufferDim - float2( 1.f, 1.f ) );
-    return backBuffer.Load( int3( perturbedPixel, 0 ) );
-    
-    //Creates artifacts if too close to objects
-//  float2 perturbedPixelUV = saturate( perturbedPixel / backBufferDim );
-//  perturbedPixel = perturbedPixelUV * ( backBufferDim - float2( 1.f, 1.f ) );
-//  return backBuffer.Sample( sSampler, perturbedPixelUV );
-}
-
-//--------------------------------------------------------------------------------------
 // Vertex Shader
-v2f_t VertexFunction(vs_input_t input)
+v2f_ocean_t VertexFunction(vs_input_ocean_t input)
 {
-	v2f_t v2f = (v2f_t)0;
+	v2f_ocean_t v2f = (v2f_ocean_t)0;
 
 	float4 local_position = float4(input.position, 1.0f);
 	float4 world_position = mul(MODEL, local_position);
@@ -356,29 +55,10 @@ v2f_t VertexFunction(vs_input_t input)
 // 
 // SV_Target0 at the end means the float4 being returned
 // is being drawn to the first bound color target.
-float4 FragmentFunction(v2f_t input) : SV_Target0
-{
-	//add to buffer
-	//------------------------------------------------------------------------------
-	const float4 normalmap_scroll = float4( 1.f, 0.f, 0.f, 1.f );
-	const float2 normalmap_scroll_speed = float2( 0.01f, 0.01f );
-	
-	//Water Constants
-	float NEAR_PLANE = -0.9f;
-	float FAR_PLANE = -100.f;
-	float3 upwelling =	float3( 0.f, 0.2f, 0.3f );
-	float3 sky =		float3( 0.69f, 0.84f, 1.f );
-	float3 air =		float3( 0.1f, 0.1f, 0.1f );
-	float nSnell	= 1.34f;
-	float kDiffuse	= 0.91f;
-	float MAX_DEPTH = 12.f;
-    float FOAM_THICKNESS = 0.5f;
-	float waterFalloff = 1.f / MAX_DEPTH;
-	//------------------------------------------------------------------------------
-
-
-	float2 normal_scroll_uv1 = input.uv + SYSTEM_TIME_SECONDS * normalmap_scroll.xy * normalmap_scroll_speed.x;
-	float2 normal_scroll_uv2 = input.uv + SYSTEM_TIME_SECONDS * normalmap_scroll.zw * normalmap_scroll_speed.y;
+float4 FragmentFunction(v2f_ocean_t input) : SV_Target0
+{   
+	float2 normal_scroll_uv1 = input.uv + SYSTEM_TIME_SECONDS * NORMALS1_SCROLL_DIR * NORMALS_SCROLL_SPEED.x;
+	float2 normal_scroll_uv2 = input.uv + SYSTEM_TIME_SECONDS * NORMALS2_SCROLL_DIR * NORMALS_SCROLL_SPEED.y;
 	
 	float4 normal_color1 = tScrollingNormal1.Sample(sSampler, normal_scroll_uv1);
 	float4 normal_color2 = tScrollingNormal2.Sample(sSampler, normal_scroll_uv2);
@@ -386,7 +66,7 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 	float3 normal1 = GetNormalFromColor( normal_color1.xyz );
 	float3 normal2 = GetNormalFromColor( normal_color2.xyz );
 
-	float3x3 tbn = GetVertexTBN( input );
+	float3x3 tbn = GetVertexTBN( input.world_tangent, input.world_bitangent, input.world_normal );
 
 	float3 world_normal = normalize( mul( normal1, tbn ) );
 	world_normal += normalize( mul( normal2, tbn ) );
@@ -413,17 +93,38 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 			//reflection	= mul( inverseView, reflection );
 			reflection	= mul(rotation_on_x, mul(rotation_on_z, reflection));
 	float4	sky_color	= tSkybox.Sample(sSampler, reflection);
-	sky_color = float4( sky, 1.f );
+	//sky_color = float4( 0.69f, 0.84f, 1.f, 1.f );
 
 
 	float reflectivity;
-	float cos_theta_incident = abs( dot( incident, world_normal ) );
-	float theta_incident = acos( cos_theta_incident );
-	float sin_theta_transmission = sin( theta_incident ) / nSnell;
+    float cos_theta_incident = abs( dot( incident, world_normal ) );
+//	float cos_theta_incident =  dot( incident, world_normal );
+//    if( cos_theta_incident > 0.f )
+//    {
+//        float waterToAirSnell = 1.f / SNELL;
+//        float sint = waterToAirSnell * sqrt( max( 0.f, 1.f - cos_theta_incident * cos_theta_incident ) );
+//        if( sint > 1.f )
+//        {
+//            return float4( UPWELLING_COLOR, 1.f );
+//        }
+//        else
+//        {
+//            //Depth Sample ( real transmission/refractance )
+//            float c2 = sqrt( 1.f - ( waterToAirSnell * waterToAirSnell * ( 1.f - cos_theta_incident ) * ( 1.f - cos_theta_incident ) ) );
+//            float3 transmission_dir = ( waterToAirSnell * ( incident + -world_normal * cos_theta_incident ) ) - ( c2 * -world_normal );
+//            //transmission_dir = float3( 1.f, 0.f, 0.f );
+//            float3 transmission_dir_skybox = mul( rotation_on_x, mul(rotation_on_z, normalize( transmission_dir ) ) );
+//            float4 transmission_color = tSkybox.Sample( sSampler, transmission_dir_skybox );
+//            return transmission_color;
+//        }
+//    }
+    
+    float theta_incident = acos( cos_theta_incident );
+	float sin_theta_transmission = sin( theta_incident ) / SNELL;
 	float theta_transmission = asin( sin_theta_transmission );
-	if( theta_incident == 0.0f )
+    if( theta_incident == 0.0f )
 	{
-		reflectivity = ( nSnell - 1 ) / ( nSnell + 1 );
+		reflectivity = ( SNELL - 1 ) / ( SNELL + 1 );
 		reflectivity = reflectivity * reflectivity;
 	}
 	else
@@ -433,60 +134,6 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
 		reflectivity = 0.5 * ( fs * fs + ts * ts );
 	}
 	float transmissivity = 1.f - reflectivity;
-
-	//Depth Sample ( real transmission/refractance )
-	//float c2 = sqrt( 1.f - ( nSnell * nSnell * ( 1.f - cos_theta_incident ) * ( 1.f - cos_theta_incident ) ) );
-	//float3 transmission_dir = ( nSnell * ( incident + world_normal * cos_theta_incident ) ) - ( c2 * world_normal );
-	//transmission_dir = float3( 1.f, 0.f, 0.f );
-	//float3 rayStartPos = mul( VIEW, float4( input.world_position.xyz, 1.f ) ).xyz;
-    //float3 rotatedTransmissionDir = normalize(mul(PROJECTION, float4(transmission_dir, 0.f)).xyz);
-	//float3 rayDir = normalize( mul( VIEW, float4( rotatedTransmissionDir, 0.f ) ).xyz );
-	//return float4( GetColorFromNormalDir( rayDir ), 1.f );
-
-    /*
-	float2 halfBufferDim = backBufferDim * 0.5f;
-	float2 rangeFraction = -1.f * backBufferDim * 0.5f;
-	float4x4 rangeMap = float4x4(
-		float4( halfBufferDim.x,	0.f,				0.f,	-rangeFraction.x ),
-		float4( 0.f,				halfBufferDim.y,	0.f,	-rangeFraction.y ),
-		float4( 0.f,				0.f,				1.f,	0.f ),
-		float4( 0.f,				0.f,				0.f,	1.f )
-		);
-
-	float2 hitPixel;
-	float3 hitPoint;
-	int2 pixelCoord = int2(input.position.x, input.position.y);
-	bool rayHit = traceScreenSpaceRay1(
-		rayStartPos,
-		rayDir,
-		mul(rangeMap, PROJECTION),
-		tDepthStencil,
-		backBufferDim,
-		1.f,//abs(FAR_PLANE - NEAR_PLANE),
-		NEAR_PLANE,
-		1.0f,
-		0.f,//float((pixelCoord.x + pixelCoord.y) & 1) * 0.5f,
-		150.f,
-		100.f,
-		hitPixel,
-		hitPoint );
-	//return float4(normalize(hitPoint), RangeMap(length(hitPoint), 0.f, 100.f, 0.f, 1.f));
-	//rayHit = true;
-	//hitPixel = input.position.xy;
-	float3 floor_color;
-    rayHit = true;
-    hitPixel = input.position.xy;
-	if( !rayHit )
-	{
-		floor_color = tSkybox.Sample( sSampler, rotatedTransmissionDir );
-		floor_color *= float3(1.f, 0.2f, 0.2f);
-	}
-	else
-	{
-		floor_color = tBackBuffer.Load(int3(hitPixel, 0)).xyz;
-		floor_color *= upwelling;
-	}
-*/
     
     //float2 perturbedPixel = input.position.xy;
     //float3 floor_color = tBackBuffer.Load( int3( perturbedPixel, 0 ) );
@@ -501,17 +148,17 @@ float4 FragmentFunction(v2f_t input) : SV_Target0
     float pixelDepth = input.camera_position.x;
 	//backBufferDepth = -LinearizeDepth( backBufferDepth, NEAR_PLANE, FAR_PLANE );
     
+    float waterFalloff = 1.f;
+    
     float refractionDepth = backBufferDepth - pixelDepth;
-	float depthFraction = saturate( refractionDepth * waterFalloff );
-    depthFraction = sqrt( sqrt( depthFraction ) );
-	floor_color = lerp( floor_color, upwelling, depthFraction.xxx );
+	float depthFraction = GetWaterFallOffForDepth( refractionDepth, INVERSE_MAX_DEPTH );
+	floor_color = lerp( floor_color, UPWELLING_COLOR, depthFraction.xxx );
     if( refractionDepth <= FOAM_THICKNESS && refractionDepth >= 0.f )
     {
         float4 noise = tDiffuse.Sample( sSampler, ( input.uv * 1.5f ) + SYSTEM_TIME_SECONDS * normalize( float2( 1.f, 1.f ) ) * float2( 0.001f, 0.003f ) );
         float noiseA = noise.w;
-        float noiseG = noise.y;
-        float foamPercent = 0.4f;
-        float noiseValue = ( noiseA * foamPercent ) + ( noiseG * ( 1.f - foamPercent ) );
+        float noiseG = noise.y;;
+        float noiseValue = ( noiseA * FOAMINESS ) + ( noiseG * ( 1.f - FOAMINESS ) );
         noiseValue = clamp( noiseValue, 0.1f, 1.f );
         noiseValue = 1.f - ( noiseValue * noiseValue );
         

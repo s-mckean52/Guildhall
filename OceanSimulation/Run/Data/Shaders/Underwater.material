@@ -1,0 +1,7 @@
+<Material   name="Underwater">
+    <ShaderState        filepath="Data/Shaders/Underwater.shaderstate"/>
+    <Tint               value="255,255,255"/>
+    <SpecularFactor     value="0.0"/>
+    <SpecularPower      value="32.0"/>
+    <MaterialSampler    type="linear"/>
+</Material>

@@ -178,6 +178,9 @@ void Game::Render()
 
 	//Render worldCamera
 	g_theRenderer->BeginCamera( *m_worldCamera );
+	Mat44 projection = m_worldCamera->GetProjectionMatrix();
+	MatrixInvert( projection );
+	m_waterInfo.WORLD_INVERSE_PROJECTION = projection; 
 
 	//RenderSkyBox
 	g_theRenderer->BindSampler( g_theRenderer->m_samplerLinear );
@@ -199,6 +202,7 @@ void Game::Render()
 	EnableLightsForRendering();
 	
 	//---------------------------------------------------------------------------------------------------------
+	//Refraction map
 	g_theRenderer->BindTexture( nullptr );
 	g_theRenderer->BindShaderByPath( "Data/Shaders/RefractionObject.hlsl" );
 	g_theRenderer->DrawMesh( m_landMesh );
@@ -209,19 +213,41 @@ void Game::Render()
 
 
 	//---------------------------------------------------------------------------------------------------------
+	// Real Render
 	g_theRenderer->SetDepthTest( COMPARE_FUNC_GEQUAL, true );
 	g_theRenderer->ClearDepth( m_worldCamera->GetDepthStencilTarget(), m_worldCamera->GetClearDepth() );
 	RenderWorld();
 
+	// Get depths
+	Texture* depthStencil = m_worldCamera->GetDepthStencilTarget();
+	Texture* depthStencilCopy = g_theRenderer->AcquireRenderTargetMatching( depthStencil );
+	g_theRenderer->CopyTexture( depthStencilCopy, depthStencil );
 
 	//---------------------------------------------------------------------------------------------------------
 	g_theRenderer->EndCamera( *m_worldCamera );
 
 	DebugRenderWorldToCamera( m_worldCamera );
 
-	g_theRenderer->CopyTexture( backBuffer, colorOutput );
-	g_theRenderer->ReleaseRenderTarget( colorOutput );
 	g_theRenderer->ReleaseRenderTarget( refractionMask );
+
+
+	//---------------------------------------------------------------------------------------------------------
+	if( m_isUnderWater )
+	{
+		Material* underwaterMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Underwater.material" );
+		underwaterMaterial->SetData( m_waterInfo );
+		underwaterMaterial->SetDiffuseTexture( colorOutput );
+		underwaterMaterial->AddMaterialTexture( 0, depthStencil );
+		g_theRenderer->ApplyFullscreenEffect( colorOutput, backBuffer, underwaterMaterial );
+	}
+	else
+	{
+		g_theRenderer->CopyTexture( backBuffer, colorOutput );
+	}
+
+	g_theRenderer->ReleaseRenderTarget( colorOutput );
+	g_theRenderer->ReleaseRenderTarget( depthStencilCopy );
+
 
 	//Render UI
 	g_theRenderer->BeginCamera( *m_UICamera );
@@ -243,6 +269,8 @@ void Game::Update()
 		m_FFTWaveSimulation->m_iWave->AddWaterObject( m_testCube );
 		m_FFTWaveSimulation->Simulate();
 		m_FFTWaveSimulation->TransformByAverageWater( m_testCube );
+
+		m_isUnderWater = m_FFTWaveSimulation->IsPointUnderWater( m_worldCamera->GetPosition() );
 	}
 }
 
@@ -299,11 +327,13 @@ void Game::DrawWater() const
 	g_theRenderer->BindMaterialTexture( 7, depthStencilCopy );
 	
 	//m_DFTWaveSimulation->Render();
+	Material* waterMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Water.material" );
+	waterMaterial->SetData( m_waterInfo );
 	m_FFTWaveSimulation->Render();
-	
+
+	g_theRenderer->ReleaseRenderTarget( refractionStencilCopy );
 	g_theRenderer->ReleaseRenderTarget( backBufferCopy );
 	g_theRenderer->ReleaseRenderTarget( depthStencilCopy );
-	g_theRenderer->ReleaseRenderTarget( refractionStencilCopy );
 }
 
 
@@ -563,7 +593,7 @@ void Game::LoadSimulationFromXML( char const* filepath )
 //---------------------------------------------------------------------------------------------------------
 void Game::ReloadCurrentXML()
 {
-	LoadSimulationFromXML( m_currentXML );
+	LoadSimulationFromXML( m_currentXML.c_str() );
 }
 
 
@@ -576,6 +606,34 @@ void Game::SetTempValues()
 	m_tempWindSpeed = m_FFTWaveSimulation->GetWindSpeed();
 	m_tempWaveSuppression = m_FFTWaveSimulation->GetWaveSuppression();
 	m_tempGloabalWaveAmp = m_FFTWaveSimulation->GetAConstant();
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddIWaveSources()
+{
+	float power = m_powerValue * -0.1f;
+	FFTWaveSimulation* fft = dynamic_cast<FFTWaveSimulation*>( m_FFTWaveSimulation );
+	int numSamples = fft->GetNumSamples();
+	int halfSamples = numSamples / 2;
+	int quaterSamples = halfSamples / 2;
+	//Center
+	fft->m_iWave->AddSource( numSamples * halfSamples + halfSamples,			power );
+	fft->m_iWave->AddSource( numSamples * halfSamples + halfSamples - 1,		power );
+	fft->m_iWave->AddSource( numSamples * halfSamples + halfSamples + 1,		power );
+	fft->m_iWave->AddSource( numSamples * ( halfSamples + 1 ) + halfSamples,	power );
+	fft->m_iWave->AddSource( numSamples * ( halfSamples - 1 ) + halfSamples,	power );
+
+	//bottom Left
+	fft->m_iWave->AddSource( 0, power );
+	//fft->m_iWave->AddSource( 1, power );
+	//fft->m_iWave->AddSource( numSamples, power );
+
+	//qudrant
+	fft->m_iWave->AddSource( quaterSamples + ( numSamples * quaterSamples ), power );
+	fft->m_iWave->AddSource( numSamples - quaterSamples + ( numSamples * quaterSamples ), power );
+	fft->m_iWave->AddSource( quaterSamples + numSamples * ( numSamples - quaterSamples ), power );
+	fft->m_iWave->AddSource( numSamples - quaterSamples + numSamples * ( numSamples - quaterSamples ), power );
 }
 
 
@@ -776,12 +834,7 @@ void Game::UpdateSimulationFromInput()
 
 	if( g_theInput->WasKeyJustPressed( '1' ) )
 	{
-		FFTWaveSimulation* fft = dynamic_cast<FFTWaveSimulation*>( m_FFTWaveSimulation );
-		fft->m_iWave->AddSource( 32 * 16 + 16, -0.5f );
-		fft->m_iWave->AddSource( 32 * 16 + 15, -0.5f );
-		fft->m_iWave->AddSource( 32 * 16 + 17, -0.5f );
-		fft->m_iWave->AddSource( 32 * 17 + 16, -0.5f );
-		fft->m_iWave->AddSource( 32 * 15 + 16, -0.5f );
+		AddIWaveSources();
 	}
 
 	if( g_theInput->WasKeyJustPressed( 'F' ) )
