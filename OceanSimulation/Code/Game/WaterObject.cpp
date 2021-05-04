@@ -16,6 +16,7 @@
 //---------------------------------------------------------------------------------------------------------
 WaterObject::WaterObject( Vec3 const& m_halfDimensions, Vec3 const& initialPosition )
 {
+	m_movementSpeed = BOX_MOVEMENT_SPEED;
 	m_bounds = AABB3( -m_halfDimensions, m_halfDimensions );
 	m_transform.SetPosition( initialPosition );
 	//CreateMesh();
@@ -32,30 +33,40 @@ WaterObject::WaterObject( Vec3 const& m_halfDimensions, Vec3 const& initialPosit
 
 
 //---------------------------------------------------------------------------------------------------------
-void WaterObject::Update()
+void WaterObject::Update( Camera* camera )
 {
 	float deltaSeconds = static_cast<float>( g_theGame->GetGameClock()->GetLastDeltaSeconds() );
 
-	Vec3 tempPosition = m_transform.GetPosition();
 
-	if( g_theInput->IsKeyPressed( KEY_CODE_RIGHT_ARROW ) )
+	float leftAmount	= 0.f;
+	float forwardAmount = 0.f;
+
+	if( g_theInput->IsKeyPressed( BOX_RIGHT_KEY ) )
 	{
-		tempPosition.x += m_movementSpeed * deltaSeconds;
+		leftAmount -= m_movementSpeed * deltaSeconds;
 	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_LEFT_ARROW ) )
+	if( g_theInput->IsKeyPressed( BOX_LEFT_KEY ) )
 	{
-		tempPosition.x -= m_movementSpeed * deltaSeconds;
+		leftAmount += m_movementSpeed * deltaSeconds;
 	}
 
-	if( g_theInput->IsKeyPressed( KEY_CODE_UP_ARROW ) )
+	if( g_theInput->IsKeyPressed( BOX_FORWARD_KEY ) )
 	{
-		tempPosition.y += m_movementSpeed * deltaSeconds;
+		forwardAmount += m_movementSpeed * deltaSeconds;
 	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_DOWN_ARROW ) )
+	if( g_theInput->IsKeyPressed( BOX_BACKWARD_KEY ) )
 	{
-		tempPosition.y -= m_movementSpeed * deltaSeconds;
+		forwardAmount -= m_movementSpeed * deltaSeconds;
 	}
-	m_transform.SetPosition( tempPosition );
+
+	float cameraYawDegrees = camera->GetYawDegrees();
+	float cosCameraYawDegrees = CosDegrees( cameraYawDegrees );
+	float sinCameraYawDegrees = SinDegrees( cameraYawDegrees );
+	Vec2 cameraForwardXY = Vec2( cosCameraYawDegrees, sinCameraYawDegrees );
+	Vec2 cameraLeftXY = Vec2( -sinCameraYawDegrees, cosCameraYawDegrees );
+
+	Vec2 translationXY = ( cameraForwardXY * forwardAmount ) + ( cameraLeftXY * leftAmount );
+	m_transform.Translate( Vec3( translationXY, 0.f ) );
 }
 
 

@@ -15,6 +15,7 @@
 class Entity;
 class XboxController;
 class Shader;
+class Material;
 class GPUMesh;
 class Clock;
 class NamedProperties;
@@ -24,6 +25,13 @@ class WaterObject;
 struct Vertex_PCUTBN;
 struct AABB3;
 struct TextureCube;
+
+typedef std::map<std::string, GPUMesh*>					TerrainMap;
+typedef std::map<std::string, GPUMesh*>::iterator		TerrainMapIterator;
+typedef std::map<std::string, std::string>				SimulationSettingMap;
+typedef std::map<std::string, std::string>::iterator	SimulationSettingMapIterator;
+typedef std::map<std::string, Material*>				WaterMaterialMap;
+typedef std::map<std::string, Material*>::iterator		WaterMaterialMapIterator;
 
 enum CameraViewOrientation
 {
@@ -50,7 +58,7 @@ struct water_t
 	Vec2 NORMALS1_SCROLL_DIR = Vec2( 1.f, 0.f );
 	Vec2 NORMALS2_SCROLL_DIR = Vec2( 0.f, 1.f );
 
-	Vec2 NORMALS_SCROLL_SPEED = Vec2( 0.01f, 0.01f );
+	Vec2 NORMALS_SCROLL_SPEED = Vec2( 0.00f, 0.00f );
 	float NEAR_PLANE = -0.9f;
 	float FAR_PLANE = -100.f;
 
@@ -79,10 +87,30 @@ public:
 	void Update();
 
 	//Input
+	float GetDeltaSeconds();
 	void UpdateFromInput( float deltaSeconds );
 	void MoveWorldCamera( float deltaSeconds );
 	void UpdateBasedOnMouseMovement();
 	void UpdateSimulationFromInput();
+	void UpdateWaterInfoFromInput();
+
+	void CycleSelectedSimulationSettings();
+	void CycleSelectedTerrain();
+	void CycleSelectedMaterial();
+	void UpdateTilingSize();
+	void UpdateChoppiness();
+	void UpdateTimeFactor();
+	void UpdateSamples();
+	void UpdateDimensions();
+	void UpdateGlobalWaveAmplitude();
+	void UpdateWaveSuppression();
+	void UpdateWindSpeed();
+	void UpdateWindDirection();
+	void UpdateIWaveSourcePower();
+
+	void UpdateFoamDepth();
+	void UpdateFoaminess();
+	void UpdateMaxDepth();
 
 	void IncreaseSamples();
 	void DecreaseSamples();
@@ -112,8 +140,13 @@ public:
 	void SetTempValues();
 	void AddIWaveSources();
 
-	void CreateTerrainFromImage( char const* filepath, Vec2 const& meshDimensions, float minHeight, float maxHeight );
+	GPUMesh* CreateTerrainFromImage( char const* filepath, Vec2 const& meshDimensions, float minHeight, float maxHeight );
 	void GenerateTerrainVerts( GPUMesh* meshToModify, IntVec2 const& vertDimensions, Vec2 const& dimensions, float minHeight, float maxHeight );
+
+	//Loading
+	void LoadTerrains();
+	void LoadSimulationSettings();
+	void LoadMaterials();
 
 	//Commands
 	static void GainFocus( EventArgs* args );
@@ -124,29 +157,42 @@ public:
 	bool IsQuitting() const { return m_isQuitting; }
 
 private:
-	TextureCube* m_skyBox = nullptr;
-	GPUMesh* m_skyCube = nullptr;
-	GPUMesh* m_landMesh = nullptr;
+	bool m_isDebugText = false;
 
-	WaterObject* m_testCube = nullptr;
+	TerrainMap m_terrains;
+	TerrainMapIterator m_selectedTerrain;
 
+	SimulationSettingMap m_simulationSettings;
+	SimulationSettingMapIterator m_selectedSettings;
 	std::string m_currentXML = "";
 
-	WaveSimulation* m_DFTWaveSimulation = nullptr;
+	WaterMaterialMap m_waterMaterials;
+	WaterMaterialMapIterator m_selectedMaterial;
+
+	bool m_showUnderwaterEffect = true;
+	bool m_isSkyBox = true;
+	bool m_updateCrate = true;
+	bool m_scrollingNormals = false;
+	bool m_isUnderWater = false;
+
+	TextureCube* m_skyBoxTexture = nullptr;
+	TextureCube* m_skyBox = nullptr;
+	TextureCube* m_noSkyBox = nullptr;
+	GPUMesh* m_skyCube = nullptr;
+
+	water_t m_waterInfo;
+
+	WaterObject* m_crate = nullptr;
+
 	FFTWaveSimulation* m_FFTWaveSimulation = nullptr;
+	float m_iWaveSourcePower = 1.f;
 
 	Clock*		m_gameClock = nullptr;
-	Texture*	m_test = nullptr;
 	
 	Light	m_theSun = Light::DIRECTIONAL;
 
 	Rgba8 m_ambientColor = Rgba8( 255, 255, 255 );
-	float m_ambientIntensity = 0.45f; //0.6f
-
-	float m_distanceFromCamera = -1.f;
-
-	float m_specularFactor = 0.f;
-	float m_specularPower = 32.f;
+	float m_ambientIntensity = 0.45f;
 
 	Rgba8	m_clearColor = Rgba8::BLACK;
 	
@@ -154,14 +200,6 @@ private:
 	Camera* m_UICamera = nullptr;
 	bool	m_isQuitting = false;
 
-	bool m_isFogEnabled = true;
-	bool m_isDebugText = false;
-
-	int m_selectedWaveIndex = 0;
-
-	water_t m_waterInfo;
-	bool m_isUnderWater = false;
-	float m_powerValue = 1.f;
 
 	Vec2	m_tempWindDir;
 	Vec2	m_tempDimensions;

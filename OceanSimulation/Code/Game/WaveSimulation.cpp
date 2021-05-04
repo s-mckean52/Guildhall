@@ -8,7 +8,7 @@
 #include "Engine/Renderer/MeshUtils.hpp"
 #include "Engine/Math/RandomNumberGenerator.hpp"
 #include "Engine/Math/Transform.hpp"
-#include "Engine/Math/RandomNumberGenerator.hpp"
+#include "Engine/Math/MatrixUtils.hpp"
 #include "Engine/Core/Clock.hpp"
 #include "Engine/Core/DevConsole.hpp"
 #include "Engine/Core/DebugRender.hpp"
@@ -133,16 +133,9 @@ void WaveSimulation::Simulate()
 
 
 //---------------------------------------------------------------------------------------------------------
-void WaveSimulation::Render() const
+void WaveSimulation::Render( Material* materialToBind ) const
 {
-	if( m_isWireFrame ) 
-	{ 
-		g_theRenderer->BindMaterialByPath( "Data/Shaders/Water_Wireframe.material" );
-	}
-	else
-	{
-		g_theRenderer->BindMaterialByPath( "Data/Shaders/Water.material" );
-	}
+	g_theRenderer->BindMaterial( materialToBind );
 	g_theRenderer->BindShaderByPath( "Data/Shaders/Water_Test.hlsl" );
 	DrawMesh();
 }
@@ -268,6 +261,7 @@ void WaveSimulation::SetPosition( Vec3 const& newPosition )
 void WaveSimulation::SetTilingDimensions( uint tilingDimenisions )
 {
 	m_tilingDimensions = tilingDimenisions;
+	CreateQuadTree();
 }
 
 
@@ -331,6 +325,12 @@ void WaveSimulation::RecalculateNormals()
 		AverageNormals( vert1.m_normal, normal, numNormalsPerVert[ vertIndex1 ] );
 		AverageNormals( vert2.m_normal, normal, numNormalsPerVert[ vertIndex2 ] );
 	}
+	for( int vertIndex = 0; vertIndex < m_surfaceVerts.size(); ++vertIndex )
+	{
+		Vertex_OCEAN& vertexToModify = m_surfaceVerts[vertIndex];
+		vertexToModify.m_tangent = CrossProduct3D( Vec3::UNIT_POSITIVE_Y, vertexToModify.m_normal ).GetNormalize();
+		vertexToModify.m_bitangent = CrossProduct3D( vertexToModify.m_normal, vertexToModify.m_tangent).GetNormalize();
+	}
 }
 
 
@@ -352,7 +352,10 @@ void WaveSimulation::TransformByAverageWater( WaterObject* waterObjectToModify )
 
 		Mat44 waterTransform = GetAverageWaterTransformOnGrid( gridStartPos, objectGridXYSteps, containingWaterBounds.GetCenter() );
 		waterObjectToModify->SetWorldTransform( waterTransform );
-
+		if( !MatrixIsOrthoNormal( waterTransform ) )
+		{
+			g_theConsole->PrintString( Rgba8::RED, "Crate matrix for water is not orthonormal" );
+		}
 		if( g_isDebugDraw )
 		{
 			Vec3 p0 = Vec3( containingWaterBounds.mins, 3.f );
@@ -433,6 +436,10 @@ Mat44 WaveSimulation::GetAverageWaterTransformOnGrid( IntVec2 const& gridStartPo
 	Vec3 tangentAverage		= tangentTotal * inversePointsHit;
 	Vec3 bitangentAverage	= bitangentTotal * inversePointsHit;
 	Vec3 normalAverage		= normalTotal * inversePointsHit;
+
+	tangentAverage.Normalize();
+	bitangentAverage.Normalize();
+	normalAverage.Normalize();
 
 	Mat44 waveVertOrientation = Mat44( tangentAverage, bitangentAverage, normalAverage, Vec3( 0.f, 0.f, positionAverage.z ) );
 	return waveVertOrientation;
@@ -720,3 +727,10 @@ void WaveSimulation::AddTimeFactor( float timeFactorToAdd )
 	m_simulationClock->SetScale( static_cast<double>( m_timeFactor ) );
 }
 
+
+//---------------------------------------------------------------------------------------------------------
+void WaveSimulation::SetTimeFactor( float timeFactor )
+{
+	m_timeFactor = timeFactor;
+	m_simulationClock->SetScale( static_cast<double>( m_timeFactor ) );
+}

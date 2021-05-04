@@ -80,7 +80,9 @@ void Game::StartUp()
 	g_theInput->SetCursorMode( MOUSE_MODE_RELATIVE );
 
 	m_worldCamera = new Camera( g_theRenderer );
-	m_worldCamera->SetProjectionPerspective( 60.f, -0.09f, -100.f );
+	float nearPlane = -0.09f;
+	float farPlane = -100.f;
+	m_worldCamera->SetProjectionPerspective( 60.f, nearPlane, farPlane );
 	m_worldCamera->SetDepthStencilTarget( g_theRenderer->m_defaultDepthStencil );
 	m_worldCamera->SetClearMode( CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, Rgba8::WHITE, 1.0f, 0 );
 	m_worldCamera->SetPosition( Vec3( -8.f, -8.f, 1.f ) );
@@ -93,37 +95,26 @@ void Game::StartUp()
 
 	m_theSun.direction = Vec3( -1.f, -1.f, -1.f ).GetNormalize();
 	m_theSun.position = Vec3( 10.f, 10.f, 10.f );
-	m_theSun.color = Rgba8::WHITE.GetValuesAsFractionsVec3();//Rgba8(255, 184, 19).GetValuesAsFractionsVec3();
+	m_theSun.color = Rgba8::WHITE.GetValuesAsFractionsVec3();
 	m_theSun.intensity = 1.f;
 
 	g_theRenderer->SetAmbientLight( m_ambientColor, m_ambientIntensity );
 
-	//uint samples = 256;
-	//Vec2 dimensions = Vec2( 64.f, 64.f );
-	//float wind = 37.f;
-	//m_DFTWaveSimulation = new DFTWaveSimulation( dimensions, samples, wind );
-	LoadSimulationFromXML( "Test.xml" );
-	//CreateNewFFTSimulation( samples, dimensions, wind );
-	//m_FFTWaveSimulation->SetPosition( Vec3( dimensions.x, 0.f, 0.f ) );
-// 	for( int i = 0; i < -1; ++i )
-// 	{
-// 		Vec2 randomDirection = g_RNG->RollRandomDirection2D();
-// 		float randomWaveLength = g_RNG->RollRandomFloatInRange( 0.5f, 7.f ) * 0.1f;
-// 		float randomAmplitude = g_RNG->RollRandomFloatInRange( 0.1f, 1.f ) * 0.1f;
-// 		float randomPhase = g_RNG->RollRandomFloatInRange( 0.0f, 5.f );
-// 
-// 		m_waveSimulation->AddWave( new Wave( randomDirection, randomWaveLength, randomAmplitude, randomPhase ) );
-// 	}
-
-	m_testCube = new WaterObject( Vec3( 1.f, 1.f, 1.f ), Vec3( 0.f, 0.f, 0.f ) );
+	m_crate = new WaterObject( Vec3( 1.f, 1.f, 1.f ), Vec3( 0.f, 0.f, 0.f ) );
 
 	g_devConsoleFont	= g_theRenderer->CreateOrGetBitmapFontFromFile( "Data/Fonts/SquirrelFixedFont" );
-	m_test				= g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Grid.png" );
 
 	//Texture* skyboxTexture = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/skybox_flipped.png" );
 	Texture* skyboxTexture = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/miramar_large_flipped.png" );
 	m_skyBox = new TextureCube( g_theRenderer );
 	m_skyBox->MakeFromImage( *skyboxTexture );
+
+	Texture* noSkyboxTexture = g_theRenderer->CreateOrGetTextureFromFile( "Data/Images/Grey.png" );
+	m_noSkyBox = new TextureCube( g_theRenderer );
+	m_noSkyBox->MakeFromImage( *noSkyboxTexture );
+
+	m_skyBoxTexture = m_isSkyBox ? m_skyBox : m_noSkyBox;
+
 
 	std::vector<uint> skyBoxIndex;
 	std::vector<Vertex_PCUTBN> skyBoxVerts;
@@ -131,7 +122,9 @@ void Game::StartUp()
 	AddTestCubeToIndexVertexArray( skyBoxVerts, skyBoxIndex, AABB3( Vec3( -skyboxHalfSize ), Vec3( skyboxHalfSize ) ), Rgba8::WHITE );
 	m_skyCube = new GPUMesh( g_theRenderer, skyBoxVerts, skyBoxIndex );
 	
-	CreateTerrainFromImage( "Data/Images/Terrain4.png", Vec2( 51.6f, 51.6f ), -10.f, 1.f );
+	LoadMaterials();
+	LoadSimulationSettings();
+	LoadTerrains();
 }
 
 
@@ -152,9 +145,6 @@ void Game::ShutDown()
 
 	delete m_FFTWaveSimulation;
 	m_FFTWaveSimulation = nullptr;
-	
-	delete m_DFTWaveSimulation;
-	m_DFTWaveSimulation = nullptr;
 
 	delete m_skyBox;
 	m_skyBox = nullptr;
@@ -187,8 +177,8 @@ void Game::Render()
 	g_theRenderer->SetCullMode( CULL_MODE_FRONT );
 	g_theRenderer->SetDepthTest( COMPARE_FUNC_ALWAYS, false );
 	
-	g_theRenderer->SetModelUBO( Mat44::IDENTITY );//Mat44::CreateTranslationXYZ( m_worldCamera->GetPosition() ) );
-	g_theRenderer->BindTexture( m_skyBox );
+	g_theRenderer->SetModelUBO( Mat44::IDENTITY );
+	g_theRenderer->BindTexture( m_skyBoxTexture );
 	g_theRenderer->BindShaderByPath( "Data/Shaders/Skybox.hlsl" );
 	g_theRenderer->DrawMesh( m_skyCube );
 	
@@ -205,8 +195,11 @@ void Game::Render()
 	//Refraction map
 	g_theRenderer->BindTexture( nullptr );
 	g_theRenderer->BindShaderByPath( "Data/Shaders/RefractionObject.hlsl" );
-	g_theRenderer->DrawMesh( m_landMesh );
-	m_testCube->Render();
+	g_theRenderer->DrawMesh( m_selectedTerrain->second );
+	if( m_updateCrate )
+	{
+		m_crate->Render();
+	}
 	g_theRenderer->BindShaderByPath( "Data/Shaders/RefractionStencil.hlsl" );
 	m_FFTWaveSimulation->DrawMesh();
 
@@ -232,7 +225,7 @@ void Game::Render()
 
 
 	//---------------------------------------------------------------------------------------------------------
-	if( m_isUnderWater )
+	if( m_isUnderWater && m_showUnderwaterEffect )
 	{
 		Material* underwaterMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Underwater.material" );
 		underwaterMaterial->SetData( m_waterInfo );
@@ -263,15 +256,37 @@ void Game::Update()
 
 	if( !g_theConsole->IsOpen() )
 	{
-		m_testCube->Update();
 		UpdateFromInput( deltaSeconds );
-		//m_DFTWaveSimulation->Simulate();
-		m_FFTWaveSimulation->m_iWave->AddWaterObject( m_testCube );
-		m_FFTWaveSimulation->Simulate();
-		m_FFTWaveSimulation->TransformByAverageWater( m_testCube );
 
-		m_isUnderWater = m_FFTWaveSimulation->IsPointUnderWater( m_worldCamera->GetPosition() );
+		if( m_updateCrate )
+		{
+			m_crate->Update( m_worldCamera );
+			if( m_FFTWaveSimulation->IsIWaveEnabled() )
+			{
+				m_FFTWaveSimulation->m_iWave->AddWaterObject( m_crate );
+			}
+		}
+
+		m_FFTWaveSimulation->Simulate();
+
+		if( m_updateCrate )
+		{
+			m_FFTWaveSimulation->TransformByAverageWater( m_crate );
+		}
+
+		if( m_showUnderwaterEffect )
+		{
+			m_isUnderWater = m_FFTWaveSimulation->IsPointUnderWater( m_worldCamera->GetPosition() );
+		}
 	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+float Game::GetDeltaSeconds()
+{
+	float deltaSeconds = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
+	return deltaSeconds;
 }
 
 
@@ -302,7 +317,7 @@ void Game::DrawTerrain() const
 {
 	g_theRenderer->BindMaterialByPath( "Data/Shaders/Terrain.material" );
 	g_theRenderer->SetModelUBO( Mat44::CreateTranslationXYZ( Vec3( 0.f, 0.f, 0.f ) ) );
-	g_theRenderer->DrawMesh( m_landMesh );
+	g_theRenderer->DrawMesh( m_selectedTerrain->second );
 }
 
 
@@ -322,14 +337,14 @@ void Game::DrawWater() const
 	g_theRenderer->CopyTexture( depthStencilCopy, depthStencil );
 
 	g_theRenderer->BindMaterialTexture( 4, refractionStencilCopy );
-	g_theRenderer->BindMaterialTexture( 5, m_skyBox );
+	g_theRenderer->BindMaterialTexture( 5, m_skyBoxTexture );
 	g_theRenderer->BindMaterialTexture( 6, backBufferCopy );
 	g_theRenderer->BindMaterialTexture( 7, depthStencilCopy );
 	
 	//m_DFTWaveSimulation->Render();
 	Material* waterMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Water.material" );
 	waterMaterial->SetData( m_waterInfo );
-	m_FFTWaveSimulation->Render();
+	m_FFTWaveSimulation->Render( m_selectedMaterial->second );
 
 	g_theRenderer->ReleaseRenderTarget( refractionStencilCopy );
 	g_theRenderer->ReleaseRenderTarget( backBufferCopy );
@@ -349,7 +364,12 @@ void Game::RenderWorld() const
 	g_theRenderer->BindMaterialByPath( "Data/Shaders/Lit.material" );
 	g_theRenderer->BindTextureByPath( "Data/Images/Test_StbiFlippedAndOpenGL.png" );
 	g_theRenderer->BindNormalTexture( nullptr );
-	m_testCube->Render();
+
+	if( m_updateCrate )
+	{
+		m_crate->Render();
+	}
+
 	DrawWater();	
 }
 
@@ -376,15 +396,20 @@ void Game::RenderUI() const
 	Mat44 cameraView = m_worldCamera->GetViewMatrix();
 	MatrixInvertOrthoNormal( cameraView );
 
-	Wave* selectedWave = m_FFTWaveSimulation->GetWaveAtIndex( m_selectedWaveIndex );
-
 	runtimeStrings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "FPS: %.2f", fps ) ) );
 	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Wave Simulation: FFT" ) ) );
-	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Number of Tiles: %i", m_FFTWaveSimulation->GetNumTiles() * m_FFTWaveSimulation->GetNumTiles() ) ) );
-	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[I] - iWave: %s", ( m_FFTWaveSimulation->IsIWaveEnabled() ? "Enabled" : "Disabled" ) ) ) );
-	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[F] - Wire Frame: %s", ( m_FFTWaveSimulation->IsWireFrameEnabled() ? "Enabled" : "Disabled" ) ) ) );
-	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[C,V] - Choppiness: %.2f", m_FFTWaveSimulation->GetChoppyWaterValue() ) ) );
-	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[Z,X] - Time Factor: %.0f", m_FFTWaveSimulation->GetTimeFactor() ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[F3]  - Sky Box: %s", ( m_isSkyBox ? "Enabled" : "Disabled" ) ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[Z,X] - Terrain: %s", m_selectedTerrain->first.c_str() ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[R,F] - Water Material: %s", m_selectedMaterial->first.c_str() ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[1,2] - Setting File: %s", m_selectedSettings->first.c_str() ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[3]   - Floating Crate: %s", ( m_updateCrate ? "Enabled" : "Disabled" ) ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[4]   - Create iWave Ripples (Power: %.2f)", m_iWaveSourcePower ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[5]   - Scrolling Normals: %s", ( m_scrollingNormals ? "Enabled" : "Disabled" ) ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[I]   - iWave: %s", ( m_FFTWaveSimulation->IsIWaveEnabled() ? "Enabled" : "Disabled" ) ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[U]   - Underwater: %s", ( m_showUnderwaterEffect ? "Enabled" : "Disabled" ) ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[N]   - Number of Tiles: %i", m_FFTWaveSimulation->GetNumTiles() * m_FFTWaveSimulation->GetNumTiles() ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[C]   - Choppiness: %.2f", m_FFTWaveSimulation->GetChoppyWaterValue() ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[T]   - Time Factor: %.0f", m_FFTWaveSimulation->GetTimeFactor() ) ) );
 
 
 // 	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Data In: %.4f(ms)", m_FFTWaveSimulation->m_simulateTimer.GetAvgTimeMilliseconds() ) ) );
@@ -394,26 +419,18 @@ void Game::RenderUI() const
 	Vec2 const& simDimensions = m_FFTWaveSimulation->GetGridDimensions();
 	Vec2 const& windDir = m_FFTWaveSimulation->GetWindDirection();
 
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[F1] - Reload Current XML File: %s", m_currentXML.c_str() ) ) );
 	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[F2] - Recalculate Values <current>(new)" ) ) );
-	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[Y,U] - Samples: %i(%i)", m_FFTWaveSimulation->GetNumSamples(), m_tempSamples ) ) );
-	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[-,+] - Dimensions: %.2f(%.2f), %.2f(%.2f)", simDimensions.x, m_tempDimensions.x, simDimensions.y, m_tempDimensions.y ) ) );
-	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[H,J] - Global Wave Amplitude: %.4f(%.4f)", m_FFTWaveSimulation->GetAConstant(), m_tempGloabalWaveAmp ) ) );
-	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[K,L] - Wave Suppression Height: %.4f(%.4f)", m_FFTWaveSimulation->GetWaveSuppression(), m_tempWaveSuppression ) ) );
-	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[N,M] - Wind Speed: %.2f(%.2f)", m_FFTWaveSimulation->GetWindSpeed(), m_tempWindSpeed ) ) );
-	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[<,>] - Wind Direction: %.2f(%.2f), %.2f(%.2f)", windDir.x, m_tempWindDir.x, windDir.y, m_tempWindDir.y ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[Y]  - Samples: %i(%i)", m_FFTWaveSimulation->GetNumSamples(), m_tempSamples ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[G]  - Dimensions: %.2f(%.2f), %.2f(%.2f)", simDimensions.x, m_tempDimensions.x, simDimensions.y, m_tempDimensions.y ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[H]  - Global Wave Amplitude: %.4f(%.4f)", m_FFTWaveSimulation->GetAConstant(), m_tempGloabalWaveAmp ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[J]  - Wave Suppression Height: %.4f(%.4f)", m_FFTWaveSimulation->GetWaveSuppression(), m_tempWaveSuppression ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[K]  - Wind Speed: %.2f(%.2f)", m_FFTWaveSimulation->GetWindSpeed(), m_tempWindSpeed ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[L]  - Wind Direction: %.2f(%.2f), %.2f(%.2f)", windDir.x, m_tempWindDir.x, windDir.y, m_tempWindDir.y ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[V]  - Foam Depth: %.1f", m_waterInfo.FOAM_THICKNESS ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[B]  - Foaminess: %.1f", m_waterInfo.FOAMINESS ) ) );
+	precomputeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[M]  - Max Depth: %.1f", m_waterInfo.MAX_DEPTH ) ) );
 
-
-	if( selectedWave != nullptr )
-	{
-		runtimeStrings.push_back( ColorString( Rgba8::BLUE,	Stringf( " " ) ) );
-		runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[LEFT, RIGHT] - Wave: %i", m_selectedWaveIndex ) ) );
-		runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[UP, DOWN]    - Direction: ( %.2f, %.2f )", selectedWave->m_directionNormal.x, selectedWave->m_directionNormal.y ) ) );
-		runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[{, }]        - Size:      %.2f", selectedWave->m_directionNormal.GetLength() ) ) );
-		runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[-, +]        - Amplitude: %.2f", selectedWave->m_amplitude ) ) );
-		runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[;, ']        - Phase:     %.2f", selectedWave->m_phase ) ) );
-		runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Frequency: %.2f", selectedWave->m_frequency ) ) );
-		runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "              - Magnitude: %.2f", selectedWave->m_magnitude ) ) );
-	}
 
 	Vec3 cameraTopRight = m_UICamera->GetOrthoTopRight();
 	Vec2 cameraTopRightXY = Vec2( cameraTopRight.x, cameraTopRight.y );
@@ -612,7 +629,7 @@ void Game::SetTempValues()
 //---------------------------------------------------------------------------------------------------------
 void Game::AddIWaveSources()
 {
-	float power = m_powerValue * -0.1f;
+	float power = m_iWaveSourcePower * -0.1f;
 	FFTWaveSimulation* fft = dynamic_cast<FFTWaveSimulation*>( m_FFTWaveSimulation );
 	int numSamples = fft->GetNumSamples();
 	int halfSamples = numSamples / 2;
@@ -638,7 +655,7 @@ void Game::AddIWaveSources()
 
 
 //---------------------------------------------------------------------------------------------------------
-void Game::CreateTerrainFromImage( char const* filepath, Vec2 const& meshDimensions, float minHeight, float maxHeight )
+GPUMesh* Game::CreateTerrainFromImage( char const* filepath, Vec2 const& meshDimensions, float minHeight, float maxHeight )
 {
 	Image terrainImage = Image( filepath );
 	IntVec2 terrainDimensions = terrainImage.GetDimensions() - IntVec2( 1, 1 );
@@ -705,7 +722,8 @@ void Game::CreateTerrainFromImage( char const* filepath, Vec2 const& meshDimensi
 	}
 
 	MeshGenerateNormals( terrainVerts, indices );
-	m_landMesh = new GPUMesh( g_theRenderer, terrainVerts, indices ); 
+	GPUMesh* landMesh = new GPUMesh( g_theRenderer, terrainVerts, indices );
+	return landMesh;
 }
 
 
@@ -780,6 +798,49 @@ void Game::GenerateTerrainVerts( GPUMesh* meshToModify, IntVec2 const& vertDimen
 
 
 //---------------------------------------------------------------------------------------------------------
+void Game::LoadTerrains()
+{
+	const Vec2 terrainSize = Vec2( 51.6f, 51.6f );
+	GPUMesh* bowlTerrain = CreateTerrainFromImage( "Data/Images/Terrain.png", terrainSize, -10.f, 1.f );
+	GPUMesh* wallTerrain = CreateTerrainFromImage( "Data/Images/Terrain2.png", terrainSize, -10.f, 1.f );
+	GPUMesh* islandTerrain = CreateTerrainFromImage( "Data/Images/Terrain3.png", terrainSize, -10.f, 1.f );
+	GPUMesh* gradientTerrain = CreateTerrainFromImage( "Data/Images/Terrain4.png", terrainSize, -10.f, 1.f );
+
+	m_terrains.insert( { "Bowl",			bowlTerrain } );
+	m_terrains.insert( { "Gradient Wall",	wallTerrain } );
+	m_terrains.insert( { "Island",			islandTerrain } );
+	m_terrains.insert( { "Gradient",		gradientTerrain } );
+
+	m_selectedTerrain = m_terrains.find( "Bowl" );
+}
+
+
+void Game::LoadSimulationSettings()
+{	
+	m_simulationSettings.insert( { "Zeros",		"Zero.xml" } );
+	m_simulationSettings.insert( { "Still",		"Still.xml" } );
+	m_simulationSettings.insert( { "Calm",		"Calm.xml" } );
+	m_simulationSettings.insert( { "Stormy",	"Stormy.xml" } );
+
+	m_selectedSettings = m_simulationSettings.find( "Zeros" );
+	LoadSimulationFromXML( m_selectedSettings->second.c_str() );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::LoadMaterials()
+{
+	Material* completeMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Water.material" );
+	Material* wireframeMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Water_Wireframe.material" );
+
+	m_waterMaterials.insert( { "Complete", completeMaterial } );
+	m_waterMaterials.insert( { "Wireframe", wireframeMaterial } );
+
+	m_selectedMaterial = m_waterMaterials.find( "Complete" );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
 void Game::LoadCurrentTempValues()
 {
 	bool tempWireFrame = m_FFTWaveSimulation->IsWireFrameEnabled();
@@ -814,33 +875,50 @@ void Game::UpdateBasedOnMouseMovement()
 //---------------------------------------------------------------------------------------------------------
 void Game::UpdateSimulationFromInput()
 {
-	const float updateSpeed = 1.f;
-	float deltaSeconds = static_cast<float>( m_gameClock->GetLastDeltaSeconds() );
+	CycleSelectedSimulationSettings();
+	CycleSelectedTerrain();
+	CycleSelectedMaterial();
+
+	if( g_theInput->IsKeyPressed( SELECT_NUM_TILES ) )
+	{
+		UpdateTilingSize();
+	}
+	if( g_theInput->IsKeyPressed( SELECT_CHOPPINES ) )
+	{
+		UpdateChoppiness();
+	}
+	if( g_theInput->IsKeyPressed( SELECT_TIME_FACTOR ) )
+	{
+		UpdateTimeFactor();
+	}
+	if( g_theInput->IsKeyPressed( SELECT_SAMPLES ) )
+	{
+		UpdateSamples();
+	}
+	if( g_theInput->IsKeyPressed( SELECT_DIMENSIONS ) )
+	{
+		UpdateDimensions();
+	}
+	if( g_theInput->IsKeyPressed( SELECT_GLOBAL_AMPLITUDE ) )
+	{
+		UpdateGlobalWaveAmplitude();
+	}
+	if( g_theInput->IsKeyPressed( SELECT_WAVE_SUPPRESS ) )
+	{
+		UpdateWaveSuppression();
+	}
+	if( g_theInput->IsKeyPressed( SELECT_WIND_SPEED ) )
+	{
+		UpdateWindSpeed();
+	}
+	if( g_theInput->IsKeyPressed( SELECT_WIND_DIRECTION ) )
+	{
+		UpdateWindDirection();
+	}
 
 	if( g_theInput->WasKeyJustPressed( 'I' ) )
 	{
 		m_FFTWaveSimulation->SetIWaveEnabled( !m_FFTWaveSimulation->IsIWaveEnabled() );
-	}
-
-	if( g_theInput->IsKeyPressed( 'C' ) )
-	{
-		m_FFTWaveSimulation->AddChoppyWaterValue( -updateSpeed * deltaSeconds );
-	}
-
-	if( g_theInput->IsKeyPressed( 'V' ) )
-	{
-		m_FFTWaveSimulation->AddChoppyWaterValue( updateSpeed * deltaSeconds );
-	}
-
-	if( g_theInput->WasKeyJustPressed( '1' ) )
-	{
-		AddIWaveSources();
-	}
-
-	if( g_theInput->WasKeyJustPressed( 'F' ) )
-	{
-		//m_DFTWaveSimulation->ToggleWireFrameMode();
-		m_FFTWaveSimulation->ToggleWireFrameMode();
 	}
 
 	if( g_theInput->WasKeyJustPressed( 'P' ) )
@@ -848,69 +926,269 @@ void Game::UpdateSimulationFromInput()
 		//m_DFTWaveSimulation->ToggleSimulationClockPause();
 		m_FFTWaveSimulation->ToggleSimulationClockPause();
 	}
+}
 
-	if( g_theInput->WasKeyJustPressed( 'U' ) )
-	{
-		IncreaseSamples();
-	}
-	if( g_theInput->WasKeyJustPressed( 'Y' ) )
-	{
-		DecreaseSamples();
-	}
 
-	if( g_theInput->IsKeyPressed( KEY_CODE_PLUS ) )
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateWaterInfoFromInput()
+{
+	if( g_theInput->IsKeyPressed( SELECT_FOAMINESS ) )
 	{
-		AddUniformDimensions( updateSpeed * deltaSeconds );
+		UpdateFoaminess();
 	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_MINUS ) )
+	if( g_theInput->IsKeyPressed( SELECT_FOAM_DEPTH ) )
 	{
-		AddUniformDimensions( -updateSpeed * deltaSeconds );
+		UpdateFoamDepth();
 	}
+	if( g_theInput->IsKeyPressed( SELECT_MAX_DEPTH ) )
+	{
+		UpdateMaxDepth();
+	}
+	if( g_theInput->WasKeyJustPressed( TOGGLE_SCROLLING_NORMALS_KEY ) )
+	{
+		m_scrollingNormals = !m_scrollingNormals;
+		if( m_scrollingNormals )
+		{
+			m_waterInfo.NORMALS_SCROLL_SPEED = Vec2( 0.01f, 0.01f );
+		}
+		else
+		{
+			m_waterInfo.NORMALS_SCROLL_SPEED = Vec2( 0.0f, 0.0f );
+		}
+	}
+}
 
-	if( g_theInput->IsKeyPressed( 'H' ) )
-	{
-		AddGlobalWaveAmp( -0.01f * deltaSeconds );
-	}
-	if( g_theInput->IsKeyPressed( 'J' ) )
-	{
-		AddGlobalWaveAmp( 0.01f * deltaSeconds );
-	}
 
-	if( g_theInput->IsKeyPressed( 'K' ) )
+//---------------------------------------------------------------------------------------------------------
+void Game::CycleSelectedSimulationSettings()
+{
+	if( g_theInput->WasKeyJustPressed( CYCLE_SETTINGS_FORWARD ) )
 	{
-		AddWaveSuppression( -0.1f * deltaSeconds );
-	}
-	if( g_theInput->IsKeyPressed( 'L' ) )
-	{
-		AddWaveSuppression( 0.1f * deltaSeconds );
-	}
-
-	if( g_theInput->IsKeyPressed( 'N' ) )
-	{
-		AddWindSpeed( -updateSpeed * deltaSeconds );
-	}
-	if( g_theInput->IsKeyPressed( 'M' ) )
-	{
-		AddWindSpeed( updateSpeed * deltaSeconds );
-	}
-
-	if( g_theInput->IsKeyPressed( KEY_CODE_COMMA ) )
-	{
-		RotateWindDirByDegrees( 30.f * deltaSeconds );
-	}
-	if( g_theInput->IsKeyPressed( KEY_CODE_PERIOD ) )
-	{
-		RotateWindDirByDegrees( 30.f * deltaSeconds );
+		m_selectedSettings++;
+		if( m_selectedSettings == m_simulationSettings.end() )
+		{
+			m_selectedSettings = m_simulationSettings.begin();
+		}
+		LoadSimulationFromXML( m_selectedSettings->second.c_str() );
 	}
 
-	if( g_theInput->WasKeyJustPressed( 'Z' ) )
+	if( g_theInput->WasKeyJustPressed( CYCLE_SETTINGS_BACKWARD ) )
 	{
-		m_FFTWaveSimulation->AddTimeFactor( -1.f );
+		if( m_selectedSettings == m_simulationSettings.begin() )
+		{
+			m_selectedSettings = --m_simulationSettings.end();
+		}
+		else
+		{
+			m_selectedSettings--;
+		}
+		LoadSimulationFromXML( m_selectedSettings->second.c_str() );
 	}
-	if( g_theInput->WasKeyJustPressed( 'X' ) )
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::CycleSelectedTerrain()
+{
+	if( g_theInput->WasKeyJustPressed( CYCLE_TERRAIN_FORWARD ) )
 	{
-		m_FFTWaveSimulation->AddTimeFactor( 1.f );
+		m_selectedTerrain++;
+		if( m_selectedTerrain == m_terrains.end() )
+		{
+			m_selectedTerrain = m_terrains.begin();
+		}
 	}
+
+	if( g_theInput->WasKeyJustPressed( CYCLE_TERRAIN_BACKWARD ) )
+	{
+		if( m_selectedTerrain == m_terrains.begin() )
+		{
+			m_selectedTerrain = --m_terrains.end();
+		}
+		else
+		{
+			m_selectedTerrain--;
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::CycleSelectedMaterial()
+{
+	if( g_theInput->WasKeyJustPressed( CYCLE_WATER_SHADERS_FORWARD ) )
+	{
+		m_selectedMaterial++;
+		if( m_selectedMaterial == m_waterMaterials.end() )
+		{
+			m_selectedMaterial = m_waterMaterials.begin();
+		}
+	}
+
+	if( g_theInput->WasKeyJustPressed( CYCLE_WATER_SHADERS_BACKWARD ) )
+	{
+		if( m_selectedMaterial == m_waterMaterials.begin() )
+		{
+			m_selectedMaterial = --m_waterMaterials.end();
+		}
+		else
+		{
+			m_selectedMaterial--;
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateTilingSize()
+{
+	float scrollAmount = g_theInput->GetScrollAmount();
+	if( scrollAmount != 0.f )
+	{
+		int direction = static_cast<int>( Signf( scrollAmount ) );
+		int currentTilingDim = m_FFTWaveSimulation->GetNumTiles();
+
+		currentTilingDim += direction * NUM_TILES_CHANGE;
+		Clamp( currentTilingDim, 1, 5 );
+
+		m_FFTWaveSimulation->SetTilingDimensions( currentTilingDim );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateChoppiness()
+{
+	float scrollAmount = g_theInput->GetScrollAmount();
+	float amountToChange = scrollAmount * CHOPINESS_CHANGE_PER_SCROLL;
+	float currentChoppiness = m_FFTWaveSimulation->GetChoppyWaterValue();
+
+	currentChoppiness += amountToChange;
+	Clamp( currentChoppiness, -1.f, 1.f );
+
+	m_FFTWaveSimulation->SetChoppyWaterValue( currentChoppiness );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateTimeFactor()
+{
+	float scrollAmount = g_theInput->GetScrollAmount();
+	if( scrollAmount != 0.f )
+	{
+		int direction = static_cast<int>( Signf( scrollAmount ) );
+		int currentTimeFactor = RoundDownToInt( m_FFTWaveSimulation->GetTimeFactor() );
+
+		currentTimeFactor += direction * TIME_FACTOR_CHANGE;
+		Clamp( currentTimeFactor, 0, 25 );
+
+		m_FFTWaveSimulation->SetTimeFactor( static_cast<float>( currentTimeFactor ) );
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateSamples()
+{
+	float scrollAmount = g_theInput->GetScrollAmount();
+	if( scrollAmount != 0.f )
+	{
+		int direction = static_cast<int>( Signf( scrollAmount ) );
+		if( direction == 1 )
+		{
+			IncreaseSamples();
+		}
+		else
+		{
+			DecreaseSamples();
+		}
+	}
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateDimensions()
+{
+	float scrollAmount = g_theInput->GetScrollAmount();
+	float amountToChange = scrollAmount * DIMENSIONS_PER_SCROLL;
+	AddUniformDimensions( amountToChange );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateGlobalWaveAmplitude()
+{
+	float scrollAmount = g_theInput->GetScrollAmount();
+	float amountToChange = scrollAmount * GLOBAL_AMPLITUDE_PER_SCROLL;
+	AddGlobalWaveAmp( amountToChange );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateWaveSuppression()
+{
+	float scrollAmount = g_theInput->GetScrollAmount();
+	float amountToChange = scrollAmount * WAVE_SUPPRESS_PER_SCROLL;
+	AddWaveSuppression( amountToChange );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateWindSpeed()
+{
+	float scrollAmount = g_theInput->GetScrollAmount();
+	float amountToChange = scrollAmount * WIND_SPEED_PER_SCROLL;
+	AddWindSpeed( amountToChange );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateWindDirection()
+{
+	float scrollAmount = g_theInput->GetScrollAmount();
+	float amountToChange = scrollAmount * WIND_ROTATION_PER_SCROLL;
+	RotateWindDirByDegrees( amountToChange );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateIWaveSourcePower()
+{
+	float scrollAmount = g_theInput->GetScrollAmount();
+	float amountToChange = scrollAmount * IWAVE_SOURCE_POWER_PER_SCROLL;
+	m_iWaveSourcePower += amountToChange;
+	Clamp( m_iWaveSourcePower, 1.f, 10.f );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateFoamDepth()
+{
+	float scrollAmount = g_theInput->GetScrollAmount();
+	float amountToChange = scrollAmount * FOAM_DEPTH_PER_SCROLL;
+	m_waterInfo.FOAM_THICKNESS += amountToChange;
+	Clamp( m_waterInfo.FOAM_THICKNESS, 0.f, 1.f );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateFoaminess()
+{
+	float scrollAmount = g_theInput->GetScrollAmount();
+	float amountToChange = scrollAmount * FOAMINESS_PER_SCROLL;
+	m_waterInfo.FOAMINESS += amountToChange;
+	Clamp( m_waterInfo.FOAMINESS, 0.f, 1.f );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::UpdateMaxDepth()
+{
+	float scrollAmount = g_theInput->GetScrollAmount();
+	float amountToChange = scrollAmount * MAX_DEPTH_PER_SCROLL;
+	m_waterInfo.MAX_DEPTH += amountToChange;
+	Clamp( m_waterInfo.MAX_DEPTH, 0.f, 100.f );
+	m_waterInfo.INVERSE_MAX_DEPTH = 1.f / m_waterInfo.MAX_DEPTH;
 }
 
 
@@ -941,6 +1219,9 @@ void Game::AddUniformDimensions( float dimensionsToAdd )
 {
 	m_tempDimensions.x += dimensionsToAdd;
 	m_tempDimensions.y += dimensionsToAdd;
+
+	m_tempDimensions.x = m_tempDimensions.x < 1.f ? 1.f : m_tempDimensions.x;
+	m_tempDimensions.y = m_tempDimensions.x < 1.f ? 1.f : m_tempDimensions.y;
 }
 
 
@@ -948,6 +1229,7 @@ void Game::AddUniformDimensions( float dimensionsToAdd )
 void Game::AddGlobalWaveAmp( float ampToAdd )
 {
 	m_tempGloabalWaveAmp += ampToAdd;
+	m_tempGloabalWaveAmp = m_tempGloabalWaveAmp < 0.f ? 0.f : m_tempGloabalWaveAmp;
 }
 
 
@@ -955,6 +1237,7 @@ void Game::AddGlobalWaveAmp( float ampToAdd )
 void Game::AddWaveSuppression( float suppressionToAdd )
 {
 	m_tempWaveSuppression += suppressionToAdd;
+	m_tempWaveSuppression = m_tempWaveSuppression < 0.f ? 0.f : m_tempWaveSuppression;
 }
 
 
@@ -962,6 +1245,7 @@ void Game::AddWaveSuppression( float suppressionToAdd )
 void Game::AddWindSpeed( float windSpeedToAdd )
 {
 	m_tempWindSpeed += windSpeedToAdd;
+	m_tempWindSpeed = m_tempWindSpeed < 0.f ? 0.f : m_tempWindSpeed;
 }
 
 
@@ -1022,6 +1306,7 @@ void Game::UpdateFromInput( float deltaSeconds )
 	MoveWorldCamera( deltaSeconds );
 
 	UpdateSimulationFromInput();
+	UpdateWaterInfoFromInput();
 
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_ESC ) )
 	{
@@ -1034,6 +1319,25 @@ void Game::UpdateFromInput( float deltaSeconds )
 		m_worldCamera->SetPitchYawRollRotationDegrees( 0.f, 0.f, 0.0f );
 	}
 
+	if( g_theInput->IsKeyPressed( APPLY_IWAVE_SOURCES_KEY ) )
+	{
+		UpdateIWaveSourcePower();
+	}
+	else if( g_theInput->WasKeyJustReleased( APPLY_IWAVE_SOURCES_KEY ) )
+	{
+		AddIWaveSources();
+	}
+
+	if( g_theInput->WasKeyJustPressed( TOGGLE_CRATE_KEY ) )
+	{
+		m_updateCrate = !m_updateCrate;
+	}
+	if( g_theInput->WasKeyJustPressed( TOGGLE_SKYBOX_KEY ) )
+	{
+		m_isSkyBox = !m_isSkyBox;
+		m_skyBoxTexture = m_isSkyBox ? m_skyBox : m_noSkyBox;
+	}
+
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F1 ) )
 	{
 		ReloadCurrentXML();
@@ -1041,6 +1345,10 @@ void Game::UpdateFromInput( float deltaSeconds )
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F2 ) )
 	{
 		LoadCurrentTempValues();
+	}
+	if( g_theInput->WasKeyJustPressed( TOGGLE_UNDERWATER_EFFECT_KEY ) )
+	{
+		m_showUnderwaterEffect = !m_showUnderwaterEffect;
 	}
 	if( g_theInput->WasKeyJustPressed( KEY_CODE_F11 ) )
 	{
@@ -1062,35 +1370,35 @@ void Game::MoveWorldCamera( float deltaSeconds )
 	float forwardMoveAmount = 0.f;
 	float leftMoveAmount = 0.f;
 	float upMoveAmount = 0.f;
-	float moveSpeed = 5.f * deltaSeconds;
-	if( g_theInput->IsKeyPressed( KEY_CODE_SHIFT ) )
+	float moveSpeed = CAMERA_MOVE_SPEED * deltaSeconds;
+	if( g_theInput->IsKeyPressed( CAMERA_FAST_KEY ) )
 	{
-		moveSpeed *= 2.f;
+		moveSpeed *= CAMERA_FAST_FACTOR;
 	}
 
-	if( g_theInput->IsKeyPressed( 'W' ) )
+	if( g_theInput->IsKeyPressed( CAMERA_FORWARD_KEY ) )
 	{
 		forwardMoveAmount += moveSpeed;
 	}	
-	if( g_theInput->IsKeyPressed( 'S' ) )
+	if( g_theInput->IsKeyPressed( CAMERA_BACKWARD_KEY ) )
 	{
 		forwardMoveAmount -= moveSpeed;
 	}	
 
-	if( g_theInput->IsKeyPressed( 'A' ) )
+	if( g_theInput->IsKeyPressed( CAMERA_LEFT_KEY ) )
 	{
 		leftMoveAmount += moveSpeed;
 	}	
-	if( g_theInput->IsKeyPressed( 'D' ) )
+	if( g_theInput->IsKeyPressed( CAMERA_RIGHT_KEY ) )
 	{
 		leftMoveAmount -= moveSpeed;
 	}
 
-	if( g_theInput->IsKeyPressed( 'Q' ) )
+	if( g_theInput->IsKeyPressed( CAMERA_UP_KEY ) )
 	{
 		upMoveAmount += moveSpeed;
 	}
-	if( g_theInput->IsKeyPressed( 'E' ) )
+	if( g_theInput->IsKeyPressed( CAMERA_DOWN_KEY ) )
 	{
 		upMoveAmount -= moveSpeed;
 	}

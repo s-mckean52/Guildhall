@@ -12,7 +12,7 @@ public:
 	~WaterObject()	{};
 	WaterObject( Vec3 const& m_halfDimensions, Vec3 const& initialPosition );
 
-	void Update();
+	void Update( Camera* camera );
 	void Render() const;
 
 	Vec3	GetPosition() const		{ return m_transform.GetPosition(); }

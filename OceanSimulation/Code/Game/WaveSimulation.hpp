@@ -17,6 +17,7 @@ class	Transform;
 class	GPUMesh;
 class	Clock;
 class	WaterObject;
+class	Material;
 
 //---------------------------------------------------------------------------------------------------------
 enum WaveSimulationMode
@@ -70,7 +71,7 @@ public:
 
 	virtual void Simulate();
 
-	virtual void Render() const;
+	virtual void Render( Material* materialToBind ) const;
 	virtual void RenderRefractionMap() const;
 	virtual void RenderBackFaces() const;
 	virtual void DrawMesh() const;
@@ -97,6 +98,7 @@ public:
 	void	SetChoppyWaterValue( float choppyWaterValue );
 	void	AddChoppyWaterValue( float choppyWaterValueToAdd );
 	void	AddTimeFactor( float timeFactorToAdd );
+	void	SetTimeFactor( float timeFactorToAdd );
 	
 	ComplexFloat	hTilde( int n, int m, float time );
 	ComplexFloat	hTilde0( int n, int m, bool doesNegateK = false );

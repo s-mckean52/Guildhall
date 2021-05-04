@@ -57,21 +57,32 @@ v2f_ocean_t VertexFunction(vs_input_ocean_t input)
 // is being drawn to the first bound color target.
 float4 FragmentFunction(v2f_ocean_t input) : SV_Target0
 {   
-	float2 normal_scroll_uv1 = input.uv + SYSTEM_TIME_SECONDS * NORMALS1_SCROLL_DIR * NORMALS_SCROLL_SPEED.x;
-	float2 normal_scroll_uv2 = input.uv + SYSTEM_TIME_SECONDS * NORMALS2_SCROLL_DIR * NORMALS_SCROLL_SPEED.y;
-	
-	float4 normal_color1 = tScrollingNormal1.Sample(sSampler, normal_scroll_uv1);
-	float4 normal_color2 = tScrollingNormal2.Sample(sSampler, normal_scroll_uv2);
+    float3 world_normal = input.world_normal.xyz;
+    
+    float3 normal1 = float3( 0.f, 0.f, 0.f );
+    float3 normal2 = float3( 0.f, 0.f, 0.f );
+    if( NORMALS_SCROLL_SPEED.x != 0.f )
+    {
+	    float2 normal_scroll_uv1 = input.uv + SYSTEM_TIME_SECONDS * NORMALS1_SCROLL_DIR * NORMALS_SCROLL_SPEED.x;
+	    float4 normal_color1 = tScrollingNormal1.Sample(sSampler, normal_scroll_uv1);
+        normal1 = GetNormalFromColor( normal_color1.xyz );
+    }
+    if( NORMALS_SCROLL_SPEED.y != 0.f )
+    {
+	    float2 normal_scroll_uv2 = input.uv + SYSTEM_TIME_SECONDS * NORMALS2_SCROLL_DIR * NORMALS_SCROLL_SPEED.y;
+	    float4 normal_color2 = tScrollingNormal2.Sample(sSampler, normal_scroll_uv2);
+	    normal2 = GetNormalFromColor( normal_color2.xyz );
+    }
 
-	float3 normal1 = GetNormalFromColor( normal_color1.xyz );
-	float3 normal2 = GetNormalFromColor( normal_color2.xyz );
+    if( NORMALS_SCROLL_SPEED.x != 0.f || NORMALS_SCROLL_SPEED.y != 0.f )
+    {
+	    float3x3 tbn = GetVertexTBN( input.world_tangent, input.world_bitangent, input.world_normal );
 
-	float3x3 tbn = GetVertexTBN( input.world_tangent, input.world_bitangent, input.world_normal );
+	    world_normal = normalize( mul( normal1, tbn ) );
+	    world_normal += normalize( mul( normal2, tbn ) );
+	    world_normal = normalize( world_normal );
+    }
 
-	float3 world_normal = normalize( mul( normal1, tbn ) );
-	world_normal += normalize( mul( normal2, tbn ) );
-	world_normal = normalize( world_normal );
-    world_normal = input.world_normal.xyz;
 
 	float2 backBufferDim;
 	tBackBuffer.GetDimensions( backBufferDim.x, backBufferDim.y );
@@ -155,6 +166,10 @@ float4 FragmentFunction(v2f_ocean_t input) : SV_Target0
 	floor_color = lerp( floor_color, UPWELLING_COLOR, depthFraction.xxx );
     if( refractionDepth <= FOAM_THICKNESS && refractionDepth >= 0.f )
     {
+        if( FOAMINESS == 0.f )
+        {
+            return float4( 1.f, 1.f, 1.f, 1.f );
+        }
         float4 noise = tDiffuse.Sample( sSampler, ( input.uv * 1.5f ) + SYSTEM_TIME_SECONDS * normalize( float2( 1.f, 1.f ) ) * float2( 0.001f, 0.003f ) );
         float noiseA = noise.w;
         float noiseG = noise.y;;
