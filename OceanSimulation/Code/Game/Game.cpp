@@ -195,7 +195,7 @@ void Game::Render()
 	//Refraction map
 	g_theRenderer->BindTexture( nullptr );
 	g_theRenderer->BindShaderByPath( "Data/Shaders/RefractionObject.hlsl" );
-	g_theRenderer->DrawMesh( m_selectedTerrain->second );
+	g_theRenderer->DrawMesh( m_selectedTerrain );
 	if( m_updateCrate )
 	{
 		m_crate->Render();
@@ -317,7 +317,7 @@ void Game::DrawTerrain() const
 {
 	g_theRenderer->BindMaterialByPath( "Data/Shaders/Terrain.material" );
 	g_theRenderer->SetModelUBO( Mat44::CreateTranslationXYZ( Vec3( 0.f, 0.f, 0.f ) ) );
-	g_theRenderer->DrawMesh( m_selectedTerrain->second );
+	g_theRenderer->DrawMesh( m_selectedTerrain );
 }
 
 
@@ -342,9 +342,9 @@ void Game::DrawWater() const
 	g_theRenderer->BindMaterialTexture( 7, depthStencilCopy );
 	
 	//m_DFTWaveSimulation->Render();
-	Material* waterMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Water.material" );
+	Material* waterMaterial = m_selectedMaterial;
 	waterMaterial->SetData( m_waterInfo );
-	m_FFTWaveSimulation->Render( m_selectedMaterial->second );
+	m_FFTWaveSimulation->Render( waterMaterial );
 
 	g_theRenderer->ReleaseRenderTarget( refractionStencilCopy );
 	g_theRenderer->ReleaseRenderTarget( backBufferCopy );
@@ -399,9 +399,9 @@ void Game::RenderUI() const
 	runtimeStrings.push_back( ColorString( Rgba8::YELLOW,	Stringf( "FPS: %.2f", fps ) ) );
 	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "Wave Simulation: FFT" ) ) );
 	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[F3]  - Sky Box: %s", ( m_isSkyBox ? "Enabled" : "Disabled" ) ) ) );
-	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[Z,X] - Terrain: %s", m_selectedTerrain->first.c_str() ) ) );
-	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[R,F] - Water Material: %s", m_selectedMaterial->first.c_str() ) ) );
-	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[1,2] - Setting File: %s", m_selectedSettings->first.c_str() ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[Z,X] - Terrain: %s", m_terrainNames[m_selectedTerrainIndex] ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[R,F] - Water Material: %s", m_waterMaterialNames[m_selectedMaterialIndex] ) ) );
+	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[1,2] - Setting File: %s", m_simulationSettingNames[m_selectedSettingsIndex] ) ) );
 	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[3]   - Floating Crate: %s", ( m_updateCrate ? "Enabled" : "Disabled" ) ) ) );
 	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[4]   - Create iWave Ripples (Power: %.2f)", m_iWaveSourcePower ) ) );
 	runtimeStrings.push_back( ColorString( Rgba8::WHITE,	Stringf( "[5]   - Scrolling Normals: %s", ( m_scrollingNormals ? "Enabled" : "Disabled" ) ) ) );
@@ -437,7 +437,7 @@ void Game::RenderUI() const
 	Vec2 cameraTopLeft = Vec2( m_UICamera->GetOrthoBottomLeft().x, cameraTopRight.y );
 	Vec2 leftTextStartPos = cameraTopLeft + Vec2( paddingFromLeft, -paddingFromTop - textHeight );
 
-	Vec2 longestStingDim = g_devConsoleFont->GetDimensionsForText2D( textHeight, precomputeStrings[4].m_text );
+	Vec2 longestStingDim = GetDimensionsForLongestColorSting( g_devConsoleFont, textHeight, precomputeStrings );
 	Vec2 rightTextStartPos = cameraTopRightXY + Vec2( -longestStingDim.x - paddingFromLeft, -paddingFromTop - textHeight );
 
 	for( int stringIndex = 0; stringIndex < runtimeStrings.size(); ++stringIndex )
@@ -458,6 +458,36 @@ void Game::RenderUI() const
 	g_theRenderer->BindTexture( g_devConsoleFont->GetTexture() );
 	g_theRenderer->SetModelUBO( Mat44::IDENTITY );
 	g_theRenderer->DrawVertexArray( textVerts );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+Vec2 Game::GetDimensionsForLongestColorSting( BitmapFont* font, float textHeight, std::vector<ColorString> const& strings ) const
+{
+	std::string longestString = GetLongestColorSting( strings );
+	Vec2 textDim = font->GetDimensionsForText2D( textHeight, longestString );
+	return textDim;
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+std::string Game::GetLongestColorSting( std::vector<ColorString> const& strings ) const
+{
+	std::string longestString = "";
+	int longestStringLength = 0;
+
+	for( int stringIndex = 0; stringIndex < strings.size(); ++stringIndex )
+	{
+		std::string currentString = strings[stringIndex].m_text;
+		int currentStringLength = static_cast<int>( currentString.length() );
+		if( currentStringLength > longestStringLength )
+		{
+			longestString = currentString;
+			longestStringLength = currentStringLength;
+		}
+	}
+
+	return longestString;
 }
 
 
@@ -802,28 +832,29 @@ void Game::LoadTerrains()
 {
 	const Vec2 terrainSize = Vec2( 51.6f, 51.6f );
 	GPUMesh* bowlTerrain = CreateTerrainFromImage( "Data/Images/Terrain.png", terrainSize, -10.f, 1.f );
-	GPUMesh* wallTerrain = CreateTerrainFromImage( "Data/Images/Terrain2.png", terrainSize, -10.f, 1.f );
+	GPUMesh* wallTerrain = CreateTerrainFromImage( "Data/Images/Terrain2.png", terrainSize, -10.f, 2.f );
 	GPUMesh* islandTerrain = CreateTerrainFromImage( "Data/Images/Terrain3.png", terrainSize, -10.f, 1.f );
 	GPUMesh* gradientTerrain = CreateTerrainFromImage( "Data/Images/Terrain4.png", terrainSize, -10.f, 1.f );
 
-	m_terrains.insert( { "Bowl",			bowlTerrain } );
-	m_terrains.insert( { "Gradient Wall",	wallTerrain } );
-	m_terrains.insert( { "Island",			islandTerrain } );
-	m_terrains.insert( { "Gradient",		gradientTerrain } );
+	AddTerrainByName( "Gradient",		gradientTerrain );
+	AddTerrainByName( "Gradient Wall",	wallTerrain );
+	AddTerrainByName( "Island",			islandTerrain );
+	AddTerrainByName( "Bowl",			bowlTerrain );
 
-	m_selectedTerrain = m_terrains.find( "Bowl" );
+	m_selectedTerrain = m_terrains[m_selectedTerrainIndex];
 }
 
 
+//---------------------------------------------------------------------------------------------------------
 void Game::LoadSimulationSettings()
 {	
-	m_simulationSettings.insert( { "Zeros",		"Zero.xml" } );
-	m_simulationSettings.insert( { "Still",		"Still.xml" } );
-	m_simulationSettings.insert( { "Calm",		"Calm.xml" } );
-	m_simulationSettings.insert( { "Stormy",	"Stormy.xml" } );
+	AddSimulationSettingByName( "Still",	"Still.xml" );
+	AddSimulationSettingByName( "Calm",		"Calm.xml" );
+	AddSimulationSettingByName( "Stormy",	"Stormy.xml" );
+	AddSimulationSettingByName( "Zeros",	"Zero.xml" );
 
-	m_selectedSettings = m_simulationSettings.find( "Zeros" );
-	LoadSimulationFromXML( m_selectedSettings->second.c_str() );
+	m_selectedSettings = m_simulationSettings[m_selectedSettingsIndex];
+	LoadSimulationFromXML( m_selectedSettings );
 }
 
 
@@ -832,11 +863,41 @@ void Game::LoadMaterials()
 {
 	Material* completeMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Water.material" );
 	Material* wireframeMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Water_Wireframe.material" );
+	Material* reflectionMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Water_Reflection.material" );
+	Material* transmissionMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Water_Transmission.material" );
+	Material* fresnelMaterial = g_theRenderer->GetOrCreateMaterialFromFile( "Data/Shaders/Water_Fresnel.material" );
 
-	m_waterMaterials.insert( { "Complete", completeMaterial } );
-	m_waterMaterials.insert( { "Wireframe", wireframeMaterial } );
+	AddWaterMaterialByName( "Complete", completeMaterial );
+	AddWaterMaterialByName( "Wireframe", wireframeMaterial );
+	AddWaterMaterialByName( "Reflection", reflectionMaterial );
+	AddWaterMaterialByName( "Transmission and Refraction", transmissionMaterial );
+	AddWaterMaterialByName( "Fresnel", fresnelMaterial );
 
-	m_selectedMaterial = m_waterMaterials.find( "Complete" );
+	m_selectedMaterial = m_waterMaterials[m_selectedMaterialIndex];
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddTerrainByName( char const* name, GPUMesh* terrainMesh )
+{
+	m_terrains.push_back( terrainMesh );
+	m_terrainNames.push_back( name );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddSimulationSettingByName( char const* name, char const* simulationFileName )
+{
+	m_simulationSettings.push_back( simulationFileName );
+	m_simulationSettingNames.push_back( name );
+}
+
+
+//---------------------------------------------------------------------------------------------------------
+void Game::AddWaterMaterialByName( char const* name, Material* material )
+{
+	m_waterMaterials.push_back( material );
+	m_waterMaterialNames.push_back( name );
 }
 
 
@@ -964,25 +1025,24 @@ void Game::CycleSelectedSimulationSettings()
 {
 	if( g_theInput->WasKeyJustPressed( CYCLE_SETTINGS_FORWARD ) )
 	{
-		m_selectedSettings++;
-		if( m_selectedSettings == m_simulationSettings.end() )
+		m_selectedSettingsIndex++;
+		if( m_selectedSettingsIndex >=  m_simulationSettings.size() )
 		{
-			m_selectedSettings = m_simulationSettings.begin();
+			m_selectedSettingsIndex = 0;
 		}
-		LoadSimulationFromXML( m_selectedSettings->second.c_str() );
+		m_selectedSettings = m_simulationSettings[m_selectedSettingsIndex];
+		LoadSimulationFromXML( m_selectedSettings );
 	}
 
 	if( g_theInput->WasKeyJustPressed( CYCLE_SETTINGS_BACKWARD ) )
 	{
-		if( m_selectedSettings == m_simulationSettings.begin() )
+		m_selectedSettingsIndex--;
+		if( m_selectedSettingsIndex < 0 )
 		{
-			m_selectedSettings = --m_simulationSettings.end();
+			m_selectedSettingsIndex = static_cast<int>( m_simulationSettings.size() ) - 1;
 		}
-		else
-		{
-			m_selectedSettings--;
-		}
-		LoadSimulationFromXML( m_selectedSettings->second.c_str() );
+		m_selectedSettings = m_simulationSettings[m_selectedSettingsIndex];
+		LoadSimulationFromXML( m_selectedSettings );
 	}
 }
 
@@ -992,23 +1052,22 @@ void Game::CycleSelectedTerrain()
 {
 	if( g_theInput->WasKeyJustPressed( CYCLE_TERRAIN_FORWARD ) )
 	{
-		m_selectedTerrain++;
-		if( m_selectedTerrain == m_terrains.end() )
+		m_selectedTerrainIndex++;
+		if( m_selectedTerrainIndex >=  m_terrains.size() )
 		{
-			m_selectedTerrain = m_terrains.begin();
+			m_selectedTerrainIndex = 0;
 		}
+		m_selectedTerrain = m_terrains[m_selectedTerrainIndex];
 	}
 
 	if( g_theInput->WasKeyJustPressed( CYCLE_TERRAIN_BACKWARD ) )
 	{
-		if( m_selectedTerrain == m_terrains.begin() )
+		m_selectedTerrainIndex--;
+		if( m_selectedTerrainIndex < 0 )
 		{
-			m_selectedTerrain = --m_terrains.end();
+			m_selectedTerrainIndex = static_cast<int>( m_terrains.size() ) - 1;
 		}
-		else
-		{
-			m_selectedTerrain--;
-		}
+		m_selectedTerrain = m_terrains[m_selectedTerrainIndex];
 	}
 }
 
@@ -1018,23 +1077,22 @@ void Game::CycleSelectedMaterial()
 {
 	if( g_theInput->WasKeyJustPressed( CYCLE_WATER_SHADERS_FORWARD ) )
 	{
-		m_selectedMaterial++;
-		if( m_selectedMaterial == m_waterMaterials.end() )
+		m_selectedMaterialIndex++;
+		if( m_selectedMaterialIndex >= m_waterMaterials.size() )
 		{
-			m_selectedMaterial = m_waterMaterials.begin();
+			m_selectedMaterialIndex = 0;
 		}
+		m_selectedMaterial = m_waterMaterials[m_selectedMaterialIndex];
 	}
 
 	if( g_theInput->WasKeyJustPressed( CYCLE_WATER_SHADERS_BACKWARD ) )
 	{
-		if( m_selectedMaterial == m_waterMaterials.begin() )
+		m_selectedMaterialIndex--;
+		if( m_selectedMaterialIndex < 0 )
 		{
-			m_selectedMaterial = --m_waterMaterials.end();
+			m_selectedMaterialIndex = static_cast<int>( m_waterMaterials.size() ) - 1;
 		}
-		else
-		{
-			m_selectedMaterial--;
-		}
+		m_selectedMaterial = m_waterMaterials[m_selectedMaterialIndex];
 	}
 }
 
@@ -1221,7 +1279,7 @@ void Game::AddUniformDimensions( float dimensionsToAdd )
 	m_tempDimensions.y += dimensionsToAdd;
 
 	m_tempDimensions.x = m_tempDimensions.x < 1.f ? 1.f : m_tempDimensions.x;
-	m_tempDimensions.y = m_tempDimensions.x < 1.f ? 1.f : m_tempDimensions.y;
+	m_tempDimensions.y = m_tempDimensions.y < 1.f ? 1.f : m_tempDimensions.y;
 }
 
 

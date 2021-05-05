@@ -1,0 +1,10 @@
+<Material   name="Water_Reflection">
+    <ShaderState        filepath="Data/Shaders/Water_Reflection.shaderstate"/>
+    <Tint               value="255,255,255"/>
+    <SpecularFactor     value="5.f"/>
+    <SpecularPower      value="350.0f"/>
+    <DiffuseTexture     filepath="Data/Images/FourNoiseChannels.png"/>
+    <MaterialTexture    filepath="Data/Images/waterNM1.png"/>
+    <MaterialTexture    filepath="Data/Images/waterNM2.png"/>
+    <MaterialSampler    type="linear" wrap="wrap"/>
+</Material>

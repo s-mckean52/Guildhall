@@ -25,6 +25,7 @@ class WaterObject;
 struct Vertex_PCUTBN;
 struct AABB3;
 struct TextureCube;
+struct ColorString;
 
 typedef std::map<std::string, GPUMesh*>					TerrainMap;
 typedef std::map<std::string, GPUMesh*>::iterator		TerrainMapIterator;
@@ -143,10 +144,17 @@ public:
 	GPUMesh* CreateTerrainFromImage( char const* filepath, Vec2 const& meshDimensions, float minHeight, float maxHeight );
 	void GenerateTerrainVerts( GPUMesh* meshToModify, IntVec2 const& vertDimensions, Vec2 const& dimensions, float minHeight, float maxHeight );
 
+	Vec2 GetDimensionsForLongestColorSting( BitmapFont* font, float textHeight, std::vector<ColorString> const& strings ) const;
+	std::string GetLongestColorSting( std::vector<ColorString> const& strings ) const;
+
 	//Loading
 	void LoadTerrains();
 	void LoadSimulationSettings();
 	void LoadMaterials();
+
+	void AddTerrainByName( char const* name, GPUMesh* terrainMesh );
+	void AddSimulationSettingByName( char const* name, char const* simulationFileName );
+	void AddWaterMaterialByName( char const* name, Material* material );
 
 	//Commands
 	static void GainFocus( EventArgs* args );
@@ -159,15 +167,21 @@ public:
 private:
 	bool m_isDebugText = false;
 
-	TerrainMap m_terrains;
-	TerrainMapIterator m_selectedTerrain;
+	std::vector<GPUMesh*> m_terrains;
+	std::vector<char const*> m_terrainNames;
+	GPUMesh* m_selectedTerrain;
+	int m_selectedTerrainIndex = 0;
 
-	SimulationSettingMap m_simulationSettings;
-	SimulationSettingMapIterator m_selectedSettings;
+	std::vector<char const*> m_simulationSettings;
+	std::vector<char const*> m_simulationSettingNames;
+	char const* m_selectedSettings;
+	int m_selectedSettingsIndex = 0;
 	std::string m_currentXML = "";
 
-	WaterMaterialMap m_waterMaterials;
-	WaterMaterialMapIterator m_selectedMaterial;
+	std::vector<Material*> m_waterMaterials;
+	std::vector<char const*> m_waterMaterialNames;
+	Material* m_selectedMaterial;
+	int m_selectedMaterialIndex = 0;
 
 	bool m_showUnderwaterEffect = true;
 	bool m_isSkyBox = true;

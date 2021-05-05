@@ -1,10 +1,6 @@
-<Material   name="Water">
+<Material   name="Water_Wireframe">
     <ShaderState        filepath="Data/Shaders/Water_Wireframe.shaderstate"/>
     <Tint               value="255,255,255"/>
-    <SpecularFactor     value="0.55f"/>
-    <SpecularPower      value="32.0f"/>
-    <!--<MaterialTexture    filepath="Data/Images/miramar_large_flipped.png"/>-->
-    <MaterialTexture    filepath="Data/Images/waterNM1.png"/>
-    <MaterialTexture    filepath="Data/Images/waterNM2.png"/>
-    <MaterialSampler    type="linear" wrap="wrap"/>
+    <SpecularFactor     value="5.f"/>
+    <SpecularPower      value="350.0f"/>
 </Material>

@@ -136,7 +136,7 @@ void WaveSimulation::Simulate()
 void WaveSimulation::Render( Material* materialToBind ) const
 {
 	g_theRenderer->BindMaterial( materialToBind );
-	g_theRenderer->BindShaderByPath( "Data/Shaders/Water_Test.hlsl" );
+	//g_theRenderer->BindShaderByPath( "Data/Shaders/Water_Test.hlsl" );
 	DrawMesh();
 }
 
@@ -632,8 +632,8 @@ float WaveSimulation::PhillipsEquation( Vec2 const& k, float lengthK )
 	float eComponent = std::exp( exponentOfE );
 
 	float kDotW = DotProduct2D( k.GetNormalized(), m_windDirection );
-	if( kDotW <= 0.f )
-		kDotW = 0.f;
+// 	if( kDotW <= 0.f )
+// 		kDotW = 0.f;
 
 	float kDotWSquared = kDotW * kDotW;
 

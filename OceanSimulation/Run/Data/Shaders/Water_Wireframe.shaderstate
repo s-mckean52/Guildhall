@@ -1,6 +1,6 @@
 <!-- lit Shader State XML -->
 
-<ShaderState Name="Water"
+<ShaderState Name="Water_Wireframe"
              Shader       =""
              BlendMode    ="Alpha"
              CullMode     ="Back"

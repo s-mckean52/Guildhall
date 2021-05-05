@@ -1,0 +1,11 @@
+<!-- lit Shader State XML -->
+
+<ShaderState Name="Water_Transmission"
+             Shader       ="Data/Shaders/Water_Transmission.hlsl"
+             BlendMode    ="Alpha"
+             CullMode     ="None"
+             FillMode     ="Solid"
+             CompareMode  ="LessThanOrEqual"
+             WriteOnDepth ="true"
+             CounterClockwiseWindOrder ="true">
+</ShaderState>

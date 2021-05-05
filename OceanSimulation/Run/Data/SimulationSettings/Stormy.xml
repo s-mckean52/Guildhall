@@ -1,5 +1,5 @@
 <WaveSimulation type="FFT" samples="256" dimensions="12.8f,12.8f">
-  <PhillipsSpectrum aConstant="0.012f"
+  <PhillipsSpectrum aConstant="0.010f"
                     windSpeed="37.f"
                     windDirection="1.f,0.f"
                     waveSuppression="0.005f">

@@ -1138,12 +1138,12 @@ void RenderContext::BindShaderState( ShaderState* shaderState )
 {
 	if( shaderState != nullptr )
 	{
-		BindShader( shaderState->GetShader() );
 		SetBlendMode( shaderState->GetBlendMode() );
 		SetCullMode( shaderState->GetCullMode() );
 		SetFillMode( shaderState->GetFillMode() );
 		SetDepthTest( shaderState->GetCompareMode(), shaderState->IsWriteOnDepth() );
 		SetFrontFaceWindOrder( shaderState->IsCounterClockwiseWindorder() );
+		BindShader( shaderState->GetShader() );
 		return;
 	}
 

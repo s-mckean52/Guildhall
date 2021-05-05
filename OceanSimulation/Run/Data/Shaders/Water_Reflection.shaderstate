@@ -1,0 +1,11 @@
+<!-- lit Shader State XML -->
+
+<ShaderState Name="Water_Reflection"
+             Shader       ="Data/Shaders/Water_Reflection.hlsl"
+             BlendMode    ="Alpha"
+             CullMode     ="None"
+             FillMode     ="Solid"
+             CompareMode  ="LessThanOrEqual"
+             WriteOnDepth ="true"
+             CounterClockwiseWindOrder ="true">
+</ShaderState>

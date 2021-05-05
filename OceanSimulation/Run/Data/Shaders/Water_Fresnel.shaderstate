@@ -1,0 +1,11 @@
+<!-- lit Shader State XML -->
+
+<ShaderState Name="Water_Fresnel"
+             Shader       ="Data/Shaders/Water_Fresnel.hlsl"
+             BlendMode    ="Alpha"
+             CullMode     ="None"
+             FillMode     ="Solid"
+             CompareMode  ="LessThanOrEqual"
+             WriteOnDepth ="true"
+             CounterClockwiseWindOrder ="true">
+</ShaderState>
