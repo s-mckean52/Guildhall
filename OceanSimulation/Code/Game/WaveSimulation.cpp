@@ -611,7 +611,7 @@ void WaveSimulation::DrawQuadTreeDebug() const
 //---------------------------------------------------------------------------------------------------------
 float WaveSimulation::GetDeepDispersion( float kLength )
 {
-	constexpr float w0 = 2.f * 3.14159f / 200.f;
+	constexpr float w0 = 2.f * 3.14159f / 100.f;
 	float wk = sqrtf( GRAVITY * kLength );
 	return RoundDownToInt( wk ) * w0;
 }
